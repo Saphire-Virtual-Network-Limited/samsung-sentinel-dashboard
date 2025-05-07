@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function AuthInitializer({ onReady }: { onReady: (callbackUrl: string) => void }) {
 	const searchParams = useSearchParams();
-	const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+	const callbackUrl = searchParams.get("callbackUrl") || "/";
 
 	useEffect(() => {
 		onReady(callbackUrl);
@@ -38,16 +38,120 @@ function AuthInitializer({ onReady }: { onReady: (callbackUrl: string) => void }
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [userResponse, setUserResponse] = useState<UserResponse | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const [callbackUrl, setCallbackUrl] = useState("/dashboard");
+	const [callbackUrl, setCallbackUrl] = useState("/");
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	const router = useRouter();
 	const pathName = usePathname();
 
+	const logout = useCallback(async () => {
+		setIsLoggingOut(true);
+		try {
+			await logoutAdmin();
+			setUserResponse(null);
+			await router.replace("/auth/login"); // wait for navigation
+		} catch (error: any) {
+			console.error("Logout error:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Logout failed",
+				duration: 3000,
+			});
+		} finally {
+			setIsLoggingOut(false);
+		}
+	}, [router]);
+
 	const fetchUserProfile = useCallback(async () => {
 		try {
 			const response = await getAdminProfile();
-			setUserResponse(response);
+
+			//redirect to pages beased on roles using switch case
+			switch (response.data.role) {
+				case "USER":
+					showToast({
+						type: "error",
+						message: "You are not authorized to access this page",
+						duration: 8000,
+					});
+					logout();
+					break;
+				case "SUPER_ADMIN":
+					setUserResponse(response);
+					router.replace("/admin");
+					break;
+				case "ADMIN":
+					setUserResponse(response);
+					router.replace("/admin/sub");
+					break;
+				case "DEVELOPER":
+					setUserResponse(response);
+					router.replace("/dev");
+					break;
+				case "MERCHANT":
+					showToast({
+						type: "error",
+						message: "You are not authorized to access this page",
+						duration: 8000,
+					});
+					logout();
+					break;
+				case "FINANCE":
+					setUserResponse(response);
+					router.replace("/finance");
+					break;
+				case "VERIFICATION":
+					setUserResponse(response);
+					router.replace("/verify");
+					break;
+				case "SUPPORT":
+					setUserResponse(response);
+					router.replace("/support");
+					break;
+				case "HUMAN_RESOURCE":
+					setUserResponse(response);
+					router.replace("/hr");
+					break;
+				case "VERIFICATION_OFFICER":
+					setUserResponse(response);
+					router.replace("/verify");
+					break;
+				case "INVENTORY_MANAGER":
+					setUserResponse(response);
+					router.replace("/inventory");
+					break;
+				case "SALES":
+					setUserResponse(response);
+					router.replace("/sales");
+					break;
+				case "AGENT":
+					showToast({
+						type: "error",
+						message: "You are not authorized to access this page",
+						duration: 8000,
+					});
+					logout();
+					break;
+				case "STORE_BRANCH_MANAGER":
+					showToast({
+						type: "error",
+						message: "You are not authorized to access this page",
+						duration: 8000,
+					});
+					logout();
+					break;
+				case "STORE_MANAGER":
+					showToast({
+						type: "error",
+						message: "You are not authorized to access this page",
+						duration: 8000,
+					});
+					logout();
+					break;
+				default:
+					logout();
+			}
+
 			console.log("Fetched user");
 		} catch (error) {
 			console.error("Error fetching user profile:", error);
@@ -60,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		} finally {
 			setIsLoading(false);
 		}
-	}, [pathName, router]);
+	}, [logout, pathName, router]);
 
 	useEffect(() => {
 		const isAuthRoute = pathName.startsWith("/auth");
@@ -78,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		setUserResponse(null);
 		try {
 			await loginAdmin({ email, password });
-			const redirectTo = callbackUrl === "/" ? "/dashboard" : callbackUrl;
+			const redirectTo = callbackUrl === "/" ? "/" : callbackUrl;
 			router.push(redirectTo);
 			showToast({
 				type: "success",
@@ -92,24 +196,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 				message: error.message || "Login failed",
 				duration: 3000,
 			});
-		}
-	};
-
-	const logout = async () => {
-		setIsLoggingOut(true);
-		try {
-			await logoutAdmin();
-			setUserResponse(null);
-			await router.replace("/auth/login"); // wait for navigation
-		} catch (error: any) {
-			console.error("Logout error:", error);
-			showToast({
-				type: "error",
-				message: error.message || "Logout failed",
-				duration: 3000,
-			});
-		} finally {
-			setIsLoggingOut(false);
 		}
 	};
 
