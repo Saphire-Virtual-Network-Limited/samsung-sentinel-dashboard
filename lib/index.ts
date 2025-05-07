@@ -6,6 +6,8 @@ export * from "./zodValidator";
 export * from "./font";
 export * from "./showNotification";
 export * from "./modeToggle";
+export * from "./api";
+export * from "./globalContext";
 
 import InternetStatus from "./internetCheck";
 
