@@ -94,7 +94,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 								pageTitle
 							)}
 						</h1>
-						<p className="text-gray-500 text-xs lg:text-sm">{isDashboard ? "Here's what's happening with your dashboard today." : `Manage your ${pageTitle.toLowerCase()}`}</p>
+						<p className="text-gray-500 text-xs lg:text-sm">{isDashboard ? "here's what's happening today." : `Manage your ${pageTitle.toLowerCase()}`}</p>
 					</div>
 					<div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min">{children}</div>
 				</div>

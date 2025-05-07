@@ -1,14 +1,29 @@
 "use client";
 
-import { Home, Users, Package, Settings, LogOut, DollarSign, ChartBar, ChevronDown } from "lucide-react";
+import { Home, Users, Package, Settings, LogOut, DollarSign, ChartBar, ChevronDown, Store, Package2Icon } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib";
 import { useState } from "react";
+import { IoBusiness } from "react-icons/io5";
+
+// Define types for menu items
+type SubItem = {
+	title: string;
+	url: string;
+};
+
+type MenuItem = {
+	title: string;
+	icon: React.FC<any>;
+	url?: string;
+	subItems?: SubItem[];
+	id?: string;
+};
 
 export function AppSidebar() {
-	const { logout } = useAuth();
+	const { logout, userResponse } = useAuth();
 	const { setOpenMobile, isMobile } = useSidebar();
 	const [isReportsOpen, setIsReportsOpen] = useState(false);
 	const [isResourceOpen, setIsResourceOpen] = useState(false);
@@ -29,26 +44,76 @@ export function AppSidebar() {
 		}
 	};
 
-	const items = [
-		{ title: "Dashboard", icon: Home, url: "/dashboard" },
-		{ icon: Package, title: "Loan Management", url: "/dashboard/loans" },
-		{ icon: Users, title: "Customers", url: "/dashboard/customers" },
-		{ icon: DollarSign, title: "Finance Management", url: "/dashboard/finance" },
-		{
-			icon: Users,
-			title: "Resource",
-			subItems: [
-				{ title: "Agents/MBE", url: "/dashboard/resources/agents" },
-				{ title: "Stores", url: "/dashboard/resources/stores" },
-				{ title: "Devices", url: "/dashboard/resources/devices" },
-			],
-		},
+	const adminItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/admin/", id: "admin-dashboard" },
+		{ icon: Package, title: "Loans", url: "/access/admin/loans", id: "admin-loans" },
+		{ icon: Users, title: "Customers", url: "/access/admin/customers", id: "admin-customers" },
+		{ icon: Store, title: "Stores", url: "/access/admin/stores", id: "admin-stores" },
+		{ icon: IoBusiness, title: "Staff", url: "/access/admin/staff", id: "admin-staff" },
 		{
 			icon: ChartBar,
 			title: "Reports",
+			id: "admin-reports",
+			subItems: [
+				{ title: "Sales", url: "/access/admin/resources/agents" },
+				{ title: "Drop-offs", url: "/access/admin/resources/stores" },
+				{ title: "Tracker", url: "/access/admin/resources/devices" },
+			],
+		},
+		{
+			icon: Package2Icon,
+			title: "Inventory",
+			id: "admin-inventory",
+			subItems: [
+				{ title: "Devices", url: "/dashboard/reports/drop-offs" },
+				{ title: "TVs", url: "/dashboard/reports/drop-offs" },
+				{ title: "Solar", url: "/dashboard/reports/drop-offs" },
+			],
+		},
+	];
+
+	const agentItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/agent/", id: "agent-dashboard" },
+		{ icon: Package, title: "Loan Management", url: "/access/agent/loans", id: "agent-loans" },
+		{ icon: Users, title: "Customers", url: "/access/agent/customers", id: "agent-customers" },
+		{
+			icon: ChartBar,
+			title: "Reports",
+			id: "agent-reports",
 			subItems: [{ title: "Drop offs", url: "/dashboard/reports/drop-offs" }],
 		},
 	];
+
+	const customerItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/customer/", id: "customer-dashboard" },
+		{ icon: Package, title: "My Loans", url: "/access/customer/loans", id: "customer-loans" },
+		{ icon: DollarSign, title: "Payments", url: "/access/customer/payments", id: "customer-payments" },
+	];
+
+	const developerItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/dev/", id: "developer-dashboard" },
+		{ icon: Package, title: "Loans", url: "/access/dev/loans", id: "developer-loans" },
+		{ icon: DollarSign, title: "Payments", url: "/access/dev/payments", id: "developer-payments" },
+	];
+
+	// Get items based on user role
+	const items: MenuItem[] = (() => {
+		const role = userResponse?.data?.role;
+		switch (role) {
+			case "SUPER_ADMIN":
+				return adminItems;
+			case "admin":
+				return adminItems;
+			case "DEVELOPER":
+				return developerItems;
+			case "merchant":
+				return customerItems;
+			case "agent":
+				return agentItems;
+			default:
+				return [];
+		}
+	})();
 
 	return (
 		<>
@@ -90,7 +155,7 @@ export function AppSidebar() {
 					<SidebarMenu className="mt-8 flex flex-1 flex-col gap-8">
 						{items.map((item) => (
 							<SidebarMenuItem
-								key={item.title}
+								key={item.id || item.title}
 								className="flex flex-col gap-2">
 								{item.subItems ? (
 									<>
@@ -147,7 +212,7 @@ export function AppSidebar() {
 								asChild
 								className="hover:bg-primary hover:text-white w-full">
 								<Link
-									href="/dashboard/settings"
+									href="/access/settings"
 									onClick={handleLinkClick}>
 									<Settings style={{ width: "16px", height: "16px" }} />
 									<span className="text-sm lg:text-base">Settings</span>
