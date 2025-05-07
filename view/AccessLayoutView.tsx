@@ -30,7 +30,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 	const pathname = usePathname();
 
 	const pageTitle = useMemo(() => formatTitle(pathname), [pathname]);
-	const isDashboard = pathname === "/dashboard";
+	const isDashboard = pathname === "/access/admin" || pathname === "/access/admin/sub" || pathname === "/access/dev" || pathname === "/access/finance" || pathname === "/access/verify" || pathname === "/access/support" || pathname === "/access/hr" || pathname === "/access/inventory" || pathname === "/access/sales";
 
 	const { userResponse } = useAuth();
 	const userName = userResponse?.data?.firstName || "";
@@ -68,7 +68,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 						</Button>
 						<Separator
 							orientation="vertical"
-							className="lg:mx-2 h-4"
+							className="hidden lg:mx-2 h-4"
 						/>
 						{/* <Button
 							variant="secondary"
@@ -76,8 +76,8 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 							className="rounded-full bg-primary/10">
 							<UserPlus2Icon className="lg:h-5 lg:w-5 h-3 w-3" />
 						</Button> */}
-						<div className="flex flex-col text-start">
-							<span className="text-black font-bold  text-xl">{userResponse?.data?.firstName}</span>
+						<div className="hidden lg:flex flex-col text-start">
+							<span className="text-black font-bold text-base">{userResponse?.data?.firstName}</span>
 							<span className="text-xs text-zinc-400 text-right">{userResponse?.data?.role?.replace(/_/g, " ").replace(/\b\w/g, (char: string) => char.toUpperCase())}</span>
 						</div>
 					</div>

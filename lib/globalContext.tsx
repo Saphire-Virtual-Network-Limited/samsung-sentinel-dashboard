@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					showToast({
 						type: "error",
 						message: "You are not authorized to access this page",
-						duration: 8000,
+						duration: 3000,
 					});
 					logout();
 					break;
@@ -136,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					showToast({
 						type: "error",
 						message: "You are not authorized to access this page",
-						duration: 8000,
+						duration: 3000,
 					});
 					logout();
 					break;
@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					showToast({
 						type: "error",
 						message: "You are not authorized to access this page",
-						duration: 8000,
+						duration: 3000,
 					});
 					logout();
 					break;
@@ -187,14 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 			showToast({
 				type: "success",
 				message: "Login successful",
-				duration: 3000,
+				duration: 1000,
 			});
 		} catch (error: any) {
 			console.error("Login error:", error);
 			showToast({
 				type: "error",
 				message: error.message || "Login failed",
-				duration: 3000,
+				duration: 1000,
 			});
 		}
 	};
