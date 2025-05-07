@@ -78,15 +78,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					break;
 				case "SUPER_ADMIN":
 					setUserResponse(response);
-					router.replace("/admin");
+					router.replace("/access/admin");
 					break;
 				case "ADMIN":
 					setUserResponse(response);
-					router.replace("/admin/sub");
+					router.replace("/access/admin/sub");
 					break;
 				case "DEVELOPER":
 					setUserResponse(response);
-					router.replace("/dev");
+					router.replace("/access/dev");
 					break;
 				case "MERCHANT":
 					showToast({
@@ -98,31 +98,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					break;
 				case "FINANCE":
 					setUserResponse(response);
-					router.replace("/finance");
+					router.replace("/access/finance");
 					break;
 				case "VERIFICATION":
 					setUserResponse(response);
-					router.replace("/verify");
+					router.replace("/access/verify");
 					break;
 				case "SUPPORT":
 					setUserResponse(response);
-					router.replace("/support");
+					router.replace("/access/support");
 					break;
 				case "HUMAN_RESOURCE":
 					setUserResponse(response);
-					router.replace("/hr");
+					router.replace("/access/hr");
 					break;
 				case "VERIFICATION_OFFICER":
 					setUserResponse(response);
-					router.replace("/verify");
+					router.replace("/access/verify");
 					break;
 				case "INVENTORY_MANAGER":
 					setUserResponse(response);
-					router.replace("/inventory");
+					router.replace("/access/inventory");
 					break;
 				case "SALES":
 					setUserResponse(response);
-					router.replace("/sales");
+					router.replace("/access/sales");
 					break;
 				case "AGENT":
 					showToast({
