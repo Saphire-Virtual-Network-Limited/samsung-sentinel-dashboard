@@ -4,8 +4,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "App";
-const appColor = process.env.NEXT_PUBLIC_APP_COLOR || "#000000";
+const appName = "Sapphire Credit | Dashboard";
+const appColor = "#0F52BA";
 export const metadata: Metadata = {
 	title: `${appName} | Dashboard`,
 	description: "",
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 					enableSystem
 					disableTransitionOnChange>
 					<NextTopLoader
-						color="#2563eb"
+						color="#0F52BA"
 						showSpinner={true}
 						easing="ease"
 					/>
