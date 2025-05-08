@@ -65,94 +65,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 	const fetchUserProfile = useCallback(async () => {
 		try {
 			const response = await getAdminProfile();
+			const userRole = response.data.role;
+			const currentPath = pathName;
 
-			//redirect to pages beased on roles using switch case
-			switch (response.data.role) {
-				case "USER":
-					showToast({
-						type: "error",
-						message: "You are not authorized to access this page",
-						duration: 8000,
-					});
-					logout();
-					break;
-				case "SUPER_ADMIN":
-					setUserResponse(response);
-					router.replace("/access/admin");
-					break;
-				case "ADMIN":
-					setUserResponse(response);
-					router.replace("/access/admin/sub");
-					break;
-				case "DEVELOPER":
-					setUserResponse(response);
-					router.replace("/access/dev");
-					break;
-				case "MERCHANT":
-					showToast({
-						type: "error",
-						message: "You are not authorized to access this page",
-						duration: 8000,
-					});
-					logout();
-					break;
-				case "FINANCE":
-					setUserResponse(response);
-					router.replace("/access/finance");
-					break;
-				case "VERIFICATION":
-					setUserResponse(response);
-					router.replace("/access/verify");
-					break;
-				case "SUPPORT":
-					setUserResponse(response);
-					router.replace("/access/support");
-					break;
-				case "HUMAN_RESOURCE":
-					setUserResponse(response);
-					router.replace("/access/hr");
-					break;
-				case "VERIFICATION_OFFICER":
-					setUserResponse(response);
-					router.replace("/access/verify");
-					break;
-				case "INVENTORY_MANAGER":
-					setUserResponse(response);
-					router.replace("/access/inventory");
-					break;
-				case "SALES":
-					setUserResponse(response);
-					router.replace("/access/sales");
-					break;
-				case "AGENT":
-					showToast({
-						type: "error",
-						message: "You are not authorized to access this page",
-						duration: 3000,
-					});
-					logout();
-					break;
-				case "STORE_BRANCH_MANAGER":
-					showToast({
-						type: "error",
-						message: "You are not authorized to access this page",
-						duration: 3000,
-					});
-					logout();
-					break;
-				case "STORE_MANAGER":
-					showToast({
-						type: "error",
-						message: "You are not authorized to access this page",
-						duration: 3000,
-					});
-					logout();
-					break;
-				default:
-					logout();
+			// Set user response first
+			setUserResponse(response);
+
+			// Check if user is accessing allowed routes
+			const isAllowedRoute = (() => {
+				switch (userRole) {
+					case "SUPER_ADMIN":
+						return currentPath.startsWith("/access/admin");
+					case "ADMIN":
+						return currentPath.startsWith("/access/admin/sub");
+					case "DEVELOPER":
+						return currentPath.startsWith("/access/dev");
+					case "FINANCE":
+						return currentPath.startsWith("/access/finance");
+					case "VERIFICATION":
+					case "VERIFICATION_OFFICER":
+						return currentPath.startsWith("/access/verify");
+					case "SUPPORT":
+						return currentPath.startsWith("/access/support");
+					case "HUMAN_RESOURCE":
+						return currentPath.startsWith("/access/hr");
+					case "INVENTORY_MANAGER":
+						return currentPath.startsWith("/access/inventory");
+					case "SALES":
+						return currentPath.startsWith("/access/sales");
+					case "USER":
+					case "MERCHANT":
+					case "AGENT":
+					case "STORE_BRANCH_MANAGER":
+					case "STORE_MANAGER":
+						return false;
+					default:
+						return false;
+				}
+			})();
+
+			// If not on allowed route, redirect to appropriate route or show error
+			if (!isAllowedRoute) {
+				switch (userRole) {
+					case "SUPER_ADMIN":
+						router.replace("/access/admin");
+						break;
+					case "ADMIN":
+						router.replace("/access/admin/sub");
+						break;
+					case "DEVELOPER":
+						router.replace("/access/dev");
+						break;
+					case "FINANCE":
+						router.replace("/access/finance");
+						break;
+					case "VERIFICATION":
+					case "VERIFICATION_OFFICER":
+						router.replace("/access/verify");
+						break;
+					case "SUPPORT":
+						router.replace("/access/support");
+						break;
+					case "HUMAN_RESOURCE":
+						router.replace("/access/hr");
+						break;
+					case "INVENTORY_MANAGER":
+						router.replace("/access/inventory");
+						break;
+					case "SALES":
+						router.replace("/access/sales");
+						break;
+					case "USER":
+					case "MERCHANT":
+					case "AGENT":
+					case "STORE_BRANCH_MANAGER":
+					case "STORE_MANAGER":
+						showToast({
+							type: "error",
+							message: "You are not authorized to access this page",
+							duration: 3000,
+						});
+						logout();
+						break;
+					default:
+						logout();
+				}
 			}
-
-			console.log("Fetched user");
 		} catch (error) {
 			console.error("Error fetching user profile:", error);
 			showToast({
