@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, Package, Settings, LogOut, DollarSign, ChartBar, ChevronDown, Store, Package2Icon } from "lucide-react";
+import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard, DollarSign } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,9 +25,7 @@ type MenuItem = {
 export function AppSidebar() {
 	const { logout, userResponse } = useAuth();
 	const { setOpenMobile, isMobile } = useSidebar();
-	const [isReportsOpen, setIsReportsOpen] = useState(false);
-	const [isResourceOpen, setIsResourceOpen] = useState(false);
-	const [isAdminOpen, setIsAdminOpen] = useState(false);
+	const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
 	const handleLogout = async () => {
 		try {
@@ -44,9 +42,11 @@ export function AppSidebar() {
 		}
 	};
 
+	const apiDocsUrl = process.env.NEXT_PUBLIC_API_DOCS_URL;
+
 	const adminItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/admin/", id: "admin-dashboard" },
-		{ icon: Package, title: "Loans", url: "/access/admin/loans", id: "admin-loans" },
+		{ icon: CreditCard, title: "Loans", url: "/access/admin/loans", id: "admin-loans" },
 		{ icon: Users, title: "Customers", url: "/access/admin/customers", id: "admin-customers" },
 		{ icon: Store, title: "Stores", url: "/access/admin/stores", id: "admin-stores" },
 		{ icon: IoBusiness, title: "Staff", url: "/access/admin/staff", id: "admin-staff" },
@@ -65,35 +65,33 @@ export function AppSidebar() {
 			title: "Inventory",
 			id: "admin-inventory",
 			subItems: [
-				{ title: "Devices", url: "/dashboard/reports/drop-offs" },
-				{ title: "TVs", url: "/dashboard/reports/drop-offs" },
-				{ title: "Solar", url: "/dashboard/reports/drop-offs" },
+				{ title: "Devices", url: "/access/admin/inventory/devices" },
+				{ title: "TVs", url: "/access/admin/inventory/tvs" },
+				{ title: "Solar", url: "/access/admin/inventory/solar" },
 			],
 		},
 	];
 
-	const agentItems: MenuItem[] = [
-		{ title: "Dashboard", icon: Home, url: "/access/agent/", id: "agent-dashboard" },
-		{ icon: Package, title: "Loan Management", url: "/access/agent/loans", id: "agent-loans" },
-		{ icon: Users, title: "Customers", url: "/access/agent/customers", id: "agent-customers" },
-		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "agent-reports",
-			subItems: [{ title: "Drop offs", url: "/dashboard/reports/drop-offs" }],
-		},
-	];
-
-	const customerItems: MenuItem[] = [
-		{ title: "Dashboard", icon: Home, url: "/access/customer/", id: "customer-dashboard" },
-		{ icon: Package, title: "My Loans", url: "/access/customer/loans", id: "customer-loans" },
-		{ icon: DollarSign, title: "Payments", url: "/access/customer/payments", id: "customer-payments" },
-	];
-
 	const developerItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/dev/", id: "developer-dashboard" },
-		{ icon: Package, title: "Loans", url: "/access/dev/loans", id: "developer-loans" },
-		{ icon: DollarSign, title: "Payments", url: "/access/dev/payments", id: "developer-payments" },
+		{ icon: Users, title: "Customers", url: "/access/dev/customers", id: "developer-customers" },
+		{ icon: Phone, title: "Devices", url: "/access/dev/devices", id: "developer-devices" },
+		{ icon: Package2Icon, title: "Products", url: "/access/dev/products", id: "developer-products" },
+		{ icon: Code, title: "API Docs", url: apiDocsUrl, id: "developer-api-docs" },
+		{ icon: ChartBar, title: "Drop-offs", url: "/access/dev/drop-offs", id: "developer-drop-offs" },
+	];
+
+	const verificationItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/verify/", id: "verification-dashboard" },
+		{ icon: Users, title: "References", url: "/access/verify/references", id: "verification-references" },
+		{ icon: CreditCard, title: "Loans", url: "/access/verify/loans", id: "verification-loans" },
+	];
+
+	const financeItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/finance/", id: "finance-dashboard" },
+		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
+		{ icon: Store, title: "Stores", url: "/access/finance/stores", id: "finance-stores" },
+		{ icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
 	];
 
 	// Get items based on user role
@@ -101,19 +99,26 @@ export function AppSidebar() {
 		const role = userResponse?.data?.role;
 		switch (role) {
 			case "SUPER_ADMIN":
+			case "ADMIN":
 				return adminItems;
-			case "admin":
-				return adminItems;
+			case "VERIFICATION":
+			case "VERIFICATION_OFFICER":
+				return verificationItems;
 			case "DEVELOPER":
 				return developerItems;
-			case "merchant":
-				return customerItems;
-			case "agent":
-				return agentItems;
+			case "FINANCE":
+				return financeItems;
 			default:
 				return [];
 		}
 	})();
+
+	const toggleMenu = (id: string) => {
+		setOpenMenus((prev) => ({
+			...prev,
+			[id]: !prev[id],
+		}));
+	};
 
 	return (
 		<>
@@ -161,20 +166,16 @@ export function AppSidebar() {
 									<>
 										<SidebarMenuButton
 											className="hover:bg-gray-900 hover:text-white w-full"
-											onClick={() => {
-												if (item.title === "Reports") setIsReportsOpen(!isReportsOpen);
-												if (item.title === "Resource") setIsResourceOpen(!isResourceOpen);
-												if (item.title === "Admin") setIsAdminOpen(!isAdminOpen);
-											}}>
+											onClick={() => item.id && toggleMenu(item.id)}>
 											<div className="flex items-center justify-between w-full">
 												<div className="flex items-center gap-2">
 													<item.icon style={{ width: "20px", height: "20px" }} />
 													<span className="text-sm lg:text-base">{item.title}</span>
 												</div>
-												<ChevronDown className={`w-4 h-4 transition-transform ${(item.title === "Reports" && isReportsOpen) || (item.title === "Resource" && isResourceOpen) || (item.title === "Admin" && isAdminOpen) ? "rotate-180" : ""}`} />
+												<ChevronDown className={`w-4 h-4 transition-transform ${item.id && openMenus[item.id] ? "rotate-180" : ""}`} />
 											</div>
 										</SidebarMenuButton>
-										{((item.title === "Reports" && isReportsOpen) || (item.title === "Resource" && isResourceOpen) || (item.title === "Admin" && isAdminOpen)) && (
+										{item.id && openMenus[item.id] && (
 											<div className="ml-6 flex flex-col gap-2">
 												{item.subItems.map((subItem) => (
 													<Link
