@@ -1,104 +1,71 @@
 "use client";
-import React, { useEffect, useCallback, useState } from "react";
-import { showToast } from "./showNotification";
-import { AnimatePresence, motion } from "framer-motion";
-import { X, Cloud, CloudOff, WifiOff, Zap, RefreshCw, Wifi } from "lucide-react";
+
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { RefreshCw, Wifi, WifiOff, X, Cloud, CloudOff, Zap } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
-// Typing for the position
-type ToastPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "bottom-center";
-
-interface InternetCheckProps {
-	position?: ToastPosition;
-	onlineMessage?: string;
-	offlineMessage?: string;
-}
-
-const InternetStatus: React.FC<InternetCheckProps> = ({ position = "top-center", onlineMessage, offlineMessage }) => {
+export default function NoInternetScreen() {
+	const [isOnline, setIsOnline] = useState(true);
 	const [isRetrying, setIsRetrying] = useState(false);
-	const [showOfflineUI, setShowOfflineUI] = useState(false);
+	const [isDismissed, setIsDismissed] = useState(false);
 
-	const handleToast = useCallback(
-		(type: "success" | "error", customMessage?: string, duration?: number) => {
-			// Default messages when no custom message is provided
-			const defaultMessage = type === "success" ? "Internet Restored 🚀" : "No/Bad Internet Connection 😭";
+	useEffect(() => {
+		// Check initial online status
+		setIsOnline(navigator.onLine);
 
-			// Use customMessage if provided, else use defaultMessage
-			const message = customMessage || defaultMessage;
+		// Add event listeners for online/offline status
+		const handleOnline = () => setIsOnline(true);
+		const handleOffline = () => setIsOnline(false);
 
-			// Show the toast with the correct type, message, position, and duration
-			showToast({ type, message, position, duration });
-		},
-		[position]
-	);
+		window.addEventListener("online", handleOnline);
+		window.addEventListener("offline", handleOffline);
 
-	// Internet is back online (with a duration of 3000ms)
-	const InternetRestored = useCallback(() => {
-		handleToast("success", onlineMessage, 3000);
-		setShowOfflineUI(false);
-	}, [handleToast, onlineMessage]);
+		return () => {
+			window.removeEventListener("online", handleOnline);
+			window.removeEventListener("offline", handleOffline);
+		};
+	}, []);
 
-	// Internet is offline or bad
-	const NoInternetConnection = useCallback(() => {
-		handleToast("error", offlineMessage, 5000);
-		setShowOfflineUI(true);
-	}, [handleToast, offlineMessage]);
-
-	const handleRetry = async () => {
+	const handleRetry = () => {
 		setIsRetrying(true);
-		try {
-			const response = await fetch("https://www.google.com/favicon.ico");
-			if (response.ok) {
-				InternetRestored();
-			} else {
-				NoInternetConnection();
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (error) {
-			NoInternetConnection();
-		}
-		setIsRetrying(false);
+
+		// Simulate checking connection
+		setTimeout(() => {
+			setIsRetrying(false);
+			// If we're actually online, this will update via the event listener
+		}, 1500);
 	};
 
 	const handleDismiss = () => {
-		setShowOfflineUI(false);
+		setIsDismissed(true);
 	};
 
-	useEffect(() => {
-		// Handle online and offline events
-		const handleOnlineEvent = () => InternetRestored();
-		const handleOfflineEvent = () => NoInternetConnection();
-
-		// Add event listeners for online and offline events
-		window.addEventListener("online", handleOnlineEvent);
-		window.addEventListener("offline", handleOfflineEvent);
-
-		// Check initial connection status
-		if (!navigator.onLine) {
-			NoInternetConnection();
-		}
-
-		// Cleanup event listeners when the component is unmounted
-		return () => {
-			window.removeEventListener("online", handleOnlineEvent);
-			window.removeEventListener("offline", handleOfflineEvent);
-		};
-	}, [InternetRestored, NoInternetConnection]);
-
-	if (!showOfflineUI) return null;
+	if (isOnline || isDismissed) {
+		return (
+			<div className="flex min-h-screen items-center justify-center">
+				<p>You are {isOnline ? "online" : "offline, but dismissed the notice"}! This is just a demo.</p>
+			</div>
+		);
+	}
 
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 text-slate-50">
-			<Button
-				variant="ghost"
-				size="icon"
-				onClick={handleDismiss}
-				className="absolute right-4 top-4 text-slate-400 hover:bg-slate-800 hover:text-white">
-				<X className="h-5 w-5" />
-				<span className="sr-only">Dismiss</span>
-			</Button>
+		<AnimatePresence>
+			<motion.div
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				exit={{ opacity: 0 }}
+				className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 text-slate-50">
+				<Button
+					variant="ghost"
+					size="icon"
+					onClick={handleDismiss}
+					className="absolute right-4 top-4 text-slate-400 hover:bg-slate-800 hover:text-white">
+					<X className="h-5 w-5" />
+					<span className="sr-only">Dismiss</span>
+				</Button>
 
-			<AnimatePresence>
 				<div className="w-full max-w-md">
 					{/* Decorative elements */}
 					<div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -413,9 +380,7 @@ const InternetStatus: React.FC<InternetCheckProps> = ({ position = "top-center",
 						<p className="mt-8 text-xs text-indigo-300/50">You can still access any offline-enabled content</p>
 					</motion.div>
 				</div>
-			</AnimatePresence>
-		</div>
+			</motion.div>
+		</AnimatePresence>
 	);
-};
-
-export default InternetStatus;
+}

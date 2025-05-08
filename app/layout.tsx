@@ -41,6 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 							position="top-right"
 							expand={false}
 						/>
+
 						<InternetStatus />
 					</AuthProvider>
 				</ThemeProvider>

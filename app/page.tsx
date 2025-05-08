@@ -1,8 +1,10 @@
 "use client";
 import { SkeletonLoader } from "@/components/reususables";
 
-const Home = () => {
-	return <SkeletonLoader />;
-};
-
-export default Home;
+export default function Page() {
+	return (
+		<>
+			<SkeletonLoader />;
+		</>
+	);
+}
