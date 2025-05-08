@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { getAdminProfile, loginAdmin, logoutAdmin, showToast } from "@/lib";
+import { getAdminProfile, loginAdmin, logoutAdmin, showToast, getAllProducts as getProducts } from "@/lib";
 import { Loader2 } from "lucide-react";
 
 // Types
@@ -20,6 +20,7 @@ interface AuthContextType {
 	isLoading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	logout: () => void;
+	getAllProducts: () => Promise<{ label: string; value: string; key: string }[] | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -197,8 +198,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		}
 	};
 
+	const getAllProducts = async () => {
+		try {
+			const response = await getProducts();
+			return response.data.map((product: any) => ({
+				label: product.name,
+				value: product.productId,
+			}));
+		} catch (error: any) {
+			console.error("Error fetching products:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Failed to fetch products",
+				duration: 3000,
+			});
+		}
+	};
+
 	return (
-		<AuthContext.Provider value={{ userResponse, isLoading, login, logout }}>
+		<AuthContext.Provider value={{ userResponse, isLoading, login, logout, getAllProducts }}>
 			<Suspense fallback={null}>
 				<AuthInitializer onReady={setCallbackUrl} />
 			</Suspense>

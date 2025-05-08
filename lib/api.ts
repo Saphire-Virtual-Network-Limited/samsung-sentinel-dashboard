@@ -15,18 +15,23 @@ async function apiCall(endpoint: string, method: string, body?: any, options?: A
 			"x-app-key": options?.appKey,
 		};
 
-		// Define axios request options
+		// Safely access localStorage only in the browser
+		if (typeof window !== "undefined") {
+			const sapphireProduct = localStorage.getItem("Sapphire-Credit-Product");
+			if (sapphireProduct) {
+				headers["Sapphire-Credit-Product"] = sapphireProduct;
+			}
+		}
+
 		const config: any = {
 			method,
 			url: `${apiUrl}${endpoint}`,
 			headers,
-			withCredentials: true, // This ensures cookies are included in cross-origin requests
+			withCredentials: true,
 		};
 
-		// Only add body if the method is not GET or HEAD
 		if (method !== "GET" && method !== "HEAD" && body) {
 			if (body instanceof FormData) {
-				// Allow browser to set Content-Type when using FormData
 				delete headers["Content-Type"];
 				config.data = body;
 			} else {
@@ -35,18 +40,16 @@ async function apiCall(endpoint: string, method: string, body?: any, options?: A
 			}
 		}
 
-		// Apply caching and revalidation strategies for GET requests
 		if (method === "GET") {
 			if (options?.cache) {
 				config.cache = options.cache;
 			}
 			if (options?.revalidate !== undefined) {
-				config.revalidate = options.revalidate; // This is a Next.js-specific thing, but we can't replicate it in axios directly
+				config.revalidate = options.revalidate;
 			}
 		}
 
 		const response = await axios(config);
-
 		return response.data;
 	} catch (error: any) {
 		const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
@@ -75,4 +78,9 @@ export async function getAdminProfile() {
 // logout
 export async function logoutAdmin() {
 	return apiCall("/admin/logout", "POST");
+}
+
+// get all products
+export async function getAllProducts() {
+	return apiCall("/admin/products", "GET");
 }

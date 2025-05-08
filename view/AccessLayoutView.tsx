@@ -3,12 +3,12 @@
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/reususables";
 import { Separator } from "@/components/ui/separator";
-import { Bell, SearchIcon } from "lucide-react";
-import { Input } from "@heroui/react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/lib";
+import AutoCompleteField from "@/components/reususables/form/AutoCompleteField";
 
 function getGreeting() {
 	const hour = new Date().getHours();
@@ -28,12 +28,42 @@ function formatTitle(pathname: string): string {
 
 export default function AccessLayoutView({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
+	const [products, setProducts] = useState<{ label: string; value: string }[]>([]);
+	const [selectedProduct, setSelectedProduct] = useState("");
+	const [loading, setLoading] = useState(true);
 
 	const pageTitle = useMemo(() => formatTitle(pathname), [pathname]);
 	const isDashboard = pathname === "/access/admin" || pathname === "/access/admin/sub" || pathname === "/access/dev" || pathname === "/access/finance" || pathname === "/access/verify" || pathname === "/access/support" || pathname === "/access/hr" || pathname === "/access/inventory" || pathname === "/access/sales";
 
-	const { userResponse } = useAuth();
+	const { userResponse, getAllProducts } = useAuth();
 	const userName = userResponse?.data?.firstName || "";
+
+	useEffect(() => {
+		const fetchProducts = async () => {
+			try {
+				const productsList = await getAllProducts();
+				setProducts(productsList || []); // Handle undefined case
+			} catch (error) {
+				console.error("Error fetching products:", error);
+				setProducts([]);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchProducts();
+	}, [getAllProducts]);
+
+	// Update headers when product is selected
+	const handleProductSelect = (value: string) => {
+		setSelectedProduct(value);
+		if (value) {
+			// Set the header for all subsequent requests
+			if (typeof window !== "undefined") {
+				localStorage.setItem("Sapphire-Credit-Product", value);
+			}
+		}
+	};
 
 	return (
 		<SidebarProvider>
@@ -47,15 +77,17 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 							orientation="vertical"
 							className="h-4"
 						/>
-						<Input
-							isClearable
-							placeholder="Type to search..."
-							radius="lg"
-							classNames={{
-								inputWrapper: "bg-primary/10",
-							}}
-							startContent={<SearchIcon className="text-primary w-4 me-2 mb-0.5 pointer-events-none flex-shrink-0" />}
-						/>
+						<div className="pb-3">
+							<AutoCompleteField
+								htmlFor="product-search"
+								id="product-search"
+								placeholder={loading ? "Loading products..." : products.length > 0 ? "Search products" : "No products available"}
+								value={selectedProduct}
+								onChange={handleProductSelect}
+								options={products}
+								isDisabled={loading || products.length === 0}
+							/>
+						</div>
 					</div>
 
 					{/* Right side: notification + user */}
