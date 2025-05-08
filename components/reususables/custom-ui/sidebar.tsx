@@ -92,6 +92,7 @@ export function AppSidebar() {
 		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
 		{ icon: Store, title: "Stores", url: "/access/finance/stores", id: "finance-stores" },
 		{ icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
+		{ icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
 	];
 
 	// Get items based on user role
