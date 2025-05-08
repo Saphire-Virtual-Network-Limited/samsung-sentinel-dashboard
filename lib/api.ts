@@ -84,3 +84,10 @@ export async function logoutAdmin() {
 export async function getAllProducts() {
 	return apiCall("/admin/products", "GET");
 }
+
+//** Loans */
+
+// get all loans
+export async function getAllLoans() {
+	return apiCall("/admin/loan/data", "GET");
+}

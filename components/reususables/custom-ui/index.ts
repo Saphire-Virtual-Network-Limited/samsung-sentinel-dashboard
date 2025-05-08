@@ -4,5 +4,6 @@ import SkeletonLoader from "./skeleton";
 import { AppSidebar } from "./sidebar";
 import SidebarSkeletonLoader from "./sidebarSkeleton";
 import NoInternet from "./noInternet";
+import DashCard from "./dashCard";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard };

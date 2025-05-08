@@ -1,14 +1,14 @@
 "use client";
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/reususables";
+import { AppSidebar, SelectField } from "@/components/reususables";
 import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/lib";
-import AutoCompleteField from "@/components/reususables/form/AutoCompleteField";
+import { mutate } from "swr";
 
 function getGreeting() {
 	const hour = new Date().getHours();
@@ -29,7 +29,6 @@ function formatTitle(pathname: string): string {
 export default function AccessLayoutView({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const [products, setProducts] = useState<{ label: string; value: string }[]>([]);
-	const [selectedProduct, setSelectedProduct] = useState("");
 	const [loading, setLoading] = useState(true);
 
 	const pageTitle = useMemo(() => formatTitle(pathname), [pathname]);
@@ -56,13 +55,15 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 
 	// Update headers when product is selected
 	const handleProductSelect = (value: string) => {
-		setSelectedProduct(value);
 		if (value) {
 			// Set the header for all subsequent requests
 			if (typeof window !== "undefined") {
 				localStorage.setItem("Sapphire-Credit-Product", value);
 			}
 		}
+
+		// Mutate all cached data to trigger revalidation
+		mutate((key) => typeof key === "string", undefined, { revalidate: true });
 	};
 
 	return (
@@ -77,15 +78,14 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 							orientation="vertical"
 							className="h-4"
 						/>
-						<div className="pb-3">
-							<AutoCompleteField
+						<div className="pb-3 w-full">
+							<SelectField
 								htmlFor="product-search"
 								id="product-search"
-								placeholder={loading ? "Loading products..." : products.length > 0 ? "Search products" : "No products available"}
-								value={selectedProduct}
-								onChange={handleProductSelect}
+								placeholder={loading ? "Loading products..." : products.length > 0 ? "Choose Products" : "No products available"}
+								onChange={(value) => handleProductSelect(value as string)}
 								options={products}
-								isDisabled={loading || products.length === 0}
+								size="md"
 							/>
 						</div>
 					</div>

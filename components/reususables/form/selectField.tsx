@@ -5,20 +5,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectItem, Selection } from "@heroui/react";
 
 interface SelectFieldProps {
-	label: string;
+	label?: string;
 	htmlFor: string;
 	id: string;
-	isInvalid: boolean;
-	errorMessage: string;
+	isInvalid?: boolean;
+	errorMessage?: string;
 	placeholder: string;
 	reqValue?: string;
 	onChange: (value: string | string[]) => void;
 	required?: boolean;
 	selectionMode?: "single" | "multiple";
 	options: { label: string; value: string }[];
+	size?: "sm" | "md" | "lg";
 }
 
-const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid, errorMessage, placeholder, reqValue, onChange, required, options, selectionMode = "single" }) => {
+const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid, errorMessage, placeholder, reqValue, onChange, required, options, selectionMode = "single", size = "lg" }) => {
 	const handleChange = (keys: Selection) => {
 		const value = selectionMode === "multiple" ? Array.from(keys as Set<string>) : Array.from(keys as Set<string>)[0] || "";
 		onChange(value);
@@ -41,7 +42,7 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid
 				placeholder={placeholder}
 				onSelectionChange={handleChange}
 				radius="md"
-				size="lg"
+				size={size}
 				variant="bordered"
 				classNames={{
 					base: "border-primary",
