@@ -5,5 +5,8 @@ import { AppSidebar } from "./sidebar";
 import SidebarSkeletonLoader from "./sidebarSkeleton";
 import NoInternet from "./noInternet";
 import DashCard from "./dashCard";
+import DateFilter from "./dateFilter";
+import DeviceCard from "./deviceCard";  
+import TableCard from "./tableCard";    
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, TableCard };

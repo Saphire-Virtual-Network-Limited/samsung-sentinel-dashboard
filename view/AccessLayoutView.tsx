@@ -64,7 +64,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 					{ revalidate: true }
 				);
 
-				// Force reload of current page data
+				// Force reload of current page data once
 				await mutate(pathname);
 			}
 		},
@@ -96,6 +96,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 			}
 		};
 
+		// Only fetch products once when component mounts
 		fetchProducts();
 	}, [getAllProducts, handleProductSelect]);
 

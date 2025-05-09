@@ -88,6 +88,16 @@ export async function getAllProducts() {
 //** Loans */
 
 // get all loans
-export async function getAllLoans() {
-	return apiCall("/admin/loan/data", "GET");
+export async function getAllLoans(startDate?: string, endDate?: string) {
+	return apiCall(`/admin/loan/data?startDate=${startDate}&endDate=${endDate}`, "GET");
+}
+
+// get all devices
+export async function getAllDevices(startDate?: string, endDate?: string) {
+	return apiCall(`/admin/device/data?startDate=${startDate}&endDate=${endDate}`, "GET");
+}
+
+// get all loan records
+export async function getAllLoanRecords(startDate?: string, endDate?: string) {
+	return apiCall(`/admin/loan/record?startDate=${startDate}&endDate=${endDate}`, "GET");
 }

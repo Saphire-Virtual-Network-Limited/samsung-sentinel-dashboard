@@ -6,7 +6,7 @@ import { GeneralSans_Meduim, GeneralSans_SemiBold, cn } from "@/lib";
 import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
-interface DashCardProps {
+interface DeviceCardProps {
 	title: string;
 	value: string | number;
 	href: string;
@@ -16,7 +16,7 @@ interface DashCardProps {
 	change: "increase" | "decrease" | "stable";
 }
 
-const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = false, changeValue, changeString, change }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({ title, value, href, hasNaira = false, changeValue, changeString, change }) => {
 	const getTrendIcon = () => {
 		switch (change) {
 			case "increase":
@@ -45,7 +45,10 @@ const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = fals
 	};
 
 	return (
-		<Card
+        <div>
+
+        {/* device card */}
+        <Card
 			as={Link}
 			isPressable
 			href={href}
@@ -64,7 +67,10 @@ const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = fals
 				</div>
 			</CardBody>
 		</Card>
+
+        </div>
+		
 	);
 };
 
-export default DashCard;
+export default DeviceCard;

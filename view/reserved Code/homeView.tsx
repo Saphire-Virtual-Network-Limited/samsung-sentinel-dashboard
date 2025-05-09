@@ -14,15 +14,13 @@ const HomeView = () => {
 	const fetchData = async (start?: string, end?: string) => {
 		try {
 			setIsLoading(true);
-			// Only fetch if both dates are provided or neither is provided
-			if ((start && end) || (!start && !end)) {
-				const [loansResponse, devicesResponse] = await Promise.all([
-					getAllLoans(start || "", end || ""),
-					getAllDevices(start || "", end || "")
-				]);
-				setLoans(loansResponse);
-				setDevices(devicesResponse);
-			}
+			// Fetch both loans and devices data
+			const [loansResponse, devicesResponse] = await Promise.all([
+				getAllLoans(start || startDate, end || endDate),
+				getAllDevices(start || startDate, end || endDate)
+			]);
+			setLoans(loansResponse);
+			setDevices(devicesResponse);
 		} catch (error) {
 			console.error("Error fetching data:", error);
 		} finally {
@@ -35,20 +33,13 @@ const HomeView = () => {
 		fetchData();
 	}, []);
 
-	// Refetch when dates change
-	useEffect(() => {
-		if (startDate && endDate) {
-			fetchData(startDate, endDate);
-		}
-	}, [startDate, endDate]);
-
 	const loanMetrics = loans?.data || {};
 	const deviceMetrics = devices?.data || {};
 
 	const generateHref = (key: string) => {
-		if (key.includes("Engaged")) return "/loans/engaged";
-		if (key.includes("Ongoing")) return "/loans/ongoing";
-		if (key.includes("Completed")) return "/loans/completed";
+        if (key.includes("Engaged")) return "/loans/engaged";
+        if (key.includes("Ongoing")) return "/loans/ongoing";
+        if (key.includes("Completed")) return "/loans/completed";
 		if (key.includes("Engaged")) return "/devices/engaged";
 		if (key.includes("Enrolled")) return "/devices/enrolled";
 		if (key.includes("Unenrolled")) return "/devices/unenrolled";
@@ -56,21 +47,9 @@ const HomeView = () => {
 	};
 
 	const handleDateFilter = async (start: string, end: string) => {
-		// Validate dates
-		if (!start || !end) {
-			return;
-		}
-		
-		const startDateTime = new Date(start);
-		const endDateTime = new Date(end);
-		
-		if (endDateTime < startDateTime) {
-			console.error("End date must be after start date");
-			return;
-		}
-
 		setStartDate(start);
 		setEndDate(end);
+		await fetchData(start, end);
 	};
 
 	return (
