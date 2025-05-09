@@ -16,10 +16,7 @@ const HomeView = () => {
 			setIsLoading(true);
 			// Only fetch if both dates are provided or neither is provided
 			if ((start && end) || (!start && !end)) {
-				const [loansResponse, devicesResponse] = await Promise.all([
-					getAllLoans(start || "", end || ""),
-					getAllDevices(start || "", end || "")
-				]);
+				const [loansResponse, devicesResponse] = await Promise.all([getAllLoans(start || "", end || ""), getAllDevices(start || "", end || "")]);
 				setLoans(loansResponse);
 				setDevices(devicesResponse);
 			}
@@ -60,10 +57,10 @@ const HomeView = () => {
 		if (!start || !end) {
 			return;
 		}
-		
+
 		const startDateTime = new Date(start);
 		const endDateTime = new Date(end);
-		
+
 		if (endDateTime < startDateTime) {
 			console.error("End date must be after start date");
 			return;
@@ -84,7 +81,7 @@ const HomeView = () => {
 					isLoading={isLoading}
 				/>
 			</div>
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 py-5">
+			<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-5">
 				{Object.entries(loanMetrics).map(([key, metric]: any) => {
 					const hasNaira = key.toLowerCase().includes("amount");
 					const rawValue = metric.value || 0;

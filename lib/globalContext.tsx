@@ -20,7 +20,7 @@ interface AuthContextType {
 	isLoading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	logout: () => void;
-	getAllProducts: () => Promise<{ label: string; value: string; key: string }[] | undefined>;
+	getAllProducts: () => Promise<{ label: string; value: string }[] | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 	const [isLoading, setIsLoading] = useState(true);
 	const [callbackUrl, setCallbackUrl] = useState("/");
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const [products, setProducts] = useState<{ label: string; value: string }[] | null>(null);
 
 	const router = useRouter();
 	const pathName = usePathname();
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		try {
 			await logoutAdmin();
 			setUserResponse(null);
-			await router.replace("/auth/login"); // wait for navigation
+			await router.replace("/auth/login");
 		} catch (error: any) {
 			console.error("Logout error:", error);
 			showToast({
@@ -69,10 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 			const userRole = response.data.role;
 			const currentPath = pathName;
 
-			// Set user response first
 			setUserResponse(response);
 
-			// Check if user is accessing allowed routes
 			const isAllowedRoute = (() => {
 				switch (userRole) {
 					case "SUPER_ADMIN":
@@ -105,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 				}
 			})();
 
-			// If not on allowed route, redirect to appropriate route or show error
 			if (!isAllowedRoute) {
 				switch (userRole) {
 					case "SUPER_ADMIN":
@@ -136,19 +134,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					case "SALES":
 						router.replace("/access/sales");
 						break;
-					case "USER":
-					case "MERCHANT":
-					case "AGENT":
-					case "STORE_BRANCH_MANAGER":
-					case "STORE_MANAGER":
+					default:
 						showToast({
 							type: "error",
 							message: "You are not authorized to access this page",
 							duration: 3000,
 						});
-						logout();
-						break;
-					default:
 						logout();
 				}
 			}
@@ -167,13 +158,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 	useEffect(() => {
 		const isAuthRoute = pathName.startsWith("/auth");
-
 		if (isAuthRoute) {
 			setUserResponse(null);
 			setIsLoading(false);
 			return;
 		}
-
 		fetchUserProfile();
 	}, [fetchUserProfile, pathName]);
 
@@ -198,13 +187,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		}
 	};
 
-	const getAllProducts = async () => {
+	const getAllProducts = useCallback(async () => {
+		if (products) return products;
+
 		try {
 			const response = await getProducts();
-			return response.data.map((product: any) => ({
+			const mapped = response.data.map((product: any) => ({
 				label: product.name,
 				value: product.productId,
 			}));
+			setProducts(mapped);
+			return mapped;
 		} catch (error: any) {
 			console.error("Error fetching products:", error);
 			showToast({
@@ -213,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 				duration: 3000,
 			});
 		}
-	};
+	}, [products]);
 
 	return (
 		<AuthContext.Provider value={{ userResponse, isLoading, login, logout, getAllProducts }}>
