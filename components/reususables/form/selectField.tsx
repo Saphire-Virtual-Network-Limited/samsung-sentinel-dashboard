@@ -17,9 +17,10 @@ interface SelectFieldProps {
 	selectionMode?: "single" | "multiple";
 	options: { label: string; value: string }[];
 	size?: "sm" | "md" | "lg";
+	defaultSelectedKeys?: string[];
 }
 
-const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid, errorMessage, placeholder, reqValue, onChange, required, options, selectionMode = "single", size = "lg" }) => {
+const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid, errorMessage, placeholder, reqValue, onChange, required, options, selectionMode = "single", size = "lg", defaultSelectedKeys }) => {
 	const handleChange = (keys: Selection) => {
 		const value = selectionMode === "multiple" ? Array.from(keys as Set<string>) : Array.from(keys as Set<string>)[0] || "";
 		onChange(value);
@@ -27,20 +28,23 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid
 
 	return (
 		<div className="flex flex-col space-y-1.5">
-			<Label
-				htmlFor={htmlFor}
-				className={cn("mb-2 text-sm text-black", GeneralSans_Meduim.className)}>
-				{label} <sup className="text-danger">{reqValue}</sup>
-			</Label>
+			{label && (
+				<Label
+					htmlFor={htmlFor}
+					className={cn("mb-2 text-sm text-black", GeneralSans_Meduim.className)}>
+					{label} <sup className="text-danger">{reqValue}</sup>
+				</Label>
+			)}
 			<Select
 				selectionMode={selectionMode}
 				id={id}
-				aria-label={label}
+				aria-label={label || placeholder} // Ensure there's always an accessible label
 				aria-invalid={isInvalid ? "true" : "false"}
 				aria-describedby={isInvalid ? `${id}-error` : undefined}
 				required={required}
 				placeholder={placeholder}
 				onSelectionChange={handleChange}
+				defaultSelectedKeys={defaultSelectedKeys}
 				radius="md"
 				size={size}
 				variant="bordered"

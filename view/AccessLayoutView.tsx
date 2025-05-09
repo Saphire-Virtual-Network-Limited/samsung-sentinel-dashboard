@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib";
 import { mutate } from "swr";
 
@@ -30,6 +30,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 	const pathname = usePathname();
 	const [products, setProducts] = useState<{ label: string; value: string }[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [selectedProduct, setSelectedProduct] = useState<string[]>([]);
 
 	const pageTitle = useMemo(() => formatTitle(pathname), [pathname]);
 	const isDashboard = pathname === "/access/admin" || pathname === "/access/admin/sub" || pathname === "/access/dev" || pathname === "/access/finance" || pathname === "/access/verify" || pathname === "/access/support" || pathname === "/access/hr" || pathname === "/access/inventory" || pathname === "/access/sales";
@@ -37,11 +38,56 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 	const { userResponse, getAllProducts } = useAuth();
 	const userName = userResponse?.data?.firstName || "";
 
+	// Update headers and trigger revalidation when product is selected
+	const handleProductSelect = useCallback(
+		async (value: string, label?: string) => {
+			if (value) {
+				// Set the header for all subsequent requests
+				if (typeof window !== "undefined") {
+					localStorage.setItem("Sapphire-Credit-Product", value);
+					if (label) {
+						localStorage.setItem("Sapphire-Credit-Product-Name", label);
+						setSelectedProduct([value]);
+					} else {
+						const product = products.find((p) => p.value === value);
+						if (product) {
+							localStorage.setItem("Sapphire-Credit-Product-Name", product.label);
+							setSelectedProduct([value]);
+						}
+					}
+				}
+
+				// Revalidate all SWR cache entries
+				await mutate(
+					(key) => typeof key === "string" && key.includes("/admin/"), // Only mutate API endpoints
+					undefined,
+					{ revalidate: true }
+				);
+
+				// Force reload of current page data
+				await mutate(pathname);
+			}
+		},
+		[products, pathname]
+	);
+
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
 				const productsList = await getAllProducts();
-				setProducts(productsList || []); // Handle undefined case
+				setProducts(productsList || []);
+
+				// Get last selected product from localStorage
+				const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
+				const lastSelectedName = localStorage.getItem("Sapphire-Credit-Product-Name");
+
+				if (lastSelectedId && lastSelectedName && productsList?.some((p) => p.value === lastSelectedId)) {
+					setSelectedProduct([lastSelectedId]);
+					await handleProductSelect(lastSelectedId, lastSelectedName);
+				} else if (productsList && productsList.length > 0) {
+					setSelectedProduct([productsList[0].value]);
+					await handleProductSelect(productsList[0].value, productsList[0].label);
+				}
 			} catch (error) {
 				console.error("Error fetching products:", error);
 				setProducts([]);
@@ -51,20 +97,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 		};
 
 		fetchProducts();
-	}, [getAllProducts]);
-
-	// Update headers when product is selected
-	const handleProductSelect = (value: string) => {
-		if (value) {
-			// Set the header for all subsequent requests
-			if (typeof window !== "undefined") {
-				localStorage.setItem("Sapphire-Credit-Product", value);
-			}
-		}
-
-		// Mutate all cached data to trigger revalidation
-		mutate((key) => typeof key === "string", undefined, { revalidate: true });
-	};
+	}, [getAllProducts, handleProductSelect]);
 
 	return (
 		<SidebarProvider>
@@ -80,10 +113,15 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 						/>
 						<div className="pb-3 w-full">
 							<SelectField
+								key={products.length} // Re-mount when products change
 								htmlFor="product-search"
 								id="product-search"
 								placeholder={loading ? "Loading products..." : products.length > 0 ? "Choose Products" : "No products available"}
-								onChange={(value) => handleProductSelect(value as string)}
+								defaultSelectedKeys={selectedProduct}
+								onChange={(value) => {
+									const product = products.find((p) => p.value === value);
+									handleProductSelect(value as string, product?.label);
+								}}
 								options={products}
 								size="md"
 							/>

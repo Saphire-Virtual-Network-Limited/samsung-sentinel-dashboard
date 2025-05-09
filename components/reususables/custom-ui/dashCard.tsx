@@ -31,11 +31,11 @@ const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = fals
 	const getChangeStyles = () => {
 		switch (change) {
 			case "increase":
-				return "bg-green-100 text-green-600 w-[20%]";
+				return "bg-green-100 text-green-600";
 			case "decrease":
-				return "bg-red-100 text-red-600 w-[20%]";
+				return "bg-red-100 text-red-600";
 			default:
-				return "bg-green-100 text-green-600 w-[20%]";
+				return "bg-green-100 text-green-600";
 		}
 	};
 
@@ -56,7 +56,7 @@ const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = fals
 			<CardBody className="space-y-4">
 				<p className={cn("lg:text-3xl text-xl font-semibold text-gray-800", GeneralSans_SemiBold.className)}>{hasNaira ? `₦${value}` : value}</p>
 				<div className="grid lg:flex items-center gap-2 text-sm text-gray-500">
-					<span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getChangeStyles()}`}>
+					<span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getChangeStyles()}`}>
 						{getTrendIcon()}
 						{formatChange()}
 					</span>
