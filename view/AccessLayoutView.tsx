@@ -42,7 +42,6 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 	const handleProductSelect = useCallback(
 		async (value: string, label?: string) => {
 			if (value) {
-				// Set the header for all subsequent requests
 				if (typeof window !== "undefined") {
 					localStorage.setItem("Sapphire-Credit-Product", value);
 					if (label) {
@@ -57,14 +56,13 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 					}
 				}
 
-				// Revalidate all SWR cache entries
-				await mutate(
-					(key) => typeof key === "string" && key.includes("/admin/"), // Only mutate API endpoints
-					undefined,
-					{ revalidate: true }
-				);
+				// Optional: broadcast event
+				window.dispatchEvent(new Event("productChanged"));
 
-				// Force reload of current page data once
+				// Revalidate ALL SWR cache
+				await mutate(() => true, undefined, { revalidate: true });
+
+				// Revalidate current pathname specifically
 				await mutate(pathname);
 			}
 		},
@@ -77,7 +75,6 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 				const productsList = await getAllProducts();
 				setProducts(productsList || []);
 
-				// Get last selected product from localStorage
 				const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
 				const lastSelectedName = localStorage.getItem("Sapphire-Credit-Product-Name");
 
@@ -96,7 +93,6 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 			}
 		};
 
-		// Only fetch products once when component mounts
 		fetchProducts();
 	}, [getAllProducts, handleProductSelect]);
 
@@ -105,7 +101,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 			<AppSidebar />
 			<SidebarInset className="flex flex-col p-2">
 				<header className="sticky z-50 top-0 flex h-16 shrink-0 items-center justify-between px-4 gap-2 border-b bg-white">
-					{/* Left side: sidebar + search */}
+					{/* Left side */}
 					<div className="flex items-center gap-4">
 						<SidebarTrigger className="-ml-1 text-primary" />
 						<Separator
@@ -114,7 +110,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 						/>
 						<div className="pb-3 w-full">
 							<SelectField
-								key={products.length} // Re-mount when products change
+								key={products.length}
 								htmlFor="product-search"
 								id="product-search"
 								placeholder={loading ? "Loading products..." : products.length > 0 ? "Choose Products" : "No products available"}
@@ -129,7 +125,7 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 						</div>
 					</div>
 
-					{/* Right side: notification + user */}
+					{/* Right side */}
 					<div className="flex items-center gap-2">
 						<Button
 							variant="secondary"
@@ -141,14 +137,8 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 							orientation="vertical"
 							className="hidden lg:mx-2 h-4"
 						/>
-						{/* <Button
-							variant="secondary"
-							size="icon"
-							className="rounded-full bg-primary/10">
-							<UserPlus2Icon className="lg:h-5 lg:w-5 h-3 w-3" />
-						</Button> */}
 						<div className="hidden lg:flex flex-col text-start">
-							<span className="text-black font-bold text-base">{userResponse?.data?.firstName}</span>
+							<span className="text-black font-bold text-base">{userName}</span>
 							<span className="text-xs text-zinc-400 text-right">{userResponse?.data?.role?.replace(/_/g, " ").replace(/\b\w/g, (char: string) => char.toUpperCase())}</span>
 						</div>
 					</div>

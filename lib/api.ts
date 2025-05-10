@@ -87,17 +87,16 @@ export async function getAllProducts() {
 
 //** Loans */
 
-// get all loans
-export async function getAllLoans(startDate?: string, endDate?: string) {
-	return apiCall(`/admin/loan/data?startDate=${startDate}&endDate=${endDate}`, "GET");
+// get all loan data
+export async function getAllLoanData(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/loan/data${query}`, "GET");
 }
 
-// get all devices
-export async function getAllDevices(startDate?: string, endDate?: string) {
-	return apiCall(`/admin/device/data?startDate=${startDate}&endDate=${endDate}`, "GET");
-}
+//** Devices */
 
-// get all loan records
-export async function getAllLoanRecords(startDate?: string, endDate?: string) {
-	return apiCall(`/admin/loan/record?startDate=${startDate}&endDate=${endDate}`, "GET");
+// get all devices data
+export async function getAllDevicesData(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/device/data${query}`, "GET");
 }
