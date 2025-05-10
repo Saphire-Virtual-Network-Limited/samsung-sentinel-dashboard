@@ -1,40 +1,36 @@
 "use client";
 
-import { DashCard, DateFilter, DeviceCard, CardSkeleton } from "@/components/reususables";
-import React, { Suspense, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
-import { getAllLoanData, getAllDevicesData } from "@/lib";
+import { DashCard, DeviceCard, CardSkeleton, DateFilter } from "@/components/reususables";
+import { getAllLoanData, getAllDevicesData, showToast } from "@/lib";
 
-const HomeContent = ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-	// Only include startDate and endDate in keys if they're defined
-	const loanKey = startDate && endDate ? ["loanRecords", startDate, endDate] : ["loanRecords"];
-	const deviceKey = startDate && endDate ? ["deviceMetrics", startDate, endDate] : ["deviceMetrics"];
+const HomeView = () => {
+	const [startDate, setStartDate] = useState<string | undefined>(undefined);
+	const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
-	const loanFetcher = async (_: string, start?: string, end?: string) => {
-		return await getAllLoanData(start, end);
+	const handleDateFilter = (start: string, end: string) => {
+		if (!start || !end) {
+			showToast({ message: "Both dates must be selected.", type: "error" });
+			return;
+		}
+		if (new Date(end) < new Date(start)) {
+			showToast({ message: "End date must be after start date.", type: "error" });
+			return;
+		}
+		setStartDate(start);
+		setEndDate(end);
 	};
 
-	const deviceFetcher = async (_: string, start?: string, end?: string) => {
-		return await getAllDevicesData(start, end);
-	};
+	// Fetch loans—initially with (undefined,undefined), then with real dates.
+	const { data: loanRes, isLoading: isLoansLoading } = useSWR(["loan", startDate, endDate], () => getAllLoanData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
 
-	const { data: loans, isLoading: isLoansLoading } = useSWR(loanKey, loanFetcher, {
-		revalidateOnFocus: true,
-		revalidateOnReconnect: true,
-		revalidateIfStale: false,
-		dedupingInterval: 60000,
-	});
-
-	const { data: devices, isLoading: isDevicesLoading } = useSWR(deviceKey, deviceFetcher, {
-		revalidateOnFocus: true,
-		revalidateOnReconnect: true,
-		revalidateIfStale: false,
-		dedupingInterval: 60000,
-	});
+	// Fetch devices—same strategy.
+	const { data: devRes, isLoading: isDevicesLoading } = useSWR(["device", startDate, endDate], () => getAllDevicesData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
 
 	const isLoading = isLoansLoading || isDevicesLoading;
-	const loanMetrics = loans?.data || {};
-	const deviceMetrics = devices?.data || {};
+	const loanMetrics = loanRes?.data || {};
+	const deviceMetrics = devRes?.data || {};
 
 	const generateHref = (key: string) => {
 		if (key.includes("Engaged")) return "/devices/engaged";
@@ -45,91 +41,58 @@ const HomeContent = ({ startDate, endDate }: { startDate?: string; endDate?: str
 		return "/";
 	};
 
-	if (isLoading) {
-		return (
-			<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-5">
-				{Array.from({ length: 8 }).map((_, index) => (
-					<CardSkeleton key={index} />
-				))}
-			</div>
-		);
-	}
-
-	return (
-		<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-5">
-			{Object.entries(loanMetrics).map(([key, metric]: any) => {
-				const hasNaira = key.toLowerCase().includes("amount");
-				const rawValue = metric.value || 0;
-				const formattedValue = hasNaira ? rawValue.toLocaleString() : rawValue;
-
-				return (
-					<div key={key}>
-						<DashCard
-							title={key.replace(/Total /, "")}
-							value={formattedValue}
-							href={generateHref(key)}
-							hasNaira={hasNaira}
-							changeValue={metric.percentageChange || 0}
-							change={metric.trend || "stable"}
-							changeString="from previous month"
-						/>
-					</div>
-				);
-			})}
-			{Object.entries(deviceMetrics).map(([key, metric]: any) => {
-				const hasNaira = key.toLowerCase().includes("amount");
-				const rawValue = metric.value || 0;
-				const formattedValue = hasNaira ? rawValue.toLocaleString() : rawValue;
-
-				return (
-					<div key={key}>
-						<DeviceCard
-							title={key.replace(/Total /, "")}
-							value={formattedValue}
-							href={generateHref(key)}
-							hasNaira={hasNaira}
-							changeValue={metric.percentageChange || 0}
-							change={metric.trend || "stable"}
-							changeString="from previous month"
-						/>
-					</div>
-				);
-			})}
-		</div>
-	);
-};
-
-const HomeView = () => {
-	const [startDate, setStartDate] = useState<string | undefined>(undefined);
-	const [endDate, setEndDate] = useState<string | undefined>(undefined);
-
-	const handleDateFilter = (start: string, end: string) => {
-		if (!start || !end) return;
-		if (new Date(end) < new Date(start)) {
-			console.error("End date must be after start date");
-			return;
-		}
-		setStartDate(start);
-		setEndDate(end);
-	};
-
 	return (
 		<div>
-			<div>
-				<DateFilter
-					className="w-full flex justify-end"
-					onFilterChange={(start, end) => handleDateFilter(start, end)}
-					initialStartDate={startDate}
-					initialEndDate={endDate}
-					isLoading={false}
-				/>
-			</div>
-			<Suspense fallback={<div className="py-5">Loading dashboard...</div>}>
-				<HomeContent
-					startDate={startDate}
-					endDate={endDate}
-				/>
-			</Suspense>
+			<DateFilter
+				className="w-full flex justify-end"
+				onFilterChange={handleDateFilter}
+				initialStartDate={startDate}
+				initialEndDate={endDate}
+				isLoading={isLoading}
+			/>
+
+			{isLoading ? (
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-5">
+					{Array.from({ length: 8 }).map((_, i) => (
+						<CardSkeleton key={i} />
+					))}
+				</div>
+			) : (
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-5">
+					{Object.entries(loanMetrics).map(([key, m]: any) => {
+						const hasNaira = key.toLowerCase().includes("amount");
+						const raw = m.value || 0;
+						return (
+							<DashCard
+								key={key}
+								title={key.replace(/Total /, "")}
+								value={hasNaira ? raw.toLocaleString() : raw}
+								href={generateHref(key)}
+								hasNaira={hasNaira}
+								changeValue={m.percentageChange || 0}
+								change={m.trend || "stable"}
+								changeString="from previous month"
+							/>
+						);
+					})}
+					{Object.entries(deviceMetrics).map(([key, m]: any) => {
+						const hasNaira = key.toLowerCase().includes("amount");
+						const raw = m.value || 0;
+						return (
+							<DeviceCard
+								key={key}
+								title={key.replace(/Total /, "")}
+								value={hasNaira ? raw.toLocaleString() : raw}
+								href={generateHref(key)}
+								hasNaira={hasNaira}
+								changeValue={m.percentageChange || 0}
+								change={m.trend || "stable"}
+								changeString="from previous month"
+							/>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 };

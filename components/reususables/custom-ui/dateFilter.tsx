@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@heroui/react";
 
 interface DateFilterProps {
-	onFilterChange: (startDate: string, endDate: string) => void; // Updated to not return a Promise
+	onFilterChange: (startDate: string, endDate: string) => void;
 	initialStartDate?: string;
 	initialEndDate?: string;
 	className?: string;
@@ -33,8 +33,8 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 	const handleApply = () => {
 		if (!isValidDateRange()) return;
 		setIsFiltering(true);
-		onFilterChange(startDate, endDate); // Call the parent handler
-		setIsFiltering(false);
+		onFilterChange(startDate, endDate);
+		setTimeout(() => setIsFiltering(false), 300); // simulate minimal delay
 	};
 
 	const isValidDateRange = () => {
@@ -48,20 +48,18 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 				<p className="text-sm text-default-400">From</p>
 				<Input
 					type="date"
-					placeholder="Start Date"
 					value={startDate}
 					onChange={(e) => setStartDate(e.target.value)}
 					className="w-full"
-					max={endDate || undefined}
+					max={endDate}
 				/>
 				<p className="text-sm text-default-400">To</p>
 				<Input
 					type="date"
-					placeholder="End Date"
 					value={endDate}
 					onChange={(e) => setEndDate(e.target.value)}
 					className="w-full"
-					min={startDate || undefined}
+					min={startDate}
 				/>
 
 				<Button
