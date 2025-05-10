@@ -22,10 +22,13 @@ const HomeView = () => {
 		setEndDate(end);
 	};
 
-	// Fetch loans—initially with (undefined,undefined), then with real dates.
+	// build a dynamic changeString once per render
+	const changeString = startDate && endDate ? `from ${startDate} to ${endDate}` : "from previous month";
+
+	// Fetch loans—initially without dates, then with
 	const { data: loanRes, isLoading: isLoansLoading } = useSWR(["loan", startDate, endDate], () => getAllLoanData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
 
-	// Fetch devices—same strategy.
+	// Fetch devices—same strategy
 	const { data: devRes, isLoading: isDevicesLoading } = useSWR(["device", startDate, endDate], () => getAllDevicesData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
 
 	const isLoading = isLoansLoading || isDevicesLoading;
@@ -71,7 +74,7 @@ const HomeView = () => {
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
 								change={m.trend || "stable"}
-								changeString="from previous month"
+								changeString={changeString}
 							/>
 						);
 					})}
@@ -87,7 +90,7 @@ const HomeView = () => {
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
 								change={m.trend || "stable"}
-								changeString="from previous month"
+								changeString={changeString}
 							/>
 						);
 					})}
