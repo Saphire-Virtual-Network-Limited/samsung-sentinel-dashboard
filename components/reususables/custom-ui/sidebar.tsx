@@ -143,7 +143,9 @@ export function AppSidebar() {
 												alt="Debiz Food Logo"
 												width={50}
 												height={50}
+												aria-label="Sapphire Credit Logo"
 												className="object-contain"
+												style={{ height: "auto" }}
 											/>
 										</div>
 										<div className="flex flex-col">

@@ -15,7 +15,6 @@ async function apiCall(endpoint: string, method: string, body?: any, options?: A
 			"x-app-key": options?.appKey,
 		};
 
-		// Safely access localStorage only in the browser
 		if (typeof window !== "undefined") {
 			const sapphireProduct = localStorage.getItem("Sapphire-Credit-Product");
 			if (sapphireProduct) {
@@ -52,15 +51,26 @@ async function apiCall(endpoint: string, method: string, body?: any, options?: A
 		const response = await axios(config);
 		return response.data;
 	} catch (error: any) {
+		const status = error?.response?.status;
+
+		// If Unauthorized, clear session and redirect to login
+		if (status === 401 && typeof window !== "undefined") {
+			// Clear any stored product key
+			localStorage.removeItem("Sapphire-Credit-Product");
+			// Redirect user to admin login
+			window.location.href = "/auth/login";
+			// Return a never‑resolving promise to stop further execution
+			return new Promise(() => {});
+		}
+
 		const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
 		console.log(`Error in ${method} ${endpoint}:`, errorMessage);
 		throw new Error(errorMessage);
 	}
 }
 
-// *** Auth *** //
+// *** Auth ***
 
-// admin login
 export interface adminLogin {
 	email: string;
 	password: string;
@@ -70,24 +80,20 @@ export async function loginAdmin(adminLogin: adminLogin) {
 	return apiCall("/admin/login", "POST", adminLogin);
 }
 
-// get user profile
 export async function getAdminProfile() {
 	return apiCall("/admin/profile", "GET");
 }
 
-// logout
 export async function logoutAdmin() {
 	return apiCall("/admin/logout", "POST");
 }
 
-// get all products
 export async function getAllProducts() {
 	return apiCall("/admin/products", "GET");
 }
 
 //** Loans */
 
-// get all loan data
 export async function getAllLoanData(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/loan/data${query}`, "GET");
@@ -95,7 +101,6 @@ export async function getAllLoanData(startDate?: string, endDate?: string) {
 
 //** Devices */
 
-// get all devices data
 export async function getAllDevicesData(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/device/data${query}`, "GET");

@@ -57,6 +57,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 						})
 					}
 					isDisabled={isLoading}
+					aria-label="Filter date range"
 				/>
 				<Button
 					variant="flat"
