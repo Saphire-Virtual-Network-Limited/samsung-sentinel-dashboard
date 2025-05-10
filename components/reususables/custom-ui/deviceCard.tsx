@@ -40,36 +40,33 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ title, value, href, hasNaira = 
 	};
 
 	const formatChange = () => {
-		const prefix = change === "increase" ? "+" : "";
+		const prefix = change === "increase" ? " + " : " - ";
 		return `${prefix}${changeValue}%`;
 	};
 
 	return (
-        <div>
-
-        {/* device card */}
-        <Card
-			as={Link}
-			isPressable
-			href={href}
-			className="rounded-xl hover:shadow-md transition-all duration-300 p-4 cursor-pointer">
-			<CardHeader className="flex items-start justify-between">
-				<h1 className={cn("lg:text-lg text-sm text-gray-600", GeneralSans_Meduim.className)}>{title}</h1>
-			</CardHeader>
-			<CardBody className="space-y-4">
-				<p className={cn("lg:text-3xl text-xl font-semibold text-gray-800", GeneralSans_SemiBold.className)}>{hasNaira ? `₦${value}` : value}</p>
-				<div className="grid lg:flex items-center gap-2 text-sm text-gray-500">
-					<span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getChangeStyles()}`}>
-						{getTrendIcon()}
-						{formatChange()}
-					</span>
-					<span className={cn("text-xs", GeneralSans_Meduim.className)}>{changeString}</span>
-				</div>
-			</CardBody>
-		</Card>
-
-        </div>
-		
+		<div>
+			{/* device card */}
+			<Card
+				as={Link}
+				isPressable
+				href={href}
+				className="rounded-xl hover:shadow-md transition-all duration-300 p-4 cursor-pointer">
+				<CardHeader className="flex items-start justify-between">
+					<h1 className={cn("lg:text-lg text-sm text-gray-600", GeneralSans_Meduim.className)}>{title}</h1>
+				</CardHeader>
+				<CardBody className="space-y-4">
+					<p className={cn("lg:text-3xl text-xl font-semibold text-gray-800", GeneralSans_SemiBold.className)}>{hasNaira ? `₦${value}` : value}</p>
+					<div className="grid lg:flex items-center gap-2 text-sm text-gray-500">
+						<span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getChangeStyles()}`}>
+							{getTrendIcon()}
+							{formatChange()}
+						</span>
+						<span className={cn("text-xs", GeneralSans_Meduim.className)}>{changeString}</span>
+					</div>
+				</CardBody>
+			</Card>
+		</div>
 	);
 };
 
