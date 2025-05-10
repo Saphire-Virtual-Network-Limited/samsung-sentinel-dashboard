@@ -63,7 +63,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 					className="bg-primary text-white"
 					onPress={handleApply}
 					disabled={!isValidRange(range) || isLoading}>
-					{isLoading ? "Loading..." : "Apply"}
+					{isLoading ? "Loading..." : "Filter"}
 				</Button>
 			</div>
 		</div>
