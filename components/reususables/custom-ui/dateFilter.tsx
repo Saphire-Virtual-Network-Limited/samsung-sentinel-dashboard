@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@heroui/react";
+import { DateRangePicker, Button } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
+import type { DateValue } from "@internationalized/date";
 
 interface DateFilterProps {
 	onFilterChange: (startDate: string, endDate: string) => void;
@@ -13,61 +14,56 @@ interface DateFilterProps {
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDate, initialEndDate, className, isLoading = false }) => {
-	const getDefaultDates = () => {
-		const now = new Date();
-		const today = now.toISOString().split("T")[0];
-		const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-		return { today, firstDayOfMonth };
-	};
+	// Range state for DateRangePicker
+	const [range, setRange] = useState<{ start: DateValue | null; end: DateValue | null }>({
+		start: null,
+		end: null,
+	});
 
-	const defaultDates = getDefaultDates();
-	const [startDate, setStartDate] = useState(initialStartDate || defaultDates.firstDayOfMonth);
-	const [endDate, setEndDate] = useState(initialEndDate || defaultDates.today);
-	const [isFiltering, setIsFiltering] = useState(false);
-
+	// Initialize the picker if initial dates are provided
 	useEffect(() => {
-		if (initialStartDate) setStartDate(initialStartDate);
-		if (initialEndDate) setEndDate(initialEndDate);
+		if (initialStartDate && initialEndDate) {
+			setRange({
+				start: parseDate(initialStartDate),
+				end: parseDate(initialEndDate),
+			});
+		}
 	}, [initialStartDate, initialEndDate]);
 
+	// Validate that both start and end are set and start <= end
+	const isValidRange = (r: { start: DateValue | null; end: DateValue | null }) => {
+		if (!r.start || !r.end) return false;
+		return r.start.compare(r.end) <= 0;
+	};
+
+	// Apply button handler: convert DateValue to ISO string
 	const handleApply = () => {
-		if (!isValidDateRange()) return;
-		setIsFiltering(true);
-		onFilterChange(startDate, endDate);
-		setTimeout(() => setIsFiltering(false), 300); // simulate minimal delay
+		if (!isValidRange(range)) return;
+		const start = range?.start?.toString();
+		const end = range?.end?.toString();
+		if (!start || !end) return;
+		onFilterChange(start, end);
 	};
-
-	const isValidDateRange = () => {
-		if (!startDate || !endDate) return false;
-		return new Date(startDate) <= new Date(endDate);
-	};
-
 	return (
 		<div className={className}>
-			<div className="flex gap-2 items-center space-x-3">
-				<p className="text-sm text-default-400">From</p>
-				<Input
-					type="date"
-					value={startDate}
-					onChange={(e) => setStartDate(e.target.value)}
-					className="w-full"
-					max={endDate}
+			<div className="flex gap-2 items-center">
+				<DateRangePicker
+					variant="bordered"
+					value={range.start && range.end ? { start: range.start, end: range.end } : null}
+					onChange={(value) =>
+						setRange({
+							start: value?.start || null,
+							end: value?.end || null,
+						})
+					}
+					isDisabled={isLoading}
 				/>
-				<p className="text-sm text-default-400">To</p>
-				<Input
-					type="date"
-					value={endDate}
-					onChange={(e) => setEndDate(e.target.value)}
-					className="w-full"
-					min={startDate}
-				/>
-
 				<Button
 					variant="flat"
 					className="bg-primary text-white"
 					onPress={handleApply}
-					disabled={!isValidDateRange() || isLoading || isFiltering}>
-					{isFiltering || isLoading ? "Loading..." : "Apply"}
+					disabled={!isValidRange(range) || isLoading}>
+					{isLoading ? "Loading..." : "Apply"}
 				</Button>
 			</div>
 		</div>
