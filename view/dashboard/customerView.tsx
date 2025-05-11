@@ -133,17 +133,17 @@ export default function CustomerPage() {
 						<DropdownMenu>
 							<DropdownItem
 								key="view"
-								onClick={() => openModal("view", row)}>
+								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
 							<DropdownItem
 								key="edit"
-								onClick={() => openModal("edit", row)}>
+								onPress={() => openModal("edit", row)}>
 								Edit
 							</DropdownItem>
 							<DropdownItem
 								key="delete"
-								onClick={() => openModal("delete", row)}>
+								onPress={() => openModal("delete", row)}>
 								Delete
 							</DropdownItem>
 						</DropdownMenu>
@@ -185,7 +185,7 @@ export default function CustomerPage() {
 				statusFilter={statusFilter}
 				onStatusChange={setStatusFilter}
 				statusColorMap={statusColorMap}
-				showStatus={true}
+				showStatus={false}
 				sortDescriptor={sortDescriptor}
 				onSortChange={setSortDescriptor}
 				page={page}
