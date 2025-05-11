@@ -2,25 +2,21 @@
 
 import React from "react";
 import useSWR from "swr";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input, Button, DropdownTrigger, Dropdown, DropdownMenu, DropdownItem, Chip, Pagination, Selection, ChipProps, SortDescriptor } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, Pagination, Selection, ChipProps, SortDescriptor } from "@heroui/react";
 import { getAllLoanRecord } from "@/lib";
-import { ChevronDownIcon, EllipsisVertical, PlusIcon, SearchIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon, EllipsisVertical, SearchIcon } from "lucide-react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
-// Helper function to capitalize each word
 export function capitalize(s: string) {
-	return s ? s.replace(/\b\w/g, (char) => char.toUpperCase()) : "";
+	return s ? s.replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 }
 
-// Function to calculate age from DOB
 const calculateAge = (dob: string) => {
-	const birthDate = new Date(dob);
-	const today = new Date();
-	let age = today.getFullYear() - birthDate.getFullYear();
-	const month = today.getMonth();
-	const day = today.getDate();
-	if (month < birthDate.getMonth() || (month === birthDate.getMonth() && day < birthDate.getDate())) {
-		age--;
-	}
+	const birth = new Date(dob),
+		today = new Date();
+	let age = today.getFullYear() - birth.getFullYear();
+	if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
 	return age;
 };
 
@@ -56,15 +52,14 @@ type CustomerRecord = {
 };
 
 const fetcher = async () => {
-	const response = await getAllLoanRecord();
-	return response.data.map((record: any) => ({
-		fullName: `${capitalize(record.firstName)} ${capitalize(record.lastName)}`,
-		email: record.email,
-		age: calculateAge(record.dob),
-		bvnPhoneNumber: record.bvnPhoneNumber,
-		mainPhoneNumber: record.mainPhoneNumber,
-		// Use dobMisMatch as status: if true, status is 'rejected', if false, status is 'approved'
-		status: record.dobMisMatch ? "rejected" : "approved",
+	const { data } = await getAllLoanRecord();
+	return data.map((r: any) => ({
+		fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
+		email: r.email,
+		age: calculateAge(r.dob),
+		bvnPhoneNumber: r.bvnPhoneNumber,
+		mainPhoneNumber: r.mainPhoneNumber,
+		status: r.dobMisMatch ? "rejected" : "approved",
 	}));
 };
 
@@ -78,30 +73,20 @@ export default function App() {
 	const [page, setPage] = React.useState(1);
 	const rowsPerPage = 10;
 
-	// SWR hook to fetch data
-	const { data: customerRecords = [], isLoading } = useSWR("customer-records", fetcher, {
-		refreshInterval: 5000,
-	});
-
-	const hasSearchFilter = Boolean(filterValue);
+	const { data: customerRecords = [], isLoading } = useSWR("customer-records", fetcher, { refreshInterval: 5000 });
 
 	const filteredItems = React.useMemo(() => {
-		let filtered = [...customerRecords];
-
-		// If there's a search filter, filter by both fullName and email
-		if (hasSearchFilter) {
-			filtered = filtered.filter((r) => r.fullName.toLowerCase().includes(filterValue.toLowerCase()) || r.email.toLowerCase().includes(filterValue.toLowerCase()));
+		let list = [...customerRecords];
+		if (filterValue) {
+			list = list.filter((r) => r.fullName.toLowerCase().includes(filterValue.toLowerCase()) || r.email.toLowerCase().includes(filterValue.toLowerCase()));
 		}
-
 		if (statusFilter !== "all" && Array.from(statusFilter).length !== statusOptions.length) {
-			filtered = filtered.filter((r) => Array.from(statusFilter).includes(r.status));
+			list = list.filter((r) => Array.from(statusFilter).includes(r.status));
 		}
-
-		return filtered;
-	}, [customerRecords, hasSearchFilter, filterValue, statusFilter]);
+		return list;
+	}, [customerRecords, filterValue, statusFilter]);
 
 	const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
 	const items = React.useMemo(() => {
 		const start = (page - 1) * rowsPerPage;
 		return filteredItems.slice(start, start + rowsPerPage);
@@ -116,27 +101,37 @@ export default function App() {
 		});
 	}, [items, sortDescriptor]);
 
-	const renderCell = React.useCallback((record: CustomerRecord, columnKey: React.Key) => {
-		const cellValue = record[columnKey as keyof CustomerRecord];
-		switch (columnKey) {
+	const exportToExcel = async (data: CustomerRecord[]) => {
+		const wb = new ExcelJS.Workbook();
+		const ws = wb.addWorksheet("Customers");
+		ws.columns = [
+			{ header: "Name", key: "fullName", width: 30 },
+			{ header: "Email", key: "email", width: 30 },
+			{ header: "BVN Phone", key: "bvnPhoneNumber", width: 20 },
+			{ header: "Main Phone", key: "mainPhoneNumber", width: 20 },
+			{ header: "Age", key: "age", width: 10 },
+			{ header: "DOB Match", key: "status", width: 15 },
+		];
+		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status) }));
+		const buf = await wb.xlsx.writeBuffer();
+		saveAs(new Blob([buf]), "Customer_Records.xlsx");
+	};
+
+	const renderCell = React.useCallback((rec: CustomerRecord, key: React.Key) => {
+		const v = rec[key as keyof CustomerRecord];
+		switch (key) {
 			case "fullName":
-				return <p className="capitalize">{cellValue}</p>;
-			case "email":
-			case "bvnPhoneNumber":
-			case "mainPhoneNumber":
-				return <p className="text-small">{cellValue}</p>;
+				return <p className="capitalize">{v}</p>;
 			case "status":
 				return (
 					<Chip
 						className="capitalize"
-						color={statusColorMap[record.status]}
+						color={statusColorMap[rec.status]}
 						size="sm"
 						variant="flat">
-						{capitalize(record.status)}
+						{capitalize(rec.status)}
 					</Chip>
 				);
-			case "age":
-				return <p className="text-small">{cellValue}</p>;
 			case "actions":
 				return (
 					<div className="relative flex justify-end items-center gap-2">
@@ -158,43 +153,19 @@ export default function App() {
 					</div>
 				);
 			default:
-				return cellValue;
+				return <p className="text-small">{v}</p>;
 		}
 	}, []);
 
-	const onSearchChange = (value?: string) => {
-		setFilterValue(value ?? "");
-		setPage(1);
-	};
-
-	// Skeleton loader content
-	const renderSkeletonRow = () => {
-		return (
-			<TableRow>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
+	const renderSkeleton = () => (
+		<TableRow>
+			{columns.map((c) => (
+				<TableCell key={c.uid}>
+					<div className="skeleton w-full h-6" />
 				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-				<TableCell>
-					<div className="skeleton w-full h-6"></div>
-				</TableCell>
-			</TableRow>
-		);
-	};
+			))}
+		</TableRow>
+	);
 
 	const topContent = (
 		<div className="flex flex-col gap-4">
@@ -202,18 +173,21 @@ export default function App() {
 				<Input
 					isClearable
 					className="w-full sm:max-w-[44%]"
-					placeholder="Search by customer name or email..."
-					startContent={<SearchIcon className="w-3" />}
+					placeholder="Search by name or email…"
+					startContent={<SearchIcon />}
 					value={filterValue}
-					onClear={() => onSearchChange("")}
-					onValueChange={onSearchChange}
+					onClear={() => setFilterValue("")}
+					onValueChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
 				/>
 				<div className="flex gap-3">
 					<Dropdown>
 						<DropdownTrigger className="hidden sm:flex">
 							<Button
-								endContent={<ChevronDownIcon className="text-small" />}
-								variant="flat">
+								variant="flat"
+								endContent={<ChevronDownIcon />}>
 								Status
 							</Button>
 						</DropdownTrigger>
@@ -234,14 +208,13 @@ export default function App() {
 					</Dropdown>
 					<Button
 						color="primary"
-						endContent={<PlusIcon />}>
-						Add Customer
+						endContent={<DownloadIcon className="w-3" />}
+						onClick={() => exportToExcel(filteredItems)}>
+						Export
 					</Button>
 				</div>
 			</div>
-			<div className="flex justify-between items-center">
-				<span className="text-default-400 text-small">Total {customerRecords.length} records</span>
-			</div>
+			<span className="text-small text-default-400">Total {customerRecords.length} records</span>
 		</div>
 	);
 
@@ -278,37 +251,33 @@ export default function App() {
 	return (
 		<Table
 			isHeaderSticky
-			aria-label="customer records table"
+			aria-label="customer records"
+			topContent={topContent}
 			bottomContent={bottomContent}
 			bottomContentPlacement="outside"
-			classNames={{
-				wrapper: "max-h-[calc(100dvh_-_150px)]",
-				tr: "cursor-pointer",
-				th: " z-10",
-			}}
+			topContentPlacement="outside"
+			classNames={{ wrapper: "max-h-[calc(100dvh_-_150px)]", tr: "cursor-pointer" }}
 			selectionMode="single"
 			color="primary"
 			radius="md"
 			shadow="sm"
 			sortDescriptor={sortDescriptor}
-			topContent={topContent}
-			isVirtualized
-			topContentPlacement="outside"
-			onSortChange={setSortDescriptor}>
+			onSortChange={setSortDescriptor}
+			isVirtualized>
 			<TableHeader columns={columns}>
-				{(column) => (
+				{(col) => (
 					<TableColumn
-						key={column.uid}
-						align={column.uid === "actions" ? "center" : "start"}
-						allowsSorting={column.sortable}>
-						{column.name}
+						key={col.uid}
+						align={col.uid === "actions" ? "center" : "start"}
+						allowsSorting={col.sortable}>
+						{col.name}
 					</TableColumn>
 				)}
 			</TableHeader>
 			<TableBody
-				emptyContent="No customer records found"
-				items={isLoading ? new Array(10).fill(null) : sortedItems}>
-				{(item) => (isLoading ? renderSkeletonRow() : <TableRow key={item.fullName}>{(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}</TableRow>)}
+				emptyContent="No records"
+				items={isLoading ? new Array(rowsPerPage).fill(null) : sortedItems}>
+				{(item) => (isLoading ? renderSkeleton() : <TableRow key={item.fullName}>{(colKey) => <TableCell>{renderCell(item, colKey)}</TableCell>}</TableRow>)}
 			</TableBody>
 		</Table>
 	);
