@@ -7,7 +7,7 @@ import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tabl
 import { getAllLoanRecord, capitalize, calculateAge } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, DropdownItem, DropdownMenu, Dropdown, DropdownTrigger, Chip, SortDescriptor, ChipProps } from "@heroui/react";
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 
 const columns: ColumnDef[] = [
@@ -42,6 +42,12 @@ type CustomerRecord = {
 };
 
 export default function CustomerPage() {
+	// --- modal state ---
+	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [modalMode, setModalMode] = React.useState<"view" | "edit" | "delete" | null>(null);
+	const [selectedItem, setSelectedItem] = React.useState<CustomerRecord | null>(null);
+
+	// --- table state ---
 	const [filterValue, setFilterValue] = React.useState("");
 	const [statusFilter, setStatusFilter] = React.useState<Set<string>>(new Set());
 	const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
@@ -53,16 +59,18 @@ export default function CustomerPage() {
 
 	const { data: raw = [], isLoading } = useSWR("customer-records", () => getAllLoanRecord().then((r) => r.data), { refreshInterval: 5000 });
 
-	const customers = React.useMemo(() => {
-		return raw.map((r: any) => ({
-			fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-			email: r.email,
-			age: calculateAge(r.dob),
-			bvnPhoneNumber: r.bvnPhoneNumber,
-			mainPhoneNumber: r.mainPhoneNumber,
-			status: r.dobMisMatch ? "rejected" : "approved",
-		}));
-	}, [raw]);
+	const customers = React.useMemo(
+		() =>
+			raw.map((r: any) => ({
+				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
+				email: r.email,
+				age: calculateAge(r.dob),
+				bvnPhoneNumber: r.bvnPhoneNumber,
+				mainPhoneNumber: r.mainPhoneNumber,
+				status: r.dobMisMatch ? "rejected" : "approved",
+			})),
+		[raw]
+	);
 
 	const filtered = React.useMemo(() => {
 		let list = [...customers];
@@ -91,6 +99,7 @@ export default function CustomerPage() {
 		});
 	}, [paged, sortDescriptor]);
 
+	// Export all filtered
 	const exportFn = async (data: CustomerRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Customers");
@@ -100,69 +109,138 @@ export default function CustomerPage() {
 		saveAs(new Blob([buf]), "Customer_Records.xlsx");
 	};
 
+	// When action clicked:
+	const openModal = (mode: "view" | "edit" | "delete", row: CustomerRecord) => {
+		setModalMode(mode);
+		setSelectedItem(row);
+		onOpen();
+	};
+
+	// Render each cell, including actions dropdown:
 	const renderCell = (row: CustomerRecord, key: string) => {
-		switch (key) {
-			case "fullName":
-				return <p className="capitalize">{row.fullName}</p>;
-			case "status":
-				return (
-					<Chip
-						className="capitalize"
-						color={statusColorMap[row.status]}
-						size="sm"
-						variant="flat">
-						{capitalize(row.status)}
-					</Chip>
-				);
-			case "actions":
-				return (
-					<div className="relative flex justify-end items-center gap-2">
-						<Dropdown>
-							<DropdownTrigger>
-								<Button
-									isIconOnly
-									size="sm"
-									variant="light">
-									<EllipsisVertical className="text-default-300" />
-								</Button>
-							</DropdownTrigger>
-							<DropdownMenu>
-								<DropdownItem key="view">View</DropdownItem>
-								<DropdownItem key="edit">Edit</DropdownItem>
-								<DropdownItem key="delete">Delete</DropdownItem>
-							</DropdownMenu>
-						</Dropdown>
-					</div>
-				);
-			default:
-				return <p className="text-small">{(row as any)[key]}</p>;
+		if (key === "actions") {
+			return (
+				<div className="flex justify-end">
+					<Dropdown>
+						<DropdownTrigger>
+							<Button
+								isIconOnly
+								size="sm"
+								variant="light">
+								<EllipsisVertical className="text-default-300" />
+							</Button>
+						</DropdownTrigger>
+						<DropdownMenu>
+							<DropdownItem
+								key="view"
+								onClick={() => openModal("view", row)}>
+								View
+							</DropdownItem>
+							<DropdownItem
+								key="edit"
+								onClick={() => openModal("edit", row)}>
+								Edit
+							</DropdownItem>
+							<DropdownItem
+								key="delete"
+								onClick={() => openModal("delete", row)}>
+								Delete
+							</DropdownItem>
+						</DropdownMenu>
+					</Dropdown>
+				</div>
+			);
 		}
+		if (key === "status") {
+			return (
+				<Chip
+					className="capitalize"
+					color={statusColorMap[row.status]}
+					size="sm"
+					variant="flat">
+					{capitalize(row.status)}
+				</Chip>
+			);
+		}
+		if (key === "fullName") {
+			return <p className="capitalize">{row.fullName}</p>;
+		}
+		return <p className="text-small">{(row as any)[key]}</p>;
 	};
 
 	return (
-		<GenericTable<CustomerRecord>
-			columns={columns}
-			data={sorted}
-			allCount={filtered.length}
-			exportData={filtered}
-			isLoading={isLoading}
-			filterValue={filterValue}
-			onFilterChange={(v) => {
-				setFilterValue(v);
-				setPage(1);
-			}}
-			statusOptions={statusOptions}
-			statusFilter={statusFilter}
-			onStatusChange={setStatusFilter}
-			statusColorMap={statusColorMap}
-			showStatus={false} // toggle to false to hide the status column
-			sortDescriptor={sortDescriptor}
-			onSortChange={setSortDescriptor}
-			page={page}
-			pages={pages}
-			onPageChange={setPage}
-			exportFn={exportFn}
-			renderCell={renderCell}
-		/>
+		<>
+			<GenericTable<CustomerRecord>
+				columns={columns}
+				data={sorted}
+				allCount={filtered.length}
+				exportData={filtered}
+				isLoading={isLoading}
+				filterValue={filterValue}
+				onFilterChange={(v) => {
+					setFilterValue(v);
+					setPage(1);
+				}}
+				statusOptions={statusOptions}
+				statusFilter={statusFilter}
+				onStatusChange={setStatusFilter}
+				statusColorMap={statusColorMap}
+				showStatus={true}
+				sortDescriptor={sortDescriptor}
+				onSortChange={setSortDescriptor}
+				page={page}
+				pages={pages}
+				onPageChange={setPage}
+				exportFn={exportFn}
+				renderCell={renderCell}
+			/>
+
+			<Modal
+				isOpen={isOpen}
+				onClose={onClose}
+				size="2xl">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>User Details</ModalHeader>
+							<ModalBody>
+								{selectedItem && (
+									<div className="space-y-4">
+										{Object.entries(selectedItem).map(([k, v]) => (
+											<div
+												key={k}
+												className="flex justify-between">
+												<strong className="capitalize">{k.replace(/([A-Z])/g, " $1").trim()}:</strong>
+												<span>{String(v)}</span>
+											</div>
+										))}
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								{modalMode !== "view" && (
+									<Button
+										color={modalMode === "delete" ? "danger" : "primary"}
+										variant="light"
+										onPress={() => {
+											// your edit/delete logic here, e.g.:
+											console.log(modalMode, selectedItem);
+											onClose();
+										}}>
+										{modalMode === "edit" ? "Save Changes" : "Confirm Delete"}
+									</Button>
+								)}
+								<Button
+									color="danger"
+									variant="light"
+									onPress={onClose}>
+									Close
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+		</>
 	);
 }
