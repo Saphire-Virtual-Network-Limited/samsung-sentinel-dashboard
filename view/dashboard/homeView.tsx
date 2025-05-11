@@ -23,13 +23,13 @@ const HomeView = () => {
 	};
 
 	// build a dynamic changeString once per render
-	const changeString = startDate && endDate ? `from ${startDate} to ${endDate}` : "from previous month";
+	const changeString = startDate && endDate ? `${startDate} to ${endDate}` : "from previous month";
 
 	// Fetch loans—initially without dates, then with
-	const { data: loanRes, isLoading: isLoansLoading } = useSWR(["loan", startDate, endDate], () => getAllLoanData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
+	const { data: loanRes, isLoading: isLoansLoading } = useSWR(["loan", startDate, endDate], () => getAllLoanData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 });
 
 	// Fetch devices—same strategy
-	const { data: devRes, isLoading: isDevicesLoading } = useSWR(["device", startDate, endDate], () => getAllDevicesData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000 });
+	const { data: devRes, isLoading: isDevicesLoading } = useSWR(["device", startDate, endDate], () => getAllDevicesData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 });
 
 	const isLoading = isLoansLoading || isDevicesLoading;
 	const loanMetrics = loanRes?.data || {};
@@ -73,7 +73,7 @@ const HomeView = () => {
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
-								change={m.trend || "stable"}
+								change={m.trend}
 								changeString={changeString}
 							/>
 						);
@@ -89,7 +89,7 @@ const HomeView = () => {
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
-								change={m.trend || "stable"}
+								change={m.trend}
 								changeString={changeString}
 							/>
 						);

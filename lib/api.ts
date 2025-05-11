@@ -94,9 +94,16 @@ export async function getAllProducts() {
 
 //** Loans */
 
+//get all loan data
 export async function getAllLoanData(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/loan/data${query}`, "GET");
+}
+
+//get all loan record
+export async function getAllLoanRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/loan/record${query}`, "GET");
 }
 
 //** Devices */

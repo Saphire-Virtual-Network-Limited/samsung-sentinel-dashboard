@@ -40,7 +40,7 @@ const DashCard: React.FC<DashCardProps> = ({ title, value, href, hasNaira = fals
 	};
 
 	const formatChange = () => {
-		const prefix = change === "increase" ? "+" : "";
+		const prefix = change === "decrease" ? "-" : "+";
 		return `${prefix}${changeValue}%`;
 	};
 

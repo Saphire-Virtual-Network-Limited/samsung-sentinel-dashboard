@@ -1,4 +1,4 @@
 import HomeView from "./homeView";
+import CustomerView from "./customerView";
 
-export { HomeView };
-
+export { HomeView, CustomerView };
