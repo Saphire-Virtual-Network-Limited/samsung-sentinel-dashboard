@@ -44,3 +44,19 @@ export const statusColorMap: { [key in "ACTIVE" | "DRAFT" | "DISABLED"]: "succes
 export const getCurrentYear = () => {
 	return new Date().getFullYear();
 };
+
+export const calculateAge = (dob: string): number => {
+	const birthDate = new Date(dob);
+	const today = new Date();
+
+	let age = today.getFullYear() - birthDate.getFullYear();
+	const monthDiff = today.getMonth() - birthDate.getMonth();
+	const dayDiff = today.getDate() - birthDate.getDate();
+
+	// If today’s month/day is before the birth month/day, subtract one year
+	if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+		age--;
+	}
+
+	return age;
+};

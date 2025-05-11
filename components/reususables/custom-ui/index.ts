@@ -7,7 +7,6 @@ import NoInternet from "./noInternet";
 import DashCard from "./dashCard";
 import DateFilter from "./dateFilter";
 import DeviceCard from "./deviceCard";
-import TableCard from "./tableCard";
 import CardSkeleton from "./cardSkeleton";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, TableCard, CardSkeleton };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton };
