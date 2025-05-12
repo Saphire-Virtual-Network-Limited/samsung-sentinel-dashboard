@@ -112,3 +112,11 @@ export async function getAllDevicesData(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/device/data${query}`, "GET");
 }
+
+//** Reports Drop offs */
+
+export async function getDropOffsData(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/drop-off/data${query}`, "GET");
+}
+

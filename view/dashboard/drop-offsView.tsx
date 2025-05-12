@@ -1,48 +1,43 @@
 // app/customers/page.tsx
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllLoanRecord, capitalize, calculateAge, showToast } from "@/lib";
+import { getDropOffsData } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "fullName", sortable: true },
+	{ name: "Name", uid: "name", sortable: true },
 	{ name: "Email", uid: "email", sortable: true },
-	{ name: "BVN Phone", uid: "bvnPhoneNumber" },
-	{ name: "Main Phone", uid: "mainPhoneNumber" },
-	{ name: "Age", uid: "age" },
-	{ name: "DOB Match", uid: "status", sortable: true },
-	{ name: "Actions", uid: "actions" },
+	{ name: "Total Time", uid: "totalTransactionTime" },
+	{ name: "Most Time Consuming", uid: "mostTimeConsumingScreen" },
+	{ name: "Time on Screen", uid: "timeTakenOnScreen" },
+	{ name: "Fulfillment Time", uid: "fullfillmentTime" },
+	{ name: "Payment Time", uid: "paymentTime" },
+	{ name: "Enrollment Time", uid: "enrollmentTime" },
+	{ name: "Mandate Time", uid: "mandateTime" },
+	{ name: "Actions", uid: "actions" }
 ];
-
-const statusOptions = [
-	{ name: "Pending", uid: "pending" },
-	{ name: "Approved", uid: "approved" },
-	{ name: "Rejected", uid: "rejected" },
-];
-
-const statusColorMap: Record<string, ChipProps["color"]> = {
-	pending: "warning",
-	approved: "success",
-	rejected: "danger",
-};
 
 type CustomerRecord = {
-	fullName: string;
+	customerId: string;
+	name: string;
 	email: string;
-	age: number;
-	bvnPhoneNumber: string;
-	mainPhoneNumber: string;
-	status: string;
+	totalTransactionTime: string;
+	mostTimeConsumingScreen: string;
+	timeTakenOnScreen: string;
+	fullfillmentTime: string;
+	paymentTime: string;
+	enrollmentTime: string;
+	mandateTime: string;
 };
 
-export default function CustomerPage() {
+export default function DropOffsPage() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | "edit" | "delete" | null>(null);
@@ -55,9 +50,8 @@ export default function CustomerPage() {
 
 	// --- table state ---
 	const [filterValue, setFilterValue] = useState("");
-	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-		column: "fullName",
+		column: "name",
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
@@ -71,8 +65,8 @@ export default function CustomerPage() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
-		() => getAllLoanRecord(startDate, endDate)
+		startDate && endDate ? ["drop-offs-records", startDate, endDate] : "drop-offs-records",
+		() => getDropOffsData(startDate, endDate)
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
 					setHasNoRecords(true);
@@ -93,34 +87,14 @@ export default function CustomerPage() {
 		}
 	);
 
-	console.log(raw);
-
-	
-
-	const customers = useMemo(
-		() =>
-			raw.map((r: any) => ({
-				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-				email: r.email,
-				age: calculateAge(r.dob),
-				bvnPhoneNumber: r.bvnPhoneNumber,
-				mainPhoneNumber: r.mainPhoneNumber,
-				status: r.dobMisMatch ? "rejected" : "approved",
-			})),
-		[raw]
-	);
-
 	const filtered = useMemo(() => {
-		let list = [...customers];
+		let list = [...raw];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
-		}
-		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status));
+			list = list.filter((c) => c.name.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
 		}
 		return list;
-	}, [customers, filterValue, statusFilter]);
+	}, [raw, filterValue]);
 
 	const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
 	const paged = useMemo(() => {
@@ -140,11 +114,11 @@ export default function CustomerPage() {
 	// Export all filtered
 	const exportFn = async (data: CustomerRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Customers");
+		const ws = wb.addWorksheet("Drop-offs");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status) }));
+		data.forEach((r) => ws.addRow(r));
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Customer_Records.xlsx");
+		saveAs(new Blob([buf]), "Drop_Offs_Records.xlsx");
 	};
 
 	// When action clicked:
@@ -174,42 +148,18 @@ export default function CustomerPage() {
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
-							<DropdownItem
-								key="edit"
-								onPress={() => openModal("edit", row)}>
-								Edit
-							</DropdownItem>
-							<DropdownItem
-								key="delete"
-								onPress={() => openModal("delete", row)}>
-								Delete
-							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 				</div>
 			);
-		}
-		if (key === "status") {
-			return (
-				<Chip
-					className="capitalize"
-					color={statusColorMap[row.status]}
-					size="sm"
-					variant="flat">
-					{capitalize(row.status)}
-				</Chip>
-			);
-		}
-		if (key === "fullName") {
-			return <p className="capitalize">{row.fullName}</p>;
 		}
 		return <p className="text-small">{(row as any)[key]}</p>;
 	};
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
+			<div className="mb-4 flex justify-center md:justify-end">
+			</div>
 			
 			<GenericTable<CustomerRecord>
 				columns={columns}
@@ -222,10 +172,6 @@ export default function CustomerPage() {
 					setFilterValue(v);
 					setPage(1);
 				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
 				showStatus={false}
 				sortDescriptor={sortDescriptor}
 				onSortChange={setSortDescriptor}
@@ -239,7 +185,6 @@ export default function CustomerPage() {
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 			/>
-			
 
 			<Modal
 				isOpen={isOpen}
@@ -248,35 +193,22 @@ export default function CustomerPage() {
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>User Details</ModalHeader>
+							<ModalHeader>Drop-off Details</ModalHeader>
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">
-
-										{/* {Object.entries(selectedItem).map(([k, v]) => (
+										{Object.entries(selectedItem).map(([k, v]) => (
 											<div
 												key={k}
 												className="flex justify-between">
 												<strong className="capitalize">{k.replace(/([A-Z])/g, " $1").trim()}:</strong>
 												<span>{String(v)}</span>
 											</div>
-										))} */}
+										))}
 									</div>
 								)}
 							</ModalBody>
-							<ModalFooter className="flex gap-2">
-								{modalMode !== "view" && (
-									<Button
-										color={modalMode === "delete" ? "danger" : "primary"}
-										variant="light"
-										onPress={() => {
-											// your edit/delete logic here, e.g.:
-											console.log(modalMode, selectedItem);
-											onClose();
-										}}>
-										{modalMode === "edit" ? "Save Changes" : "Confirm Delete"}
-									</Button>
-								)}
+							<ModalFooter>
 								<Button
 									color="danger"
 									variant="light"
