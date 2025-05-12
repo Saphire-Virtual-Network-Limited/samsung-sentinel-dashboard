@@ -1,7 +1,7 @@
 // app/customers/page.tsx
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 import { getAllLoanRecord, capitalize, calculateAge, showToast } from "@/lib";
@@ -51,7 +51,20 @@ export default function CustomerPage() {
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
 	const [endDate, setEndDate] = useState<string | undefined>(undefined);
-	const [hasNoRecords, setHasNoRecords] = useState(false);
+
+	// --- handle date filter ---
+	const handleDateFilter = (start: string, end: string) => {
+		if (!start || !end) {
+			showToast({ message: "Both dates must be selected.", type: "error" });
+			return;
+		}
+		if (new Date(end) < new Date(start)) {
+			showToast({ message: "End date must be after start date.", type: "error" });
+			return;
+		}
+		setStartDate(start);
+		setEndDate(end);
+	};
 
 	// --- table state ---
 	const [filterValue, setFilterValue] = useState("");
@@ -63,40 +76,12 @@ export default function CustomerPage() {
 	const [page, setPage] = useState(1);
 	const rowsPerPage = 10;
 
-	// --- handle date filter ---
-	const handleDateFilter = (start: string, end: string) => {
-		setStartDate(start);
-		setEndDate(end);
-	};
 
-	// Fetch data based on date filter
-	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
-		() => getAllLoanRecord(startDate, endDate)
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
-					setHasNoRecords(true);
-					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch(() => {
-				setHasNoRecords(true);
-				return [];
-			}),
-		{
-			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
-			shouldRetryOnError: false
-		}
-	);
+	// build a dynamic changeString once per render
+	const changeString = startDate && endDate ? `${startDate} to ${endDate}` : "from previous month";
 
-	console.log(raw);
-
-	
-
+	const { data: raw = [], isLoading } = useSWR(["customer-records", startDate, endDate], () => getAllLoanRecord(startDate, endDate).then((r) => r.data), { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 });
+    console.log(raw)
 	const customers = useMemo(
 		() =>
 			raw.map((r: any) => ({
@@ -110,7 +95,7 @@ export default function CustomerPage() {
 		[raw]
 	);
 
-	const filtered = useMemo(() => {
+	const filtered = React.useMemo(() => {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
@@ -123,7 +108,7 @@ export default function CustomerPage() {
 	}, [customers, filterValue, statusFilter]);
 
 	const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
-	const paged = useMemo(() => {
+	const paged = React.useMemo(() => {
 		const start = (page - 1) * rowsPerPage;
 		return filtered.slice(start, start + rowsPerPage);
 	}, [filtered, page]);
@@ -209,13 +194,13 @@ export default function CustomerPage() {
 	return (
 		<>
 		<div className="mb-4 flex justify-center md:justify-end">
-		{/* <DateFilter
+		<DateFilter
 				className="w-full flex justify-end"
 				onFilterChange={handleDateFilter}
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 				isLoading={isLoading}
-			/> */}
+			/>
 		</div>
 			
 			<GenericTable<CustomerRecord>
@@ -241,10 +226,6 @@ export default function CustomerPage() {
 				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
 			/>
 			
 
@@ -259,15 +240,14 @@ export default function CustomerPage() {
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">
-
-										{/* {Object.entries(selectedItem).map(([k, v]) => (
+										{Object.entries(selectedItem).map(([k, v]) => (
 											<div
 												key={k}
 												className="flex justify-between">
 												<strong className="capitalize">{k.replace(/([A-Z])/g, " $1").trim()}:</strong>
 												<span>{String(v)}</span>
 											</div>
-										))} */}
+										))}
 									</div>
 								)}
 							</ModalBody>

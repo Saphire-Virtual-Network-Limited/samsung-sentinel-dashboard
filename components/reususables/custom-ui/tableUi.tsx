@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Pagination, ChipProps, SortDescriptor } from "@heroui/react";
 import { ChevronDownIcon, DownloadIcon, SearchIcon } from "lucide-react";
+import DateFilter from "./dateFilter";
+import { showToast } from "@/lib";
 
 export interface ColumnDef {
 	name: string;
@@ -30,13 +32,36 @@ export interface GenericTableProps<T> {
 	onPageChange: (p: number) => void;
 	exportFn: (data: T[]) => void;
 	renderCell: (row: T, columnKey: string) => React.ReactNode;
+	hasNoRecords: boolean;
+	onDateFilterChange?: (start: string, end: string) => void;
+	initialStartDate?: string;
+	initialEndDate?: string;
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
-	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell } = props;
+	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate } = props;
 
 	// Exclude status column if hidden
 	const displayedColumns = showStatus ? columns : columns.filter((c) => c.uid !== "status");
+
+	// --- date filter state ---
+	const [startDate, setStartDate] = useState<string | undefined>(initialStartDate);
+	const [endDate, setEndDate] = useState<string | undefined>(initialEndDate);
+
+	// --- handle date filter ---
+	const handleDateFilter = (start: string, end: string) => {
+		if (!start || !end) {
+			showToast({ message: "Both dates must be selected.", type: "error" });
+			return;
+		}
+		if (new Date(end) < new Date(start)) {
+			showToast({ message: "End date must be after start date.", type: "error" });
+			return;
+		}
+		setStartDate(start);
+		setEndDate(end);
+		onDateFilterChange?.(start, end);
+	};
 
 	const renderSkeleton = () => (
 		<TableRow>
@@ -50,7 +75,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 
 	const topContent = (
 		<div className="flex flex-col gap-4">
-			<div className="flex justify-between gap-3 items-end">
+			<div className="flex flex-col md:flex-row justify-between gap-3.5 items-end md:items-start md:justify-center">
 				<Input
 					isClearable
 					className="w-full sm:max-w-[44%]"
@@ -60,6 +85,15 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 					onClear={() => onFilterChange("")}
 					onValueChange={onFilterChange}
 				/>
+				{onDateFilterChange && (
+					<DateFilter
+						className="w-full flex justify-end"
+						onFilterChange={handleDateFilter}
+						initialStartDate={startDate}
+						initialEndDate={endDate}
+						isLoading={isLoading}
+					/>
+				)}
 				<div className="flex gap-3">
 					{showStatus && statusOptions.length > 0 && statusFilter && onStatusChange && (
 						<Dropdown>
@@ -86,7 +120,8 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 							</DropdownMenu>
 						</Dropdown>
 					)}
-					<Button
+					
+					<Button 
 						color="primary"
 						endContent={<DownloadIcon className="w-3" />}
 						onPress={() => exportFn(exportData)}>
@@ -155,7 +190,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 				)}
 			</TableHeader>
 			<TableBody
-				emptyContent="No records"
+				emptyContent={hasNoRecords ? "No records" : "No data found"}
 				items={isLoading ? new Array(displayedColumns.length).fill(null) : data}>
 				{(item: T | null) => (item === null ? renderSkeleton() : <TableRow key={(item as any)[displayedColumns[0].uid]}>{(colKey) => <TableCell>{renderCell(item as T, colKey as string)}</TableCell>}</TableRow>)}
 			</TableBody>

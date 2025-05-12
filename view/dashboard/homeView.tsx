@@ -7,7 +7,7 @@ import { getAllLoanData, getAllDevicesData, showToast } from "@/lib";
 
 const HomeView = () => {
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
-	const [endDate, setEndDate] = useState<string | undefined>(undefined);
+	const [endDate, setEndDate] = useState<string |   undefined>(undefined);
 
 	const handleDateFilter = (start: string, end: string) => {
 		if (!start || !end) {
