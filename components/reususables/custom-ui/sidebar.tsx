@@ -55,9 +55,9 @@ export function AppSidebar() {
 			title: "Reports",
 			id: "admin-reports",
 			subItems: [
-				{ title: "Sales", url: "/access/admin/resources/agents" },
-				{ title: "Drop-offs", url: "/access/admin/resources/stores" },
-				{ title: "Tracker", url: "/access/admin/resources/devices" },
+				{ title: "Sales", url: "/access/admin/reports/sales" },
+				{ title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
+				{ title: "Tracker", url: "/access/admin/reports/tracker" },
 			],
 		},
 		{
