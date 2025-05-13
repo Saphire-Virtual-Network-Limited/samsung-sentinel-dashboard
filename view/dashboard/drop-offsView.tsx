@@ -14,9 +14,9 @@ import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "name", sortable: true },
 	{ name: "Email", uid: "email", sortable: true },
-	{ name: "Total Time", uid: "totalTransactionTime" },
-	{ name: "Most Time Consuming", uid: "mostTimeConsumingScreen" },
-	{ name: "Time on Screen", uid: "timeTakenOnScreen" },
+	{ name: "TAT", uid: "totalTransactionTime" },
+	{ name: "Screen with MTC", uid: "mostTimeConsumingScreen" },
+	{ name: "Time Spent on Sc.", uid: "timeTakenOnScreen" },
 	{ name: "Fulfillment Time", uid: "fullfillmentTime" },
 	{ name: "Payment Time", uid: "paymentTime" },
 	{ name: "Enrollment Time", uid: "enrollmentTime" },
@@ -75,7 +75,8 @@ export default function DropOffsPage() {
 				setHasNoRecords(false);
 				return r.data;
 			})
-			.catch(() => {
+			.catch((error) => {
+				console.error("Error fetching drop-offs data:", error);
 				setHasNoRecords(true);
 				return [];
 			}),
@@ -83,7 +84,9 @@ export default function DropOffsPage() {
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
-			shouldRetryOnError: false
+			shouldRetryOnError: false,
+			keepPreviousData: true, // Keep previous data while loading new data
+			revalidateIfStale: true // Revalidate if data is stale
 		}
 	);
 

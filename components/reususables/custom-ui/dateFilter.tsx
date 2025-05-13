@@ -42,7 +42,12 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 		const start = range?.start?.toString();
 		const end = range?.end?.toString();
 		if (!start || !end) return;
-		onFilterChange(start, end);
+
+		// Format dates to YYYY-MM-DD format
+		const formattedStart = start.split('T')[0];
+		const formattedEnd = end.split('T')[0];
+		
+		onFilterChange(formattedStart, formattedEnd);
 	};
 	return (
 		<div className={className}>

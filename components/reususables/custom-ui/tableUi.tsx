@@ -48,6 +48,12 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	const [startDate, setStartDate] = useState<string | undefined>(initialStartDate);
 	const [endDate, setEndDate] = useState<string | undefined>(initialEndDate);
 
+	// Update local state when props change
+	React.useEffect(() => {
+		setStartDate(initialStartDate);
+		setEndDate(initialEndDate);
+	}, [initialStartDate, initialEndDate]);
+
 	// --- handle date filter ---
 	const handleDateFilter = (start: string, end: string) => {
 		if (!start || !end) {
