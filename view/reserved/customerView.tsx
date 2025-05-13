@@ -226,6 +226,7 @@ export default function CustomerPage() {
 				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
+				hasNoRecords={customers.length === 0}
 			/>
 			
 
