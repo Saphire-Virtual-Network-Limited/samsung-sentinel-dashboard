@@ -76,6 +76,7 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/dev/", id: "developer-dashboard" },
 		{ icon: Users, title: "Customers", url: "/access/dev/customers", id: "developer-customers" },
 		{ icon: Phone, title: "Devices", url: "/access/dev/devices", id: "developer-devices" },
+		{ icon: CreditCard, title: "Loans", url: "/access/dev/loans", id: "developer-loans" },
 		{ icon: Package2Icon, title: "Products", url: "/access/dev/products", id: "developer-products" },
 		{ icon: Code, title: "API Docs", url: apiDocsUrl, id: "developer-api-docs" },
 		{ icon: ChartBar, title: "Drop-offs", url: "/access/dev/drop-offs", id: "developer-drop-offs" },
