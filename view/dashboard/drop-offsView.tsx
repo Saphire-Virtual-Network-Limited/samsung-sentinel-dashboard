@@ -1,10 +1,9 @@
-// app/customers/page.tsx
 "use client";
 
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getDropOffsData } from "@/lib";
+import { getDropOffsData, getDropOffsRecord } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
@@ -26,15 +25,91 @@ const columns: ColumnDef[] = [
 
 type CustomerRecord = {
 	customerId: string;
-	name: string;
+	firstName: string;
+	lastName: string;
 	email: string;
-	totalTransactionTime: string;
-	mostTimeConsumingScreen: string;
-	timeTakenOnScreen: string;
-	fullfillmentTime: string;
-	paymentTime: string;
-	enrollmentTime: string;
-	mandateTime: string;
+	bvn: string;
+	dob: string;
+	dobMisMatch: boolean;
+	createdAt: string;
+	updatedAt: string;
+	customerLoanDiskId: string;
+	channel: string;
+	bvnPhoneNumber: string;
+	mainPhoneNumber: string;
+	mbeId: string | null;
+	monoCustomerConnectedCustomerId: string;
+	Wallet?: {
+		wallet_id: string;
+		accountNumber: string;
+		bankName: string;
+		dva_id: number;
+		accountName: string;
+		bankId: number;
+		currency: string;
+		cust_code: string;
+		cust_id: number;
+		userId: string | null;
+		created_at: string;
+		updated_at: string;
+		customerId: string;
+	};
+	WalletBalance?: {
+		balanceId: string;
+		userId: string | null;
+		balance: number;
+		lastBalance: number;
+		created_at: string;
+		updated_at: string;
+		customerId: string;
+	};
+	TransactionHistory?: Array<{
+		transactionHistoryId: string;
+		amount: number;
+		paymentType: string;
+		prevBalance: number;
+		newBalance: number;
+		paymentReference: string;
+		extRef: string;
+		currency: string;
+		channel: string;
+		charge: number;
+		chargeNarration: string;
+		senderBank: string | null;
+		senderAccount: string | null;
+		recieverBank: string | null;
+		recieverAccount: string | null;
+		paymentDescription: string;
+		paid_at: string | null;
+		createdAt: string;
+		updatedAt: string;
+		userid: string | null;
+		customersCustomerId: string;
+	}>;
+	LoanRecord?: Array<{
+		loanRecordId: string;
+		customerId: string;
+		loanDiskId: string;
+		lastPoint: string;
+		channel: string;
+		loanStatus: string;
+		createdAt: string;
+		updatedAt: string;
+		loanAmount: number;
+		deviceId: string;
+		downPayment: number;
+		insurancePackage: string;
+		insurancePrice: number;
+		mbsEligibleAmount: number;
+		payFrequency: string;
+		storeId: string;
+		devicePrice: number;
+		deviceAmount: number;
+		monthlyRepayment: number;
+		duration: number;
+		interestAmount: number;
+		LoanRecordCard: any[];
+	}>;
 };
 
 export default function DropOffsPage() {
@@ -42,6 +117,8 @@ export default function DropOffsPage() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | "edit" | "delete" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<CustomerRecord | null>(null);
+	const [dropOffLogs, setDropOffLogs] = useState<any[]>([]);
+	const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -125,10 +202,23 @@ export default function DropOffsPage() {
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view" | "edit" | "delete", row: CustomerRecord) => {
+	const openModal = async (mode: "view" | "edit" | "delete", row: CustomerRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
 		onOpen();
+		
+		if (mode === "view") {
+			setIsLoadingLogs(true);
+			try {
+				const response = await getDropOffsRecord();
+				const logs = response.data.find((item: any) => item.customerId === row.customerId)?.CustomerDropOffLog || [];
+				setDropOffLogs(logs);
+			} catch (error) {
+				console.error("Error fetching drop-off logs:", error);
+			} finally {
+				setIsLoadingLogs(false);
+			}
+		}
 	};
 
 	// Render each cell, including actions dropdown:
@@ -192,22 +282,219 @@ export default function DropOffsPage() {
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				size="2xl">
+				size="5xl">
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Drop-off Details</ModalHeader>
+							<ModalHeader className="flex flex-col gap-1">
+								<h2 className="text-2xl font-bold">Customer Details</h2>
+								<p className="text-sm text-gray-500">Complete customer information and transaction history</p>
+							</ModalHeader>
 							<ModalBody>
 								{selectedItem && (
-									<div className="space-y-4">
-										{Object.entries(selectedItem).map(([k, v]) => (
-											<div
-												key={k}
-												className="flex justify-between">
-												<strong className="capitalize">{k.replace(/([A-Z])/g, " $1").trim()}:</strong>
-												<span>{String(v)}</span>
+									<div className="space-y-6">
+										{/* Personal Information Section */}
+										<div className="bg-white rounded-lg shadow-sm p-6">
+											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Personal Information</h3>
+											<div className="grid grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Full Name:</span>
+														<span className="font-medium">{`${selectedItem.firstName} ${selectedItem.lastName}`}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Email:</span>
+														<span className="font-medium">{selectedItem.email}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Date of Birth:</span>
+														<span className="font-medium">{selectedItem.dob}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">BVN:</span>
+														<span className="font-medium">{selectedItem.bvn}</span>
+													</div>
+												</div>
+												<div className="space-y-2">
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">BVN Phone:</span>
+														<span className="font-medium">{selectedItem.bvnPhoneNumber}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Main Phone:</span>
+														<span className="font-medium">{selectedItem.mainPhoneNumber}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Channel:</span>
+														<span className="font-medium">{selectedItem.channel}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Created At:</span>
+														<span className="font-medium">{new Date(selectedItem.createdAt).toLocaleString()}</span>
+													</div>
+												</div>
 											</div>
-										))}
+										</div>
+
+										{/* Wallet Information Section */}
+										<div className="bg-white rounded-lg shadow-sm p-6">
+											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Wallet Information</h3>
+											<div className="grid grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Account Number:</span>
+														<span className="font-medium">{selectedItem.Wallet?.accountNumber}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Bank Name:</span>
+														<span className="font-medium">{selectedItem.Wallet?.bankName}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Account Name:</span>
+														<span className="font-medium">{selectedItem.Wallet?.accountName}</span>
+													</div>
+												</div>
+												<div className="space-y-2">
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Current Balance:</span>
+														<span className="font-medium">₦{selectedItem.WalletBalance?.balance.toLocaleString()}</span>
+													</div>
+													<div className="flex items-center">
+														<span className="text-gray-600 w-40">Last Balance:</span>
+														<span className="font-medium">₦{selectedItem.WalletBalance?.lastBalance.toLocaleString()}</span>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										{/* Loan Information Section */}
+										<div className="bg-white rounded-lg shadow-sm p-6">
+											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Loan Information</h3>
+											{selectedItem.LoanRecord && selectedItem.LoanRecord[0] && (
+												<div className="grid grid-cols-2 gap-4">
+													<div className="space-y-2">
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Loan Amount:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].loanAmount.toLocaleString()}</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Device Price:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].devicePrice.toLocaleString()}</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Down Payment:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].downPayment.toLocaleString()}</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Insurance Price:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].insurancePrice.toLocaleString()}</span>
+														</div>
+													</div>
+													<div className="space-y-2">
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Monthly Repayment:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].monthlyRepayment.toLocaleString()}</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Duration:</span>
+															<span className="font-medium">{selectedItem.LoanRecord[0].duration} months</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Interest Amount:</span>
+															<span className="font-medium">₦{selectedItem.LoanRecord[0].interestAmount.toLocaleString()}</span>
+														</div>
+														<div className="flex items-center">
+															<span className="text-gray-600 w-40">Loan Status:</span>
+															<span className="font-medium">{selectedItem.LoanRecord[0].loanStatus}</span>
+														</div>
+													</div>
+												</div>
+											)}
+										</div>
+
+										{/* Transaction History Section */}
+										<div className="bg-white rounded-lg shadow-sm p-6">
+											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Transaction History</h3>
+											<div className="overflow-x-auto">
+												<table className="min-w-full divide-y divide-gray-200">
+													<thead className="bg-gray-50">
+														<tr>
+															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+														</tr>
+													</thead>
+													<tbody className="bg-white divide-y divide-gray-200">
+														{selectedItem.TransactionHistory?.map((transaction) => (
+															<tr key={transaction.transactionHistoryId}>
+																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+																	{new Date(transaction.createdAt).toLocaleString()}
+																</td>
+																<td className="px-6 py-4 whitespace-nowrap text-sm">
+																	<span className={`px-2 py-1 rounded-full text-xs ${
+																		transaction.paymentType === 'CREDIT' 
+																			? 'bg-green-100 text-green-800' 
+																			: 'bg-red-100 text-red-800'
+																	}`}>
+																		{transaction.paymentType}
+																	</span>
+																</td>
+																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+																	₦{transaction.amount.toLocaleString()}
+																</td>
+																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+																	{transaction.paymentDescription}
+																</td>
+																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+																	{transaction.paymentReference}
+																</td>
+															</tr>
+														))}
+													</tbody>
+												</table>
+											</div>
+										</div>
+
+										{/* Drop-off Logs Section */}
+										{modalMode === "view" && (
+											<div className="bg-white rounded-lg shadow-sm p-6">
+												<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Drop-off Logs</h3>
+												{isLoadingLogs ? (
+													<div className="text-center py-4">Loading logs...</div>
+												) : dropOffLogs.length > 0 ? (
+													<div className="overflow-x-auto">
+														<table className="min-w-full divide-y divide-gray-200">
+															<thead className="bg-gray-50">
+																<tr>
+																	<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screen Name</th>
+																	<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Channel</th>
+																	<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screen Time</th>
+																	<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">API Response Time</th>
+																	<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created At</th>
+																</tr>
+															</thead>
+															<tbody className="bg-white divide-y divide-gray-200">
+																{dropOffLogs.map((log) => (
+																	<tr key={log.dropOffLogId}>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.screenName}</td>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.channel}</td>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.screenTime}</td>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.apiResponseTime}</td>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+																			{new Date(log.createdAt).toLocaleString()}
+																		</td>
+																	</tr>
+																))}
+															</tbody>
+														</table>
+													</div>
+												) : (
+													<div className="text-center py-4 text-gray-500">No drop-off logs found</div>
+												)}
+											</div>
+										)}
 									</div>
 								)}
 							</ModalBody>

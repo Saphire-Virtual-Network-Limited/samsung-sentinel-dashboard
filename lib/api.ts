@@ -120,3 +120,27 @@ export async function getDropOffsData(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/customers/drop-off/data${query}`, "GET");
 }
 
+export async function getDropOffsRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/drop-off/record${query}`, "GET");
+}
+
+//get all customer record
+export async function getAllCustomerRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/record${query}`, "GET");
+}
+
+
+export interface verifyCustomerReferenceNumber {
+	customerId: string;
+	phoneNumber: string;
+	phoneVerified: boolean;
+	comment: string;
+}
+
+export async function verifyCustomerReferenceNumber(verifyCustomerReferenceNumber: verifyCustomerReferenceNumber) {
+	return apiCall("/admin/customers/verify-reference", "POST", verifyCustomerReferenceNumber);
+}
+
+

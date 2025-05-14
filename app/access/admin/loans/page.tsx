@@ -1,7 +1,8 @@
 import React from "react";
+import { LoansView } from "@/view/dashboard";
 
 const LoansPage = () => {
-	return <div>LoansPage</div>;
+	return <LoansView />;
 };
 
 export default LoansPage;

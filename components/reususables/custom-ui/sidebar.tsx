@@ -85,6 +85,7 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/verify/", id: "verification-dashboard" },
 		{ icon: Users, title: "References", url: "/access/verify/references", id: "verification-references" },
 		{ icon: CreditCard, title: "Loans", url: "/access/verify/loans", id: "verification-loans" },
+		{ icon: Users, title: "Customers", url: "/access/verify/customers", id: "verification-customers" },
 	];
 
 	const financeItems: MenuItem[] = [

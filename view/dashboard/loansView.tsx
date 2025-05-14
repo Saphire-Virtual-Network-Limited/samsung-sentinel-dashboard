@@ -188,7 +188,7 @@ type CustomerRecord = {
 	}>;
 };
 
-export default function CustomerPage() {
+export default function LoansView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();

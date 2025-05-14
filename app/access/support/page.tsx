@@ -1,7 +1,7 @@
-import React from "react";
+import CustomerView from "@/view/dashboard/customerView";
 
-const page = () => {
-	return <div></div>;
+const SupportPage = () => {
+	return <CustomerView />;
 };
 
-export default page;
+export default SupportPage;

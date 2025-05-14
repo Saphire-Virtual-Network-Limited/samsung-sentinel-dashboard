@@ -1,7 +1,8 @@
 import CustomerView from "@/view/dashboard/customerView";
 
-const VerifyPage = () => {
+
+const VerifyCustomersPage = () => {
 	return <CustomerView />;
 };
 
-export default VerifyPage;
+export default VerifyCustomersPage;
