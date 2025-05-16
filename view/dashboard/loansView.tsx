@@ -179,8 +179,6 @@ export default function LoansView() {
 		}
 	);
 
-	console.log(raw);
-
 	const customers = useMemo(
 		() =>
 			raw.map((r: LoanRecord) => ({
@@ -216,14 +214,12 @@ export default function LoansView() {
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = a[sortDescriptor.column as keyof LoanRecord];
-			const bVal = b[sortDescriptor.column as keyof LoanRecord];
+			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || '');
+			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || '');
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
 	}, [paged, sortDescriptor]);
-
-
 
 	// Export all filtered
 	const exportFn = async (data: LoanRecord[]) => {
@@ -292,7 +288,15 @@ export default function LoansView() {
 		if (key === "fullName") {
 			return <p className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;
 		}
-		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key]}</p>;
+		// Ensure we're converting any value to a string before rendering
+		const cellValue = (row as any)[key];
+		if (cellValue === null || cellValue === undefined) {
+			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</p>;
+		}
+		if (typeof cellValue === 'object') {
+			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</p>;
+		}
+		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</p>;
 	};
 
 	return (
@@ -346,209 +350,172 @@ export default function LoansView() {
 										<div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Personal Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												<div>
-													<p className="text-sm text-default-500">Customer ID</p>
-													<p className="font-medium">{selectedItem.customerId || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Full Name</p>
-													<p className="font-medium">{selectedItem.firstName && selectedItem.lastName ? `${selectedItem.firstName} ${selectedItem.lastName}` : 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Email</p>
-													<p className="font-medium">{selectedItem.email || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">BVN</p>
-													<p className="font-medium">{selectedItem.bvn || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Date of Birth</p>
-													<p className="font-medium">{selectedItem.dob || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">BVN Phone</p>
-													<p className="font-medium">{selectedItem.bvnPhoneNumber || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Main Phone</p>
-													<p className="font-medium">{selectedItem.mainPhoneNumber || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Dob Mismatch</p>
-													<p className="font-medium">{selectedItem.dobMisMatch ? 'Yes' : 'No'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Channel</p>
-													<p className="font-medium">{selectedItem.channel || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Created At</p>
-													<p className="font-medium">{selectedItem.createdAt ? new Date(selectedItem.createdAt).toLocaleString() : 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Updated At</p>
-													<p className="font-medium">{selectedItem.updatedAt ? new Date(selectedItem.updatedAt).toLocaleString() : 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Mono Customer ID</p>
-													<p className="font-medium">{selectedItem.monoCustomerConnectedCustomerId || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Reg By</p>
-													<p className="font-medium">{selectedItem.regBy || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">MBE ID</p>
-													<p className="font-medium">{selectedItem.mbeId || 'N/A'}</p>
-												</div>
+												{Object.entries(selectedItem).map(([key, value]) => {
+													// Skip LoanRecord as it's handled separately
+													if (key === 'LoanRecord') return null;
+													
+													// Handle null/undefined values
+													if (value === null || value === undefined) {
+														return (
+															<div key={key}>
+																<p className="text-sm text-default-500">{key}</p>
+																<p className="font-medium">N/A</p>
+															</div>
+														);
+													}
+
+													// Handle objects
+													if (typeof value === 'object') {
+														return (
+															<div key={key}>
+																<p className="text-sm text-default-500">{key}</p>
+																<p className="font-medium">View Details</p>
+															</div>
+														);
+													}
+
+													// Handle dates
+													if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+														try {
+															const date = new Date(value as string);
+															if (!isNaN(date.getTime())) {
+																value = date.toLocaleString();
+															}
+														} catch (e) {
+															// If date parsing fails, use the original value
+														}
+													}
+
+													// Handle boolean values
+													if (typeof value === 'boolean') {
+														value = value ? 'Yes' : 'No';
+													}
+
+													return (
+														<div key={key}>
+															<p className="text-sm text-default-500">{key}</p>
+															<p className="font-medium">{String(value)}</p>
+														</div>
+													);
+												})}
 											</div>
 										</div>
 
 										{/* Loan Information */}
-										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Loan Information</h3>
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												<div>
-													<p className="text-sm text-default-500">LoanDisk ID</p>
-													<p className="font-medium">{selectedItem.customerLoanDiskId || 'N/A'}</p>
+										{selectedItem.LoanRecord && selectedItem.LoanRecord.length > 0 && (
+											<div className="bg-default-50 p-4 rounded-lg">
+												<h3 className="text-lg font-semibold mb-3">Loan Information</h3>
+												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+													{Object.entries(selectedItem.LoanRecord[0]).map(([key, value]) => {
+														// Skip store and device as they're handled separately
+														if (key === 'store' || key === 'device') return null;
+
+														// Handle null/undefined values
+														if (value === null || value === undefined) {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">N/A</p>
+																</div>
+															);
+														}
+
+														// Handle objects
+														if (typeof value === 'object') {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">View Details</p>
+																</div>
+															);
+														}
+
+														// Handle dates
+														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+															try {
+																const date = new Date(value as string);
+																if (!isNaN(date.getTime())) {
+																	value = date.toLocaleString();
+																}
+															} catch (e) {
+																// If date parsing fails, use the original value
+															}
+														}
+
+														// Handle boolean values
+														if (typeof value === 'boolean') {
+															value = value ? 'Yes' : 'No';
+														}
+
+														// Format currency values
+														if (typeof value === 'number' && 
+															(key.toLowerCase().includes('amount') || 
+															 key.toLowerCase().includes('price') || 
+															 key.toLowerCase().includes('payment'))) {
+															value = `₦${Number(value).toLocaleString()}`;
+														}
+
+														return (
+															<div key={key}>
+																<p className="text-sm text-default-500">{key}</p>
+																<p className="font-medium">{String(value)}</p>
+															</div>
+														);
+													})}
 												</div>
-												{selectedItem.LoanRecord?.[0] && (
-													<>
-														<div>
-															<p className="text-sm text-default-500">Loan Record ID</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].loanRecordId || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Loan Disk ID</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].loanDiskId || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Last Point</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].lastPoint || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Channel</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].channel || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Loan Status</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].loanStatus || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Loan Amount</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].loanAmount !== undefined ? `₦${selectedItem.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Device ID</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].deviceId || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Down Payment</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].downPayment !== undefined ? `₦${selectedItem.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Insurance Package</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].insurancePackage || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Insurance Price</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].insurancePrice !== undefined ? `₦${selectedItem.LoanRecord[0].insurancePrice.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">MBS Eligible Amount</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].mbsEligibleAmount !== undefined ? `₦${selectedItem.LoanRecord[0].mbsEligibleAmount.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Pay Frequency</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].payFrequency || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Store ID</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].storeId || 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Device Price</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].devicePrice !== undefined ? `₦${selectedItem.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Device Amount</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].deviceAmount !== undefined ? `₦${selectedItem.LoanRecord[0].deviceAmount.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Monthly Repayment</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].monthlyRepayment !== undefined ? `₦${selectedItem.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Duration</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].duration !== undefined ? `${selectedItem.LoanRecord[0].duration} months` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Interest Amount</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].interestAmount !== undefined ? `₦${selectedItem.LoanRecord[0].interestAmount.toLocaleString()}` : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Created At</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].createdAt ? new Date(selectedItem.LoanRecord[0].createdAt).toLocaleString() : 'N/A'}</p>
-														</div>
-														<div>
-															<p className="text-sm text-default-500">Updated At</p>
-															<p className="font-medium">{selectedItem.LoanRecord[0].updatedAt ? new Date(selectedItem.LoanRecord[0].updatedAt).toLocaleString() : 'N/A'}</p>
-														</div>
-													</>
-												)}
 											</div>
-										</div>
+										)}
 
 										{/* Store Information */}
 										{selectedItem.LoanRecord?.[0]?.store && (
 											<div className="bg-default-50 p-4 rounded-lg">
 												<h3 className="text-lg font-semibold mb-3">Store Information</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													<div>
-														<p className="text-sm text-default-500">Store ID</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.storeId || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Store Name</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.storeName || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">City</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.city || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">State</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.state || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Region</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.region || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Address</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.address || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Phone Number</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.phoneNumber || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Email</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.storeEmail || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Partner</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].store.partner || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Store Hours</p>
-														<p className="font-medium">{`${selectedItem.LoanRecord[0].store.storeOpen || 'N/A'} - ${selectedItem.LoanRecord[0].store.storeClose || 'N/A'}`}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Bank Details</p>
-														<p className="font-medium">{`${selectedItem.LoanRecord[0].store.bankName || 'N/A'} - ${selectedItem.LoanRecord[0].store.accountNumber || 'N/A'}`}</p>
-													</div>
+													{Object.entries(selectedItem.LoanRecord[0].store).map(([key, value]) => {
+														// Handle null/undefined values
+														if (value === null || value === undefined) {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">N/A</p>
+																</div>
+															);
+														}
+
+														// Handle objects
+														if (typeof value === 'object') {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">View Details</p>
+																</div>
+															);
+														}
+
+														// Handle dates
+														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+															try {
+																const date = new Date(value as string);
+																if (!isNaN(date.getTime())) {
+																	value = date.toLocaleString();
+																}
+															} catch (e) {
+																// If date parsing fails, use the original value
+															}
+														}
+
+														// Handle boolean values
+														if (typeof value === 'boolean') {
+															value = value ? 'Yes' : 'No';
+														}
+
+														return (
+															<div key={key}>
+																<p className="text-sm text-default-500">{key}</p>
+																<p className="font-medium">{String(value)}</p>
+															</div>
+														);
+													})}
 												</div>
 											</div>
 										)}
@@ -558,46 +525,58 @@ export default function LoansView() {
 											<div className="bg-default-50 p-4 rounded-lg">
 												<h3 className="text-lg font-semibold mb-3">Device Information</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													<div>
-														<p className="text-sm text-default-500">Device Name</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceName || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Model Number</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceModelNumber || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Manufacturer</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceManufacturer || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Type</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceType || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">RAM</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceRam || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Storage</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceStorage || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Screen</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.deviceScreen || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Price</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.price !== undefined ? `₦${selectedItem.LoanRecord[0].device.price.toLocaleString()}` : 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Android Go</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.android_go || 'N/A'}</p>
-													</div>
-													<div>
-														<p className="text-sm text-default-500">Device ID</p>
-														<p className="font-medium">{selectedItem.LoanRecord[0].device.newDeviceId || 'N/A'}</p>
-													</div>
+													{Object.entries(selectedItem.LoanRecord[0].device).map(([key, value]) => {
+														// Handle null/undefined values
+														if (value === null || value === undefined) {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">N/A</p>
+																</div>
+															);
+														}
+
+														// Handle objects
+														if (typeof value === 'object') {
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="font-medium">View Details</p>
+																</div>
+															);
+														}
+
+														// Handle dates
+														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+															try {
+																const date = new Date(value as string);
+																if (!isNaN(date.getTime())) {
+																	value = date.toLocaleString();
+																}
+															} catch (e) {
+																// If date parsing fails, use the original value
+															}
+														}
+
+														// Handle boolean values
+														if (typeof value === 'boolean') {
+															value = value ? 'Yes' : 'No';
+														}
+
+														// Format currency values
+														if (typeof value === 'number' && 
+															(key.toLowerCase().includes('price') || 
+															 key.toLowerCase().includes('amount'))) {
+															value = `₦${Number(value).toLocaleString()}`;
+														}
+
+														return (
+															<div key={key}>
+																<p className="text-sm text-default-500">{key}</p>
+																<p className="font-medium">{String(value)}</p>
+															</div>
+														);
+													})}
 												</div>
 											</div>
 										)}

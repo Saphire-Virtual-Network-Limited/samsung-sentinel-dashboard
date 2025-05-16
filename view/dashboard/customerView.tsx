@@ -13,12 +13,12 @@ import { SelectField } from "@/components/reususables/form";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Email", uid: "email", sortable: true },
-	{ name: "BVN Phone", uid: "bvnPhoneNumber" },
-	{ name: "Main Phone", uid: "mainPhoneNumber" },
-	{ name: "Age", uid: "age" },
-	{ name: "DOB Match", uid: "status", sortable: true },
-	{ name: "Actions", uid: "actions" },
+	{ name: "Contact No.", uid: "mainPhoneNumber" },
+	{ name: "Age", uid: "age", sortable: true },
+	{ name: "DOB Mismatch", uid: "dobMisMatch" },
+	{ name: "Referee 1", uid: "referee1" },
+	{ name: "Referee 2", uid: "referee2" },
+	{ name: "Actions", uid: "actions"},
 ];
 
 const statusOptions = [
@@ -255,10 +255,12 @@ export default function CustomerPage() {
 				...r,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				email: r.email,
+				referee1: `${r.CustomerKYC?.[0]?.phone2Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone2 || 'N/A'}`,
+				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
 				age: calculateAge(r.dob),
-				bvnPhoneNumber: r.bvnPhoneNumber,
 				mainPhoneNumber: r.mainPhoneNumber,
-				status: r.dobMisMatch ? "rejected" : "approved",
+				dobMisMatch: r.dobMisMatch ? 'Yes' : 'No',
+				// status: r.dobMisMatch ? "rejected" : "approved",
 			})),
 		[raw]
 	);
@@ -489,10 +491,10 @@ export default function CustomerPage() {
 													<p className="text-sm text-default-500">Email</p>
 													<p className="font-medium">{selectedItem.email || 'N/A'}</p>
 												</div>
-												<div>
+												{/* <div>
 													<p className="text-sm text-default-500">BVN</p>
 													<p className="font-medium">{selectedItem.bvn || 'N/A'}</p>
-												</div>
+												</div> */}
 												<div>
 													<p className="text-sm text-default-500">Date of Birth</p>
 													<p className="font-medium">{selectedItem.dob || 'N/A'}</p>
@@ -517,7 +519,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Wallet Information */}
-										<div className="bg-default-50 p-4 rounded-lg">
+										{/* <div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Wallet Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
@@ -573,7 +575,7 @@ export default function CustomerPage() {
 													<p className="font-medium">{selectedItem.WalletBalance?.lastBalance !== undefined ? `₦${selectedItem.WalletBalance.lastBalance.toLocaleString()}` : 'N/A'}</p>
 												</div>
 											</div>
-										</div>
+										</div> */}
 
 										{/* KYC Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
@@ -612,28 +614,34 @@ export default function CustomerPage() {
 															<p className="font-medium">{selectedItem.CustomerKYC?.[0]?.status2Comment || 'N/A'}</p>
 														</div>
 													</div>
-													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-														<Button
-														className="w-full"
-														variant="flat"
-														color="success"
-														onPress={() => {
-															setRefereeType("referee1");
-															onApproved();
-														}}>
-															Approve
-														</Button>
-														<Button
-														className="w-full"
-														variant="flat"
-														color="danger"
-														onPress={() => {
-															setRefereeType("referee1");
-															onRejected();
-														}}>
-															Reject
-														</Button>
-													</div>
+													{selectedItem.CustomerKYC?.[0]?.phone2 && selectedItem.CustomerKYC?.[0]?.phone2 !== 'N/A' && (
+														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+															{selectedItem.CustomerKYC?.[0]?.phone2Status !== 'APPROVED' && (
+																<Button
+																	className="w-full"
+																	variant="flat"
+																	color="success"
+																	onPress={() => {
+																		setRefereeType("referee1");
+																		onApproved();
+																	}}>
+																	Approve
+																</Button>
+															)}
+															{selectedItem.CustomerKYC?.[0]?.phone2Status !== 'REJECTED' && (
+																<Button
+																	className="w-full"
+																	variant="flat"
+																	color="danger"
+																	onPress={() => {
+																		setRefereeType("referee1");
+																		onRejected();
+																	}}>
+																	Reject
+																</Button>
+															)}
+														</div>
+													)}
 												</div>
 
 												<div className="flex flex-col gap-4 bg-gray-200 p-4 rounded-lg">
@@ -652,28 +660,34 @@ export default function CustomerPage() {
 															<p className="font-medium">{selectedItem.CustomerKYC?.[0]?.status3Comment || 'N/A'}</p>
 														</div>
 													</div>
-													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-														<Button
-														className="w-full"
-														variant="flat"
-														color="success"
-														onPress={() => {
-															setRefereeType("referee2");
-															onApproved();
-														}}>
-															Approve
-														</Button>
-														<Button
-														className="w-full"
-														variant="flat"
-														color="danger"
-														onPress={() => {
-															setRefereeType("referee2");
-															onRejected();
-														}}>
-															Reject
-														</Button>
-													</div>
+													{selectedItem.CustomerKYC?.[0]?.phone3 && selectedItem.CustomerKYC?.[0]?.phone3 !== 'N/A' && (
+														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+															{selectedItem.CustomerKYC?.[0]?.phone3Status !== 'APPROVED' && (
+																<Button
+																	className="w-full"
+																	variant="flat"
+																	color="success"
+																	onPress={() => {
+																		setRefereeType("referee2");
+																		onApproved();
+																	}}>
+																	Approve
+																</Button>
+															)}
+															{selectedItem.CustomerKYC?.[0]?.phone3Status !== 'REJECTED' && (
+																<Button
+																	className="w-full"
+																	variant="flat"
+																	color="danger"
+																	onPress={() => {
+																		setRefereeType("referee2");
+																		onRejected();
+																	}}>
+																	Reject
+																</Button>
+															)}
+														</div>
+													)}
 												</div>
 												
 												<div>
@@ -720,7 +734,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Mandate Information */}
-										<div className="bg-default-50 p-4 rounded-lg">
+										{/* <div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Mandate Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
@@ -788,16 +802,16 @@ export default function CustomerPage() {
 													<p className="font-medium">{selectedItem.CustomerMandate?.[0]?.message || 'N/A'}</p>
 												</div>
 											</div>
-										</div>
+										</div> */}
 
 										{/* Loan Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Loan Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												<div>
+												{/* <div>
 													<p className="text-sm text-default-500">LoanDisk ID</p>
 													<p className="font-medium">{selectedItem.customerLoanDiskId || 'N/A'}</p>
-												</div>
+												</div> */}
 												<div>
 													<p className="text-sm text-default-500">Loan Amount</p>
 													<p className="font-medium">{selectedItem.LoanRecord?.[0]?.loanAmount !== undefined ? `₦${selectedItem.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A'}</p>
@@ -878,7 +892,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Transaction History */}
-										<div className="bg-default-50 p-4 rounded-lg">
+										{/* <div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
 											{selectedItem.TransactionHistory && selectedItem.TransactionHistory.length > 0 ? (
 												<div className="space-y-4">
@@ -902,7 +916,7 @@ export default function CustomerPage() {
 											) : (
 												<p className="text-default-500">No transaction history available</p>
 											)}
-										</div>
+										</div> */}
 									</div>
 								)}
 							</ModalBody>
