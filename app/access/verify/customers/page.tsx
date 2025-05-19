@@ -1,4 +1,4 @@
-import CustomerView from "@/view/dashboard/customerView";
+import CustomerView from "@/view/dashboard/customer/customerView";
 
 
 const VerifyCustomersPage = () => {

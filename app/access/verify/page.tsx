@@ -1,4 +1,6 @@
-import CustomerView from "@/view/dashboard/customerView";
+import React from "react";
+
+import CustomerView from "@/view/dashboard/customer/customerView";
 
 const VerifyPage = () => {
 	return <CustomerView />;

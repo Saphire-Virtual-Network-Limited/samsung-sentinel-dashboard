@@ -132,6 +132,7 @@ export async function getAllCustomerRecord(startDate?: string, endDate?: string)
 }
 
 
+
 export interface verifyCustomerReferenceNumber {
 	customerId: string;
 	phoneNumber: string;
@@ -143,4 +144,36 @@ export async function verifyCustomerReferenceNumber(verifyCustomerReferenceNumbe
 	return apiCall("/admin/customers/verify-reference", "POST", verifyCustomerReferenceNumber);
 }
 
+//** Stores */
+
+export async function getAllStores() {
+	return apiCall("/admin/stores/record", "GET");
+}
+
+export async function getUnpaidStores(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/stores/unpaid${query}`, "GET");
+}
+
+export async function getPaidStores(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/stores/paid${query}`, "GET");
+}
+
+//** Referees */
+
+export async function getUnapprovedReferees(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
+}
+
+export async function getApprovedReferees(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/approved-refreees${query}`, "GET");
+}
+
+export async function getRejectedReferees(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/rejected-refreees${query}`, "GET");
+}
 

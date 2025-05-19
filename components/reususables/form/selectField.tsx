@@ -49,7 +49,7 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, htmlFor, id, isInvalid
 				size={size}
 				variant="bordered"
 				classNames={{
-					base: "border-primary  w-full",
+					base: "border-primary  w-64",
 					trigger: ["data-[focus=true]:border-primary ", "active:border-primary"],
 					value: "truncate whitespace-inherit",
 					innerWrapper: "truncate whitespace-inherit",
