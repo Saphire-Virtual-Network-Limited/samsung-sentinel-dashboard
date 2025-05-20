@@ -382,7 +382,7 @@ export default function UnapprovedRefereesPage() {
 				isOpen={isOpen}
 				onClose={onClose}
 				// size="2xl"
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1300px] max-h-[600px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>
