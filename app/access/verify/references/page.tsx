@@ -1,6 +1,5 @@
 "use client";
 
-import { CustomerView } from "@/view";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
 import { UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage } from "@/view/dashboard";
