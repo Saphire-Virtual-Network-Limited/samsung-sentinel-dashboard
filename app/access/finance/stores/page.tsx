@@ -1,15 +1,15 @@
 "use client";
 
+import React from 'react'
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage } from "@/view/dashboard";
+import { CustomerView, UnpaidStoresView, PaidStoresView } from "@/view";
+import AllStoresView from '@/view/dashboard/finance/allStoresView';
 
 
-import React from "react";
-
-const VerifyPage = () => {
-	return (
-		<div className="flex w-full flex-col">
+const Page = () => {
+  return (
+    <div className="flex w-full flex-col">
 			<Tabs
 				aria-label="Options"
 				size="lg"
@@ -20,27 +20,29 @@ const VerifyPage = () => {
 					tab: "lg:p-4 text-sm lg:text-base",
 				}}>
 				<Tab
-					key="Unapproved"
-					title="Unapproved"
+					key="Unpaid Stores"
+					title="Unpaid Stores"
 					className="lg:p-4 text-base">
-					<UnapprovedRefereesPage />	
+					<UnpaidStoresView />
 				</Tab>
+				
 				<Tab
-					key="Approved"
-					title="Approved"
+					key="Paid Stores"
+					title="Paid Stores"
 					className="lg:p-4 text-base">
-					<ApprovedRefereesPage />
+					<PaidStoresView />
 				</Tab>
+				
 				<Tab
-					key="Rejected"
-					title="Rejected"
+					key="All Stores"
+					title="All Stores"
 					className="lg:p-4 text-base">
-					<RejectedRefereesPage />
+					<AllStoresView />
 				</Tab>
 
 			</Tabs>
 		</div>
-	);
-};
+  )
+}
 
-export default VerifyPage;
+export default Page;

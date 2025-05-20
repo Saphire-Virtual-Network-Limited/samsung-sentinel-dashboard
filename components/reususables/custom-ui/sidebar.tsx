@@ -85,15 +85,15 @@ export function AppSidebar() {
 
 	const verificationItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/verify/", id: "verification-dashboard" },
-		{ icon: Users, title: "References", url: "/access/verify/references", id: "verification-references" },
-		{ icon: CreditCard, title: "Loans", url: "/access/verify/loans", id: "verification-loans" },
-		{ icon: Users, title: "Customers", url: "/access/verify/customers", id: "verification-customers" },
+		// { icon: Users, title: "References", url: "/access/verify/references", id: "verification-references" },
+		// { icon: CreditCard, title: "Loans", url: "/access/verify/loans", id: "verification-loans" },
+		// { icon: Users, title: "Customers", url: "/access/verify/customers", id: "verification-customers" },
 	];
 
 	const financeItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/finance/", id: "finance-dashboard" },
-		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
 		{ icon: Store, title: "Stores", url: "/access/finance/stores", id: "finance-stores" },
+		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
 		{ icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
 		{ icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
 	];

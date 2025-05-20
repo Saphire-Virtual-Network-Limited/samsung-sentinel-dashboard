@@ -519,7 +519,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Wallet Information */}
-										{/* <div className="bg-default-50 p-4 rounded-lg">
+										<div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Wallet Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
@@ -575,7 +575,7 @@ export default function CustomerPage() {
 													<p className="font-medium">{selectedItem.WalletBalance?.lastBalance !== undefined ? `₦${selectedItem.WalletBalance.lastBalance.toLocaleString()}` : 'N/A'}</p>
 												</div>
 											</div>
-										</div> */}
+										</div>
 
 										{/* KYC Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
@@ -614,7 +614,7 @@ export default function CustomerPage() {
 															<p className="font-medium">{selectedItem.CustomerKYC?.[0]?.status2Comment || 'N/A'}</p>
 														</div>
 													</div>
-													{selectedItem.CustomerKYC?.[0]?.phone2 && selectedItem.CustomerKYC?.[0]?.phone2 !== 'N/A' && (
+													{/* {selectedItem.CustomerKYC?.[0]?.phone2 && selectedItem.CustomerKYC?.[0]?.phone2 !== 'N/A' && (
 														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 															{selectedItem.CustomerKYC?.[0]?.phone2Status !== 'APPROVED' && (
 																<Button
@@ -641,7 +641,7 @@ export default function CustomerPage() {
 																</Button>
 															)}
 														</div>
-													)}
+													)} */}
 												</div>
 
 												<div className="flex flex-col gap-4 bg-gray-200 p-4 rounded-lg">
@@ -660,7 +660,7 @@ export default function CustomerPage() {
 															<p className="font-medium">{selectedItem.CustomerKYC?.[0]?.status3Comment || 'N/A'}</p>
 														</div>
 													</div>
-													{selectedItem.CustomerKYC?.[0]?.phone3 && selectedItem.CustomerKYC?.[0]?.phone3 !== 'N/A' && (
+													{/* {selectedItem.CustomerKYC?.[0]?.phone3 && selectedItem.CustomerKYC?.[0]?.phone3 !== 'N/A' && (
 														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 															{selectedItem.CustomerKYC?.[0]?.phone3Status !== 'APPROVED' && (
 																<Button
@@ -687,7 +687,7 @@ export default function CustomerPage() {
 																</Button>
 															)}
 														</div>
-													)}
+													)} */}
 												</div>
 												
 												<div>
@@ -734,7 +734,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Mandate Information */}
-										{/* <div className="bg-default-50 p-4 rounded-lg">
+										<div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Mandate Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
@@ -802,7 +802,7 @@ export default function CustomerPage() {
 													<p className="font-medium">{selectedItem.CustomerMandate?.[0]?.message || 'N/A'}</p>
 												</div>
 											</div>
-										</div> */}
+										</div>
 
 										{/* Loan Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
@@ -892,7 +892,7 @@ export default function CustomerPage() {
 										</div>
 
 										{/* Transaction History */}
-										{/* <div className="bg-default-50 p-4 rounded-lg">
+										<div className="bg-default-50 p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
 											{selectedItem.TransactionHistory && selectedItem.TransactionHistory.length > 0 ? (
 												<div className="space-y-4">
@@ -916,7 +916,7 @@ export default function CustomerPage() {
 											) : (
 												<p className="text-default-500">No transaction history available</p>
 											)}
-										</div> */}
+										</div>
 									</div>
 								)}
 							</ModalBody>

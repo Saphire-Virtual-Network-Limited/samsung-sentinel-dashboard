@@ -337,7 +337,7 @@ export default function DropOffsPage() {
 										</div>
 
 										{/* Wallet Information Section */}
-										<div className="bg-white rounded-lg shadow-sm p-6">
+										{/* <div className="bg-white rounded-lg shadow-sm p-6">
 											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Wallet Information</h3>
 											<div className="grid grid-cols-2 gap-4">
 												<div className="space-y-2">
@@ -365,10 +365,10 @@ export default function DropOffsPage() {
 													</div>
 												</div>
 											</div>
-										</div>
+										</div> */}
 
 										{/* Loan Information Section */}
-										<div className="bg-white rounded-lg shadow-sm p-6">
+										{/* <div className="bg-white rounded-lg shadow-sm p-6">
 											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Loan Information</h3>
 											{selectedItem.LoanRecord && selectedItem.LoanRecord[0] && (
 												<div className="grid grid-cols-2 gap-4">
@@ -410,10 +410,10 @@ export default function DropOffsPage() {
 													</div>
 												</div>
 											)}
-										</div>
+										</div> */}
 
 										{/* Transaction History Section */}
-										<div className="bg-white rounded-lg shadow-sm p-6">
+										{/* <div className="bg-white rounded-lg shadow-sm p-6">
 											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Transaction History</h3>
 											<div className="overflow-x-auto">
 												<table className="min-w-full divide-y divide-gray-200">
@@ -455,7 +455,7 @@ export default function DropOffsPage() {
 													</tbody>
 												</table>
 											</div>
-										</div>
+										</div> */}
 
 										{/* Drop-off Logs Section */}
 										{modalMode === "view" && (
