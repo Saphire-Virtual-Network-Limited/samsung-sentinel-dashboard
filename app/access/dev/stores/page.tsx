@@ -20,22 +20,24 @@ const Page = () => {
 					tab: "lg:p-4 text-sm lg:text-base",
 				}}>
 				<Tab
-					key="All Stores"
-					title="All Stores"
+					key="Unpaid Stores"
+					title="Unpaid Stores"
 					className="lg:p-4 text-base">
-					<AllStoresView />
+					<UnpaidStoresView />
 				</Tab>
+				
 				<Tab
 					key="Paid Stores"
 					title="Paid Stores"
 					className="lg:p-4 text-base">
 					<PaidStoresView />
 				</Tab>
+				
 				<Tab
-					key="Unpaid Stores"
-					title="Unpaid Stores"
+					key="All Stores"
+					title="All Stores"
 					className="lg:p-4 text-base">
-					<UnpaidStoresView />
+					<AllStoresView />
 				</Tab>
 
 			</Tabs>

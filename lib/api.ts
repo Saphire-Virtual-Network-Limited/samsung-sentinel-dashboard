@@ -177,3 +177,12 @@ export async function getRejectedReferees(startDate?: string, endDate?: string) 
 	return apiCall(`/admin/customers/rejected-refreees${query}`, "GET");
 }
 
+export interface updateStoreStatus {
+	status: string;
+	storeOnLoanId: string;
+}
+
+export async function updateStoreStatus(updateStoreStatus: updateStoreStatus) {
+	return apiCall("/admin/stores/update-payment", "PUT", updateStoreStatus);
+}
+

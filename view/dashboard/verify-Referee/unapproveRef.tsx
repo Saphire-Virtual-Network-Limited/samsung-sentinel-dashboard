@@ -136,7 +136,7 @@ export default function UnapprovedRefereesPage() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
+		startDate && endDate ? ["unapproved-refreees", startDate, endDate] : "unapproved-refreees",
 		() => getUnapprovedReferees(startDate, endDate)
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
@@ -147,14 +147,14 @@ export default function UnapprovedRefereesPage() {
 				return r.data;
 			})
 			.catch((error) => {
-				console.error("Error fetching customer records:", error);
+				console.error("Error fetching unapproved referee:", error);
 				setHasNoRecords(true);
 				return [];
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
@@ -241,6 +241,7 @@ export default function UnapprovedRefereesPage() {
 		} finally {
 			setIsButtonLoading(false);
 			onApprovedClose();
+			onClose();
 		}
 	};
 
@@ -279,6 +280,7 @@ export default function UnapprovedRefereesPage() {
 		} finally {
 			setIsButtonLoading(false);
 			onRejectedClose();
+			onClose();
 		}
 	};
 

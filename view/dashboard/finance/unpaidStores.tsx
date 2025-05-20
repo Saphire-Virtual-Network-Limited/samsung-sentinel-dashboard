@@ -3,18 +3,19 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getUnpaidStores } from "@/lib";
+import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getUnpaidStores, updateStoreStatus } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { SelectField } from "@/components/reususables/form";
+import { type } from "os";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "store.storeName", sortable: true },
-	{ name: "Phone No.", uid: "store.phoneNumber", sortable: true },
-	{ name: "Amount", uid: "amount", sortable: true },
-	{ name: "Status", uid: "status", sortable: true },
+	{ name: "Name", uid: "fullName", sortable: true },
+	{ name: "Phone No.", uid: "PhoneNo", sortable: true },
+	{ name: "Amount", uid: "Amount", sortable: true },
+	{ name: "Status", uid: "Status", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -120,12 +121,20 @@ type StoreOnLoan = {
           monoCustomerConnectedCustomerId: string;
       };
   };
+  // Add transformed fields
+  id?: string;
+  fullName?: string;
+  PhoneNo?: string;
+  Amount?: string;
+  Status?: string;
 };
 
 
-export default function AllStoresView() {
+export default function UnpaidStoresView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
+	const [isButtonLoading, setIsButtonLoading] = useState(false);
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<StoreOnLoan | null>(null);
 
@@ -153,8 +162,8 @@ export default function AllStoresView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		["stores-records"],
-		() => getUnpaidStores()
+		startDate && endDate ? ["unpaid-stores", startDate, endDate] : "unpaid-stores",
+		() => getUnpaidStores(startDate, endDate)
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
 					setHasNoRecords(true);
@@ -164,53 +173,83 @@ export default function AllStoresView() {
 				return r.data;
 			})
 			.catch((error) => {
-					console.error("Error fetching stores records:", error); 
+				console.error("Error fetching unpaid stores:", error);
 				setHasNoRecords(true);
 				return [];
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
 		}
 	);
 
+  console.log(raw);
+
 	const customers = useMemo(
 		() =>
 			raw.map((r: StoreOnLoan) => ({
 				...r,
+				id: r.storeId,
 				fullName: r.store.storeName || '',
-				Email: r.store.storeEmail || '',
 				PhoneNo: r.store.phoneNumber || '',
-				State: r.store.state || '',
-				Partner: r.store.partner || '',
+				Amount: r.amount?.toLocaleString() || '0',
+				Status: r.status || '',
 			})),
 		[raw]
 	);
+
+
+  const handleUpdateStoreStatus = async (row: StoreOnLoan) => {
+    setIsButtonLoading(true);
+
+    const storeDetails = {
+      storeOnLoanId: row.storeOnLoanId,
+      status: "PAID",
+    }
+
+    console.log('Updating store with details:', storeDetails);
+    try {
+      const res = await updateStoreStatus(storeDetails);
+      console.log('Update response:', res);
+
+      if (res.statusCode === 200) {
+        showToast({ type: "success", message: "Store status updated successfully", duration: 3000, position: "top-right" });
+        onApprovedClose();
+        onClose();
+      } else {
+        console.error('Update failed with response:', res);
+        showToast({ type: "error", message: res.message || "Failed to update store status", duration: 8000, position: "top-right" });
+      }
+    } catch (error: any) {
+      console.error('Error updating store status:', error);
+      showToast({ type: "error", message: error.message || "Failed to update store status", duration: 8000, position: "top-right" });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
 
 	const filtered = useMemo(() => {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
-				const fullName = (c.store.storeName || '').toLowerCase();
-				const email = (c.store.storeEmail || '').toLowerCase();
-				const phone = (c.store.phoneNumber || '').toLowerCase();
-				const state = (c.store.state || '').toLowerCase();
-				const partner = (c.store.partner || '').toLowerCase();
+				const fullName = (c.fullName || '').toLowerCase();
+				const phone = (c.PhoneNo || '').toLowerCase();
+				const amount = (c.Amount || '').toLowerCase();
+				const status = (c.Status || '').toLowerCase();
 				
 				return fullName.includes(f) || 
-					   email.includes(f) || 
 					   phone.includes(f) || 
-					   state.includes(f) || 
-					   partner.includes(f);
+					   amount.includes(f) || 
+					   status.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));	
+			list = list.filter((c) => statusFilter.has(c.Status || ''));	
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -274,10 +313,28 @@ export default function AllStoresView() {
 		}
 		
 		if (key === "fullName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.store.storeName || ''}</p>;	
+			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;	
 		}
+
+		if (key === "Status") {
+			return (
+				<Chip
+					key={`${row.storeId}-status`}
+					className="capitalize"
+					color="warning"
+					size="sm"
+					variant="flat">
+					{row.Status}
+				</Chip>
+			);
+		}
+
 		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
+
+
+
+
 
 	return (
 		<>
@@ -333,6 +390,10 @@ export default function AllStoresView() {
 													<p className="text-sm text-default-500">Store ID</p>
 													<p className="font-medium">{selectedItem.store.storeId || 'N/A'}</p>
 												</div>
+                        <div>
+													<p className="text-sm text-default-500">Store on Loan ID</p>
+													<p className="font-medium">{selectedItem.storeOnLoanId || 'N/A'}</p>
+												</div>
 												<div>
 													<p className="text-sm text-default-500">Store Name</p>
 													<p className="font-medium">{selectedItem.store.storeName || 'N/A'}</p>
@@ -381,6 +442,25 @@ export default function AllStoresView() {
 													<p className="text-sm text-default-500">Store Hours</p>
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
+                        <div className="flex items-center justify-between col-span-2">
+                        <div>
+													<p className="text-sm text-default-500">Paid Status</p>
+													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
+														{selectedItem.status || 'N/A'}
+													</p>
+												</div>
+                        <div>
+                          {selectedItem.status !== 'PAID' && (
+                            <Button
+                                color="success"
+                                variant="solid"
+                                onPress={() => onApproved()}  
+                                isLoading={isButtonLoading}>
+                                Mark as Paid
+                            </Button>
+                          )}
+                        </div>
+                        </div>
 											</div>
 										</div>
 
@@ -513,6 +593,46 @@ export default function AllStoresView() {
 									variant="light"
 									onPress={onClose}>
 									Close
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+      <Modal
+				isOpen={isApproved}
+				onClose={onApprovedClose}
+				size="lg">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Confirm Store Payment</ModalHeader>
+							<ModalBody>
+								<p className="text-md text-default-500">
+									Are you sure you want to mark this store as paid?  This action cannot be undone.
+								</p>
+                
+								{selectedItem && (
+									<div className="mt-4">
+										<p className="font-medium">Store: {selectedItem.store.storeName}</p>
+										<p className="font-medium">Amount: ₦{selectedItem.amount?.toLocaleString()}</p>
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => selectedItem && handleUpdateStoreStatus(selectedItem)}
+									isLoading={isButtonLoading}>
+									Confirm Payment
+								</Button>
+								<Button
+									color="danger"
+									variant="light"
+									onPress={onApprovedClose}>
+									Cancel
 								</Button>
 							</ModalFooter>
 						</>

@@ -135,7 +135,7 @@ export default function ApprovedRefereesPage() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
+		startDate && endDate ? ["rejected-refreees", startDate, endDate] : "rejected-refreees",
 		() => getRejectedReferees(startDate, endDate)
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
@@ -152,8 +152,8 @@ export default function ApprovedRefereesPage() {
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
@@ -239,6 +239,7 @@ export default function ApprovedRefereesPage() {
 		} finally {
 			setIsButtonLoading(false);
 			onApprovedClose();
+			onClose();
 		}
 	};
 
@@ -277,6 +278,7 @@ export default function ApprovedRefereesPage() {
 		} finally {
 			setIsButtonLoading(false);
 			onRejectedClose();
+			onClose();
 		}
 	};
 
