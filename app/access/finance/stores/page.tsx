@@ -3,7 +3,7 @@
 import React from 'react'
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { CustomerView, UnpaidStoresView, PaidStoresView } from "@/view";
+import { UnpaidStoresView, PaidStoresView } from "@/view";
 import AllStoresView from '@/view/dashboard/finance/allStoresView';
 
 
