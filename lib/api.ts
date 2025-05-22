@@ -106,6 +106,23 @@ export async function getAllLoanRecord(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/loan/record${query}`, "GET");
 }
 
+export async function getAllEnrolledRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/loan/enrolled${query}`, "GET");
+}
+
+export async function getAllApprovedRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/loan/approved${query}`, "GET");
+}
+
+export async function getAllDefaultedRecord(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/loan/defaulted${query}`, "GET");
+}
+
+
+
 //** Devices */
 
 export async function getAllDevicesData(startDate?: string, endDate?: string) {

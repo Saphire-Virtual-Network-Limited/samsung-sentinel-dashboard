@@ -8,16 +8,16 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import DateFilter from "@/components/reususables/custom-ui/dateFilter";
-import { SelectField } from "@/components/reususables/form";
+
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Email", uid: "email", sortable: true },
-	{ name: "BVN Phone", uid: "bvnPhoneNumber" },
-	{ name: "Main Phone", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age" },
-	{ name: "Status", uid: "status", sortable: true },
+	{ name: "Device Price", uid: "devicePrice" },
+	{ name: "Loan Amount", uid: "loanAmount" },
+	{ name: "Down Payment", uid: "downPayment" },
+	{ name: "Monthly Repay.", uid: "monthlyRepayment" },
+	{ name: "Duration", uid: "duration" },
 	{ name: "Loan Status", uid: "loanStatus", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
@@ -27,6 +27,7 @@ const statusOptions = [
 	{ name: "Pending", uid: "pending" },
 	{ name: "Approved", uid: "approved" },
 	{ name: "Rejected", uid: "rejected" },
+	{ name: "Defaulted", uid: "defaulted" },
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
@@ -34,6 +35,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	approved: "success",
 	rejected: "danger",
 	enrolled: "warning",
+	defaulted: "danger",
 };  
 
 type LoanRecord = {
@@ -179,16 +181,20 @@ export default function LoansView() {
 		}
 	);
 
+	console.log(raw);
+
 	const customers = useMemo(
 		() =>
 			raw.map((r: LoanRecord) => ({
 				...r,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-				email: r.email,
 				age: calculateAge(r.dob),
-				bvnPhoneNumber: r.bvnPhoneNumber,
-				mainPhoneNumber: r.mainPhoneNumber,
+				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
+				duration: r.LoanRecord?.[0]?.duration ? `${r.LoanRecord[0].duration} months` : 'N/A',
 				status: r.status,
+				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
+				downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
+				devicePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
 				loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A'
 			})),
 		[raw]
@@ -228,7 +234,7 @@ export default function LoansView() {
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Loan_Records.xlsx");
+		saveAs(new Blob([buf]), "All_Loan_Records.xlsx");
 	};
 
 	// When action clicked:

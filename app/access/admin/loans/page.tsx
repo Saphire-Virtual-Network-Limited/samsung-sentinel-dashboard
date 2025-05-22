@@ -1,8 +1,8 @@
 import React from "react";
-import { LoansView } from "@/view/dashboard";
+import LoanSummaryView from '@/view/dashboard/loans/loanSummaryView'
 
 const LoansPage = () => {
-	return <LoansView />;
+	return <LoanSummaryView />;
 };
 
 export default LoansPage;
