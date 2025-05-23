@@ -75,6 +75,7 @@ export function AppSidebar() {
 	const developerItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/dev/", id: "developer-dashboard" },
 		{ icon: Users, title: "Customers", url: "/access/dev/customers", id: "developer-customers" },
+		{ icon: Users, title: "Referees", url: "/access/dev/referees", id: "developer-referees" },
 		{ icon: Phone, title: "Devices", url: "/access/dev/devices", id: "developer-devices" },
 		{ icon: CreditCard, title: "Loans", url: "/access/dev/loans", id: "developer-loans" },
 		{ icon: Package2Icon, title: "Products", url: "/access/dev/products", id: "developer-products" },
