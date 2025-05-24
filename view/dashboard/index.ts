@@ -11,8 +11,11 @@ import RejectedRefereesPage from "./verify-Referee/rejectedRef";
 import EnrolledView from "./loans/enrolledView";
 import ApprovedView from "./loans/approvedView";
 import DefaultedView from "./loans/defaultedView";
+import EnrolledDeviceView from "./devices/enrolledDeviceView";   
+import UnEnrolledDeviceView from "./devices/unEnrolledDeviceView"; 
+import AllDevices from "./devices/allDevicesView";          
 
 
 
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices   };

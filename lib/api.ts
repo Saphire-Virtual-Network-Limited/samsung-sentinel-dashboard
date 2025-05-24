@@ -203,3 +203,10 @@ export async function updateStoreStatus(updateStoreStatus: updateStoreStatus) {
 	return apiCall("/admin/stores/update-payment", "PUT", updateStoreStatus);
 }
 
+//** Devices */
+
+export async function getAllDevices(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/device/all${query}`, "GET");
+}
+

@@ -3,19 +3,19 @@
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores } from "@/lib";
+import { getAllDevices } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "storeName", sortable: true },
-	{ name: "Contact No.", uid: "phoneNumber", sortable: true },
-	{ name: "Partner", uid: "partner", sortable: true },
-	{ name: "State", uid: "state", sortable: true },
-	{ name: "Region", uid: "region", sortable: true },
-	{ name: "City", uid: "city", sortable: true },
+	{ name: "Name", uid: "deviceName", sortable: true },
+  { name: "Brand", uid: "deviceManufacturer", sortable: true },
+  { name: "Type", uid: "deviceType", sortable: true },
+	{ name: "Price", uid: "price", sortable: true },
+	{ name: "SAP", uid: "SAP", sortable: true },
+	{ name: "SLD", uid: "SLD", sortable: true },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -31,35 +31,32 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	unpaid: "danger",
 };
 
-type StoreRecord = {
-  storeOldId: number;
-  storeName: string;
-  city: string;
-  state: string;
-  region: string;
-  address: string;
-  accountNumber: string;
-  accountName: string;
-  bankName: string;
-  bankCode: string;
-  phoneNumber: string;
-  storeEmail: string;
-  longitude: number;
-  latitude: number;
-  clusterId: number;
-  partner: string;
-  storeOpen: string;
-  storeClose: string;
+type DeviceRecord = {
+  price: number;
+  deviceModelNumber: string;
+  SAP: number;
+  SLD: number;
   createdAt: string;
+  deviceManufacturer: string;
+  deviceName: string;
+  deviceRam: string | null;
+  deviceScreen: string | null;
+  deviceStorage: string | null;
+  imageLink: string;
+  newDeviceId: string;
+  oldDeviceId: string;
+  sentiprotect: number;
   updatedAt: string;
-  storeId: string;
+  deviceType: string;
+  deviceCamera: string[];
+  android_go: string;
 };
 
 export default function AllStoresView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
-	const [selectedItem, setSelectedItem] = useState<StoreRecord | null>(null);
+	const [selectedItem, setSelectedItem] = useState<DeviceRecord | null>(null);
 
 
 	// --- date filter state ---
@@ -71,7 +68,7 @@ export default function AllStoresView() {
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-		column: "fullName",
+		column: "deviceName",
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
@@ -85,8 +82,8 @@ export default function AllStoresView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		["stores-records"],
-		() => getAllStores()
+		["devices-records"],
+		() => getAllDevices()
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
 					setHasNoRecords(true);
@@ -96,7 +93,7 @@ export default function AllStoresView() {
 				return r.data;
 			})
 			.catch((error) => {
-					console.error("Error fetching stores records:", error);
+					console.error("Error fetching devices records:", error);
 				setHasNoRecords(true);
 				return [];
 			}),
@@ -112,13 +109,14 @@ export default function AllStoresView() {
 
 	const customers = useMemo(
 		() =>
-			raw.map((r: StoreRecord) => ({
+			  raw.map((r: DeviceRecord) => ({
 				...r,
-				fullName: r.storeName || '',
-				Email: r.storeEmail || '',
-				PhoneNo: r.phoneNumber || '',
-				State: r.state || '',
-				Partner: r.partner || '',
+				deviceName: r.deviceName || '',
+				deviceManufacturer: r.deviceManufacturer || '',
+				deviceType: r.deviceType || '',
+				price: r.price || '',
+				SAP: r.SAP || '',
+				SLD: r.SLD || '',
 			})),
 		[raw]
 	);
@@ -128,17 +126,19 @@ export default function AllStoresView() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
-				const fullName = (c.fullName || '').toLowerCase();
-				const email = (c.Email || '').toLowerCase();
-				const phone = (c.PhoneNo || '').toLowerCase();
-				const state = (c.State || '').toLowerCase();
-				const partner = (c.Partner || '').toLowerCase();
+				const deviceName = (c.deviceName || '').toLowerCase();
+				const deviceManufacturer = (c.deviceManufacturer || '').toLowerCase();
+				const deviceType = (c.deviceType || '').toLowerCase();
+				const price = (c.price || '').toLowerCase();
+				const SAP = (c.SAP || '').toLowerCase();
+				const SLD = (c.SLD || '').toLowerCase();
 				
-				return fullName.includes(f) || 
-					   email.includes(f) || 
-					   phone.includes(f) || 
-					   state.includes(f) || 
-					   partner.includes(f);
+				return deviceName.includes(f) || 
+					   deviceManufacturer.includes(f) || 
+					   deviceType.includes(f) || 
+					   price.includes(f) || 
+					   SAP.includes(f) || 
+					   SLD.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
@@ -155,35 +155,35 @@ export default function AllStoresView() {
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = (a[sortDescriptor.column as keyof StoreRecord] || '').toString();
-			const bVal = (b[sortDescriptor.column as keyof StoreRecord] || '').toString();
+			const aVal = (a[sortDescriptor.column as keyof DeviceRecord] || '').toString();
+			const bVal = (b[sortDescriptor.column as keyof DeviceRecord] || '').toString();
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
 	}, [paged, sortDescriptor]);
 
 	// Export all filtered
-	const exportFn = async (data: StoreRecord[]) => {
+	const exportFn = async (data: DeviceRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("Devices");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Stores_Records.xlsx");
+		saveAs(new Blob([buf]), "Devices_Records.xlsx");
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view", row: StoreRecord) => {
+	const openModal = (mode: "view", row: DeviceRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
 		onOpen();
 	};
 
 	// Render each cell, including actions dropdown:
-	const renderCell = (row: StoreRecord, key: string) => {
+	const renderCell = (row: DeviceRecord, key: string) => {
 		if (key === "actions") {
 			return (
-				<div className="flex justify-end" key={`${row.storeId}-actions`}>
+				<div className="flex justify-end" key={`${row.newDeviceId}-actions`}>
 					<Dropdown>
 						<DropdownTrigger>
 							<Button
@@ -195,7 +195,7 @@ export default function AllStoresView() {
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Actions">
 							<DropdownItem
-								key={`${row.storeId}-view`}
+								key={`${row.newDeviceId}-view`}
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
@@ -205,10 +205,10 @@ export default function AllStoresView() {
 			);
 		}
 		
-		if (key === "fullName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.storeName || ''}</p>;	
+		if (key === "deviceName") {
+			return <p key={`${row.newDeviceId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.deviceName || ''}</p>;	
 		}
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <p key={`${row.newDeviceId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
 
 	return (
@@ -216,7 +216,7 @@ export default function AllStoresView() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
-			<GenericTable<StoreRecord>
+			<GenericTable<DeviceRecord>
 				columns={columns}
 				data={sorted}
 				allCount={filtered.length}
@@ -258,61 +258,53 @@ export default function AllStoresView() {
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">
-										{/* Store Information */}
+										{/* Device Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Store Information</h3>
+											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
-													<p className="text-sm text-default-500">Store ID</p>
-													<p className="font-medium">{selectedItem.storeId || 'N/A'}</p>
+													<p className="text-sm text-default-500">Device ID</p>
+													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Store Name</p>
-													<p className="font-medium">{selectedItem.storeName || 'N/A'}</p>
+													<p className="text-sm text-default-500">Old Device ID</p>
+													<p className="font-medium">{selectedItem.oldDeviceId || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Partner</p>
-													<p className="font-medium">{selectedItem.partner || 'N/A'}</p>
+													<p className="text-sm text-default-500">Device Name</p>
+													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">City</p>
-													<p className="font-medium">{selectedItem.city || 'N/A'}</p>
+													<p className="text-sm text-default-500">Model Number</p>
+													<p className="font-medium">{selectedItem.deviceModelNumber || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">State</p>
-													<p className="font-medium">{selectedItem.state || 'N/A'}</p>
+													<p className="text-sm text-default-500">Manufacturer</p>
+													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Region</p>
-													<p className="font-medium">{selectedItem.region || 'N/A'}</p>
+													<p className="text-sm text-default-500">Device Type</p>
+													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Address</p>
-													<p className="font-medium">{selectedItem.address || 'N/A'}</p>
+													<p className="text-sm text-default-500">Price</p>
+													<p className="font-medium">{selectedItem.price || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Phone Number</p>
-													<p className="font-medium">{selectedItem.phoneNumber || 'N/A'}</p>
+													<p className="text-sm text-default-500">SAP</p>
+													<p className="font-medium">{selectedItem.SAP || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Email</p>
-													<p className="font-medium">{selectedItem.storeEmail || 'N/A'}</p>
+													<p className="text-sm text-default-500">SLD</p>
+													<p className="font-medium">{selectedItem.SLD || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Account Number</p>
-													<p className="font-medium">{selectedItem.accountNumber || 'N/A'}</p>
+													<p className="text-sm text-default-500">Sentiprotect</p>
+													<p className="font-medium">{selectedItem.sentiprotect || 'N/A'}</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Account Name</p>
-													<p className="font-medium">{selectedItem.accountName || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Bank Name</p>
-													<p className="font-medium">{selectedItem.bankName || 'N/A'}</p>
-												</div>
-												<div>
-													<p className="text-sm text-default-500">Store Hours</p>
-													<p className="font-medium">{`${selectedItem.storeOpen || '00:00'} - ${selectedItem.storeClose || '00:00'}`}</p>
+													<p className="text-sm text-default-500">Android Go</p>
+													<p className="font-medium">{selectedItem.android_go || 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Created At</p>
