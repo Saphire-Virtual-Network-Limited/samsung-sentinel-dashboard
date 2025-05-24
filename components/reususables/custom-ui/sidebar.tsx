@@ -103,6 +103,8 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/support/", id: "support-dashboard" },
 		{ icon: Store, title: "Stores", url: "/access/support/stores", id: "support-stores" },
 		{ icon: CreditCard, title: "Customers", url: "/access/support/customers", id: "support-customers" },
+		{ icon: CreditCard, title: "Loans", url: "/access/support/loans", id: "support-loans" },
+
 	];
 
 	// Get items based on user role
