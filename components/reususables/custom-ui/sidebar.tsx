@@ -99,6 +99,12 @@ export function AppSidebar() {
 		{ icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
 	];
 
+	const supportItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/support/", id: "support-dashboard" },
+		{ icon: Store, title: "Stores", url: "/access/support/stores", id: "support-stores" },
+		{ icon: CreditCard, title: "Customers", url: "/access/support/customers", id: "support-customers" },
+	];
+
 	// Get items based on user role
 	const items: MenuItem[] = (() => {
 		const role = userResponse?.data?.role;
@@ -113,6 +119,8 @@ export function AppSidebar() {
 				return developerItems;
 			case "FINANCE":
 				return financeItems;
+			case "SUPPORT":
+				return supportItems;
 			default:
 				return [];
 		}
