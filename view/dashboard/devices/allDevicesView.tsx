@@ -13,9 +13,11 @@ const columns: ColumnDef[] = [
 	{ name: "Name", uid: "deviceName", sortable: true },
   { name: "Brand", uid: "deviceManufacturer", sortable: true },
   { name: "Type", uid: "deviceType", sortable: true },
-	{ name: "Price", uid: "price", sortable: true },
+  { name: "Sentiprotect", uid: "sentiprotect", sortable: true },
 	{ name: "SAP", uid: "SAP", sortable: true },
 	{ name: "SLD", uid: "SLD", sortable: true },
+
+	{ name: "Price", uid: "price", sortable: true },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -52,7 +54,7 @@ type DeviceRecord = {
   android_go: string;
 };
 
-export default function AllStoresView() {
+export default function AllDevicesView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
@@ -114,9 +116,10 @@ export default function AllStoresView() {
 				deviceName: r.deviceName || '',
 				deviceManufacturer: r.deviceManufacturer || '',
 				deviceType: r.deviceType || '',
-				price: r.price || '',
-				SAP: r.SAP || '',
-				SLD: r.SLD || '',
+				price: r.price ? `₦${r.price.toLocaleString()}` : '',
+				sentiProtect: r.sentiprotect ? `₦${r.sentiprotect.toLocaleString()}` : '',
+				SAP: r.SAP ? `₦${r.SAP.toLocaleString()}` : '',
+				SLD: r.SLD ? `₦${r.SLD.toLocaleString()}` : '',
 			})),
 		[raw]
 	);
@@ -288,19 +291,19 @@ export default function AllStoresView() {
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Price</p>
-													<p className="font-medium">{selectedItem.price || 'N/A'}</p>
+													<p className="font-medium">{selectedItem.price ? `₦${selectedItem.price.toLocaleString()}` : 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">SAP</p>
-													<p className="font-medium">{selectedItem.SAP || 'N/A'}</p>
+													<p className="font-medium">{selectedItem.SAP ? `₦${selectedItem.SAP.toLocaleString()}` : 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">SLD</p>
-													<p className="font-medium">{selectedItem.SLD || 'N/A'}</p>
+													<p className="font-medium">{selectedItem.SLD ? `₦${selectedItem.SLD.toLocaleString()}` : 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Sentiprotect</p>
-													<p className="font-medium">{selectedItem.sentiprotect || 'N/A'}</p>
+													<p className="font-medium">{selectedItem.sentiprotect ? `₦${selectedItem.sentiprotect.toLocaleString()}` : 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Android Go</p>

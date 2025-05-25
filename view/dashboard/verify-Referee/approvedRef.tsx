@@ -10,14 +10,16 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, So
 import { EllipsisVertical } from "lucide-react";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
+import { useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "DOB Mismatch", uid: "dobMisMatch" },
 	{ name: "Referee 1", uid: "referee1" },
 	{ name: "Referee 2", uid: "referee2" },
+	{ name: "Created At", uid: "createdAt" },	
+	{ name: "Updated At", uid: "updatedAt" },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -102,6 +104,7 @@ type ApprovedRefereeRecord = {
 };
 
 export default function ApprovedRefereesPage() {
+	const router = useRouter();
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
@@ -172,7 +175,8 @@ export default function ApprovedRefereesPage() {
 				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
 				age: calculateAge(r.dob),
 				mainPhoneNumber: r.mainPhoneNumber,
-				dobMisMatch: r.dobMisMatch ? 'Yes' : 'No',
+				createdAt: r.CustomerKYC?.[0]?.createdAt ? new Date(r.CustomerKYC?.[0]?.createdAt).toLocaleString() : 'N/A',
+				updatedAt: r.CustomerKYC?.[0]?.updatedAt ? new Date(r.CustomerKYC?.[0]?.updatedAt).toLocaleString() : 'N/A',
 			})),
 		[raw]
 	);
@@ -294,9 +298,7 @@ export default function ApprovedRefereesPage() {
 
 	// When action clicked:
 	const openModal = (mode: "view", row: ApprovedRefereeRecord) => {
-		setModalMode(mode);
-		setSelectedItem(row);
-		onOpen();
+		router.push(`/access/verify/approved/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:
@@ -420,7 +422,7 @@ export default function ApprovedRefereesPage() {
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Dob Mismatch</p>
-													<p className="font-medium">{selectedItem.dobMisMatch ? 'Yes' : 'No'}</p>
+													<p className="font-medium">{selectedItem.dobMisMatch === false ? 'No' : 'Yes'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Reg by:</p>

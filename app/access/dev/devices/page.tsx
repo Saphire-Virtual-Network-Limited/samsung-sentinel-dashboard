@@ -1,8 +1,8 @@
 import React from 'react'
-
+import { DeviceSummaryView } from '@/view/dashboard'
 const Page = () => {
   return (
-    <div>page</div>
+    <DeviceSummaryView />
   )
 }
 

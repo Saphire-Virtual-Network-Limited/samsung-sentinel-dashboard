@@ -10,12 +10,12 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, So
 import { EllipsisVertical } from "lucide-react";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
+import { useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "DOB Mismatch", uid: "dobMisMatch" },
 	{ name: "Referee 1", uid: "referee1" },
 	{ name: "Referee 2", uid: "referee2" },
 	{ name: "Actions", uid: "actions"},
@@ -101,7 +101,8 @@ type RejectedRefereeRecord = {
 	}>;
 };
 
-export default function ApprovedRefereesPage() {
+export default function RejectedRefereesPage() {
+	const router = useRouter();
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
@@ -172,9 +173,8 @@ export default function ApprovedRefereesPage() {
 				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
 				age: calculateAge(r.dob),
 				mainPhoneNumber: r.mainPhoneNumber,
-				dobMisMatch: r.dobMisMatch ? 'Yes' : 'No',
 			})),
-		[raw]
+		[raw]	
 	);
 
 	const filtered = useMemo(() => {
@@ -294,9 +294,7 @@ export default function ApprovedRefereesPage() {
 
 	// When action clicked:
 	const openModal = (mode: "view", row: RejectedRefereeRecord) => {
-		setModalMode(mode);
-		setSelectedItem(row);
-		onOpen();
+		router.push(`/access/verify/rejected/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:
