@@ -221,6 +221,11 @@ export default function DropOffsPage() {
 		}
 	};
 
+	// Handle row click
+	const handleRowClick = (row: CustomerRecord) => {
+		openModal("view", row);
+	};
+
 	// Render each cell, including actions dropdown:
 	const renderCell = (row: CustomerRecord, key: string) => {
 		if (key === "actions") {
@@ -246,7 +251,7 @@ export default function DropOffsPage() {
 				</div>
 			);
 		}
-		return <p className="text-small">{(row as any)[key]}</p>;
+		return <p className="text-small cursor-pointer" onClick={() => handleRowClick(row)}>{(row as any)[key]}</p>;
 	};
 
 	return (
@@ -302,160 +307,10 @@ export default function DropOffsPage() {
 														<span className="text-gray-600 w-40">Full Name:</span>
 														<span className="font-medium">{`${selectedItem.firstName} ${selectedItem.lastName}`}</span>
 													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Email:</span>
-														<span className="font-medium">{selectedItem.email}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Date of Birth:</span>
-														<span className="font-medium">{selectedItem.dob}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">BVN:</span>
-														<span className="font-medium">{selectedItem.bvn}</span>
-													</div>
-												</div>
-												<div className="space-y-2">
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">BVN Phone:</span>
-														<span className="font-medium">{selectedItem.bvnPhoneNumber}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Main Phone:</span>
-														<span className="font-medium">{selectedItem.mainPhoneNumber}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Channel:</span>
-														<span className="font-medium">{selectedItem.channel}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Created At:</span>
-														<span className="font-medium">{new Date(selectedItem.createdAt).toLocaleString()}</span>
-													</div>
+													
 												</div>
 											</div>
 										</div>
-
-										{/* Wallet Information Section */}
-										{/* <div className="bg-white rounded-lg shadow-sm p-6">
-											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Wallet Information</h3>
-											<div className="grid grid-cols-2 gap-4">
-												<div className="space-y-2">
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Account Number:</span>
-														<span className="font-medium">{selectedItem.Wallet?.accountNumber}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Bank Name:</span>
-														<span className="font-medium">{selectedItem.Wallet?.bankName}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Account Name:</span>
-														<span className="font-medium">{selectedItem.Wallet?.accountName}</span>
-													</div>
-												</div>
-												<div className="space-y-2">
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Current Balance:</span>
-														<span className="font-medium">₦{selectedItem.WalletBalance?.balance.toLocaleString()}</span>
-													</div>
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Last Balance:</span>
-														<span className="font-medium">₦{selectedItem.WalletBalance?.lastBalance.toLocaleString()}</span>
-													</div>
-												</div>
-											</div>
-										</div> */}
-
-										{/* Loan Information Section */}
-										{/* <div className="bg-white rounded-lg shadow-sm p-6">
-											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Loan Information</h3>
-											{selectedItem.LoanRecord && selectedItem.LoanRecord[0] && (
-												<div className="grid grid-cols-2 gap-4">
-													<div className="space-y-2">
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Loan Amount:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].loanAmount.toLocaleString()}</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Device Price:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].devicePrice.toLocaleString()}</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Down Payment:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].downPayment.toLocaleString()}</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Insurance Price:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].insurancePrice.toLocaleString()}</span>
-														</div>
-													</div>
-													<div className="space-y-2">
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Monthly Repayment:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].monthlyRepayment.toLocaleString()}</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Duration:</span>
-															<span className="font-medium">{selectedItem.LoanRecord[0].duration} months</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Interest Amount:</span>
-															<span className="font-medium">₦{selectedItem.LoanRecord[0].interestAmount.toLocaleString()}</span>
-														</div>
-														<div className="flex items-center">
-															<span className="text-gray-600 w-40">Loan Status:</span>
-															<span className="font-medium">{selectedItem.LoanRecord[0].loanStatus}</span>
-														</div>
-													</div>
-												</div>
-											)}
-										</div> */}
-
-										{/* Transaction History Section */}
-										{/* <div className="bg-white rounded-lg shadow-sm p-6">
-											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Transaction History</h3>
-											<div className="overflow-x-auto">
-												<table className="min-w-full divide-y divide-gray-200">
-													<thead className="bg-gray-50">
-														<tr>
-															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-															<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
-														</tr>
-													</thead>
-													<tbody className="bg-white divide-y divide-gray-200">
-														{selectedItem.TransactionHistory?.map((transaction) => (
-															<tr key={transaction.transactionHistoryId}>
-																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																	{new Date(transaction.createdAt).toLocaleString()}
-																</td>
-																<td className="px-6 py-4 whitespace-nowrap text-sm">
-																	<span className={`px-2 py-1 rounded-full text-xs ${
-																		transaction.paymentType === 'CREDIT' 
-																			? 'bg-green-100 text-green-800' 
-																			: 'bg-red-100 text-red-800'
-																	}`}>
-																		{transaction.paymentType}
-																	</span>
-																</td>
-																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																	₦{transaction.amount.toLocaleString()}
-																</td>
-																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																	{transaction.paymentDescription}
-																</td>
-																<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																	{transaction.paymentReference}
-																</td>
-															</tr>
-														))}
-													</tbody>
-												</table>
-											</div>
-										</div> */}
 
 										{/* Drop-off Logs Section */}
 										{modalMode === "view" && (

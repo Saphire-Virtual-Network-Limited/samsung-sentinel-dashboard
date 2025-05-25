@@ -10,7 +10,8 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, So
 import { EllipsisVertical } from "lucide-react";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -105,6 +106,8 @@ type ApprovedRefereeRecord = {
 
 export default function ApprovedRefereesPage() {
 	const router = useRouter();
+	const pathname = usePathname();
+	const { user } = useAuth();
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
@@ -298,7 +301,8 @@ export default function ApprovedRefereesPage() {
 
 	// When action clicked:
 	const openModal = (mode: "view", row: ApprovedRefereeRecord) => {
-		router.push(`/access/verify/approved/${row.customerId}`);
+		const role = pathname.split('/')[2] || 'verify';
+		router.push(`/access/${role}/approved/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:

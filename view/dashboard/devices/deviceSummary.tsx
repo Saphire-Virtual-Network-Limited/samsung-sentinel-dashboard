@@ -19,8 +19,8 @@ const DeviceSummaryView = () => {
 					tab: "lg:p-4 text-sm lg:text-base",
 				}}>
 				<Tab
-					key="All Loans"
-					title="All Loans"
+					key="All Devices"
+					title="All Devices"
 					className="lg:p-4 text-base">
 					<AllDevices />	
 				</Tab>
@@ -31,16 +31,10 @@ const DeviceSummaryView = () => {
 					<EnrolledDeviceView />
 				</Tab>
                     <Tab
-                        key="Approved"
-                        title="Approved"
+                        key="UnEnrolled"
+                        title="UnEnrolled"
                         className="lg:p-4 text-base">
                         <UnEnrolledDeviceView />
-                    </Tab>
-                    <Tab
-                        key="Defaulted"
-                        title="Defaulted"
-                        className="lg:p-4 text-base">
-                        <DefaultedView />
                     </Tab>
 
 			</Tabs>
