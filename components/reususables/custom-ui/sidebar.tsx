@@ -86,8 +86,9 @@ export function AppSidebar() {
 
 	const verificationItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/verify/", id: "verification-dashboard" },
-		// { icon: Users, title: "References", url: "/access/verify/references", id: "verification-references" },
-		// { icon: CreditCard, title: "Loans", url: "/access/verify/loans", id: "verification-loans" },
+		{ icon: Users, title: "Unapproved", url: "/access/verify/unapproved-referees", id: "unapproved-referees" },
+		{ icon: CreditCard, title: "Approved", url: "/access/verify/approved-referees", id: "approved-referees" },
+		{ icon: CreditCard, title: "Rejected", url: "/access/verify/rejected-referees", id: "rejected-referees" },
 		// { icon: Users, title: "Customers", url: "/access/verify/customers", id: "verification-customers" },
 	];
 

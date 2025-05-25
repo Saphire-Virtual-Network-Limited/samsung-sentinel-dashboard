@@ -197,8 +197,13 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 			</TableHeader>
 			<TableBody
 				emptyContent={hasNoRecords ? "No records" : "No data found"}
-				items={isLoading ? new Array(displayedColumns.length).fill(null) : data}>
-				{(item: T | null) => (item === null ? renderSkeleton() : <TableRow key={(item as any).id || (item as any)[displayedColumns[0].uid]}>{(colKey) => <TableCell>{renderCell(item as T, colKey as string)}</TableCell>}</TableRow>)}
+				items={isLoading ? Array(10).fill(null) : data}>
+				{(item: T | null) => (
+					isLoading ? renderSkeleton() : 
+					<TableRow key={(item as any).id || (item as any)[displayedColumns[0].uid]}>
+						{(colKey) => <TableCell>{renderCell(item as T, colKey as string)}</TableCell>}
+					</TableRow>
+				)}
 			</TableBody>
 		</Table>
 	);

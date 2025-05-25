@@ -14,8 +14,9 @@ import DefaultedView from "./loans/defaultedView";
 import EnrolledDeviceView from "./devices/enrolledDeviceView";   
 import UnEnrolledDeviceView from "./devices/unEnrolledDeviceView"; 
 import AllDevices from "./devices/allDevicesView";          
+import DeviceSummaryView from "./devices/deviceSummary";   
+import SingleRefereeView from "./verify-Referee/singleRefView";
+import SingleCustomer from "./customer/singleCustomer";
 
 
-
-
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices   };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer };

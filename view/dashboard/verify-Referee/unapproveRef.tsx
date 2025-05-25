@@ -10,12 +10,12 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, So
 import { EllipsisVertical } from "lucide-react";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
+import { useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "DOB Mismatch", uid: "dobMisMatch" },
 	{ name: "Referee 1", uid: "referee1" },
 	{ name: "Referee 2", uid: "referee2" },
 	{ name: "Actions", uid: "actions"},
@@ -103,6 +103,7 @@ type UnapprovedRefereeRecord = {
 
 
 export default function UnapprovedRefereesPage() { 
+	const router = useRouter();
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
@@ -173,8 +174,6 @@ export default function UnapprovedRefereesPage() {
 				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
 				age: calculateAge(r.dob),
 				mainPhoneNumber: r.mainPhoneNumber,
-				dobMisMatch: r.dobMisMatch ? 'Yes' : 'No',
-				// status: r.dobMisMatch ? "rejected" : "approved",
 			})),
 		[raw]
 	);
@@ -183,7 +182,13 @@ export default function UnapprovedRefereesPage() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => 
+				c.fullName.toLowerCase().includes(f) || 
+				c.email.toLowerCase().includes(f) ||
+				c.mainPhoneNumber.includes(f) ||
+				(c.CustomerKYC?.[0]?.phone2 && c.CustomerKYC[0].phone2.includes(f)) ||
+				(c.CustomerKYC?.[0]?.phone3 && c.CustomerKYC[0].phone3.includes(f))
+			);
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
@@ -287,18 +292,16 @@ export default function UnapprovedRefereesPage() {
 	// Export all filtered
 	const exportFn = async (data: UnapprovedRefereeRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Customers");
+		const ws = wb.addWorksheet("unapproved_referees");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Customer_Records.xlsx");
+		saveAs(new Blob([buf]), "unapproved_referees_Records.xlsx");
 	};
 
 	// When action clicked:
 	const openModal = (mode: "view", row: UnapprovedRefereeRecord) => {
-		setModalMode(mode);
-		setSelectedItem(row);
-		onOpen();
+		router.push(`/access/verify/unapproved/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:

@@ -210,3 +210,13 @@ export async function getAllDevices(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/device/all${query}`, "GET");
 }
 
+export async function getAllEnrolledDevices(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/device/enrolled${query}`, "GET");
+}
+
+export async function getAllUnEnrolledDevices(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/device/unenrolled${query}`, "GET");
+}
+
