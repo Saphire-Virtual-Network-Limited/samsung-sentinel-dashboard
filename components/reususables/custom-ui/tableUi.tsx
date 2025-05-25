@@ -42,7 +42,10 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate } = props;
 
 	// Exclude status column if hidden
-	const displayedColumns = showStatus ? columns : columns.filter((c) => c.uid !== "status");
+	const displayedColumns = [
+		{ name: "S/N", uid: "serialNumber" },
+		...(showStatus ? columns : columns.filter((c) => c.uid !== "status"))
+	];
 
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(initialStartDate);
@@ -169,6 +172,23 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		</div>
 	);
 
+	const renderRow = (item: T | null) => {
+		if (isLoading) return renderSkeleton();
+		
+		const rowIndex = data.indexOf(item as T);
+		return (
+			<TableRow key={(item as any).id || (item as any)[displayedColumns[1].uid]}>
+				{(colKey) => (
+					<TableCell>
+						{colKey === "serialNumber" 
+							? ((page - 1) * 10) + rowIndex + 1
+							: renderCell(item as T, colKey as string)}
+					</TableCell>
+				)}
+			</TableRow>
+		);
+	};
+
 	return (
 		<Table
 			isHeaderSticky
@@ -198,12 +218,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 			<TableBody
 				emptyContent={hasNoRecords ? "No records" : "No data found"}
 				items={isLoading ? Array(10).fill(null) : data}>
-				{(item: T | null) => (
-					isLoading ? renderSkeleton() : 
-					<TableRow key={(item as any).id || (item as any)[displayedColumns[0].uid]}>
-						{(colKey) => <TableCell>{renderCell(item as T, colKey as string)}</TableCell>}
-					</TableRow>
-				)}
+				{renderRow}
 			</TableBody>
 		</Table>
 	);
