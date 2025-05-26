@@ -709,9 +709,27 @@ export default function SingleCustomerPage() {
                               <div className="font-medium text-default-900">{store.store.storeEmail || 'N/A'}</div>
                             </div>
                             <div>
-                              <div className="text-sm text-default-500 mb-1">Bank Details</div>
+                              <div className="text-sm text-default-500 mb-1">Bank Name</div>
                               <div className="font-medium text-default-900">
-                                {store.store.bankName} - {store.store.accountNumber}
+                                {store.store.bankName || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Account Number</div>
+                              <div className="font-medium text-default-900">
+                                {store.store.accountNumber || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Account Name</div>
+                              <div className="font-medium text-default-900">
+                                {store.store.accountName || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Bank Code</div>
+                              <div className="font-medium text-default-900">
+                                {store.store.bankCode || 'N/A'}
                               </div>
                             </div>
                             <div>
