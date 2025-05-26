@@ -51,70 +51,29 @@ type CustomerRecord = {
 		updated_at: string;
 		customerId: string;
 	};
-	MonoCustomer?: {
-		customerId: string;
+	TransactionHistory?: Array<{
+		transactionHistoryId: string;
+		amount: number;
+		paymentType: string;
+		prevBalance: number;
+		newBalance: number;
+		paymentReference: string;
+		extRef: string;
+		currency: string;
+		channel: string;
+		charge: number;
+		chargeNarration: string;
+		senderBank: string;
+		senderAccount: string;
+		recieverBank: string;
+		recieverAccount: string;
+		paymentDescription: string;
+		paid_at: string;
 		createdAt: string;
 		updatedAt: string;
-		email: string;
-		name: string;
-		connectedCustomerId: string;
-		monourl: string;
-		tempAccountId: string;
-	};
-	regBy?: {
-        title: string;
-        createdAt: string;
-        mbeId: string;
-        mbe_old_id: string;
-        updatedAt: string;
-        firstname: string;
-        lastname: string;
-        phone: string;
-        state: string | null;
-        username: string;
-        accountStatus: string;
-        assignedStoreBranch: string | null;
-        bvn: string | null;
-        bvnPhoneNumber: string | null;
-        channel: string | null;
-        dob: string | null;
-        email: string | null;
-        isActive: boolean;
-        otp: string | null;
-        otpExpiry: string | null;
-        password: string | null;
-        role: string;
-        tokenVersion: number;
-        stores: Array<{
-            id: string;
-            mbeOldId: string;
-            storeOldId: number;
-            mbeId: string | null;
-            storeId: string | null;
-            store: {
-                storeOldId: number;
-                storeName: string;
-                city: string;
-                state: string | null;
-                region: string | null;
-                address: string;
-                accountNumber: string;
-                accountName: string;
-                bankName: string;
-                bankCode: string;
-                phoneNumber: string;
-                storeEmail: string;
-                longitude: number;
-                latitude: number;
-                clusterId: number;
-                partner: string;
-                storeOpen: string;
-                storeClose: string;
-                createdAt: string;
-                updatedAt: string;
-            }
-        }>;
-	};
+		userid: string;
+		customersCustomerId: string;
+	}>;
 	CustomerKYC?: Array<{
 		kycId: string;
 		customerId: string;
@@ -129,15 +88,15 @@ type CustomerRecord = {
 		occupation: string;
 		businessName: string;
 		applicantBusinessAddress: string;
-		applicantAddress: string;		
+		applicantAddress: string;
 		source: string;
-		createdAt: string;		
+		createdAt: string;
 		updatedAt: string;
+		status2Comment: string | null;
+		status3Comment: string | null;
+		channel: string;
 		phone2Status: string;
 		phone3Status: string;
-		status2Comment: string;
-		status3Comment: string;
-		channel: string;
 	}>;
 	CustomerAccountDetails?: Array<{
 		customerAccountDetailsId: string;
@@ -148,6 +107,7 @@ type CustomerRecord = {
 		createdAt: string;
 		updatedAt: string;
 		bankID: number;
+		bankName: string;
 	}>;
 	CustomerMandate?: Array<{
 		customerMandateId: string;
@@ -163,13 +123,14 @@ type CustomerRecord = {
 		end_date: string;
 		reference: string;
 		channel: string;
-		createdAt: string;	
+		createdAt: string;
 		updatedAt: string;
 		message: string;
 	}>;
 	LoanRecord?: Array<{
 		loanRecordId: string;
 		customerId: string;
+		loanDiskId: string;
 		customerLoanDiskId: string;
 		lastPoint: string;
 		channel: string;
@@ -189,32 +150,142 @@ type CustomerRecord = {
 		monthlyRepayment: number;
 		duration: number;
 		interestAmount: number;
-		LoanRecordCard: [];
+		deviceName: string;
+		LoanRecordCard: any[];
+		store: {
+			storeOldId: number;
+			storeName: string;
+			city: string;
+			state: string;
+			region: string | null;
+			address: string;
+			accountNumber: string;
+			accountName: string;
+			bankName: string;
+			bankCode: string;
+			phoneNumber: string;
+			storeEmail: string;
+			longitude: number;
+			latitude: number;
+			clusterId: number;
+			partner: string;
+			storeOpen: string;
+			storeClose: string;
+			createdAt: string;
+			updatedAt: string;
+			storeId: string;
+		};
+		device: {
+			price: number;
+			deviceModelNumber: string;
+			SAP: number;
+			SLD: number;
+			createdAt: string;
+			deviceManufacturer: string;
+			deviceName: string;
+			deviceRam: string | null;
+			deviceScreen: string | null;
+			deviceStorage: string | null;
+			imageLink: string;
+			newDeviceId: string;
+			oldDeviceId: string;
+			sentiprotect: number;
+			updatedAt: string;
+			deviceType: string;
+			deviceCamera: any[];
+			android_go: string;
+		};
+		StoresOnLoan: Array<{
+			storeOnLoanId: string;
+			storeId: string;
+			loanRecordId: string;
+			amount: number;
+			status: string;
+			createdAt: string;
+			updatedAt: string;
+			channel: string;
+		}>;
+		DeviceOnLoan: Array<{
+			deviceOnLoanId: string;
+			deviceId: string;
+			loanRecordId: string;
+			status: string;
+			createdAt: string;
+			updatedAt: string;
+			channel: string;
+			imei: string | null;
+			amount: number;
+			devicePrice: number;
+		}>;
 	}>;
-	TransactionHistory?: Array<{
-		transactionHistoryId: string;
-		amount: number;
-		paymentType: string;
-		prevBalance: number;
-		newBalance: number;
-		paymentReference: string;
-		extRef: string;
-		currency: string;
-		channel: string;
-		charge: number;
-		chargeNarration: string;
-		senderBank: string;
-		senderAccount: string;
-		recieverBank: string;
-		recieverAccount: string;
-		paymentDescription: string;	
-		paid_at: string;
+	regBy: {
+		title: string;
+		createdAt: string;
+		mbeId: string;
+		mbe_old_id: string;
+		updatedAt: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		state: string | null;
+		username: string;
+		accountStatus: string;
+		assignedStoreBranch: string | null;
+		bvn: string | null;
+		bvnPhoneNumber: string | null;
+		channel: string | null;
+		dob: string | null;
+		email: string | null;
+		isActive: boolean;
+		otp: string | null;
+		otpExpiry: string | null;
+		password: string | null;
+		role: string;
+		tokenVersion: number;
+		stores: Array<{
+			id: string;
+			mbeOldId: string;
+			storeOldId: number;
+			mbeId: string | null;
+			storeId: string | null;
+			store: {
+				storeOldId: number;
+				storeName: string;
+				city: string;
+				state: string;
+				region: string;
+				address: string;
+				accountNumber: string;
+				accountName: string;
+				bankName: string;
+				bankCode: string;
+				phoneNumber: string;
+				storeEmail: string;
+				longitude: number;
+				latitude: number;
+				clusterId: number;
+				partner: string;
+				storeOpen: string;
+				storeClose: string;
+				createdAt: string;
+				updatedAt: string;
+				storeId: string;
+			};
+		}>;
+	};
+	MonoCustomer?: {
+		customerId: string;
 		createdAt: string;
 		updatedAt: string;
-		userid: string;
-		customersCustomerId: string;
-	}>;
+		email: string;
+		name: string;
+		connectedCustomerId: string;
+		monourl: string;
+		tempAccountId: string | null;
+		CustomerAccounts: any[];
+	};
 };
+
 
 export default function SingleCustomerPage() {  
   const params = useParams();
@@ -803,6 +874,174 @@ export default function SingleCustomerPage() {
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.channel || 'N/A'}</div>
                   </div>
                 </div>
+
+                {/* Store on Loan Information */}
+                <div className="mt-8 pt-8 border-t border-default-200">
+                  <h4 className="text-base font-semibold text-default-900 mb-4">Store on Loan</h4>
+                  <div className="grid grid-cols-1 gap-6">
+                    {customer.LoanRecord?.[0]?.StoresOnLoan && customer.LoanRecord[0].StoresOnLoan.length > 0 ? (
+                      customer.LoanRecord[0].StoresOnLoan.map((store, index) => (
+                        <div key={index} className="bg-default-50 rounded-lg p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Store ID</div>
+                              <div className="font-medium text-default-900">{store.storeId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Amount</div>
+                              <div className="font-medium text-default-900">
+                                {store.amount !== undefined ? `₦${store.amount.toLocaleString()}` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Status</div>
+                              <div className="font-medium">
+                                <Chip 
+                                  color={
+                                    store.status === 'APPROVED' 
+                                      ? 'success' 
+                                      : store.status === 'REJECTED'
+                                      ? 'danger'
+                                      : 'warning'
+                                  }
+                                  variant="flat"
+                                  className="font-medium"
+                                >
+                                  {store.status || 'PENDING'}
+                                </Chip>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Channel</div>
+                              <div className="font-medium text-default-900">{store.channel || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Created At</div>
+                              <div className="font-medium text-default-900">
+                                {store.createdAt ? new Date(store.createdAt).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Updated At</div>
+                              <div className="font-medium text-default-900">
+                                {store.updatedAt ? new Date(store.updatedAt).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-default-50 rounded-lg p-8 text-center">
+                        <div className="flex flex-col items-center justify-center text-default-500">
+                          <svg 
+                            className="w-12 h-12 mb-4 text-default-300" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" 
+                            />
+                          </svg>
+                          <p className="text-sm font-medium">No store on loan data available</p>
+                          <p className="text-xs mt-1">There are no stores on loan to display at this time.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Device on Loan Information */}
+                <div className="mt-8 pt-8 border-t border-default-200">
+                  <h4 className="text-base font-semibold text-default-900 mb-4">Device on Loan</h4>
+                  <div className="grid grid-cols-1 gap-6">
+                    {customer.LoanRecord?.[0]?.DeviceOnLoan && customer.LoanRecord[0].DeviceOnLoan.length > 0 ? (
+                      customer.LoanRecord[0].DeviceOnLoan.map((device, index) => (
+                        <div key={index} className="bg-default-50 rounded-lg p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Device ID</div>
+                              <div className="font-medium text-default-900">{device.deviceId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Status</div>
+                              <div className="font-medium">
+                                <Chip 
+                                  color={
+                                    device.status === 'APPROVED' 
+                                      ? 'success' 
+                                      : device.status === 'REJECTED'
+                                      ? 'danger'
+                                      : 'warning'
+                                  }
+                                  variant="flat"
+                                  className="font-medium"
+                                >
+                                  {device.status || 'PENDING'}
+                                </Chip>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">IMEI</div>
+                              <div className="font-medium text-default-900">{device.imei || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Amount</div>
+                              <div className="font-medium text-default-900">
+                                {device.amount !== undefined ? `₦${device.amount.toLocaleString()}` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Device Price</div>
+                              <div className="font-medium text-default-900">
+                                {device.devicePrice !== undefined ? `₦${device.devicePrice.toLocaleString()}` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Channel</div>
+                              <div className="font-medium text-default-900">{device.channel || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Created At</div>
+                              <div className="font-medium text-default-900">
+                                {device.createdAt ? new Date(device.createdAt).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Updated At</div>
+                              <div className="font-medium text-default-900">
+                                {device.updatedAt ? new Date(device.updatedAt).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-default-50 rounded-lg p-8 text-center">
+                        <div className="flex flex-col items-center justify-center text-default-500">
+                          <svg 
+                            className="w-12 h-12 mb-4 text-default-300" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" 
+                            />
+                          </svg>
+                          <p className="text-sm font-medium">No device on loan data available</p>
+                          <p className="text-xs mt-1">There are no devices on loan to display at this time.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -890,6 +1129,26 @@ export default function SingleCustomerPage() {
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Temporary Account ID</div>
                     <div className="font-medium text-default-900">{customer.MonoCustomer?.tempAccountId || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Email</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.email || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Name</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.name || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Created At</div>
+                    <div className="font-medium text-default-900">
+                      {customer.MonoCustomer?.createdAt ? new Date(customer.MonoCustomer.createdAt).toLocaleString() : 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Updated At</div>
+                    <div className="font-medium text-default-900">
+                      {customer.MonoCustomer?.updatedAt ? new Date(customer.MonoCustomer.updatedAt).toLocaleString() : 'N/A'}
+                    </div>
                   </div>
                 </div>
               </div>
