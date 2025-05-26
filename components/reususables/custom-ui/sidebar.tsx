@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard, DollarSign } from "lucide-react";
+import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
