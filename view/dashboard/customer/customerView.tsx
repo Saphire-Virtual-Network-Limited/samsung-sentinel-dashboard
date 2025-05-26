@@ -81,17 +81,29 @@ type CustomerRecord = {
 		updated_at: string;
 		customerId: string;
 	};
-	MonoCustomer?: {
-		customerId: string;
+	TransactionHistory?: Array<{
+		transactionHistoryId: string;
+		amount: number;
+		paymentType: string;
+		prevBalance: number;
+		newBalance: number;
+		paymentReference: string;
+		extRef: string;
+		currency: string;
+		channel: string;
+		charge: number;
+		chargeNarration: string;
+		senderBank: string;
+		senderAccount: string;
+		recieverBank: string;
+		recieverAccount: string;
+		paymentDescription: string;
+		paid_at: string;
 		createdAt: string;
 		updatedAt: string;
-		email: string;
-		name: string;
-		connectedCustomerId: string;
-		monourl: string;
-		tempAccountId: string;
-	};
-	regBy: string;
+		userid: string;
+		customersCustomerId: string;
+	}>;
 	CustomerKYC?: Array<{
 		kycId: string;
 		customerId: string;
@@ -106,15 +118,15 @@ type CustomerRecord = {
 		occupation: string;
 		businessName: string;
 		applicantBusinessAddress: string;
-		applicantAddress: string;		
+		applicantAddress: string;
 		source: string;
-		createdAt: string;		
+		createdAt: string;
 		updatedAt: string;
+		status2Comment: string | null;
+		status3Comment: string | null;
+		channel: string;
 		phone2Status: string;
 		phone3Status: string;
-		status2Comment: string;
-		status3Comment: string;
-		channel: string;
 	}>;
 	CustomerAccountDetails?: Array<{
 		customerAccountDetailsId: string;
@@ -125,6 +137,7 @@ type CustomerRecord = {
 		createdAt: string;
 		updatedAt: string;
 		bankID: number;
+		bankName: string;
 	}>;
 	CustomerMandate?: Array<{
 		customerMandateId: string;
@@ -140,14 +153,14 @@ type CustomerRecord = {
 		end_date: string;
 		reference: string;
 		channel: string;
-		createdAt: string;	
+		createdAt: string;
 		updatedAt: string;
 		message: string;
 	}>;
 	LoanRecord?: Array<{
 		loanRecordId: string;
 		customerId: string;
-		customerLoanDiskId: string;
+		loanDiskId: string;
 		lastPoint: string;
 		channel: string;
 		loanStatus: string;
@@ -166,30 +179,149 @@ type CustomerRecord = {
 		monthlyRepayment: number;
 		duration: number;
 		interestAmount: number;
-		LoanRecordCard: [];
+		deviceName: string;
+		LoanRecordCard: any[];
+		store: {
+			storeOldId: number;
+			storeName: string;
+			city: string;
+			state: string;
+			region: string | null;
+			address: string;
+			accountNumber: string;
+			accountName: string;
+			bankName: string;
+			bankCode: string;
+			phoneNumber: string;
+			storeEmail: string;
+			longitude: number;
+			latitude: number;
+			clusterId: number;
+			partner: string;
+			storeOpen: string;
+			storeClose: string;
+			createdAt: string;
+			updatedAt: string;
+			storeId: string;
+		};
+		device: {
+			price: number;
+			deviceModelNumber: string;
+			SAP: number;
+			SLD: number;
+			createdAt: string;
+			deviceManufacturer: string;
+			deviceName: string;
+			deviceRam: string | null;
+			deviceScreen: string | null;
+			deviceStorage: string | null;
+			imageLink: string;
+			newDeviceId: string;
+			oldDeviceId: string;
+			sentiprotect: number;
+			updatedAt: string;
+			deviceType: string;
+			deviceCamera: any[];
+			android_go: string;
+		};
+		StoresOnLoan: Array<{
+			storeOnLoanId: string;
+			storeId: string;
+			loanRecordId: string;
+			amount: number;
+			status: string;
+			createdAt: string;
+			updatedAt: string;
+			channel: string;
+		}>;
+		DeviceOnLoan: Array<{
+			deviceOnLoanId: string;
+			deviceId: string;
+			loanRecordId: string;
+			status: string;
+			createdAt: string;
+			updatedAt: string;
+			channel: string;
+			imei: string | null;
+			amount: number;
+			devicePrice: number;
+		}>;
 	}>;
-	TransactionHistory?: Array<{
-		transactionHistoryId: string;
-		amount: number;
-		paymentType: string;
-		prevBalance: number;
-		newBalance: number;
-		paymentReference: string;
-		extRef: string;
-		currency: string;
-		channel: string;
-		charge: number;
-		chargeNarration: string;
-		senderBank: string;
-		senderAccount: string;
-		recieverBank: string;
-		recieverAccount: string;
-		paymentDescription: string;	
-		paid_at: string;
+	regBy: {
+		title: string;
+		createdAt: string;
+		mbeId: string;
+		mbe_old_id: string;
+		updatedAt: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		state: string | null;
+		username: string;
+		accountStatus: string;
+		assignedStoreBranch: string | null;
+		bvn: string | null;
+		bvnPhoneNumber: string | null;
+		channel: string | null;
+		dob: string | null;
+		email: string | null;
+		isActive: boolean;
+		otp: string | null;
+		otpExpiry: string | null;
+		password: string | null;
+		role: string;
+		tokenVersion: number;
+		stores: Array<{
+			id: string;
+			mbeOldId: string;
+			storeOldId: number;
+			mbeId: string | null;
+			storeId: string | null;
+			store: {
+				storeOldId: number;
+				storeName: string;
+				city: string;
+				state: string;
+				region: string;
+				address: string;
+				accountNumber: string;
+				accountName: string;
+				bankName: string;
+				bankCode: string;
+				phoneNumber: string;
+				storeEmail: string;
+				longitude: number;
+				latitude: number;
+				clusterId: number;
+				partner: string;
+				storeOpen: string;
+				storeClose: string;
+				createdAt: string;
+				updatedAt: string;
+				storeId: string;
+			};
+		}>;
+	};
+	MonoCustomer?: {
+		customerId: string;
 		createdAt: string;
 		updatedAt: string;
-		userid: string;
-		customersCustomerId: string;
+		email: string;
+		name: string;
+		connectedCustomerId: string;
+		monourl: string;
+		tempAccountId: string | null;
+		CustomerAccounts: any[];
+	};
+	CustomerDropOffLog?: Array<{
+		dropOffLogId: string;
+		screenTime: string;
+		apiResponseTime: string;
+		customerId: string;
+		createdAt: string;
+		updatedAt: string;
+		channel: string;
+		screenName: string;
 	}>;
 };
 
@@ -258,7 +390,7 @@ export default function CustomerPage() {
 				state: r.CustomerKYC?.[0]?.state || 'N/A',
 				city: r.CustomerKYC?.[0]?.town || 'N/A',
 				bvnPhoneNumber: r.bvnPhoneNumber,
-				loanAmount: r.LoanRecord?.[0]?.loanAmount || 'N/A',
+				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
 				region: r.CustomerKYC?.[0]?.localGovernment || 'N/A',
 			})),
 		[raw]

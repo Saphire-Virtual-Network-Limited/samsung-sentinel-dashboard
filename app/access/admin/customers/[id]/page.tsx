@@ -1,10 +1,9 @@
-import SingleCustomer from '@/view/dashboard/customer/singleCustomer'
 import React from 'react'
-
+import SingleCustomer from '@/view/dashboard/customer/singleCustomer'
 
 const SingleCustomerPage = () => {
   return (
-                <SingleCustomer />
+          <SingleCustomer />
             
   )
 }
