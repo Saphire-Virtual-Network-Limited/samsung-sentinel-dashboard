@@ -898,16 +898,16 @@ export default function SingleCustomerPage() {
                               <div className="font-medium">
                                 <Chip 
                                   color={
-                                    store.status === 'APPROVED' 
+                                    store.status === 'PAID' 
                                       ? 'success' 
-                                      : store.status === 'REJECTED'
-                                      ? 'danger'
-                                      : 'warning'
+                                      : store.status === 'UNPAID'
+                                      ? 'warning'
+                                      : 'danger'
                                   }
                                   variant="flat"
                                   className="font-medium"
                                 >
-                                  {store.status || 'PENDING'}
+                                  {store.status || 'UNPAID'}
                                 </Chip>
                               </div>
                             </div>
@@ -971,16 +971,16 @@ export default function SingleCustomerPage() {
                               <div className="font-medium">
                                 <Chip 
                                   color={
-                                    device.status === 'APPROVED' 
+                                    device.status === 'ENROLLED' 
                                       ? 'success' 
-                                      : device.status === 'REJECTED'
+                                      : device.status === 'UNENROLLED'
                                       ? 'danger'
                                       : 'warning'
                                   }
                                   variant="flat"
                                   className="font-medium"
                                 >
-                                  {device.status || 'PENDING'}
+                                  {device.status || 'UNENROLLED'}
                                 </Chip>
                               </div>
                             </div>
