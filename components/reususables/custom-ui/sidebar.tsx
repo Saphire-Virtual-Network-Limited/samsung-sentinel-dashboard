@@ -96,8 +96,10 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/finance/", id: "finance-dashboard" },
 		{ icon: Store, title: "Stores", url: "/access/finance/stores", id: "finance-stores" },
 		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
-		{ icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
-		{ icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
+		{ icon: Store, title: "Customers", url: "/access/finance/customers", id: "finance-customers" },
+
+		// { icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
+		// { icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
 	];
 
 	const supportItems: MenuItem[] = [
