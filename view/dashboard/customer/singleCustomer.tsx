@@ -363,8 +363,8 @@ export default function SingleCustomerPage() {
     <div className="min-h-screen bg-default-50">
       {/* Header Section */}
       <div className="bg-white border-b border-default-200">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-4">
+        <div className=" py-6">
+          <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-4">
               {/* <Button
                 variant="light"
@@ -392,17 +392,17 @@ export default function SingleCustomerPage() {
         </div>
       </div>
 
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="  px-2  py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Left Column - Personal Information */}
           <div className="lg:col-span-1 space-y-8">
             {/* Personal Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Personal Information</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
                   <div>
                     <div className="text-sm text-default-500 mb-1">Customer ID</div>
                     <div className="font-medium text-default-900">{customer.customerId || 'N/A'}</div>
@@ -469,11 +469,11 @@ export default function SingleCustomerPage() {
 
             {/* KYC Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">KYC Information</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
                   {/* <div>
                     <div className="text-sm text-default-500 mb-1">KYC ID</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.kycId || 'N/A'}</div>
@@ -482,10 +482,7 @@ export default function SingleCustomerPage() {
                     <div className="text-sm text-default-500 mb-1">Address</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantAddress || 'N/A'}</div>
                   </div>
-                  <div>
-                    <div className="text-sm text-default-500 mb-1">Business Address</div>
-                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A'}</div>
-                  </div>
+                  
                   <div>
                     <div className="text-sm text-default-500 mb-1">House Number</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.houseNumber || 'N/A'}</div>
@@ -517,6 +514,10 @@ export default function SingleCustomerPage() {
                   <div>
                     <div className="text-sm text-default-500 mb-1">Business Name</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.businessName || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-default-500 mb-1">Business Address</div>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A'}</div>
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">Source</div>
@@ -562,7 +563,7 @@ export default function SingleCustomerPage() {
                         {customer.CustomerKYC?.[0]?.phone2Status || 'PENDING'}
                       </Chip>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div>
                         <div className="text-sm text-default-500 mb-1">Phone Number</div>
                         <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone2 || 'N/A'}</div>
@@ -609,11 +610,11 @@ export default function SingleCustomerPage() {
 
             {/* Registration Details */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+                <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Registed By:</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                   <div>
                     <div className="text-sm text-default-500 mb-1">Title</div>
                     <div className="font-medium text-default-900">{customer.regBy?.title || 'N/A'}</div>
@@ -752,11 +753,11 @@ export default function SingleCustomerPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Loan Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Loan Information</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Loan Amount</div>
                     <div className="font-medium text-default-900">
@@ -807,22 +808,12 @@ export default function SingleCustomerPage() {
                       </Chip>
                     </div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Loan Record ID</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.loanRecordId || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Loan Disk ID</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.customerLoanDiskId || 'N/A'}</div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Last Point</div>
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.lastPoint || 'N/A'}</div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Device ID</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.deviceId || 'N/A'}</div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Down Payment</div>
                     <div className="font-medium text-default-900">
@@ -855,10 +846,7 @@ export default function SingleCustomerPage() {
                     <div className="text-sm text-default-500 mb-1">Pay Frequency</div>
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.payFrequency || 'N/A'}</div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Store ID</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.storeId || 'N/A'}</div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Device Price</div>
                     <div className="font-medium text-default-900">
@@ -868,7 +856,7 @@ export default function SingleCustomerPage() {
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Device Amount</div>
+                    <div className="text-sm text-default-500 mb-1">Device price with insurance</div>
                     <div className="font-medium text-default-900">
                       {customer.LoanRecord?.[0]?.deviceAmount !== undefined
                         ? `₦${customer.LoanRecord[0].deviceAmount.toLocaleString()}`
@@ -887,9 +875,27 @@ export default function SingleCustomerPage() {
                       {customer.LoanRecord?.[0]?.updatedAt ? new Date(customer.LoanRecord[0].updatedAt).toLocaleString() : 'N/A'}
                     </div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
+                  {/* <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Loan Channel</div>
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.channel || 'N/A'}</div>
+                  </div> */}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
+                <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Loan Record ID</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.loanRecordId || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Device ID</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.deviceId || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Loan Disk ID</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.customerLoanDiskId || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Store ID</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.storeId || 'N/A'}</div>
                   </div>
                 </div>
 
@@ -1065,11 +1071,11 @@ export default function SingleCustomerPage() {
 
             {/* Wallet Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">Wallet Information</h3>
+              <div className="p-3 border-b border-default-200">
+                <h3 className="text-lg font-semibold text-default-900">Virtual Account Information</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Wallet ID</div>
                     <div className="font-medium text-default-900">{customer.Wallet?.wallet_id || 'N/A'}</div>
@@ -1086,29 +1092,10 @@ export default function SingleCustomerPage() {
                     <div className="text-sm text-default-500 mb-1">Account Name</div>
                     <div className="font-medium text-default-900">{customer.Wallet?.accountName || 'N/A'}</div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Currency</div>
-                    <div className="font-medium text-default-900">{customer.Wallet?.currency || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Customer Code</div>
-                    <div className="font-medium text-default-900">{customer.Wallet?.cust_code || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Wallet Balance */}
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">Wallet Balance</h3>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-default-50 rounded-lg p-4">
+                  {/* <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Balance ID</div>
                     <div className="font-medium text-default-900">{customer.WalletBalance?.balanceId || 'N/A'}</div>
-                  </div>
+                  </div> */}
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Current Balance</div>
                     <div className="font-medium text-default-900">
@@ -1125,25 +1112,30 @@ export default function SingleCustomerPage() {
                         : 'N/A'}
                     </div>
                   </div>
+                  {/* <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Currency</div>
+                    <div className="font-medium text-default-900">{customer.Wallet?.currency || 'N/A'}</div>
+                  </div> */}
+                  {/* <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Customer Code</div>
+                    <div className="font-medium text-default-900">{customer.Wallet?.cust_code || 'N/A'}</div>
+                  </div> */}
                 </div>
               </div>
             </div>
 
             {/* Mono Customer */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Mono Customer</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Connected Customer ID</div>
                     <div className="font-medium text-default-900">{customer.MonoCustomer?.connectedCustomerId || 'N/A'}</div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Mono URL</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.monourl || 'N/A'}</div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Temporary Account ID</div>
                     <div className="font-medium text-default-900">{customer.MonoCustomer?.tempAccountId || 'N/A'}</div>
@@ -1169,15 +1161,23 @@ export default function SingleCustomerPage() {
                     </div>
                   </div>
                 </div>
+                <div className="bg-default-50 rounded-lg p-4 mt-4">
+                    <div className="text-sm text-default-500 mb-1">Mono URL</div>
+                    <div className="font-medium text-default-900">
+                      <div className="bg-white rounded-lg p-2 border border-default-200">
+                        {customer.MonoCustomer?.monourl || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
 
             {/* Account Details */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden w-full">
-              <div className="p-6 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">Account Details</h3>
+              <div className="p-3 border-b border-default-200">
+                <h3 className="text-lg font-semibold text-default-900">Customer Account Details</h3>
               </div>
-              <div className="p-6">
+              <div className="p-4">
                 <div className="grid grid-cols-1 gap-6 w-full">
                   {customer.CustomerAccountDetails?.map((account, index) => (
                     <div key={index} className="bg-default-50 rounded-lg p-4 w-full">
@@ -1197,6 +1197,10 @@ export default function SingleCustomerPage() {
                         <div>
                           <div className="text-sm text-default-500 mb-1">Bank ID</div>
                           <div className="font-medium text-default-900">{account.bankID || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-default-500 mb-1">Bank Name</div>
+                          <div className="font-medium text-default-900">{account.bankName || 'N/A'}</div>
                         </div>
                         <div>
                           <div className="text-sm text-default-500 mb-1">Created At</div>
@@ -1219,14 +1223,14 @@ export default function SingleCustomerPage() {
 
             {/* Mandate Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden w-full">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Mandate Information</h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 gap-6 w-full">
+              <div className="p-4">
+                <div className="grid grid-cols-1 gap-4 w-full">
                   {customer.CustomerMandate?.map((mandate, index) => (
                     <div key={index} className="bg-default-50 rounded-lg p-4 w-full">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                           <div className="text-sm text-default-500 mb-1">Status</div>
                           <Chip 
@@ -1280,10 +1284,6 @@ export default function SingleCustomerPage() {
                           <div className="font-medium text-default-900">{mandate.channel || 'N/A'}</div>
                         </div>
                         <div>
-                          <div className="text-sm text-default-500 mb-1">Message</div>
-                          <div className="font-medium text-default-900">{mandate.message || 'N/A'}</div>
-                        </div>
-                        <div>
                           <div className="text-sm text-default-500 mb-1">Created At</div>
                           <div className="font-medium text-default-900">
                             {mandate.createdAt ? new Date(mandate.createdAt).toLocaleString() : 'N/A'}
@@ -1296,6 +1296,10 @@ export default function SingleCustomerPage() {
                           </div>
                         </div>
                       </div>
+                      <div>
+                          <div className="text-sm text-default-500 mb-1">Message</div>
+                          <div className="font-medium text-default-900">{mandate.message || 'N/A'}</div>
+                        </div>
                     </div>
                   ))}
                 </div>
@@ -1304,10 +1308,10 @@ export default function SingleCustomerPage() {
 
             {/* Transaction History */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+                <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">Transaction History</h3>
               </div>
-              <div className="p-6">
+              <div className="p-4">
                 <div className="overflow-x-auto rounded-lg border border-default-200">
                   <table className="w-full">
                     <thead>
