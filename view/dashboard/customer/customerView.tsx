@@ -400,7 +400,12 @@ export default function CustomerPage() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => 
+				c.fullName.toLowerCase().includes(f) || 
+				c.email.toLowerCase().includes(f) ||
+				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
+				c.customerId.toLowerCase().includes(f)
+			);
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
@@ -470,7 +475,7 @@ export default function CustomerPage() {
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{row.fullName}</p>;
+			return <p className="capitalize cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</p>;
 		}
 		return <p className="text-small cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</p>;
 	};
