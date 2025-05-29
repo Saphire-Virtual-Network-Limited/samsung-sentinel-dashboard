@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 import { getRejectedReferees, capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getApprovedReferees } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -161,9 +160,11 @@ export default function RejectedRefereesPage() {
 			revalidateIfStale: true
 		}
 	);
-
-	console.log(raw);
-
+			
+	useEffect(() => {
+		mutate(["rejected-refreees", startDate, endDate]);
+	}, [startDate, endDate]);
+	
 	const customers = useMemo(
 		() =>
 			raw.map((r: RejectedRefereeRecord) => ({
@@ -182,7 +183,7 @@ export default function RejectedRefereesPage() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f));
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
@@ -286,17 +287,17 @@ export default function RejectedRefereesPage() {
 	// Export all filtered
 	const exportFn = async (data: RejectedRefereeRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Customers");
+		const ws = wb.addWorksheet("Rejected Referees");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Customer_Records.xlsx");
+		saveAs(new Blob([buf]), "Rejected_Referees_Records.xlsx");
 	};
 
 	// When action clicked:
 	const openModal = (mode: "view", row: RejectedRefereeRecord) => {
-		const role = pathname.split('/')[2] || 'verify';
-		router.push(`/access/${role}/rejected/${row.customerId}`);
+		const role = pathname.split('/')[2] || 'verify' || 'admin' || 'dev';
+		router.push(`/access/${role}/referees/rejected-referees/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:

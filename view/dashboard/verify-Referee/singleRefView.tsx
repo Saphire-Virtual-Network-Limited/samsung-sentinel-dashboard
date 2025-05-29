@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Chip } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import { getApprovedReferees, getUnapprovedReferees, getRejectedReferees, verifyCustomerReferenceNumber, showToast } from "@/lib";
 import { SelectField } from "@/components/reususables/form";
+import useSWR from "swr";
 
 type CustomerRecord = {
   customerId: string;
@@ -72,70 +73,75 @@ type CustomerRecord = {
   }>;
 };
 
-export default function SingleCustomerPage() {
-  const params = useParams();
+interface SingleRefereeViewProps {
+  status: string;
+  id: string;
+  role?: string;
+}
+
+export default function SingleRefereeView({ status, id, role = 'verify' }: SingleRefereeViewProps) {
   const router = useRouter();
-  const [customer, setCustomer] = useState<CustomerRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const [refereeType, setRefereeType] = useState<"referee1" | "referee2" | null>(null);
-  const [reason, setReason] = useState("");
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [refereeType, setRefereeType] = useState<"referee1" | "referee2" | null>(null);
+  const [reason, setReason] = useState("");
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
 
-  // Get the status from the URL path
-  const status = params.status as string;
+  const { data: response, error, isLoading } = useSWR(
+    status && id ? [status, id] : null,
+    async () => {
+      let result;
+      if (status === 'approved-referees') {
+        result = await getApprovedReferees();
+      } else if (status === 'unapproved-referees') {
+        result = await getUnapprovedReferees();
+      } else if (status === 'rejected-referees') {
+        result = await getRejectedReferees();
+      } else {
+        throw new Error('Invalid status');
+      }
+      return result;
+    },
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 0,
+      refreshInterval: 0,
+      shouldRetryOnError: false,
+      keepPreviousData: true,
+      revalidateIfStale: true
+    }
+  );
+
+  
+
+  const customer = useMemo(() => {
+    if (!response?.data) return null;
+    return response.data.find((c: CustomerRecord) => c.customerId === id);
+  }, [response?.data, id]);
 
   useEffect(() => {
-    const fetchCustomer = async () => {
-      if (!status || !params.id) {
-        setIsLoading(false);
-        return;
-      }
+    if (error) {
+      showToast({
+        type: "error",
+        message: error.message || "Failed to fetch customer data",
+        duration: 3000,
+      });
+    }
+  }, [error]);
 
-      try {
-        let response;
-        switch (status) {
-          case 'approved':
-            response = await getApprovedReferees();
-            break;
-          case 'unapproved':
-            response = await getUnapprovedReferees();
-            break;
-          case 'rejected':
-            response = await getRejectedReferees();
-            break;
-          default:
-            throw new Error('Invalid status');
-        }
+  useEffect(() => {
+    if (response?.data && !customer) {
+      showToast({
+        type: "error",
+        message: "Customer not found",
+        duration: 3000,
+      });
+    }
+  }, [response?.data, customer]);
 
-        const customerData = response.data.find(
-          (c: CustomerRecord) => c.customerId === params.id
-        );
-        
-        if (customerData) {
-          setCustomer(customerData);
-        } else {
-          showToast({
-            type: "error",
-            message: "Customer not found",
-            duration: 5000,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching customer:", error);
-        showToast({
-          type: "error",
-          message: "Failed to fetch customer data",
-          duration: 5000,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCustomer();
-  }, [params.id, status]);
+  const handleBack = () => {
+    router.push(`/access/${role}/referees/${status}`);
+  };
 
   const handleApproveReferee = async (type: "referee1" | "referee2") => {
     if (!customer) return;

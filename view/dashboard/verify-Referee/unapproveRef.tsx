@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 import { getUnapprovedReferees, capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getAllCustomerRecord } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -107,6 +106,7 @@ export default function UnapprovedRefereesPage() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { user } = useAuth();
+	const role = pathname.split('/')[2] || 'verify';
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isOpen: isApproved, onOpen: onApproved, onClose: onApprovedClose } = useDisclosure();
@@ -165,7 +165,10 @@ export default function UnapprovedRefereesPage() {
 		}
 	);
 
-	console.log(raw);
+	useEffect(() => {
+		mutate(["unapproved-refreees", startDate, endDate]);
+	}, [startDate, endDate]);
+
 
 	const customers = useMemo(
 		() =>
@@ -189,6 +192,7 @@ export default function UnapprovedRefereesPage() {
 				c.fullName.toLowerCase().includes(f) || 
 				c.email.toLowerCase().includes(f) ||
 				c.mainPhoneNumber.includes(f) ||
+				c.customerId.includes(f) ||
 				(c.CustomerKYC?.[0]?.phone2 && c.CustomerKYC[0].phone2.includes(f)) ||
 				(c.CustomerKYC?.[0]?.phone3 && c.CustomerKYC[0].phone3.includes(f))
 			);
@@ -295,17 +299,17 @@ export default function UnapprovedRefereesPage() {
 	// Export all filtered
 	const exportFn = async (data: UnapprovedRefereeRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("unapproved_referees");
+		const ws = wb.addWorksheet("Unapproved Referees");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "unapproved_referees_Records.xlsx");
+		saveAs(new Blob([buf]), "Unapproved_Referees_Records.xlsx");
 	};
 
 	// When action clicked:
 	const openModal = (mode: "view", row: UnapprovedRefereeRecord) => {
-		const role = pathname.split('/')[2] || 'verify';
-		router.push(`/access/${role}/unapproved/${row.customerId}`);
+		const role = pathname.split('/')[2] || 'verify' || 'admin' || 'dev';
+		router.push(`/access/${role}/referees/unapproved-referees/${row.customerId}`);
 	};
 
 	// Render each cell, including actions dropdown:
@@ -345,9 +349,9 @@ export default function UnapprovedRefereesPage() {
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;
+			return <div className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</div>;
 		}
-		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key]}</p>;
+		return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key]}</div>;
 	};
 
 	return (
