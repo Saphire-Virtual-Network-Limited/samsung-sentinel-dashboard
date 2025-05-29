@@ -14,7 +14,6 @@ export default function SingleRefereePage({ params }: PageProps) {
 
   return (
     <SingleRefereeView 
-      status="approved-referees" 
       id={resolvedParams.id} 
       role={role}
     />
