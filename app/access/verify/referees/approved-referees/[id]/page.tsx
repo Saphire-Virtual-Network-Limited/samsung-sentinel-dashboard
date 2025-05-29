@@ -4,12 +4,13 @@ import React from "react";
 import SingleRefereeView from "@/view/dashboard/verify-Referee/singleRefView";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 export default function ApprovedRefereePage({ params }: PageProps) {
-  return <SingleRefereeView id={params.id} />;
+  const resolvedParams = React.use(params);
+  return <SingleRefereeView id={resolvedParams.id} />;
 }
