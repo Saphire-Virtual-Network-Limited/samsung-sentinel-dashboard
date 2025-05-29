@@ -220,3 +220,10 @@ export async function getAllUnEnrolledDevices(startDate?: string, endDate?: stri
 	return apiCall(`/admin/device/unenrolled${query}`, "GET");
 }
 
+
+//** Link Details */
+
+export async function updateLinkStatus(customerId: string) {
+	return apiCall(`/admin/customers/update-kyc/${customerId}`, "POST");
+}
+
