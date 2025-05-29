@@ -82,12 +82,11 @@ type CustomerRecord = {
 };
 
 interface SingleRefereeViewProps {
-  status: string;
   id: string;
   role?: string;
 }
 
-export default function SingleRefereeView({ status, id, role = 'verify' }: SingleRefereeViewProps) {
+export default function SingleRefereeView({ id, role = 'verify' }: SingleRefereeViewProps) {
   const router = useRouter();
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -97,19 +96,22 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
   const [isDisabled, setIsDisabled] = useState(false);
 
   const { data: response, error, isLoading } = useSWR(
-    status && id ? [status, id] : null,
+    id ? ['referee', id] : null,
     async () => {
-      let result;
-      if (status === 'approved-referees') {
-        result = await getApprovedReferees();
-      } else if (status === 'unapproved-referees') {
-        result = await getUnapprovedReferees();
-      } else if (status === 'rejected-referees') {
-        result = await getRejectedReferees();
-      } else {
-        throw new Error('Invalid status');
-      }
-      return result;
+      const [approved, unapproved, rejected] = await Promise.all([
+        getApprovedReferees(),
+        getUnapprovedReferees(),
+        getRejectedReferees()
+      ]);
+      
+      // Combine all results and find the customer
+      const allReferees = [
+        ...(approved?.data || []),
+        ...(unapproved?.data || []),
+        ...(rejected?.data || [])
+      ];
+      
+      return { data: allReferees };
     },
     {
       revalidateOnFocus: true,
@@ -167,7 +169,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
   // }, [customer?.customerId, role, router]);
 
   const handleBack = () => {
-    router.push(`/access/${role}/referees/${status}`);
+    router.push(`/access/${role}/referees/approved-referees/${customer.customerId}`);
   };
 
   const phones = useMemo(() => {

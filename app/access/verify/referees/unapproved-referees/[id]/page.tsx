@@ -1,18 +1,7 @@
 "use client";
-import { SingleRefereeView } from '@/view/dashboard';
-import React from 'react';
+import React from "react";
+import SingleRefereeView from "@/view/dashboard/verify-Referee/singleRefView";
 
-interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+export default function UnapprovedRefereePage({ params }: { params: { id: string } }) {
+  return <SingleRefereeView id={params.id} />;
 }
-
-const SingleRefereePage = ({ params }: PageProps) => {
-  const resolvedParams = React.use(params);
-  const role = "verify"; // Hardcoded for this route
-
-  return <SingleRefereeView status="unapproved-referees" id={resolvedParams.id} role={role} />;
-};
-
-export default SingleRefereePage;
