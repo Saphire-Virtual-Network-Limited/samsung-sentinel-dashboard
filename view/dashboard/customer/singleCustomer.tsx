@@ -4,8 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button, Chip } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getAllCustomerRecord, showToast, verifyCustomerReferenceNumber } from "@/lib";
-import { SelectField } from "@/components/reususables/form";
+import { getAllCustomerRecord, showToast } from "@/lib";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 
 type CustomerRecord = {
@@ -15,6 +14,8 @@ type CustomerRecord = {
 	email: string;
 	bvn: string;
 	dob: string;
+  inputtedDob: string;
+	
 	dobMisMatch: boolean;
 	createdAt: string;
 	updatedAt: string;
@@ -77,8 +78,7 @@ type CustomerRecord = {
 	CustomerKYC?: Array<{
 		kycId: string;
 		customerId: string;
-		phone2: string;
-		phone3: string;
+
 		houseNumber: string;
 		streetAddress: string;
 		nearestBusStop: string;
@@ -90,6 +90,13 @@ type CustomerRecord = {
 		applicantBusinessAddress: string;
 		applicantAddress: string;
 		source: string;
+
+    phone2: string;
+	phone3: string;
+	phone4: string;
+	phone5: string;
+	phoneApproved: string;
+  generalStatus: string;
 		createdAt: string;
 		updatedAt: string;
 		status2Comment: string | null;
@@ -543,67 +550,49 @@ export default function SingleCustomerPage() {
 
                 {/* Referee Information */}
                 <div className="mt-8 pt-8 border-t border-default-200">
-                  <h4 className="text-base font-semibold text-default-900 mb-4">Referee Information</h4>
-                  
-                  {/* Referee 1 */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-default-700">Referee 1</h5>
-                      <Chip 
-                        color={
-                          customer.CustomerKYC?.[0]?.phone2Status === 'APPROVED' 
-                            ? 'success' 
-                            : customer.CustomerKYC?.[0]?.phone2Status === 'REJECTED'
-                            ? 'danger'
-                            : 'warning'
-                        }
-                        variant="flat"
-                        className="font-medium"
-                      >
-                        {customer.CustomerKYC?.[0]?.phone2Status || 'PENDING'}
-                      </Chip>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                        <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone2 || 'N/A'}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-default-500 mb-1">Comment</div>
-                        <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.status2Comment || 'N/A'}</div>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-base font-semibold text-default-900 mb-4">KYC Status</h4>
+                        <p className={`text-sm mb-1 ${
+                        customer.CustomerKYC?.[0]?.generalStatus === 'APPROVED' ? 'text-success-500 font-medium bg-success-50 px-4 py-1 rounded-md' :
+                        customer.CustomerKYC?.[0]?.generalStatus === 'REJECTED' ? 'text-danger-500 font-medium bg-danger-50 px-4 py-1 rounded-md' :
+                        'text-warning-500 font-medium bg-warning-50 px-4 py-1 rounded-md'
+                      }`}>
+                        {customer.CustomerKYC?.[0]?.generalStatus}
+                      </p>
                   </div>
 
-                  {/* Referee 2 */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-default-700">Referee 2</h5>
-                      <Chip 
-                        color={
-                          customer.CustomerKYC?.[0]?.phone3Status === 'APPROVED' 
-                            ? 'success' 
-                            : customer.CustomerKYC?.[0]?.phone3Status === 'REJECTED'
-                            ? 'danger'
-                            : 'warning'
-                        }
-                        variant="flat"
-                        className="font-medium"
-                      >
-                        {customer.CustomerKYC?.[0]?.phone3Status || 'PENDING'}
-                      </Chip>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                        <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone3 || 'N/A'}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-default-500 mb-1">Comment</div>
-                        <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.status3Comment || 'N/A'}</div>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 1</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone2 || 'N/A'}</div>
                   </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 2</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone3 || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 3</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone4 || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 4</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone5 || 'N/A'}</div>
+                  </div>
+                 
+                </div>
+                {customer.CustomerKYC?.[0]?.phoneApproved && (
+                  <div className="bg-green-50 rounded-lg p-4 mt-4">
+                    <p>Approved Referee number</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phoneApproved}</div>
+                  </div>
+                )}
+                  </div>
+                  
+
+                    
+
+                  
                 </div>
               </div>
             </div>

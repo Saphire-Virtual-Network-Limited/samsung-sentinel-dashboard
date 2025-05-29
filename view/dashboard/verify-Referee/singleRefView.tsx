@@ -50,6 +50,7 @@ type CustomerRecord = {
     linkStatus: string;
     phoneApproved: string;
     generalComment: string;
+    generalStatus: string;
     channel: string;
     phone2Status: string;
     phone3Status: string;
