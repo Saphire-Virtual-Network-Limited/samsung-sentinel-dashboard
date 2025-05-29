@@ -846,7 +846,10 @@ export default function SingleCustomerPage() {
                     <div className="text-sm text-default-500 mb-1">Pay Frequency</div>
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.payFrequency || 'N/A'}</div>
                   </div>
-                  
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Device Name</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.deviceName || 'N/A'}</div>
+                  </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Device Price</div>
                     <div className="font-medium text-default-900">
@@ -875,10 +878,6 @@ export default function SingleCustomerPage() {
                       {customer.LoanRecord?.[0]?.updatedAt ? new Date(customer.LoanRecord[0].updatedAt).toLocaleString() : 'N/A'}
                     </div>
                   </div>
-                  {/* <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Loan Channel</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.channel || 'N/A'}</div>
-                  </div> */}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
                 <div className="bg-default-50 rounded-lg p-4">

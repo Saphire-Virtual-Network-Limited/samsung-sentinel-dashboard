@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Chip } from "@heroui/react";
+import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getApprovedReferees, getUnapprovedReferees, getRejectedReferees, verifyCustomerReferenceNumber, showToast } from "@/lib";
+import { getApprovedReferees, getUnapprovedReferees, getRejectedReferees, verifyCustomerReferenceNumber, showToast, updateLinkStatus } from "@/lib";
 import { SelectField } from "@/components/reususables/form";
 import useSWR from "swr";
 
@@ -20,6 +20,7 @@ type CustomerRecord = {
   updatedAt: string;
   customerLoanDiskId: string;
   channel: string;
+  inputtedDob: string;
   bvnPhoneNumber: string;
   mainPhoneNumber: string;
   mbeId: string | null;
@@ -29,6 +30,8 @@ type CustomerRecord = {
     customerId: string;
     phone2: string;
     phone3: string;
+    phone4: string;
+    phone5: string;
     houseNumber: string;
     streetAddress: string;
     nearestBusStop: string;
@@ -44,6 +47,9 @@ type CustomerRecord = {
     updatedAt: string;
     status2Comment: string | null;
     status3Comment: string | null;
+    linkStatus: string;
+    phoneApproved: string;
+    generalComment: string;
     channel: string;
     phone2Status: string;
     phone3Status: string;
@@ -66,6 +72,7 @@ type CustomerRecord = {
     payFrequency: string;
     storeId: string;
     devicePrice: number;
+    deviceName: string;
     deviceAmount: number;
     monthlyRepayment: number;
     duration: number;
@@ -83,9 +90,10 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
   const router = useRouter();
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [refereeType, setRefereeType] = useState<"referee1" | "referee2" | null>(null);
   const [reason, setReason] = useState("");
   const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [selectedPhone, setSelectedPhone] = useState<string[]>([]);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const { data: response, error, isLoading } = useSWR(
     status && id ? [status, id] : null,
@@ -112,8 +120,6 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
     }
   );
 
-  
-
   const customer = useMemo(() => {
     if (!response?.data) return null;
     return response.data.find((c: CustomerRecord) => c.customerId === id);
@@ -139,76 +145,112 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
     }
   }, [response?.data, customer]);
 
+  // useEffect(() => {
+  //   const handleLinkStatus = async () => {
+  //     try {
+  //       await updateLinkStatus(customer?.customerId);
+  //     } catch (error: any) {
+  //       showToast({ 
+  //         type: "error", 
+  //         message: error.message || "A user is already on the customer's account", 
+  //         duration: 8000,
+  //       });
+  //       router.push(`/access/${role}/referees/unapproved-referees/`);
+  //       console.error("Failed to update link status", error);
+  //     }
+  //   };
+    
+  //   if (customer?.customerId) {
+  //     handleLinkStatus();
+  //   }
+  // }, [customer?.customerId, role, router]);
+
   const handleBack = () => {
     router.push(`/access/${role}/referees/${status}`);
   };
 
-  const handleApproveReferee = async (type: "referee1" | "referee2") => {
-    if (!customer) return;
+  const phones = useMemo(() => {
+    const phoneOptions = [
+      {
+        id: 1,
+        label: "Referee 1",
+        value: customer?.CustomerKYC?.[0]?.phone2,
+      },
+      {
+        id: 2,
+        label: "Referee 2",
+        value: customer?.CustomerKYC?.[0]?.phone3,
+      },
+      {
+        id: 3,
+        label: "Referee 3",
+        value: customer?.CustomerKYC?.[0]?.phone4,
+      },
+      {
+        id: 4,
+        label: "Referee 4",
+        value: customer?.CustomerKYC?.[0]?.phone5,
+      },
+    ];
+
+    // Filter out phones with null/undefined values and ensure each has a unique key
+    return phoneOptions
+      .filter(phone => phone.value)
+      .map(phone => ({
+        ...phone,
+        key: `phone-${phone.id}-${phone.value}`,
+        label: `${phone.label} - ${phone.value}` // Combine label and value in the display text
+      }));
+  }, [customer?.CustomerKYC]);
+
+  const handlePhoneChange = (value: string) => {
+    setSelectedPhone([value]);
+  };
+
+  const handleApproveReferee = async () => {
     
     setIsButtonLoading(true);
     try {
-      const phoneNumber = type === "referee1" 
-        ? String(customer?.CustomerKYC?.[0]?.phone2)
-        : String(customer?.CustomerKYC?.[0]?.phone3);
-
       const verifyCustomerReferenceNumberDetails = {
         customerId: customer.customerId,
-        phoneNumber,
+        phoneNumber: selectedPhone[0], // Convert array to single string
         phoneVerified: true,
-        comment: `Referee ${type === "referee1" ? "1" : "2"} has been verified`,
+        comment: `Referee has been verified`,
       };
 
       await verifyCustomerReferenceNumber(verifyCustomerReferenceNumberDetails);
-      showToast({
-        type: "success",
-        message: `Referee ${type === "referee1" ? "1" : "2"} verified successfully`,
-        duration: 3000,
-      });
-      router.refresh();
-      router.back();
+      showToast({ type: "success", message: "Referee verified successfully, Please check approved referees", duration: 4000,});
+      router.push(`/access/${role}/referees/approved-referees/${customer.customerId}`);
     } catch (error: any) {
-      console.error(`Failed to verify referee ${type === "referee1" ? "1" : "2"}`, error);
-      showToast({
-        type: "error",
-        message: error.message || `Failed to verify referee ${type === "referee1" ? "1" : "2"}`,
-        duration: 5000,
-      });
+      console.error("Failed to verify referee", error);
+
+      showToast({ type: "error", message: error.message || "Failed to verify referee", duration: 5000,});
     } finally {
       setIsButtonLoading(false);
       setShowApproveModal(false);
     }
   };
 
-  const handleRejectReferee = async (type: "referee1" | "referee2") => {
+  const handleRejectReferee = async () => {
     if (!customer) return;
 
     setIsButtonLoading(true);
     try {
-      const phoneNumber = type === "referee1"
-        ? String(customer?.CustomerKYC?.[0]?.phone2)
-        : String(customer?.CustomerKYC?.[0]?.phone3);
-
       const verifyCustomerReferenceNumberDetails = {
         customerId: customer.customerId,
-        phoneNumber,
+        phoneNumber: selectedPhone[0], // Use selected phone number
         phoneVerified: false,
         comment: reason,
       };
 
       await verifyCustomerReferenceNumber(verifyCustomerReferenceNumberDetails);
-      showToast({
-        type: "success",
-        message: `Referee ${type === "referee1" ? "1" : "2"} rejected successfully`,
-        duration: 3000,
-      });
-      router.refresh();
-      router.back();
+      showToast({ type: "success", message: "Referee rejected successfully, Please check rejected referees", duration: 4000,});
+      router.push(`/access/${role}/referees/rejected-referees/${customer.customerId}`);
     } catch (error: any) {
-      console.error(`Failed to reject referee ${type === "referee1" ? "1" : "2"}`, error);
+      console.error("Failed to reject referee", error);
       showToast({
         type: "error",
-        message: error.message || `Failed to reject referee ${type === "referee1" ? "1" : "2"}`,
+        message: error.message || "Failed to reject referee",
         duration: 5000,
       });
     } finally {
@@ -224,6 +266,8 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
       </div>
     );
   }
+
+
 
   if (!customer) {
     return (
@@ -247,7 +291,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
     <div className="min-h-screen bg-default-50">
       {/* Header Section */}
       <div className="bg-white border-b border-default-200">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className=" py-6">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-4">
               {/* <Button
@@ -277,7 +321,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
         </div>
       </div>
 
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className=" py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Personal Information */}
           <div className="lg:col-span-1 space-y-8">
@@ -289,7 +333,31 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                 <div className="space-y-4">
                   <div>
                     <div className="text-sm text-default-500 mb-1">Customer ID</div>
-                    <div className="font-medium text-default-900">{customer.customerId || 'N/A'}</div>
+                    <div className="font-medium text-default-900 flex items-center gap-2">
+                      {customer.customerId || 'N/A'} 
+
+                      <Snippet
+                        codeString={customer.customerId}
+                        classNames={{
+                          base: "p-0",        // Adds padding to the outer container
+                          content: "p-0",    // Adds horizontal padding to the content wrapper
+                        }}
+                        className="p-0"
+                        size="sm"
+                        hideSymbol
+                        hideCopyButton={false}  // show only the copy icon
+                        // copyButtonProps={{
+                        //   color: "primary",
+                        //   variant: "flat",
+                        //   size: "sm",
+                        //   isIconOnly: true,
+                          
+
+                        // }}
+                      />
+                      
+
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">Full Name</div>
@@ -308,8 +376,14 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     <div className="font-medium text-default-900">{customer.bvn || 'N/A'}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-default-500 mb-1">Date of Birth</div>
+                    <div className="text-sm text-default-500 mb-1">BVN Date of Birth</div>
                     <div className="font-medium text-default-900">{customer.dob || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-default-500 mb-1">Inputted Date of Birth</div>
+                    <div className="font-medium text-default-900">
+                      {customer.inputtedDob ? new Date(customer.inputtedDob).toISOString().split('T')[0] : 'N/A'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">BVN Phone</div>
@@ -323,14 +397,6 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     <div className="text-sm text-default-500 mb-1">Registered By</div>
                     <div className="font-medium text-default-900">{customer.mbeId || 'N/A'}</div>
                   </div>
-                  {/* <div>
-                    <div className="text-sm text-default-500 mb-1">Mono Customer Connected ID</div>
-                    <div className="font-medium text-default-900">{customer.monoCustomerConnectedCustomerId || 'N/A'}</div>
-                  </div> */}
-                  {/* <div>
-                    <div className="text-sm text-default-500 mb-1">Customer Loan Disk ID</div>
-                    <div className="font-medium text-default-900">{customer.customerLoanDiskId || 'N/A'}</div>
-                  </div> */}
                   <div>
                     <div className="text-sm text-default-500 mb-1">Created At</div>
                     <div className="font-medium text-default-900">
@@ -358,10 +424,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     <div className="text-sm text-default-500 mb-1">Address</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantAddress || 'N/A'}</div>
                   </div>
-                  <div>
-                    <div className="text-sm text-default-500 mb-1">Business Address</div>
-                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A'}</div>
-                  </div>
+                  
                   <div>
                     <div className="text-sm text-default-500 mb-1">House Number</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.houseNumber || 'N/A'}</div>
@@ -395,6 +458,11 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.businessName || 'N/A'}</div>
                   </div>
                   <div>
+                    <div className="text-sm text-default-500 mb-1">Business Address</div>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A'}</div>
+                  </div>
+                  
+                  <div>
                     <div className="text-sm text-default-500 mb-1">Source</div>
                     <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.source || 'N/A'}</div>
                   </div>
@@ -423,126 +491,102 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
           <div className="lg:col-span-2 space-y-8">
             {/* Referees Section */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-6 border-b border-default-200">
+              <div className="p-6 border-b border-default-200 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-default-900">Referees</h3>
+                <p className={`text-sm mb-1 ${
+                  customer.CustomerKYC?.[0]?.generalStatus === 'APPROVED' ? 'text-success-500 font-medium bg-success-50 px-4 py-1 rounded-md' :
+                  customer.CustomerKYC?.[0]?.generalStatus === 'REJECTED' ? 'text-danger-500 font-medium bg-danger-50 px-4 py-1 rounded-md' :
+                  'text-warning-500 font-medium bg-warning-50 px-4 py-1 rounded-md'
+                }`}>
+                  {customer.CustomerKYC?.[0]?.generalStatus}
+                </p>
               </div>
               <div className="p-6 space-y-8">
-                {/* Referee 1 */}
-                <div className="bg-default-50 rounded-xl p-6 border border-default-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-default-900">Referee 1</h4>
-                    <Chip 
-                      color={
-                        customer.CustomerKYC?.[0]?.phone2Status === 'APPROVED' 
-                          ? 'success' 
-                          : customer.CustomerKYC?.[0]?.phone2Status === 'REJECTED'
-                          ? 'danger'
-                          : 'warning'
-                      }
-                      variant="flat"
-                      className="font-medium"
-                    >
-                      {customer.CustomerKYC?.[0]?.phone2Status || 'PENDING'}
-                    </Chip>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                      <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone2 || 'N/A'}</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="text-sm text-default-500 mb-1">Comment</div>
-                      <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.status2Comment || 'N/A'}</div>
-                    </div>
-                  </div>
-                  {customer.CustomerKYC?.[0]?.phone2 && customer.CustomerKYC?.[0]?.phone2 !== 'N/A' && (
-                    <div className="flex gap-4">
-                      {customer.CustomerKYC?.[0]?.phone2Status !== 'APPROVED' && (
-                        <Button
-                          color="success"
-                          variant="flat"
-                          className="font-medium"
-                          onPress={() => {
-                            setRefereeType("referee1");
-                            setShowApproveModal(true);
-                          }}>
-                          Approve
-                        </Button>
-                      )}
-                      {customer.CustomerKYC?.[0]?.phone2Status !== 'REJECTED' && (
-                        <Button
-                          color="danger"
-                          variant="flat"
-                          className="font-medium"
-                          onPress={() => {
-                            setRefereeType("referee1");
-                            setShowRejectModal(true);
-                          }}>
-                          Reject
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
 
-                {/* Referee 2 */}
-                <div className="bg-default-50 rounded-xl p-6 border border-default-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-default-900">Referee 2</h4>
-                    <Chip 
-                      color={
-                        customer.CustomerKYC?.[0]?.phone3Status === 'APPROVED' 
-                          ? 'success' 
-                          : customer.CustomerKYC?.[0]?.phone3Status === 'REJECTED'
-                          ? 'danger'
-                          : 'warning'
-                      }
-                      variant="flat"
-                      className="font-medium"
-                    >
-                      {customer.CustomerKYC?.[0]?.phone3Status || 'PENDING'}
-                    </Chip>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                      <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone3 || 'N/A'}</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="text-sm text-default-500 mb-1">Comment</div>
-                      <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.status3Comment || 'N/A'}</div>
-                    </div>
-                  </div>
-                  {customer.CustomerKYC?.[0]?.phone3 && customer.CustomerKYC?.[0]?.phone3 !== 'N/A' && (
-                    <div className="flex gap-4">
-                      {customer.CustomerKYC?.[0]?.phone3Status !== 'APPROVED' && (
-                        <Button
-                          color="success"
-                          variant="flat"
-                          className="font-medium"
-                          onPress={() => {
-                            setRefereeType("referee2");
-                            setShowApproveModal(true);
-                          }}>
-                          Approve
-                        </Button>
-                      )}
-                      {customer.CustomerKYC?.[0]?.phone3Status !== 'REJECTED' && (
-                        <Button
-                          color="danger"
-                          variant="flat"
-                          className="font-medium"
-                          onPress={() => {
-                            setRefereeType("referee2");
-                            setShowRejectModal(true);
-                          }}>
-                          Reject
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <div className="flex items-center space-x-4">
+
+                <SelectField
+                  key="phone-select"
+                  htmlFor="phone-select"
+                  id="phone-select"
+                  placeholder={isLoading ? "Loading referees..." : phones?.length > 0 ? "Choose Referees" : "No referee number available"}
+                  defaultSelectedKeys={selectedPhone}
+                  onChange={(value) => handlePhoneChange(value as string)}
+                  options={phones}
+                  size="md"
+                />
+
+                        {customer?.CustomerKYC?.[0]?.generalStatus === 'PENDING' && (
+                          <>
+                            <Button
+                              color="success"
+                              variant="flat"
+                              className="font-medium"
+                              isDisabled={!selectedPhone.length}
+                              onPress={() => {
+                                setShowApproveModal(true);
+                              }}>
+                              Approve
+                            </Button>
+
+                            <Button
+                              color="danger"
+                              variant="flat"
+                              className="font-medium"
+                              isDisabled={!selectedPhone.length}
+                              onPress={() => {
+                                setShowRejectModal(true);
+                              }}>
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {customer?.CustomerKYC?.[0]?.generalStatus === 'APPROVED' && (
+                          <Button
+                            color="danger"
+                            variant="flat"
+                            className="font-medium"
+                            isDisabled={!selectedPhone.length}
+                            onPress={() => {
+                              setShowRejectModal(true);
+                            }}>
+                            Reject
+                          </Button>
+                        )}
+                        
+                      </div>
+
               </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 1</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone2 || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 2</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone3 || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 3</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone4 || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <p>Referee 4</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phone5 || 'N/A'}</div>
+                  </div>
+                 
+                </div>
+                {customer.CustomerKYC?.[0]?.phoneApproved && (
+                  <div className="bg-green-50 rounded-lg p-4 mt-4">
+                    <p>Approved Referee number</p>
+                    <div className="font-medium text-default-900">{customer.CustomerKYC?.[0]?.phoneApproved}</div>
+                  </div>
+                )}
+              </div>
+
+
+
             </div>
 
             {/* Loan Information */}
@@ -655,6 +699,10 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.storeId || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Device Name</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.deviceName || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Device Price</div>
                     <div className="font-medium text-default-900">
                       {customer.LoanRecord?.[0]?.devicePrice !== undefined
@@ -663,7 +711,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Device Amount</div>
+                    <div className="text-sm text-default-500 mb-1">Device Amount with insurance</div>
                     <div className="font-medium text-default-900">
                       {customer.LoanRecord?.[0]?.deviceAmount !== undefined
                         ? `₦${customer.LoanRecord[0].deviceAmount.toLocaleString()}`
@@ -714,7 +762,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                   color="success"
                   className="font-medium"
                   isLoading={isButtonLoading}
-                  onPress={() => refereeType && handleApproveReferee(refereeType)}>
+                  onPress={handleApproveReferee}>
                   Approve
                 </Button>
               </div>
@@ -763,7 +811,7 @@ export default function SingleRefereeView({ status, id, role = 'verify' }: Singl
                   color="success"
                   className="font-medium"
                   isLoading={isButtonLoading}
-                  onPress={() => refereeType && handleRejectReferee(refereeType)}>
+                  onPress={handleRejectReferee}>
                   Reject
                 </Button>
               </div>
