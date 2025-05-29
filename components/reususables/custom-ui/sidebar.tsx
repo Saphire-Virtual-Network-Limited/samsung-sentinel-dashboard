@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard } from "lucide-react";
+import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard, Check, X } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
@@ -75,7 +75,17 @@ export function AppSidebar() {
 	const developerItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/dev/", id: "developer-dashboard" },
 		{ icon: Users, title: "Customers", url: "/access/dev/customers", id: "developer-customers" },
-		{ icon: Users, title: "Referees", url: "/access/dev/referees", id: "developer-referees" },
+		{
+			icon: Users,
+			title: "Referees",
+			id: "developer-referees",
+			subItems: [
+				{ title: "Pending", url: "/access/dev/referees/unapproved-referees" },
+				{ title: "Approved", url: "/access/dev/referees/approved-referees" },
+				{ title: "Rejected", url: "/access/dev/referees/rejected-referees" }
+			],
+		},
+			
 		{ icon: Phone, title: "Devices", url: "/access/dev/devices", id: "developer-devices" },
 		{ icon: CreditCard, title: "Loans", url: "/access/dev/loans", id: "developer-loans" },
 		{ icon: Package2Icon, title: "Products", url: "/access/dev/products", id: "developer-products" },
@@ -86,10 +96,9 @@ export function AppSidebar() {
 
 	const verificationItems: MenuItem[] = [
 		{ title: "Dashboard", icon: Home, url: "/access/verify/", id: "verification-dashboard" },
-		{ icon: Users, title: "Unapproved", url: "/access/verify/unapproved-referees", id: "unapproved-referees" },
-		{ icon: CreditCard, title: "Approved", url: "/access/verify/approved-referees", id: "approved-referees" },
-		{ icon: CreditCard, title: "Rejected", url: "/access/verify/rejected-referees", id: "rejected-referees" },
-		// { icon: Users, title: "Customers", url: "/access/verify/customers", id: "verification-customers" },
+		{ icon: Users, title: "Pending", url: "/access/verify/referees/unapproved-referees", id: "unapproved-referees" },
+		{ icon: Check, title: "Approved", url: "/access/verify/referees/approved-referees", id: "approved-referees" },
+		{ icon: X, title: "Rejected", url: "/access/verify/referees/rejected-referees", id: "rejected-referees" },
 	];
 
 	const financeItems: MenuItem[] = [
