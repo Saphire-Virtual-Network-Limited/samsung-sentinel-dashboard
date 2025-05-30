@@ -12,12 +12,12 @@ import { EllipsisVertical } from "lucide-react";
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "name", sortable: true },
 	{ name: "TAT", uid: "totalTransactionTime" },
-	{ name: "Screen with MTC", uid: "mostTimeConsumingScreen" },
-	{ name: "Time Spent on Sc.", uid: "timeTakenOnScreen" },
-	{ name: "Fulfillment Time", uid: "fullfillmentTime" },
-	{ name: "Payment Time", uid: "paymentTime" },
-	{ name: "Enrollment Time", uid: "enrollmentTime" },
+	{ name: "Highest Screen", uid: "mostTimeConsumingScreen" },
+	{ name: "Time Spent.", uid: "timeTakenOnScreen" },
 	{ name: "Mandate Time", uid: "mandateTime" },
+	{ name: "Payment Time", uid: "paymentTime" },
+	{ name: "Fulfillment Time", uid: "fullfillmentTime" },
+	{ name: "Enrollment Time", uid: "enrollmentTime" },
 	{ name: "Actions", uid: "actions" }
 ];
 

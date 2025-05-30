@@ -25,6 +25,32 @@ type CustomerRecord = {
   mainPhoneNumber: string;
   mbeId: string | null;
   monoCustomerConnectedCustomerId: string;
+
+  regBy?: {
+        title: string;
+        createdAt: string;
+        mbeId: string;
+        mbe_old_id: string;
+        updatedAt: string;
+        firstname: string;
+        lastname: string;
+        phone: string;
+        state: string | null;
+        username: string;
+        accountStatus: string;
+        assignedStoreBranch: string | null;
+        bvn: string | null;
+        bvnPhoneNumber: string | null;
+        channel: string | null;
+        dob: string | null;
+        email: string | null;
+        isActive: boolean;
+        otp: string | null;
+        otpExpiry: string | null;
+        password: string | null;
+        role: string;
+        tokenVersion: number;
+      },
   CustomerKYC?: Array<{
     kycId: string;
     customerId: string;
