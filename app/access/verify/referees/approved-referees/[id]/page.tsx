@@ -6,7 +6,7 @@ interface PageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function ApprovedRefereePage({ params }: PageProps) {
+export default async function RejectedRefereePage({ params }: PageProps) {
   const resolvedParams = await params;
   return <SingleRefereeView id={resolvedParams.id} />;
 }
