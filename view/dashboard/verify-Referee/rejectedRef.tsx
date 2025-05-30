@@ -15,8 +15,8 @@ const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "Referee 1", uid: "referee1" },
-	{ name: "Referee 2", uid: "referee2" },
+	{ name: "Rejected Reason", uid: "generalComment" },
+	{ name: "Status", uid: "generalStatus" },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -61,6 +61,9 @@ type RejectedRefereeRecord = {
 		nearestBusStop: string;
 		localGovernment: string;
 		state: string;
+		generalStatus: string;
+		phoneApproved: string;
+		generalComment: string;
 		town: string;
 		occupation: string;
 		businessName: string;
@@ -171,8 +174,9 @@ export default function RejectedRefereesPage() {
 				...r,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				email: r.email,
-				referee1: `${r.CustomerKYC?.[0]?.phone2Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone2 || 'N/A'}`,
-				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
+				generalStatus: r.CustomerKYC?.[0]?.generalStatus || 'pending',
+				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || 'pending'],
+				generalComment: r.CustomerKYC?.[0]?.generalComment || 'N/A',
 				age: calculateAge(r.dob),
 				mainPhoneNumber: r.mainPhoneNumber,
 			})),
