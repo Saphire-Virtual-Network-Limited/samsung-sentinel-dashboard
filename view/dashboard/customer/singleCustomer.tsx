@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Chip } from "@heroui/react";
+import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import { getAllCustomerRecord, showToast } from "@/lib";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
@@ -412,7 +412,24 @@ export default function SingleCustomerPage() {
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
                   <div>
                     <div className="text-sm text-default-500 mb-1">Customer ID</div>
-                    <div className="font-medium text-default-900">{customer.customerId || 'N/A'}</div>
+                    <div className="font-medium text-default-900 flex items-center gap-2">
+                      {customer.customerId || 'N/A'} 
+
+                      <Snippet
+                        codeString={customer.customerId}
+                        classNames={{
+                          base: "p-0",        // Adds padding to the outer container
+                          content: "p-0",    // Adds horizontal padding to the content wrapper
+                        }}
+                        className="p-0"
+                        size="sm"
+                        hideSymbol
+                        hideCopyButton={false}  // show only the copy icon
+                        
+                      />
+                      
+
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">Full Name</div>
@@ -1112,54 +1129,7 @@ export default function SingleCustomerPage() {
               </div>
             </div>
 
-            {/* Mono Customer */}
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">Mono Customer</h3>
-              </div>
-              <div className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Connected Customer ID</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.connectedCustomerId || 'N/A'}</div>
-                  </div>
-                  
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Temporary Account ID</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.tempAccountId || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Email</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.email || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Name</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.name || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Created At</div>
-                    <div className="font-medium text-default-900">
-                      {customer.MonoCustomer?.createdAt ? new Date(customer.MonoCustomer.createdAt).toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Updated At</div>
-                    <div className="font-medium text-default-900">
-                      {customer.MonoCustomer?.updatedAt ? new Date(customer.MonoCustomer.updatedAt).toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-default-50 rounded-lg p-4 mt-4">
-                    <div className="text-sm text-default-500 mb-1">Mono URL</div>
-                    <div className="font-medium text-default-900">
-                      <div className="bg-white rounded-lg p-2 border border-default-200">
-                        {customer.MonoCustomer?.monourl || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-              </div>
-            </div>
-
+            
             {/* Account Details */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden w-full">
               <div className="p-3 border-b border-default-200">
@@ -1285,7 +1255,7 @@ export default function SingleCustomerPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
                       <div>
                           <div className="text-sm text-default-500 mb-1">Mandate ID</div>
                           <div className="font-medium text-default-900">{mandate.mandateId || 'N/A'}</div>
@@ -1301,6 +1271,55 @@ export default function SingleCustomerPage() {
                 </div>
               </div>
             </div>
+
+            {/* Mono Customer */}
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+              <div className="p-3 border-b border-default-200">
+                <h3 className="text-lg font-semibold text-default-900">Mono Customer</h3>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Connected Customer ID</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.connectedCustomerId || 'N/A'}</div>
+                  </div>
+                  
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Temporary Account ID</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.tempAccountId || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Email</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.email || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Name</div>
+                    <div className="font-medium text-default-900">{customer.MonoCustomer?.name || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Created At</div>
+                    <div className="font-medium text-default-900">
+                      {customer.MonoCustomer?.createdAt ? new Date(customer.MonoCustomer.createdAt).toLocaleString() : 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Updated At</div>
+                    <div className="font-medium text-default-900">
+                      {customer.MonoCustomer?.updatedAt ? new Date(customer.MonoCustomer.updatedAt).toLocaleString() : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-default-50 rounded-lg p-4 mt-4">
+                    <div className="text-sm text-default-500 mb-1">Mono URL</div>
+                    <div className="font-medium text-default-900">
+                      <div className="bg-white rounded-lg p-2 border border-default-200">
+                        {customer.MonoCustomer?.monourl || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+
 
             {/* Transaction History */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">

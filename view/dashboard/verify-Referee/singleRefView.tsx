@@ -336,7 +336,7 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                 <div className="space-y-4">
                   <div>
                     <div className="text-sm text-default-500 mb-1">Customer ID</div>
-                    <div className="font-medium text-default-900 flex items-center gap-2">
+                    <div className="font-medium text-default-900 flex items-center justify-between">
                       {customer.customerId || 'N/A'} 
 
                       <Snippet
@@ -349,17 +349,8 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                         size="sm"
                         hideSymbol
                         hideCopyButton={false}  // show only the copy icon
-                        // copyButtonProps={{
-                        //   color: "primary",
-                        //   variant: "flat",
-                        //   size: "sm",
-                        //   isIconOnly: true,
-                          
-
-                        // }}
+                        
                       />
-                      
-
                     </div>
                   </div>
                   <div>
