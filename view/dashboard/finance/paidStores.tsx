@@ -257,7 +257,7 @@ export default function PaidStoresView() {
 	const renderCell = (row: StoreOnLoan, key: string) => {
 		if (key === "actions") {
 			return (
-				<div className="flex justify-end" key={`${row.storeId}-actions`}>
+				<div className="flex justify-end" key={`${row.storeId}-actions-container`}>
 					<Dropdown>
 						<DropdownTrigger>
 							<Button
@@ -269,7 +269,7 @@ export default function PaidStoresView() {
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Actions">
 							<DropdownItem
-								key={`${row.storeId}-view`}
+								key={`${row.storeId}-view-action`}
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
@@ -280,13 +280,13 @@ export default function PaidStoresView() {
 		}
 		
 		if (key === "fullName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;	
+			return <p key={`${row.storeId}-name-cell`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;	
 		}
 
 		if (key === "Status") {
 			return (
 				<Chip
-					key={`${row.storeId}-status`}
+					key={`${row.storeId}-status-chip`}
 					className="capitalize"
 					color={statusColorMap[row.Status?.toLowerCase() || ''] || "warning"}
 					size="sm"
@@ -296,7 +296,7 @@ export default function PaidStoresView() {
 			);
 		}
 
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <p key={`${row.storeId}-${key}-cell`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
 
 	return (

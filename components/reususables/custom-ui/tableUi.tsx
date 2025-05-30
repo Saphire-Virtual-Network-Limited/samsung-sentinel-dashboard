@@ -176,8 +176,9 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		if (isLoading) return renderSkeleton();
 		
 		const rowIndex = data.indexOf(item as T);
+		const uniqueKey = item ? `${(item as any).id || (item as any)[displayedColumns[1].uid]}-${rowIndex}` : `skeleton-${rowIndex}`;
 		return (
-			<TableRow key={(item as any).id || (item as any)[displayedColumns[1].uid]}>
+			<TableRow key={uniqueKey}>
 				{(colKey) => (
 					<TableCell>
 						{colKey === "serialNumber" 

@@ -197,6 +197,7 @@ export async function getRejectedReferees(startDate?: string, endDate?: string) 
 export interface updateStoreStatus {
 	status: string;
 	storeOnLoanId: string;
+	bankUsed: string;
 }
 
 export async function updateStoreStatus(updateStoreStatus: updateStoreStatus) {

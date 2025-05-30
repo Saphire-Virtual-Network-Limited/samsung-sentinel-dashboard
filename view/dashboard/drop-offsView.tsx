@@ -168,8 +168,24 @@ export default function DropOffsPage() {
 	const filtered = useMemo(() => {
 		let list = [...raw];
 		if (filterValue) {
-			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.name.toLowerCase().includes(f) || c.bvn.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f) || c.mainPhoneNumber.toLowerCase().includes(f) || c.deviceName?.toLowerCase().includes(f) || c.deviceModelNumber?.toLowerCase().includes(f) || c.deviceRam?.toLowerCase().includes(f));
+			const f = filterValue.toLowerCase().trim();
+			list = list.filter((c) => {
+				try {
+					// Safely check each field with proper null checks
+					const name = `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase();
+					const bvn = (c.bvn || '').toLowerCase();
+					const customerId = (c.customerId || '').toLowerCase();
+					const phone = (c.mainPhoneNumber || '').toLowerCase();
+					
+					return name.includes(f) || 
+						   bvn.includes(f) || 
+						   customerId.includes(f) || 
+						   phone.includes(f);
+				} catch (error) {
+					console.error('Error in filter:', error);
+					return false;
+				}
+			});
 		}
 		return list;
 	}, [raw, filterValue]);

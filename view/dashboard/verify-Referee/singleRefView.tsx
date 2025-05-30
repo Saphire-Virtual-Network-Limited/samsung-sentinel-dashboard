@@ -323,13 +323,6 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
         <div className=" py-6">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-4">
-              {/* <Button
-                variant="light"
-                startContent={<ArrowLeft />}
-                className="hover:bg-default-100 transition-colors"
-                onPress={() => router.back()}>
-                Back
-              </Button> */}
               <div>
                 <h1 className="text-lg font-bold text-default-900">
                   {customer.firstName} {customer.lastName}

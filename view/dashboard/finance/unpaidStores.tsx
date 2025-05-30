@@ -3,13 +3,11 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getUnpaidStores, updateStoreStatus } from "@/lib";
+import {  showToast,  getUnpaidStores, updateStoreStatus } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import { SelectField } from "@/components/reususables/form";
-import { type } from "os";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -202,6 +200,9 @@ export default function UnpaidStoresView() {
 		[raw]
 	);
 
+	const [banks, setBanks] = useState([])
+	const [selectedBank, setSelectedBank] = useState()
+
 
   const handleUpdateStoreStatus = async (row: StoreOnLoan) => {
     setIsButtonLoading(true);
@@ -209,6 +210,7 @@ export default function UnpaidStoresView() {
     const storeDetails = {
       storeOnLoanId: row.storeOnLoanId,
       status: "PAID",
+	  bankUsed: row.store.bankName,
     }
 
     console.log('Updating store with details:', storeDetails);
@@ -329,12 +331,8 @@ export default function UnpaidStoresView() {
 			);
 		}
 
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <div key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;
 	};
-
-
-
-
 
 	return (
 		<>
@@ -450,7 +448,7 @@ export default function UnpaidStoresView() {
 													</p>
 												</div>
                         <div>
-                          {selectedItem.status !== 'PAID' && (
+                          {/* {selectedItem.status !== 'PAID' && ( */}
                             <Button
                                 color="success"
                                 variant="solid"
@@ -458,7 +456,7 @@ export default function UnpaidStoresView() {
                                 isLoading={isButtonLoading}>
                                 Mark as Paid
                             </Button>
-                          )}
+                          {/* )} */}
                         </div>
                         </div>
 											</div>
