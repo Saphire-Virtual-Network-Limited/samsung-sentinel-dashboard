@@ -220,7 +220,13 @@ export default function LoansView() {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
 				c.fullName?.toLowerCase().includes(f) || 
-				c.email?.toLowerCase().includes(f)
+				c.email?.toLowerCase().includes(f) ||
+				c.customerId.includes(f) ||
+				c.mainPhoneNumber.includes(f) ||
+				c.bvn.includes(f) ||
+				c.deviceName?.toLowerCase().includes(f) ||
+				c.deviceModelNumber?.toLowerCase().includes(f) ||
+				c.deviceRam?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

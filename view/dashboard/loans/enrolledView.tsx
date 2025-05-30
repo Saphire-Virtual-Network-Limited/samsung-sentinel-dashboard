@@ -204,7 +204,7 @@ export default function EnrolledView() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f) || c.bvn.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f) || c.mainPhoneNumber.toLowerCase().includes(f) || c.deviceName?.toLowerCase().includes(f) || c.deviceModelNumber?.toLowerCase().includes(f) || c.deviceRam?.toLowerCase().includes(f));
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));

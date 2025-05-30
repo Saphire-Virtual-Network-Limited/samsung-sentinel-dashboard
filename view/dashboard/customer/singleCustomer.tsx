@@ -1239,10 +1239,7 @@ export default function SingleCustomerPage() {
                           <div className="text-sm text-default-500 mb-1">Mandate Type</div>
                           <div className="font-medium text-default-900">{mandate.mandate_type || 'N/A'}</div>
                         </div>
-                        <div>
-                          <div className="text-sm text-default-500 mb-1">Mandate ID</div>
-                          <div className="font-medium text-default-900">{mandate.mandateId || 'N/A'}</div>
-                        </div>
+                        
                         <div>
                           <div className="text-sm text-default-500 mb-1">Debit Type</div>
                           <div className="font-medium text-default-900">{mandate.debit_type || 'N/A'}</div>
@@ -1288,10 +1285,17 @@ export default function SingleCustomerPage() {
                           </div>
                         </div>
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
                       <div>
+                          <div className="text-sm text-default-500 mb-1">Mandate ID</div>
+                          <div className="font-medium text-default-900">{mandate.mandateId || 'N/A'}</div>
+                        </div>
+                        <div>
                           <div className="text-sm text-default-500 mb-1">Message</div>
                           <div className="font-medium text-default-900">{mandate.message || 'N/A'}</div>
                         </div>
+                      </div>
+                        
                     </div>
                   ))}
                 </div>

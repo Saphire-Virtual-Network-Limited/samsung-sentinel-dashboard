@@ -8,11 +8,9 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "name", sortable: true },
-	{ name: "Email", uid: "email", sortable: true },
 	{ name: "TAT", uid: "totalTransactionTime" },
 	{ name: "Screen with MTC", uid: "mostTimeConsumingScreen" },
 	{ name: "Time Spent on Sc.", uid: "timeTakenOnScreen" },
@@ -171,7 +169,7 @@ export default function DropOffsPage() {
 		let list = [...raw];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.name.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => c.name.toLowerCase().includes(f) || c.bvn.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f) || c.mainPhoneNumber.toLowerCase().includes(f) || c.deviceName?.toLowerCase().includes(f) || c.deviceModelNumber?.toLowerCase().includes(f) || c.deviceRam?.toLowerCase().includes(f));
 		}
 		return list;
 	}, [raw, filterValue]);
@@ -259,7 +257,7 @@ export default function DropOffsPage() {
 			<div className="mb-4 flex justify-center md:justify-end">
 			</div>
 			
-			<GenericTable<CustomerRecord>
+			<GenericTable
 				columns={columns}
 				data={sorted}
 				allCount={filtered.length}
@@ -296,21 +294,10 @@ export default function DropOffsPage() {
 								<p className="text-sm text-gray-500">Complete customer information and transaction history</p>
 							</ModalHeader>
 							<ModalBody>
-								{selectedItem && (
+								{selectedItem ? (
 									<div className="space-y-6">
 										{/* Personal Information Section */}
-										<div className="bg-white rounded-lg shadow-sm p-6">
-											<h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Personal Information</h3>
-											<div className="grid grid-cols-2 gap-4">
-												<div className="space-y-2">
-													<div className="flex items-center">
-														<span className="text-gray-600 w-40">Full Name:</span>
-														<span className="font-medium">{`${selectedItem.firstName} ${selectedItem.lastName}`}</span>
-													</div>
-													
-												</div>
-											</div>
-										</div>
+										
 
 										{/* Drop-off Logs Section */}
 										{modalMode === "view" && (
@@ -338,7 +325,15 @@ export default function DropOffsPage() {
 																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.screenTime}</td>
 																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.apiResponseTime}</td>
 																		<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																			{new Date(log.createdAt).toLocaleString()}
+																			{new Date(log.createdAt).toLocaleString('en-US', {
+																				year: 'numeric',
+																				month: '2-digit',
+																				day: '2-digit',
+																				hour: '2-digit',
+																				minute: '2-digit',
+																				second: '2-digit',
+																				hour12: false
+																			})}
 																		</td>
 																	</tr>
 																))}
@@ -351,6 +346,8 @@ export default function DropOffsPage() {
 											</div>
 										)}
 									</div>
+								) : (
+									<div className="text-center py-4 text-gray-500">No customer data available</div>
 								)}
 							</ModalBody>
 							<ModalFooter>
