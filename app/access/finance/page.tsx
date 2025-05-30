@@ -1,7 +1,9 @@
 import React from "react";
+import {  StoreSummaryPage } from "@/view";
 
 const page = () => {
-	return <div></div>;
+	return 	<StoreSummaryPage />;
 };
 
 export default page;
+

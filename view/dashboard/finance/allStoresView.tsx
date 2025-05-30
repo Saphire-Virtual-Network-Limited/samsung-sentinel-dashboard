@@ -205,9 +205,10 @@ export default function AllStoresView() {
 			);
 		}
 		
-		if (key === "fullName") {
+		if (key === "storeName") {
 			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.storeName || ''}</p>;	
 		}
+
 		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
 

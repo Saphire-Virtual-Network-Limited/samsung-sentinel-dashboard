@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
+import { SelectField } from "@/components/reususables";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -200,8 +201,8 @@ export default function UnpaidStoresView() {
 		[raw]
 	);
 
-	const [banks, setBanks] = useState([])
-	const [selectedBank, setSelectedBank] = useState()
+	// const [banks, setBanks] = useState([])
+	const [selectedBank, setSelectedBank] = useState<string>("");
 
 
   const handleUpdateStoreStatus = async (row: StoreOnLoan) => {
@@ -210,7 +211,7 @@ export default function UnpaidStoresView() {
     const storeDetails = {
       storeOnLoanId: row.storeOnLoanId,
       status: "PAID",
-	  bankUsed: row.store.bankName,
+	  bankUsed: selectedBank,
     }
 
     console.log('Updating store with details:', storeDetails);
@@ -243,11 +244,13 @@ export default function UnpaidStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
+				const customerId = (c.customerId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   phone.includes(f) || 
 					   amount.includes(f) || 
-					   status.includes(f);
+					   status.includes(f) ||
+					   customerId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
@@ -322,10 +325,11 @@ export default function UnpaidStoresView() {
 			return (
 				<Chip
 					key={`${row.storeId}-status`}
-					className="capitalize"
+					className="capitalize cursor-pointer"
 					color="warning"
 					size="sm"
-					variant="flat">
+					variant="flat"
+					onClick={() => openModal("view", row)}>
 					{row.Status}
 				</Chip>
 			);
@@ -440,25 +444,54 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">Store Hours</p>
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
-                        <div className="flex items-center justify-between col-span-2">
-                        <div>
+                        						<div>
 													<p className="text-sm text-default-500">Paid Status</p>
 													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
 														{selectedItem.status || 'N/A'}
 													</p>
+
+													<div className="flex items-center justify-between col-span-2 mt-4">
+
+												<div>
+													<SelectField
+														label="Which Bank was used to make payment to this store Used?"
+														htmlFor="bank"
+														id="bank"
+														placeholder="Select Bank"
+														isInvalid={false}
+														errorMessage=""
+														onChange={(value) => setSelectedBank(value as string)}
+														options={[
+														{ label: "Access Bank", value: "access bank" },
+														{ label: "First Bank", value: "first bank" },
+														{ label: "GTBank", value: "gtbank" },
+														{ label: "UBA", value: "uba" },
+														{ label: "Zenith Bank", value: "zenith bank" },
+														{ label: "Fidelity Bank", value: "fidelity bank" },
+														{ label: "Union Bank", value: "union bank" },
+														{ label: "Sterling Bank", value: "sterling bank" },
+														{ label: "Wema Bank", value: "wema bank" },
+														{ label: "Stanbic IBTC", value: "stanbic ibtc" }
+														]}
+													/>
 												</div>
-                        <div>
-                          {/* {selectedItem.status !== 'PAID' && ( */}
-                            <Button
-                                color="success"
-                                variant="solid"
-                                onPress={() => onApproved()}  
-                                isLoading={isButtonLoading}>
-                                Mark as Paid
-                            </Button>
-                          {/* )} */}
-                        </div>
-                        </div>
+
+												<div>
+													{selectedItem.status !== 'PAID' && (
+														<Button
+															color="success"
+															variant="solid"
+															onPress={() => onApproved()}  
+															isLoading={isButtonLoading}>
+															Mark as Paid
+														</Button>
+													)}
+												</div>
+                        					</div>
+												</div>
+											
+
+
 											</div>
 										</div>
 

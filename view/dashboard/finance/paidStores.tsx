@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getPaidStores } from "@/lib";
+import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getPaidStores, updateStoreStatus } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
@@ -287,10 +287,11 @@ export default function PaidStoresView() {
 			return (
 				<Chip
 					key={`${row.storeId}-status-chip`}
-					className="capitalize"
+					className="capitalize cursor-pointer"
 					color={statusColorMap[row.Status?.toLowerCase() || ''] || "warning"}
 					size="sm"
-					variant="flat">
+					variant="flat"
+					onClick={() => openModal("view", row)}>
 					{row.Status}
 				</Chip>
 			);
@@ -298,7 +299,7 @@ export default function PaidStoresView() {
 
 		return <p key={`${row.storeId}-${key}-cell`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
-
+    
 	return (
 		<>
 		<div className="mb-4 flex justify-center md:justify-end">
@@ -401,10 +402,12 @@ export default function PaidStoresView() {
 													<p className="text-sm text-default-500">Store Hours</p>
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
-                        <div>
+                        						<div>
 													<p className="text-sm text-default-500">Paid Status</p>
 													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>{`${selectedItem.status || 'N/A'}`}</p>
 												</div>
+												<div className="flex items-center justify-between col-span-2 mt-4">
+                        					</div>
 											</div>
 										</div>
 

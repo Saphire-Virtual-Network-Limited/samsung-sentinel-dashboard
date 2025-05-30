@@ -204,7 +204,31 @@ export default function EnrolledView() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f) || c.bvn.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f) || c.mainPhoneNumber.toLowerCase().includes(f) || c.deviceName?.toLowerCase().includes(f) || c.deviceModelNumber?.toLowerCase().includes(f) || c.deviceRam?.toLowerCase().includes(f));
+			list = list.filter((c) => {
+				try {
+					// Safely check each field with proper null checks
+					const fullName = (c.fullName || '').toLowerCase();
+					const email = (c.email || '').toLowerCase();
+					const bvn = (c.bvn || '').toLowerCase();
+					const customerId = (c.customerId || '').toLowerCase();
+					const phone = (c.mainPhoneNumber || '').toLowerCase();
+					const deviceName = (c.deviceName || '').toLowerCase();
+					const deviceModel = (c.deviceModelNumber || '').toLowerCase();
+					const deviceRam = (c.deviceRam || '').toLowerCase();
+					
+					return fullName.includes(f) || 
+						   email.includes(f) || 
+						   bvn.includes(f) || 
+						   customerId.includes(f) || 
+						   phone.includes(f) || 
+						   deviceName.includes(f) || 
+						   deviceModel.includes(f) || 
+						   deviceRam.includes(f);
+				} catch (error) {
+					console.error('Error in filter:', error);
+					return false;
+				}
+			});
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
