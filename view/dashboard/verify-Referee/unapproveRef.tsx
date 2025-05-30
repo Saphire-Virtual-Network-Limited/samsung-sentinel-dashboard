@@ -16,15 +16,15 @@ const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "Referee 1", uid: "referee1" },
-	{ name: "Referee 2", uid: "referee2" },
+	{ name: "Referee No.", uid: "phone2" },
+	{ name: "Status", uid: "generalStatus" },
 	{ name: "Actions", uid: "actions"},
 ];
 
 const statusOptions = [
-	{ name: "Pending", uid: "pending" },
-	{ name: "Approved", uid: "approved" },
-	{ name: "Rejected", uid: "rejected" },
+	{ name: "PENDING", uid: "pending" },
+	{ name: "APPROVED", uid: "approved" },
+	{ name: "REJECTED", uid: "rejected" },
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
@@ -72,6 +72,7 @@ type UnapprovedRefereeRecord = {
 		updatedAt: string;
 		status2Comment: string | null;
 		status3Comment: string | null;
+		generalStatus: string;
 		channel: string;
 		phone2Status: string;
 		phone3Status: string;
@@ -176,10 +177,10 @@ export default function UnapprovedRefereesPage() {
 				...r,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				email: r.email,
-				referee1: `${r.CustomerKYC?.[0]?.phone2Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone2 || 'N/A'}`,
-				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
+				generalStatus: r.CustomerKYC?.[0]?.generalStatus || 'pending',
+				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || 'pending'],
+				phone2: r.CustomerKYC?.[0]?.phone2 || 'N/A',
 				age: calculateAge(r.dob),
-				mainPhoneNumber: r.mainPhoneNumber,
 			})),
 		[raw]
 	);

@@ -48,6 +48,16 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/admin/", id: "admin-dashboard" },
 		{ icon: CreditCard, title: "Loans", url: "/access/admin/loans", id: "admin-loans" },
 		{ icon: Users, title: "Customers", url: "/access/admin/customers", id: "admin-customers" },
+		{
+			icon: Users,
+			title: "Referees",
+			id: "admin-referees",
+			subItems: [
+				{ title: "Pending", url: "/access/admin/referees/unapproved-referees" },
+				{ title: "Approved", url: "/access/admin/referees/approved-referees" },
+				{ title: "Rejected", url: "/access/admin/referees/rejected-referees" }
+			],
+		},
 		{ icon: Store, title: "Stores", url: "/access/admin/stores", id: "admin-stores" },
 		{ icon: IoBusiness, title: "Staff", url: "/access/admin/staff", id: "admin-staff" },
 		{
@@ -106,9 +116,6 @@ export function AppSidebar() {
 		{ icon: Store, title: "Stores", url: "/access/finance/stores", id: "finance-stores" },
 		{ icon: CreditCard, title: "Loans", url: "/access/finance/loans", id: "finance-loans" },
 		{ icon: Store, title: "Customers", url: "/access/finance/customers", id: "finance-customers" },
-
-		// { icon: DollarSign, title: "Payroll", url: "/access/finance/staff", id: "finance-staff" },
-		// { icon: Users, title: "Agents", url: "/access/finance/agents", id: "finance-agents" },
 	];
 
 	const supportItems: MenuItem[] = [
