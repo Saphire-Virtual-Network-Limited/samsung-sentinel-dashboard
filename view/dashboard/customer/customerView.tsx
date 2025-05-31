@@ -475,9 +475,9 @@ export default function CustomerPage() {
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</p>;
+			return <div className="capitalize cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</div>;
 		}
-		return <p className="text-small cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</p>;
+		return <div className="text-small cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</div>;
 	};
 
 	return (
