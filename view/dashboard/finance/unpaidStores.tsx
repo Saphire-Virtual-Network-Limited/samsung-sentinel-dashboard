@@ -197,7 +197,7 @@ export default function UnpaidStoresView() {
 				id: r.storeId,
 				fullName: r.store.storeName || '',
 				PhoneNo: r.store.phoneNumber || '',
-				Amount: r.amount?.toLocaleString() || '0',
+				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
 				Status: r.status || '',
 			})),
 		[raw]
@@ -516,6 +516,10 @@ export default function UnpaidStoresView() {
 												<div>
 													<p className="text-sm text-default-500">Loan Amount</p>
 													<p className="font-medium">₦{selectedItem.loanRecord.loanAmount?.toLocaleString() || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Store Price</p>
+													<p className="font-medium">₦{selectedItem.loanRecord.devicePrice?.toLocaleString() || 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Down Payment</p>
