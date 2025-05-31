@@ -186,7 +186,9 @@ export default function UnpaidStoresView() {
 		}
 	);
 
-  console.log(raw);
+	const { mutate } = useSWR(
+		startDate && endDate ? ["unpaid-stores", startDate, endDate] : "unpaid-stores"
+	);
 
 	const customers = useMemo(
 		() =>
@@ -223,6 +225,7 @@ export default function UnpaidStoresView() {
         showToast({ type: "success", message: "Store status updated successfully", duration: 3000, position: "top-right" });
         onApprovedClose();
         onClose();
+        mutate();
       } else {
         console.error('Update failed with response:', res);
         showToast({ type: "error", message: res.message || "Failed to update store status", duration: 8000, position: "top-right" });
@@ -277,7 +280,7 @@ export default function UnpaidStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreOnLoan[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("Unpaid Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
@@ -376,7 +379,7 @@ export default function UnpaidStoresView() {
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1200px] max-h-[600px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>
@@ -386,7 +389,13 @@ export default function UnpaidStoresView() {
 									<div className="space-y-6">
 										{/* Store Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
+											<div className="flex items-center justify-between">
 											<h3 className="text-lg font-semibold mb-3">Store Information</h3>
+
+											<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
+														{selectedItem.status || 'N/A'}
+													</p>
+											</div>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
 													<p className="text-sm text-default-500">Store ID</p>
@@ -445,16 +454,13 @@ export default function UnpaidStoresView() {
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
                         						<div>
-													<p className="text-sm text-default-500">Paid Status</p>
-													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
-														{selectedItem.status || 'N/A'}
-													</p>
 
 													<div className="flex items-center justify-between col-span-2 mt-4">
 
 												<div>
+													<p className="text-sm text-default-500 my-2">Manual Payment</p>
 													<SelectField
-														label="Which Bank was used to make payment to this store Used?"
+														label="Which Bank was used to make payment to this store?"
 														htmlFor="bank"
 														id="bank"
 														placeholder="Select Bank"

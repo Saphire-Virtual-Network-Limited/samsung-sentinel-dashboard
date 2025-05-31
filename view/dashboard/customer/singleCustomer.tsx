@@ -679,76 +679,97 @@ export default function SingleCustomerPage() {
                   </div>
                 </div>
 
-                {/* Store Information */}
-                
-                  <div className="mt-8 pt-8 border-t border-default-200">
-                    <h4 className="text-base font-semibold text-default-900  mb-4">Store Information</h4>
-                    <div className="grid grid-cols-1 gap-6">
-                        <div className="bg-default-50 rounded-lg p-4">
-                          <div className="space-y-3">
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Store Name</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeName || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Address</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.address || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">City</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.city || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">State</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.state || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Region</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.region || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.phoneNumber || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Store Email</div>
-                              <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeEmail || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Bank Name</div>
-                              <div className="font-medium text-default-900">
-                                {customer.LoanRecord?.[0]?.store.bankName || 'N/A'}
+                {/* Stores Table */}
+                <div className="mt-8 pt-8 border-t border-default-200">
+                  <h4 className="text-base font-semibold text-default-900 mb-4">Stores Assigned to MBE</h4>
+                  <div className="overflow-x-auto rounded-lg border border-default-200">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-default-50 border-b border-default-200">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Store Name</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Address</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">City</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">State</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Region</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Phone</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Email</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Operating Hours</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Bank Name</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Account Number</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Account Name</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-default-600 uppercase tracking-wider">Bank Code</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-default-200">
+                        {customer.regBy?.stores?.map((store, index) => (
+                          <tr key={index} className="hover:bg-default-50 transition-colors duration-150 ease-in-out">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-default-900">
+                              {store.store.storeName || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.address || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.city || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.state || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.region || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.phoneNumber || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.storeEmail || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.storeOpen && store.store.storeClose 
+                                ? `${store.store.storeOpen} - ${store.store.storeClose}`
+                                : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.bankName || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.accountNumber || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.accountName || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                              {store.store.bankCode || 'N/A'}
+                            </td>
+                          </tr>
+                        ))}
+                        {(!customer.regBy?.stores || customer.regBy.stores.length === 0) && (
+                          <tr>
+                            <td colSpan={12} className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center justify-center text-default-500">
+                                <svg 
+                                  className="w-12 h-12 mb-4 text-default-300" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth={2} 
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" 
+                                  />
+                                </svg>
+                                <p className="text-sm font-medium">No stores registered</p>
+                                <p className="text-xs mt-1">There are no stores to display at this time.</p>
                               </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Account Number</div>
-                              <div className="font-medium text-default-900">
-                                {customer.LoanRecord?.[0]?.store.accountNumber || 'N/A'}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Account Name</div>
-                              <div className="font-medium text-default-900">
-                                {customer.LoanRecord?.[0]?.store.accountName || 'N/A'}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Bank Code</div>
-                              <div className="font-medium text-default-900">
-                                {customer.LoanRecord?.[0]?.store.bankCode || 'N/A'}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Operating Hours</div>
-                              <div className="font-medium text-default-900">
-                                {customer.LoanRecord?.[0]?.store.storeOpen} - {customer.LoanRecord?.[0]?.store.storeClose}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                     
-                    </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1318,6 +1339,80 @@ export default function SingleCustomerPage() {
               </div>
             </div>
 
+            {/* Store Information */}
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden mt-8">
+              <div className="p-3 border-b border-default-200">
+                <h3 className="text-lg font-semibold text-default-900">Device Store Information</h3>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Store Name</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeName || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Address</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.address || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">City</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.city || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">State</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.state || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Region</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.region || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Phone Number</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.phoneNumber || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Store Email</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeEmail || 'N/A'}</div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Bank Name</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.bankName || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Account Number</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.accountNumber || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Account Name</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.accountName || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Bank Code</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.bankCode || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Store ID</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.storeId || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-default-50 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">Operating Hours</div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.store.storeOpen} - {customer.LoanRecord?.[0]?.store.storeClose}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Transaction History */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
