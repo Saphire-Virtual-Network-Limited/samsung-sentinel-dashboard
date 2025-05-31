@@ -379,7 +379,7 @@ export default function UnpaidStoresView() {
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				className="m-4 max-w-[1200px] max-h-[600px] overflow-y-auto">
+				className="m-4 max-w-[1200px] max-h-[650px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>

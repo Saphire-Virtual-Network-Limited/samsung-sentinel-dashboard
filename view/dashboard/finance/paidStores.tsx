@@ -338,7 +338,7 @@ export default function PaidStoresView() {
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1200px] max-h-[650px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>
