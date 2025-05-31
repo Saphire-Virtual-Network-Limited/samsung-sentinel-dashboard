@@ -239,11 +239,11 @@ export default function PaidStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreOnLoan[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("Paid Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "unpaidStores_Records.xlsx");
+		saveAs(new Blob([buf]), "paidStores_Records.xlsx");
 	};
 
 	// When action clicked:

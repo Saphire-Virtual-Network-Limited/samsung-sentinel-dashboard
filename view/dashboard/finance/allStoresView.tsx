@@ -165,11 +165,11 @@ export default function AllStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("All Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Stores_Records.xlsx");
+		saveAs(new Blob([buf]), "allStores_Records.xlsx");
 	};
 
 	// When action clicked:
@@ -206,10 +206,10 @@ export default function AllStoresView() {
 		}
 		
 		if (key === "storeName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.storeName || ''}</p>;	
+			return <div key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;	
 		}
 
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <div key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;
 	};
 
 	return (

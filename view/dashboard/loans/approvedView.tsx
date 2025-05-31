@@ -332,17 +332,17 @@ export default function LoansView() {
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;
+			return <div className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</div>;
 		}
 		// Ensure we're converting any value to a string before rendering
 		const cellValue = (row as any)[key];
 		if (cellValue === null || cellValue === undefined) {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</p>;
+			return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</div>;
 		}
 		if (typeof cellValue === 'object') {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</p>;
+			return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</div>;
 		}
-		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</p>;
+		return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</div>;
 	};
 
 	return (
