@@ -22,11 +22,17 @@ const columns: ColumnDef[] = [
 const statusOptions = [
   { name: "Unpaid", uid: "unpaid" },
 { name: "Paid", uid: "paid" },
+{ name: "Pending", uid: "pending" },
+{ name: "Failed", uid: "failed" },
+
+
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
 	unpaid: "warning",
 	paid: "success",
+	pending: "warning",
+	failed: "danger",
 }; 
 
 type StoreOnLoan = {
@@ -332,7 +338,7 @@ export default function UnpaidStoresView() {
 				<Chip
 					key={`${row.storeId}-status`}
 					className="capitalize cursor-pointer"
-					color="warning"
+					color={statusColorMap[row.Status as keyof typeof statusColorMap] || "default"}
 					size="sm"
 					variant="flat"
 					onClick={() => openModal("view", row)}>
@@ -399,9 +405,13 @@ export default function UnpaidStoresView() {
 											<div className="flex items-center justify-between">
 											<h3 className="text-lg font-semibold mb-3">Store Information</h3>
 
-											<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
-														{selectedItem.status || 'N/A'}
-													</p>
+											<p className={`font-medium ${
+												selectedItem.status === 'PAID' ? 'bg-green-500' : 
+												selectedItem.status === 'PENDING' ? 'bg-yellow-500' :
+												selectedItem.status === 'FAILED' ? 'bg-red-500' :
+												'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
+												{selectedItem.status || 'N/A'}
+											</p>
 											</div>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>

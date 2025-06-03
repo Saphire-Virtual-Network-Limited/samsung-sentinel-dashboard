@@ -951,10 +951,14 @@ export default function SingleCustomerPage() {
                                 <Chip 
                                   color={
                                     store.status === 'PAID' 
-                                      ? 'success' 
+                                      ? 'success'
+                                      : store.status === 'PENDING'
+                                      ? 'warning' 
                                       : store.status === 'UNPAID'
-                                      ? 'warning'
-                                      : 'danger'
+                                      ? 'danger'
+                                      : store.status === 'FAILED'
+                                      ? 'danger'
+                                      : 'default'
                                   }
                                   variant="flat"
                                   className="font-medium"
@@ -962,18 +966,6 @@ export default function SingleCustomerPage() {
                                   {store.status || 'UNPAID'}
                                 </Chip>
                               </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Transaction ID</div>
-                              <div className="font-medium text-default-900">{store.tnxId || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Session ID</div>
-                              <div className="font-medium text-default-900">{store.sessionId || 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Reference</div>
-                              <div className="font-medium text-default-900">{store.reference || 'N/A'}</div>
                             </div>
                             <div>
                               <div className="text-sm text-default-500 mb-1">Pay Channel</div>

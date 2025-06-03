@@ -214,7 +214,12 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                   </div>
                   <h1 class="text-blue-100 text-xs tracking-wide uppercase">Sapphire Virtual Network</h1>
                   <p class="text-blue-100 text-xs tracking-wide uppercase">Payment Acknowledgement</p>
-                  <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${transactionData.status === 'UNPAID' ? 'bg-red-500' : 'bg-green-500'} text-white mt-2">
+                  <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    transactionData.status === 'PAID' ? 'bg-green-500' :
+                    transactionData.status === 'PENDING' ? 'bg-yellow-500' :
+                    transactionData.status === 'FAILED' ? 'bg-red-500' :
+                    'bg-red-500'
+                  } text-white mt-2">
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
