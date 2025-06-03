@@ -23,6 +23,7 @@ interface Recipient {
 }
 
 interface TransactionData {
+  customerId: string
   receiptNumber: string
   transactionId: string
   sessionId: string
@@ -46,7 +47,7 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
   const [isDownloading, setIsDownloading] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState("")
 
-  const userUrl = `https://dashboard.connectwithsapphire.com/verify-code`; // dynamic data
+  const userUrl = `https://dashboard.connectwithsapphire.com/verify-code?customerId=${transactionData.customerId}`; // dynamic data
 
   useEffect(() => {
     // Generate QR code when component mounts
@@ -211,7 +212,6 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <h1 class="text-xl font-bold">SecurePay Business</h1>
                   <p class="text-blue-100 text-xs tracking-wide uppercase">Payment Receipt</p>
                   <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${transactionData.status === 'UNPAID' ? 'bg-red-500' : 'bg-green-500'} text-white mt-2">
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +332,7 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         🔒 Secure Transaction Completed
                       </p>
                       <p class="text-xs text-blue-700">
-                        This transaction was processed with bank-level security. Receipt generated on ${new Date().toLocaleString()}
+                        Receipt generated on ${new Date().toLocaleString()}
                       </p>
                     </div>
                   </div>

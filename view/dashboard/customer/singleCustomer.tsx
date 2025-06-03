@@ -1001,6 +1001,7 @@ export default function SingleCustomerPage() {
                             </div>
                             <PaymentReceipt 
                 transactionData={{
+                  customerId: customer?.customerId || 'N/A',
                   receiptNumber: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.reference || 'N/A',
                   transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A' ,
                   sessionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.sessionId || 'N/A',

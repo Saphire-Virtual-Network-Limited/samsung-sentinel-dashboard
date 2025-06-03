@@ -228,3 +228,9 @@ export async function updateLinkStatus(customerId: string) {
 	return apiCall(`/admin/customers/update-kyc/${customerId}`, "POST");
 }
 
+//** Get Customer Details */
+
+export async function getCustomerDetails(id: string) {
+	return apiCall(`/application/customer/${id}`, "GET");
+}
+
