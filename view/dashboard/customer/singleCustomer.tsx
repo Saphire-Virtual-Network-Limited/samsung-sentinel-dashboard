@@ -999,33 +999,47 @@ export default function SingleCustomerPage() {
                                 {store.updatedAt ? new Date(store.updatedAt).toLocaleString() : 'N/A'}
                               </div>
                             </div>
-                            <PaymentReceipt 
-                transactionData={{
-                  customerId: customer?.customerId || 'N/A',
-                  receiptNumber: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.reference || 'N/A',
-                  transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A' ,
-                  sessionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.sessionId || 'N/A',
-                  amount: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
-                  currency: 'NGN',
-                  date: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.createdAt || 'N/A',
-                  status: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.status || 'N/A',
-                  paymentMethod: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.bankUsed || 'N/A',
-                  sender: {
-                    name: "Sentiflex",
-                    company: "Sapphire Virtual Network",
-                    email: "info@sapphirevirtual.com",
-                  },
-                  recipient: {
-                    name: customer?.LoanRecord?.[0]?.store?.accountName|| 'N/A',
-                    company: customer?.LoanRecord?.[0]?.store?.storeName || 'N/A',
-                    account: customer?.LoanRecord?.[0]?.store?.accountNumber || 'N/A',
-                    bank: customer?.LoanRecord?.[0]?.store?.bankName || 'N/A',
-                  },
-                  fee: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
-                  reference: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A',
-                  description: "Payment for " + customer?.LoanRecord?.[0]?.device.deviceName || 'N/A',
-                }}
-              />
+                              <PaymentReceipt 
+                                  transactionData={{
+                                    customerId: customer?.customerId || 'N/A',
+                                    receiptNumber: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.reference || 'N/A',
+                                    transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A' ,
+                                    sessionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.sessionId || 'N/A',
+                                    amount: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                                    currency: 'NGN',
+                                    date: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.createdAt || 'N/A',
+                                    status: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.status || 'N/A',
+                                    paymentMethod: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.bankUsed || 'N/A',
+                                    sender: {
+                                      name: "Sentiflex",
+                                      company: "Sapphire Virtual Network",
+                                      email: "info@sapphirevirtual.com",
+                                    },
+                                    recipient: {
+                                      name: customer?.LoanRecord?.[0]?.store?.accountName|| 'N/A',
+                                      company: customer?.LoanRecord?.[0]?.store?.storeName || 'N/A',
+                                      account: customer?.LoanRecord?.[0]?.store?.accountNumber || 'N/A',
+                                      bank: customer?.LoanRecord?.[0]?.store?.bankName || 'N/A',
+                                    },
+                                    fee: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                                    reference: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A',
+                                    description: "Payment for " + customer?.LoanRecord?.[0]?.device.deviceName || 'N/A',
+                                  }}
+                                />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Transaction ID</div>
+                              <div className="font-medium text-default-900">{store.tnxId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Session ID</div>
+                              <div className="font-medium text-default-900">{store.sessionId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Reference</div>
+                              <div className="font-medium text-default-900">{store.reference || 'N/A'}</div>
+                            </div>
                           </div>
                         </div>
                       ))
