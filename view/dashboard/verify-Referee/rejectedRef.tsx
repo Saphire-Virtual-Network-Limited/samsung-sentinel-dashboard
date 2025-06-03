@@ -10,6 +10,7 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, So
 import { EllipsisVertical } from "lucide-react";
 import { SelectField } from "@/components/reususables/form";
 import { useRouter, usePathname } from "next/navigation";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -351,6 +352,9 @@ export default function RejectedRefereesPage() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
+		{isLoading ? (
+			<TableSkeleton columns={columns.length} rows={10} />
+		) : (
 			<GenericTable<RejectedRefereeRecord>
 				columns={columns}
 				data={sorted}
@@ -379,6 +383,7 @@ export default function RejectedRefereesPage() {
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 			/>
+		)}
 			
 
 			<Modal

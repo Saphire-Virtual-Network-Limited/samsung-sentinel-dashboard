@@ -7,7 +7,8 @@ import { getAllLoanRecord, capitalize, calculateAge, showToast, verifyCustomerRe
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
-import { EllipsisVertical } from "lucide-react"; 
+import { EllipsisVertical } from "lucide-react";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
@@ -329,6 +330,9 @@ export default function EnrolledDevicesView() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
+		{isLoading ? (
+			<TableSkeleton columns={columns.length} rows={10} />
+		) : (
 			<GenericTable<LoanRecord>
 				columns={columns}
 				data={sorted}
@@ -357,6 +361,7 @@ export default function EnrolledDevicesView() {
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 			/>
+		)}
 			
 
 			<Modal

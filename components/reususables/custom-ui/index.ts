@@ -8,5 +8,6 @@ import DashCard from "./dashCard";
 import DateFilter from "./dateFilter";
 import DeviceCard from "./deviceCard";
 import CardSkeleton from "./cardSkeleton";
+import TableSkeleton from "./tableSkeleton";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton };

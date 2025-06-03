@@ -5,6 +5,8 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input,
 import { ChevronDownIcon, DownloadIcon, SearchIcon } from "lucide-react";
 import DateFilter from "./dateFilter";
 import { showToast } from "@/lib";
+import TableSkeleton from './tableSkeleton';
+
 
 export interface ColumnDef {
 	name: string;
@@ -173,7 +175,17 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	);
 
 	const renderRow = (item: T | null) => {
-		if (isLoading) return renderSkeleton();
+		if (isLoading || !data.length) {
+			return (
+				<TableRow key={`skeleton-${Math.random()}`}>
+					{displayedColumns.map((c) => (
+						<TableCell key={c.uid}>
+							<div className="skeleton w-full h-6" />
+						</TableCell>
+					))}
+				</TableRow>
+			);
+		}
 		
 		const rowIndex = data.indexOf(item as T);
 		const uniqueKey = item ? `${(item as any).id || (item as any)[displayedColumns[1].uid]}-${rowIndex}` : `skeleton-${rowIndex}`;
@@ -218,8 +230,34 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 			</TableHeader>
 			<TableBody
 				emptyContent={hasNoRecords ? "No records" : "No data found"}
-				items={isLoading ? Array(10).fill(null) : data}>
-				{renderRow}
+				items={isLoading ? Array(10).fill(null) : data.length ? data : Array(10).fill(null)}>
+				{(item) => {
+					if (isLoading) {
+						return (
+							<TableRow key={`skeleton-${Math.random()}`}>
+								{displayedColumns.map((c) => (
+									<TableCell key={c.uid}>
+										<div className="skeleton w-full h-6" />
+									</TableCell>
+								))}
+							</TableRow>
+						);
+					}
+					
+					const rowIndex = data.indexOf(item as T);
+					const uniqueKey = item ? `${(item as any).id || (item as any)[displayedColumns[1].uid]}-${rowIndex}` : `skeleton-${rowIndex}`;
+					return (
+						<TableRow key={uniqueKey}>
+							{displayedColumns.map((colKey) => (
+								<TableCell key={colKey.uid}>
+									{colKey.uid === "serialNumber" 
+										? ((page - 1) * 10) + rowIndex + 1
+										: renderCell(item as T, colKey.uid)}
+								</TableCell>
+							))}
+						</TableRow>
+					);
+				}}
 			</TableBody>
 		</Table>
 	);

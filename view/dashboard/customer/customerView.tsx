@@ -9,7 +9,8 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import { SelectField } from "@/components/reususables/form";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
+
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -91,7 +92,7 @@ type CustomerRecord = {
 		extRef: string;
 		currency: string;
 		channel: string;
-		charge: number;
+		charge: number;	
 		chargeNarration: string;
 		senderBank: string;
 		senderAccount: string;
@@ -407,7 +408,7 @@ export default function CustomerPage() {
 				c.customerId.toLowerCase().includes(f) ||
 				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
 				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
-				
+
 			);
 		}
 		if (statusFilter.size > 0) {
@@ -488,34 +489,38 @@ export default function CustomerPage() {
 			<div className="mb-4 flex justify-center md:justify-end">
 			</div>
 			
-			<GenericTable<CustomerRecord>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-			/>
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<CustomerRecord>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+				/>
+			)}
 		</>
 	);
 }

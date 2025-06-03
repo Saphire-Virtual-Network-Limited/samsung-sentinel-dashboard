@@ -12,6 +12,7 @@ import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
@@ -357,6 +358,9 @@ export default function ApprovedRefereesPage() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
+		{isLoading ? (
+			<TableSkeleton columns={columns.length} rows={10} />
+		) : (
 			<GenericTable<ApprovedRefereeRecord>
 				columns={columns}
 				data={sorted}
@@ -385,6 +389,7 @@ export default function ApprovedRefereesPage() {
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 			/>
+		)}
 			
 
 			<Modal
