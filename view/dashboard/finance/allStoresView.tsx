@@ -133,12 +133,14 @@ export default function AllStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const state = (c.State || '').toLowerCase();
 				const partner = (c.Partner || '').toLowerCase();
+				const storeId = (c.storeId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   email.includes(f) || 
 					   phone.includes(f) || 
 					   state.includes(f) || 
-					   partner.includes(f);
+					   partner.includes(f) ||
+					   storeId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {

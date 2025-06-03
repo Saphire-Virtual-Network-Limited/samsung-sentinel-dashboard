@@ -248,12 +248,14 @@ export default function UnpaidStoresView() {
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
 				const customerId = (c.customerId || '').toLowerCase();
+				const storeId = (c.storeId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   phone.includes(f) || 
 					   amount.includes(f) || 
 					   status.includes(f) ||
-					   customerId.includes(f);
+					   customerId.includes(f) ||
+					   storeId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
