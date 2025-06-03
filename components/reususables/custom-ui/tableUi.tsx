@@ -5,7 +5,6 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input,
 import { ChevronDownIcon, DownloadIcon, SearchIcon } from "lucide-react";
 import DateFilter from "./dateFilter";
 import { showToast } from "@/lib";
-import TableSkeleton from './tableSkeleton';
 
 
 export interface ColumnDef {
@@ -73,16 +72,6 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		setEndDate(end);
 		onDateFilterChange?.(start, end);
 	};
-
-	const renderSkeleton = () => (
-		<TableRow>
-			{displayedColumns.map((c) => (
-				<TableCell key={c.uid}>
-					<div className="skeleton w-full h-6" />
-				</TableCell>
-			))}
-		</TableRow>
-	);
 
 	const topContent = (
 		<div className="flex flex-col gap-4">
@@ -173,34 +162,6 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 			</div>
 		</div>
 	);
-
-	const renderRow = (item: T | null) => {
-		if (isLoading || !data.length) {
-			return (
-				<TableRow key={`skeleton-${Math.random()}`}>
-					{displayedColumns.map((c) => (
-						<TableCell key={c.uid}>
-							<div className="skeleton w-full h-6" />
-						</TableCell>
-					))}
-				</TableRow>
-			);
-		}
-		
-		const rowIndex = data.indexOf(item as T);
-		const uniqueKey = item ? `${(item as any).id || (item as any)[displayedColumns[1].uid]}-${rowIndex}` : `skeleton-${rowIndex}`;
-		return (
-			<TableRow key={uniqueKey}>
-				{(colKey) => (
-					<TableCell>
-						{colKey === "serialNumber" 
-							? ((page - 1) * 10) + rowIndex + 1
-							: renderCell(item as T, colKey as string)}
-					</TableCell>
-				)}
-			</TableRow>
-		);
-	};
 
 	return (
 		<Table
