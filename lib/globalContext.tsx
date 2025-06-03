@@ -158,7 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 	useEffect(() => {
 		const isAuthRoute = pathName.startsWith("/auth");
-		if (isAuthRoute) {
+		const isPublicRoute = pathName.startsWith("/verify-code");
+		if (isAuthRoute || isPublicRoute) {
 			setUserResponse(null);
 			setIsLoading(false);
 			return;

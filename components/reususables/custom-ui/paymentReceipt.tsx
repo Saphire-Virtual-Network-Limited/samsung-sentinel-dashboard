@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 // import { Card, CardBody, CardHeader } from "@heroui/card"
 // import { Separator } from "@/components/ui/separator"
 import { useState, useEffect } from "react"
-// import { DynamicQRCode } from "./index"
+import { DynamicQRCode } from "./index"
 import QRCode from "qrcode"
 
 
@@ -46,7 +46,7 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
   const [isDownloading, setIsDownloading] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState("")
 
-  const userUrl = "https://onebuck.tools/user/42"; // dynamic data
+  const userUrl = `https://dashboard.connectwithsapphire.com/verify-code`; // dynamic data
 
   useEffect(() => {
     // Generate QR code when component mounts
