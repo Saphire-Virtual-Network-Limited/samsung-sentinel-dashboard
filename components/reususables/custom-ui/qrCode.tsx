@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-
+import Image from "next/image";
 const DynamicQRCode = ({ value }: { value: string }) => {
   const [qrUrl, setQrUrl] = useState("");
 
@@ -17,7 +17,7 @@ const DynamicQRCode = ({ value }: { value: string }) => {
   return (
     <div>
       <p>QR Code for: <strong>{value}</strong></p>
-      {qrUrl && <img src={qrUrl} alt="QR Code" />}
+      {qrUrl && <Image src={qrUrl} alt="QR Code" />}
     </div>
   );
 };
