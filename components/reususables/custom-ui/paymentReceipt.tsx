@@ -47,7 +47,7 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
   const [isDownloading, setIsDownloading] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState("")
 
-  const userUrl = `https://dashboard.connectwithsapphire.com/verify-code?customerId=${transactionData.customerId}`; // dynamic data
+  const userUrl = `https://sentiflex.connectwithsapphire.com/verify-code?customerId=${transactionData.customerId}`; // dynamic data
 
   useEffect(() => {
     // Generate QR code when component mounts
