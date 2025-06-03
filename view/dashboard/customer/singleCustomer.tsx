@@ -704,42 +704,42 @@ export default function SingleCustomerPage() {
                         {customer.regBy?.stores?.map((store, index) => (
                           <tr key={index} className="hover:bg-default-50 transition-colors duration-150 ease-in-out">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-default-900">
-                              {store.store.storeName || 'N/A'}
+                              {store.store?.storeName || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.address || 'N/A'}
+                              {store.store?.address || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.city || 'N/A'}
+                              {store.store?.city || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.state || 'N/A'}
+                              {store.store?.state || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.region || 'N/A'}
+                              {store.store?.region || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.phoneNumber || 'N/A'}
+                              {store.store?.phoneNumber || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.storeEmail || 'N/A'}
+                              {store.store?.storeEmail || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.storeOpen && store.store.storeClose 
+                              {store.store?.storeOpen && store.store?.storeClose 
                                 ? `${store.store.storeOpen} - ${store.store.storeClose}`
                                 : 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.bankName || 'N/A'}
+                              {store.store?.bankName || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.accountNumber || 'N/A'}
+                              {store.store?.accountNumber || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.accountName || 'N/A'}
+                              {store.store?.accountName || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                              {store.store.bankCode || 'N/A'}
+                              {store.store?.bankCode || 'N/A'}
                             </td>
                           </tr>
                         ))}
@@ -1348,66 +1348,66 @@ export default function SingleCustomerPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Store Name</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeName || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.storeName || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Address</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.address || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.address || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">City</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.city || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.city || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">State</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.state || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.state || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Region</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.region || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.region || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Phone Number</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.phoneNumber || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.phoneNumber || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Store Email</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store.storeEmail || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.store?.storeEmail || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Bank Name</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.bankName || 'N/A'}
+                      {customer.LoanRecord?.[0]?.store?.bankName || 'N/A'}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Account Number</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.accountNumber || 'N/A'}
+                      {customer.LoanRecord?.[0]?.store?.accountNumber || 'N/A'}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Account Name</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.accountName || 'N/A'}
+                      {customer.LoanRecord?.[0]?.store?.accountName || 'N/A'}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Bank Code</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.bankCode || 'N/A'}
+                      {customer.LoanRecord?.[0]?.store?.bankCode || 'N/A'}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Store ID</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.storeId || 'N/A'}
+                      {customer.LoanRecord?.[0]?.store?.storeId || 'N/A'}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Operating Hours</div>
                     <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.store.storeOpen} - {customer.LoanRecord?.[0]?.store.storeClose}
+                      {customer.LoanRecord?.[0]?.store?.storeOpen} - {customer.LoanRecord?.[0]?.store?.storeClose}
                     </div>
                   </div>
                 </div>
