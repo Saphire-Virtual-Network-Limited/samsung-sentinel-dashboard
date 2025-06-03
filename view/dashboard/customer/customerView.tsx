@@ -404,7 +404,9 @@ export default function CustomerPage() {
 				c.fullName.toLowerCase().includes(f) || 
 				c.email.toLowerCase().includes(f) ||
 				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f)
+				c.customerId.toLowerCase().includes(f) ||
+				(c.bvn && c.bvn.toString().includes(f)) ||
+				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
