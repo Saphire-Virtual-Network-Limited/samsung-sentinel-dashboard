@@ -6,7 +6,7 @@ import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import { getAllCustomerRecord, showToast } from "@/lib";
 // import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-// import { PaymentReceipt } from "@/components/reususables/custom-ui";
+import { PaymentReceipt } from "@/components/reususables/custom-ui";
 
 type CustomerRecord = {
 	customerId: string;
@@ -999,6 +999,32 @@ export default function SingleCustomerPage() {
                                 {store.updatedAt ? new Date(store.updatedAt).toLocaleString() : 'N/A'}
                               </div>
                             </div>
+                            <PaymentReceipt 
+                transactionData={{
+                  receiptNumber: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.reference || 'N/A',
+                  transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A' ,
+                  sessionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.sessionId || 'N/A',
+                  amount: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                  currency: 'NGN',
+                  date: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.createdAt || 'N/A',
+                  status: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.status || 'N/A',
+                  paymentMethod: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.bankUsed || 'N/A',
+                  sender: {
+                    name: "Sentiflex",
+                    company: "Sapphire Virtual Network",
+                    email: "info@sapphirevirtual.com",
+                  },
+                  recipient: {
+                    name: customer?.LoanRecord?.[0]?.store?.accountName|| 'N/A',
+                    company: customer?.LoanRecord?.[0]?.store?.storeName || 'N/A',
+                    account: customer?.LoanRecord?.[0]?.store?.accountNumber || 'N/A',
+                    bank: customer?.LoanRecord?.[0]?.store?.bankName || 'N/A',
+                  },
+                  fee: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                  reference: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A',
+                  description: "Payment for " + customer?.LoanRecord?.[0]?.device.deviceName || 'N/A',
+                }}
+              />
                           </div>
                         </div>
                       ))
@@ -1527,7 +1553,6 @@ export default function SingleCustomerPage() {
                 </div>
               </div>
             </div>
-
 
           </div>
 

@@ -10,5 +10,6 @@ import DeviceCard from "./deviceCard";
 import CardSkeleton from "./cardSkeleton";
 import TableSkeleton from "./tableSkeleton";
 import PaymentReceipt from "./paymentReceipt";
+import DynamicQRCode from "./qrCode";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode };

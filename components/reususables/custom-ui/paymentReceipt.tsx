@@ -2,33 +2,33 @@
 
 import { Check, Download, PrinterIcon as Print, Share, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardBody, CardHeader } from "@heroui/card"
-import { Separator } from "@/components/ui/separator"
-import { useState } from "react"
+// import { Card, CardBody, CardHeader } from "@heroui/card"
+// import { Separator } from "@/components/ui/separator"
+import { useState, useEffect } from "react"
+import { DynamicQRCode } from "./index"
+import QRCode from "qrcode"
+
 
 interface Sender {
   name: string
   company: string
-  account: string
   email: string
-  address: string
 }
 
 interface Recipient {
   name: string
   company: string
   account: string
-  email: string
-  address: string
+  bank: string
 }
 
 interface TransactionData {
   receiptNumber: string
   transactionId: string
+  sessionId: string
   amount: string
   currency: string
   date: string
-  time: string
   status: string
   paymentMethod: string
   sender: Sender
@@ -44,17 +44,25 @@ interface PaymentReceiptProps {
 
 export default function PaymentReceipt({ transactionData }: PaymentReceiptProps) {
   const [isDownloading, setIsDownloading] = useState(false)
+  const [qrCodeUrl, setQrCodeUrl] = useState("")
+
+  const userUrl = "https://onebuck.tools/user/42"; // dynamic data
+
+  useEffect(() => {
+    // Generate QR code when component mounts
+    QRCode.toDataURL(userUrl, { width: 200 })
+      .then(url => setQrCodeUrl(url))
+      .catch(console.error);
+  }, [userUrl]);
 
   const generatePDF = async () => {
     setIsDownloading(true)
 
     try {
-      const printWindow = window.open("", "_blank")
-      if (!printWindow) return
-
-      // Get the receipt content
-      const receiptElement = document.getElementById("receipt-content")
-      if (!receiptElement) return
+      // Create a hidden iframe for printing
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      document.body.appendChild(iframe)
 
       const receiptHTML = `
         <!DOCTYPE html>
@@ -64,23 +72,288 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
             @media print {
-              body { margin: 0; padding: 0.5in; }
-              .no-print { display: none !important; }
-              @page { margin: 0.5in; size: letter; }
+              body { 
+                margin: 0; 
+                padding: 0.25in;
+                background: white;
+                max-height: 100vh;
+                overflow: hidden;
+              }
+              @page { 
+                margin: 0.25in; 
+                size: letter;
+              }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .print-page {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                height: 100vh;
+                overflow: hidden;
+              }
+              .print-content {
+                transform: scale(0.95);
+                transform-origin: top center;
+              }
+            }
+            body {
+              background: white;
+              font-family: system-ui, -apple-system, sans-serif;
+              margin: 0;
+              padding: 0;
+            }
+            .print-page {
+              padding: 0.5in;
+              box-sizing: border-box;
+            }
+            .print-content {
+              max-width: 100%;
+              margin: 0 auto;
+            }
+            .bg-gradient-to-r {
+              background-image: linear-gradient(to right, var(--tw-gradient-stops));
+            }
+            .from-blue-600 {
+              --tw-gradient-from: #2563eb;
+              --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0));
+            }
+            .to-blue-700 {
+              --tw-gradient-to: #1d4ed8;
+            }
+            .bg-blue-600 {
+              background-color: #2563eb;
+            }
+            .bg-blue-700 {
+              background-color: #1d4ed8;
+            }
+            .bg-slate-50 {
+              background-color: #f8fafc;
+            }
+            .bg-blue-50 {
+              background-color: #eff6ff;
+            }
+            .bg-green-500 {
+              background-color: #22c55e;
+            }
+            .bg-red-500 {
+              background-color: #ef4444;
+            }
+            .border-blue-600 {
+              border-color: #2563eb;
+            }
+            .border-green-500 {
+              border-color: #22c55e;
+            }
+            .text-blue-600 {
+              color: #2563eb;
+            }
+            .text-blue-700 {
+              color: #1d4ed8;
+            }
+            .text-blue-900 {
+              color: #1e3a8a;
+            }
+            .text-blue-100 {
+              color: #dbeafe;
+            }
+            .text-slate-900 {
+              color: #0f172a;
+            }
+            .text-slate-600 {
+              color: #475569;
+            }
+            .text-slate-500 {
+              color: #64748b;
+            }
+            .text-white {
+              color: white;
+            }
+            .shadow-2xl {
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            }
+            .rounded-lg {
+              border-radius: 0.5rem;
+            }
+            .rounded-t-lg {
+              border-top-left-radius: 0.5rem;
+              border-top-right-radius: 0.5rem;
+            }
+            .rounded-full {
+              border-radius: 9999px;
+            }
+            .border-l-4 {
+              border-left-width: 4px;
+            }
+            .border-t {
+              border-top-width: 1px;
+            }
+            .border-0 {
+              border-width: 0;
+            }
+            .border {
+              border-width: 1px;
+            }
+            .border-slate-200 {
+              border-color: #e2e8f0;
             }
           </style>
         </head>
         <body class="bg-white font-sans text-gray-900">
-          ${receiptElement.innerHTML}
+          <div class="print-page">
+            <div class="print-content">
+              <div class="bg-white shadow-2xl border-0">
+                <div class="text-center pb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg flex-row">
+                  <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h1 class="text-xl font-bold">SecurePay Business</h1>
+                  <p class="text-blue-100 text-xs tracking-wide uppercase">Payment Receipt</p>
+                  <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${transactionData.status === 'UNPAID' ? 'bg-red-500' : 'bg-green-500'} text-white mt-2">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    ${transactionData.status}
+                  </div>
+                </div>
+
+                <div class="p-4">
+                  <div class="text-center bg-slate-50 p-3 rounded-lg mb-4">
+                    <p class="text-2xl font-bold text-slate-900 mb-1">NGN ${Number(transactionData.amount).toLocaleString()}</p>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="space-y-2">
+                      <h3 class="text-base font-bold text-slate-900 border-b-2 border-blue-600 pb-1">
+                        Transaction Information
+                      </h3>
+                      <div class="space-y-2">
+                        <div>
+                          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reference Number</p>
+                          <p class="text-sm font-mono text-slate-900">${transactionData.receiptNumber}</p>
+                        </div>
+                        <div>
+                          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</p>
+                          <p class="text-sm font-mono text-slate-900 break-all">${transactionData.transactionId}</p>
+                        </div>
+                        <div>
+                          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Session ID</p>
+                          <p class="text-sm font-mono text-slate-900 break-all">${transactionData.sessionId}</p>
+                        </div>
+                        <div>
+                          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</p>
+                          <p class="text-sm text-slate-900">${new Date(transactionData.date).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Method</p>
+                          <p class="text-sm text-slate-900">${transactionData.paymentMethod}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="space-y-2">
+                      
+                      <div class="bg-slate-50 p-3 rounded-lg flex flex-col items-center justify-center h-full">
+                        <img src="${qrCodeUrl}" alt="QR Code" class="w-64 h-64" />
+                        <p class="text-xs text-center text-slate-500 mt-2">Scan to verify receipt</p>
+                      </div>
+                    </div>
+
+                    <div class="space-y-2">
+                      <h3 class="text-base font-bold text-slate-900 border-b-2 border-blue-600 pb-1">
+                        Payment Breakdown
+                      </h3>
+                      <div class="bg-slate-50 p-3 rounded-lg space-y-2">
+                        <div class="flex justify-between text-sm">
+                          <span class="text-slate-600">Transfer Amount</span>
+                          <span class="font-semibold text-slate-900">
+                            NGN ${Number(transactionData.fee).toLocaleString()}
+                          </span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                          <span class="text-slate-600">Processing Fee</span>
+                          <span class="font-semibold text-slate-900">
+                            NGN ${(Number.parseFloat(transactionData.amount.replace(",", "")) - Number.parseFloat(transactionData.fee)).toFixed(2)}
+                          </span>
+                        </div>
+                        <hr class="my-2" />
+                        <div class="flex justify-between text-sm font-bold">
+                          <span class="text-slate-900">Total Amount</span>
+                          <span class="text-slate-900">NGN ${Number(transactionData.amount).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="space-y-2">
+                      <h3 class="text-base font-bold text-slate-900 border-b-2 border-blue-600 pb-1">
+                        Description
+                      </h3>
+                      <div class="bg-slate-50 p-3 rounded-lg">
+                        <p class="text-sm text-slate-900">${transactionData.description}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="space-y-2">
+                      <h3 class="text-base font-bold text-slate-900 border-b-2 border-blue-600 pb-1">
+                        Payment From
+                      </h3>
+                      <div class="bg-slate-50 p-3 rounded-lg border-l-4 border-blue-600">
+                        <p class="text-sm font-bold text-slate-900">${transactionData.sender.name}</p>
+                        <p class="text-xs font-semibold text-blue-600">${transactionData.sender.company}</p>
+                        <div class="mt-1 space-y-0.5 text-xs text-slate-600">
+                          <p>${transactionData.sender.email}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="space-y-2">
+                      <h3 class="text-base font-bold text-slate-900 border-b-2 border-blue-600 pb-1">
+                        Payment To
+                      </h3>
+                      <div class="bg-slate-50 p-3 rounded-lg border-l-4 border-green-500">
+                        <p class="text-sm font-bold text-slate-900">${transactionData.recipient.name}</p>
+                        <div class="mt-1 space-y-0.5 text-xs text-slate-600">
+                          <p>Account: ${transactionData.recipient.account}</p>
+                          <p>Bank: ${transactionData.recipient.bank}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border-t border-slate-200 pt-3">
+                    <div class="bg-blue-50 p-3 rounded-lg text-center">
+                      <p class="text-xs font-semibold text-blue-900 mb-0.5">
+                        🔒 Secure Transaction Completed
+                      </p>
+                      <p class="text-xs text-blue-700">
+                        This transaction was processed with bank-level security. Receipt generated on ${new Date().toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </body>
         </html>
       `
 
-      printWindow.document.write(receiptHTML)
-      printWindow.document.close()
+      iframe.contentDocument?.write(receiptHTML)
+      iframe.contentDocument?.close()
 
+      // Wait for content to load
       setTimeout(() => {
-        printWindow.print()
+        iframe.contentWindow?.print()
+        // Remove iframe after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe)
+        }, 1000)
       }, 1000)
     } catch (error) {
       console.error("Error generating PDF:", error)
@@ -89,201 +362,26 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
     }
   }
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Payment Receipt - ${transactionData.receiptNumber}`,
-          text: `Payment receipt for $${transactionData.amount} - Transaction ID: ${transactionData.transactionId}`,
-        })
-      } catch (error) {
-        console.log("Error sharing:", error)
-      }
-    } else {
-      const receiptText = `Payment Receipt - ${transactionData.receiptNumber}\nAmount: $${transactionData.amount}\nTransaction ID: ${transactionData.transactionId}\nDate: ${transactionData.date}`
-      navigator.clipboard.writeText(receiptText)
-    }
-  }
+  // const handleShare = async () => {
+  //   if (navigator.share) {
+  //     try {
+  //       await navigator.share({
+  //         title: `Payment Receipt - ${transactionData.receiptNumber}`,
+  //         text: `Payment receipt for NGN${transactionData.amount} - Transaction ID: ${transactionData.transactionId}`,
+  //       })
+  //     } catch (error) {
+  //       console.log("Error sharing:", error)
+  //     }
+  //   } else {
+  //     const receiptText = `Payment Receipt - ${transactionData.receiptNumber}\nAmount: NGN${transactionData.amount}\nTransaction ID: ${transactionData.transactionId}\nDate: ${transactionData.date}`
+  //     navigator.clipboard.writeText(receiptText)
+  //   }
+  // }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 flex items-center justify-center">
-      <div className="w-full max-w-4xl">
-        {/* Action Buttons */}
-        <div className="flex gap-3 mb-4 no-print">
-          <Button onClick={generatePDF} disabled={isDownloading} className="flex-1 bg-blue-600 hover:bg-blue-700">
-            <Download className="w-4 h-4 mr-2" />
-            {isDownloading ? "Generating..." : "Download PDF"}
-          </Button>
-          <Button variant="outline" onClick={generatePDF} className="flex-1">
-            <Print className="w-4 h-4 mr-2" />
-            Print
-          </Button>
-          <Button variant="outline" onClick={handleShare} className="flex-1">
-            <Share className="w-4 h-4 mr-2" />
-            Share
-          </Button>
-        </div>
-
-        {/* Single Page Receipt Card */}
-        <Card className="bg-white shadow-2xl border-0 print:shadow-none print:border-0">
-          <div id="receipt-content">
-            <CardHeader className="text-center pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg print:bg-blue-600 print:rounded-none">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold">SecurePay Business</h1>
-              <p className="text-blue-100 text-sm tracking-wide uppercase">Payment Receipt</p>
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white mt-3">
-                <Check className="w-3 h-3 mr-1" />
-                {transactionData.status}
-              </div>
-            </CardHeader>
-
-            <CardBody className="p-6 print:p-4">
-              {/* Amount Display */}
-              <div className="text-center bg-slate-50 p-4 rounded-lg mb-6 print:bg-gray-100 print:mb-4">
-                <p className="text-3xl font-bold text-slate-900 mb-1 print:text-2xl">${transactionData.amount}</p>
-                <p className="text-sm text-slate-600">{transactionData.currency}</p>
-              </div>
-
-              {/* Two Column Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 print:gap-4 print:mb-4">
-                {/* Left Column - Transaction Details */}
-                <div className="space-y-4 print:space-y-3">
-                  <h3 className="text-lg font-bold text-slate-900 border-b-2 border-blue-600 pb-1 print:text-base print:border-b">
-                    Transaction Information
-                  </h3>
-
-                  <div className="space-y-3 print:space-y-2">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Receipt Number</p>
-                      <p className="text-sm font-mono text-slate-900 print:text-xs">{transactionData.receiptNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</p>
-                      <p className="text-sm font-mono text-slate-900 break-all print:text-xs">
-                        {transactionData.transactionId}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</p>
-                      <p className="text-sm text-slate-900 print:text-xs">
-                        {transactionData.date} at {transactionData.time}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Method</p>
-                      <p className="text-sm text-slate-900 print:text-xs">{transactionData.paymentMethod}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Payment Breakdown */}
-                <div className="space-y-4 print:space-y-3">
-                  <h3 className="text-lg font-bold text-slate-900 border-b-2 border-blue-600 pb-1 print:text-base print:border-b">
-                    Payment Breakdown
-                  </h3>
-
-                  <div className="bg-slate-50 p-4 rounded-lg space-y-2 print:bg-gray-100 print:p-3 print:space-y-1">
-                    <div className="flex justify-between text-sm print:text-xs">
-                      <span className="text-slate-600">Transfer Amount</span>
-                      <span className="font-semibold text-slate-900">
-                        $
-                        {(
-                          Number.parseFloat(transactionData.amount.replace(",", "")) -
-                          Number.parseFloat(transactionData.fee)
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm print:text-xs">
-                      <span className="text-slate-600">Processing Fee</span>
-                      <span className="font-semibold text-slate-900">${transactionData.fee}</span>
-                    </div>
-                    <Separator className="my-2 print:my-1" />
-                    <div className="flex justify-between text-base font-bold print:text-sm">
-                      <span className="text-slate-900">Total Amount</span>
-                      <span className="text-slate-900">${transactionData.amount}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description and Reference */}
-              <div className="mb-6 space-y-3 print:mb-4 print:space-y-2">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</p>
-                  <p className="text-sm text-slate-900 print:text-xs">{transactionData.description}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reference</p>
-                  <p className="text-sm text-slate-900 print:text-xs">{transactionData.reference}</p>
-                </div>
-              </div>
-
-              {/* Sender and Recipient - Two Columns */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 print:gap-4 print:mb-4">
-                {/* Payment From */}
-                <div className="space-y-3 print:space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 border-b-2 border-blue-600 pb-1 print:text-base print:border-b">
-                    Payment From
-                  </h3>
-                  <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-blue-600 print:bg-gray-100 print:p-3 print:border-l-2">
-                    <p className="text-base font-bold text-slate-900 print:text-sm">{transactionData.sender.name}</p>
-                    <p className="text-sm font-semibold text-blue-600 print:text-xs">
-                      {transactionData.sender.company}
-                    </p>
-                    <div className="mt-2 space-y-1 text-xs text-slate-600 print:text-xs print:mt-1">
-                      <p>{transactionData.sender.email}</p>
-                      <p>Account: {transactionData.sender.account}</p>
-                      <p>{transactionData.sender.address}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment To */}
-                <div className="space-y-3 print:space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 border-b-2 border-blue-600 pb-1 print:text-base print:border-b">
-                    Payment To
-                  </h3>
-                  <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-green-500 print:bg-gray-100 print:p-3 print:border-l-2">
-                    <p className="text-base font-bold text-slate-900 print:text-sm">{transactionData.recipient.name}</p>
-                    <p className="text-sm font-semibold text-green-600 print:text-xs">
-                      {transactionData.recipient.company}
-                    </p>
-                    <div className="mt-2 space-y-1 text-xs text-slate-600 print:text-xs print:mt-1">
-                      <p>{transactionData.recipient.email}</p>
-                      <p>Account: {transactionData.recipient.account}</p>
-                      <p>{transactionData.recipient.address}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="border-t border-slate-200 pt-4 print:pt-3">
-                <div className="bg-blue-50 p-4 rounded-lg text-center mb-4 print:bg-blue-100 print:p-3 print:mb-3">
-                  <p className="text-sm font-semibold text-blue-900 mb-1 print:text-xs">
-                    🔒 Secure Transaction Completed
-                  </p>
-                  <p className="text-xs text-blue-700 print:text-xs">
-                    This transaction was processed with bank-level security. Receipt generated on{" "}
-                    {new Date().toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="text-center space-y-1 print:space-y-0">
-                  <p className="text-sm font-semibold text-slate-900 print:text-xs">SecurePay Business</p>
-                  <p className="text-xs text-slate-600">support@securepay.com | 1-800-SECURE-PAY</p>
-                  <p className="text-xs text-slate-500">
-                    This is an official payment receipt. Please retain for your records.
-                  </p>
-                  <p className="text-xs text-slate-500">Transaction processed in compliance with PCI DSS standards.</p>
-                </div>
-              </div>
-            </CardBody>
-          </div>
-        </Card>
-      </div>
-    </div>
+    <Button onClick={generatePDF} disabled={isDownloading} className="bg-blue-600 hover:bg-blue-700">
+      <Download className="w-4 h-4 mr-2" />
+      {isDownloading ? "Generating..." : "Download Receipt"}
+    </Button>
   )
 }
