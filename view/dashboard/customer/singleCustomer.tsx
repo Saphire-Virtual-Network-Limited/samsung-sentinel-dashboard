@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import { getAllCustomerRecord, showToast } from "@/lib";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
+// import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
+// import { PaymentReceipt } from "@/components/reususables/custom-ui";
 
 type CustomerRecord = {
 	customerId: string;
@@ -77,7 +78,6 @@ type CustomerRecord = {
 	CustomerKYC?: Array<{
 		kycId: string;
 		customerId: string;
-
 		houseNumber: string;
 		streetAddress: string;
 		nearestBusStop: string;
@@ -89,7 +89,6 @@ type CustomerRecord = {
 		applicantBusinessAddress: string;
 		applicantAddress: string;
 		source: string;
-
     phone2: string;
 	phone3: string;
 	phone4: string;
@@ -210,6 +209,11 @@ type CustomerRecord = {
 			createdAt: string;
 			updatedAt: string;
 			channel: string;
+			tnxId: string | null;
+			sessionId: string | null;
+			reference: string | null;
+			payChannel: string | null;
+			bankUsed: string | null;
 		}>;
 		DeviceOnLoan: Array<{
 			deviceOnLoanId: string;
@@ -960,6 +964,26 @@ export default function SingleCustomerPage() {
                               </div>
                             </div>
                             <div>
+                              <div className="text-sm text-default-500 mb-1">Transaction ID</div>
+                              <div className="font-medium text-default-900">{store.tnxId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Session ID</div>
+                              <div className="font-medium text-default-900">{store.sessionId || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Reference</div>
+                              <div className="font-medium text-default-900">{store.reference || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Pay Channel</div>
+                              <div className="font-medium text-default-900">{store.payChannel || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Bank Used</div>
+                              <div className="font-medium text-default-900">{store.bankUsed || 'N/A'}</div>
+                            </div>
+                            <div>
                               <div className="text-sm text-default-500 mb-1">Channel</div>
                               <div className="font-medium text-default-900">{store.channel || 'N/A'}</div>
                             </div>
@@ -1116,10 +1140,6 @@ export default function SingleCustomerPage() {
                     <div className="text-sm text-default-500 mb-1">Account Name</div>
                     <div className="font-medium text-default-900">{customer.Wallet?.accountName || 'N/A'}</div>
                   </div>
-                  {/* <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Balance ID</div>
-                    <div className="font-medium text-default-900">{customer.WalletBalance?.balanceId || 'N/A'}</div>
-                  </div> */}
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Current Balance</div>
                     <div className="font-medium text-default-900">
@@ -1136,14 +1156,7 @@ export default function SingleCustomerPage() {
                         : 'N/A'}
                     </div>
                   </div>
-                  {/* <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Currency</div>
-                    <div className="font-medium text-default-900">{customer.Wallet?.currency || 'N/A'}</div>
-                  </div> */}
-                  {/* <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Customer Code</div>
-                    <div className="font-medium text-default-900">{customer.Wallet?.cust_code || 'N/A'}</div>
-                  </div> */}
+                  
                 </div>
               </div>
             </div>
@@ -1514,7 +1527,10 @@ export default function SingleCustomerPage() {
                 </div>
               </div>
             </div>
+
+
           </div>
+
         </div>
       </div>
     </div>

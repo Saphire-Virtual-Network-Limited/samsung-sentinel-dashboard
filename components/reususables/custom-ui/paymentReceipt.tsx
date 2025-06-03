@@ -6,36 +6,44 @@ import { Card, CardBody, CardHeader } from "@heroui/card"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 
-export default function Component() {
-  const [isDownloading, setIsDownloading] = useState(false)
+interface Sender {
+  name: string
+  company: string
+  account: string
+  email: string
+  address: string
+}
 
-  const transactionData = {
-    receiptNumber: "RCP-2024-789012",
-    transactionId: "TXN-2024-001234567",
-    amount: "2,500.00",
-    currency: "USD",
-    date: "December 6, 2024",
-    time: "3:24 PM EST",
-    status: "Completed",
-    paymentMethod: "Bank Transfer",
-    sender: {
-      name: "Michael Rodriguez",
-      company: "Rodriguez Consulting LLC",
-      account: "****2847",
-      email: "michael@rodriguezconsulting.com",
-      address: "1234 Business Ave, Suite 100, New York, NY 10001",
-    },
-    recipient: {
-      name: "Jennifer Chen",
-      company: "Chen Digital Solutions",
-      account: "****9156",
-      email: "jennifer@chendigital.com",
-      address: "5678 Tech Boulevard, San Francisco, CA 94105",
-    },
-    fee: "15.00",
-    reference: "Invoice #INV-2024-0892 - Web Development Services",
-    description: "Payment for Q4 2024 web development and maintenance services",
-  }
+interface Recipient {
+  name: string
+  company: string
+  account: string
+  email: string
+  address: string
+}
+
+interface TransactionData {
+  receiptNumber: string
+  transactionId: string
+  amount: string
+  currency: string
+  date: string
+  time: string
+  status: string
+  paymentMethod: string
+  sender: Sender
+  recipient: Recipient
+  fee: string
+  reference: string
+  description: string
+}
+
+interface PaymentReceiptProps {
+  transactionData: TransactionData
+}
+
+export default function PaymentReceipt({ transactionData }: PaymentReceiptProps) {
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const generatePDF = async () => {
     setIsDownloading(true)

@@ -9,5 +9,6 @@ import DateFilter from "./dateFilter";
 import DeviceCard from "./deviceCard";
 import CardSkeleton from "./cardSkeleton";
 import TableSkeleton from "./tableSkeleton";
+import PaymentReceipt from "./paymentReceipt";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt };
