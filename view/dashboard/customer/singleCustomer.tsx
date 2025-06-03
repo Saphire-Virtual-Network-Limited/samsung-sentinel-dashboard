@@ -1027,11 +1027,8 @@ export default function SingleCustomerPage() {
                                   }}
                                 />
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                            <div>
-                              <div className="text-sm text-default-500 mb-1">Transaction ID</div>
-                              <div className="font-medium text-default-900">{store.tnxId || 'N/A'}</div>
-                            </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
+                            
                             <div>
                               <div className="text-sm text-default-500 mb-1">Session ID</div>
                               <div className="font-medium text-default-900">{store.sessionId || 'N/A'}</div>
@@ -1039,6 +1036,10 @@ export default function SingleCustomerPage() {
                             <div>
                               <div className="text-sm text-default-500 mb-1">Reference</div>
                               <div className="font-medium text-default-900">{store.reference || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-default-500 mb-1">Transaction ID</div>
+                              <div className="font-medium text-default-900">{store.tnxId || 'N/A'}</div>
                             </div>
                           </div>
                         </div>
