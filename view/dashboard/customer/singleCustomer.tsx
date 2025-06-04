@@ -918,7 +918,7 @@ export default function SingleCustomerPage() {
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Loan Disk ID</div>
-                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.customerLoanDiskId || 'N/A'}</div>
+                    <div className="font-medium text-default-900">{customer.LoanRecord?.[0]?.loanDiskId || 'N/A'}</div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">Store ID</div>
