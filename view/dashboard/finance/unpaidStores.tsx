@@ -488,13 +488,18 @@ export default function UnpaidStoresView() {
 														{ label: "Access Bank", value: "access bank" },
 														{ label: "First Bank", value: "first bank" },
 														{ label: "GTBank", value: "gtbank" },
+														{ label: "FCMB", value: "fcmb" },
 														{ label: "UBA", value: "uba" },
 														{ label: "Zenith Bank", value: "zenith bank" },
 														{ label: "Fidelity Bank", value: "fidelity bank" },
 														{ label: "Union Bank", value: "union bank" },
 														{ label: "Sterling Bank", value: "sterling bank" },
 														{ label: "Wema Bank", value: "wema bank" },
-														{ label: "Stanbic IBTC", value: "stanbic ibtc" }
+														{ label: "Stanbic IBTC", value: "stanbic ibtc" },
+														{ label: "VFD Microfinance Bank", value: "vfd microfinance bank" },
+														{ label: "GIRO", value: "GIRO" },
+														{ label: "Paystack", value: "Paystack" }
+
 														]}
 													/>
 												</div>
