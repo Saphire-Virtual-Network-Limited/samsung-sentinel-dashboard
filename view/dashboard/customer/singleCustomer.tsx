@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import { getAllCustomerRecord, showToast } from "@/lib";
-// import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 import { PaymentReceipt } from "@/components/reususables/custom-ui";
 
 type CustomerRecord = {
@@ -56,8 +55,8 @@ type CustomerRecord = {
 		transactionHistoryId: string;
 		amount: number;
 		paymentType: string;
-		prevBalance: number;
-		newBalance: number;
+		prevBalance: number | null | string;
+		newBalance: number | null | string;
 		paymentReference: string;
 		extRef: string;
 		currency: string;
@@ -995,9 +994,9 @@ export default function SingleCustomerPage() {
                                   transactionData={{
                                     customerId: customer?.customerId || 'N/A',
                                     receiptNumber: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.reference || 'N/A',
-                                    transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A' ,
+                                    transactionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A',
                                     sessionId: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.sessionId || 'N/A',
-                                    amount: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                                    amount: (customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount || 0).toString(),
                                     currency: 'NGN',
                                     date: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.createdAt || 'N/A',
                                     status: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.status || 'N/A',
@@ -1008,14 +1007,14 @@ export default function SingleCustomerPage() {
                                       email: "info@sapphirevirtual.com",
                                     },
                                     recipient: {
-                                      name: customer?.LoanRecord?.[0]?.store?.accountName|| 'N/A',
+                                      name: customer?.LoanRecord?.[0]?.store?.accountName || 'N/A',
                                       company: customer?.LoanRecord?.[0]?.store?.storeName || 'N/A',
                                       account: customer?.LoanRecord?.[0]?.store?.accountNumber || 'N/A',
                                       bank: customer?.LoanRecord?.[0]?.store?.bankName || 'N/A',
                                     },
-                                    fee: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount.toString() || 'N/A',
+                                    fee: (customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.amount || 0).toString(),
                                     reference: customer?.LoanRecord?.[0]?.StoresOnLoan?.[0]?.tnxId || 'N/A',
-                                    description: "Payment for " + customer?.LoanRecord?.[0]?.device.deviceName || 'N/A',
+                                    description: "Payment for " + (customer?.LoanRecord?.[0]?.device?.deviceName || 'N/A'),
                                   }}
                                 />
                           </div>
@@ -1500,12 +1499,12 @@ export default function SingleCustomerPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
                             {transaction.prevBalance !== undefined 
-                              ? `${transaction.currency} ${transaction.prevBalance.toLocaleString()}` 
+                              ? `${transaction.currency} ${transaction?.prevBalance?.toLocaleString()}` 
                               : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
                             {transaction.newBalance !== undefined 
-                              ? `${transaction.currency} ${transaction.newBalance.toLocaleString()}` 
+                              ? `${transaction.currency} ${transaction?.newBalance?.toLocaleString()}` 
                               : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
