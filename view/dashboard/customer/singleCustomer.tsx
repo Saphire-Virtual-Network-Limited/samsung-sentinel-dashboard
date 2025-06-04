@@ -1498,14 +1498,14 @@ export default function SingleCustomerPage() {
                             {transaction.paymentType || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                            {transaction.prevBalance !== undefined 
-                              ? `${transaction.currency} ${transaction?.prevBalance?.toLocaleString()}` 
-                              : 'N/A'}
+                            {transaction.prevBalance !== undefined && transaction.prevBalance !== null
+                              ? `${transaction.currency} ${Number(transaction.prevBalance).toLocaleString()}`
+                              : `${transaction.currency} 0`}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                            {transaction.newBalance !== undefined 
-                              ? `${transaction.currency} ${transaction?.newBalance?.toLocaleString()}` 
-                              : 'N/A'}
+                            {transaction.newBalance !== undefined && transaction.newBalance !== null
+                              ? `${transaction.currency} ${Number(transaction.newBalance).toLocaleString()}`
+                              : `${transaction.currency} 0`}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
                             {transaction.paymentReference || 'N/A'}
