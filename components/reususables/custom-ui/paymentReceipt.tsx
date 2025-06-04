@@ -385,9 +385,11 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
   // }
 
   return (
-    <Button onClick={generatePDF} disabled={isDownloading} className="bg-blue-600 hover:bg-blue-700">
-      <Download className="w-4 h-4 mr-2" />
-      {isDownloading ? "Generating..." : "Payment Acknowledgement"}
-    </Button>
+    transactionData.status === "PAID" && (
+      <Button onClick={generatePDF} disabled={isDownloading} className="bg-blue-600 hover:bg-blue-700">
+        <Download className="w-4 h-4 mr-2" />
+        {isDownloading ? "Generating..." : "Payment Acknowledgement"}
+      </Button>
+    )
   )
 }
