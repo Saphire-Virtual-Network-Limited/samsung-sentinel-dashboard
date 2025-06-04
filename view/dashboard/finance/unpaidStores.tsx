@@ -31,7 +31,7 @@ const statusOptions = [
 const statusColorMap: Record<string, ChipProps["color"]> = {
 	unpaid: "warning",
 	paid: "success",
-	pending: "warning",
+	pending: "primary",
 	failed: "danger",
 }; 
 
@@ -254,7 +254,7 @@ export default function UnpaidStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
-				const customerId = (c.customerId || '').toLowerCase();
+				const customerId = (c.loanRecord?.customer?.customerId || '').toLowerCase();
 				const storeId = (c.storeId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
@@ -338,7 +338,7 @@ export default function UnpaidStoresView() {
 				<Chip
 					key={`${row.storeId}-status`}
 					className="capitalize cursor-pointer"
-					color={statusColorMap[row.Status as keyof typeof statusColorMap] || "default"}
+					color={statusColorMap[row.Status?.toLowerCase() as keyof typeof statusColorMap] || "default"}
 					size="sm"
 					variant="flat"
 					onClick={() => openModal("view", row)}>

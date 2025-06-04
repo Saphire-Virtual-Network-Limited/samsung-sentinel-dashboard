@@ -210,12 +210,14 @@ export default function PaidStoresView() {
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
 				const storeId = (c.storeId || '').toLowerCase();
+				const customerId = (c.loanRecord?.customer?.customerId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   phone.includes(f) || 
 					   amount.includes(f) || 
 					   status.includes(f) ||
-					   storeId.includes(f);
+					   storeId.includes(f) ||
+					   customerId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
