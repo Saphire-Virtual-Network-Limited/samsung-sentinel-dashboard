@@ -13,7 +13,7 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "name", sortable: true },
 	{ name: "TAT", uid: "totalTransactionTime" },
-	{ name: "Highest Screen", uid: "mostTimeConsumingScreen" },
+	{ name: "HST", uid: "mostTimeConsumingScreen" },
 	{ name: "Time Spent.", uid: "timeTakenOnScreen" },
 	{ name: "Mandate Time", uid: "mandateTime" },
 	{ name: "Payment Time", uid: "paymentTime" },

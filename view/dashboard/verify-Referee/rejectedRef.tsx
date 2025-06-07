@@ -480,7 +480,7 @@ export default function RejectedRefereesPage() {
 													</div>
 													{selectedItem.CustomerKYC?.[0]?.phone2 && selectedItem.CustomerKYC?.[0]?.phone2 !== 'N/A' && (
 														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-															{selectedItem.CustomerKYC?.[0]?.phone2Status !== 'APPROVED' && (
+															{(selectedItem.CustomerKYC?.[0]?.phone2Status !== 'APPROVED' || selectedItem.CustomerKYC?.[0]?.generalStatus === 'rejected') && (
 																<Button
 																	className="w-full"
 																	variant="flat"
@@ -526,7 +526,7 @@ export default function RejectedRefereesPage() {
 													</div>
 													{selectedItem.CustomerKYC?.[0]?.phone3 && selectedItem.CustomerKYC?.[0]?.phone3 !== 'N/A' && (
 														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-															{selectedItem.CustomerKYC?.[0]?.phone3Status !== 'APPROVED' && (
+															{(selectedItem.CustomerKYC?.[0]?.phone3Status !== 'APPROVED' || selectedItem.CustomerKYC?.[0]?.generalStatus === 'rejected') && (
 																<Button
 																	className="w-full"
 																	variant="flat"
