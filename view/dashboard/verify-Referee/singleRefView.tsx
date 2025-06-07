@@ -566,6 +566,18 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                             Reject
                           </Button>
                         )}
+                        {customer?.CustomerKYC?.[0]?.generalStatus === 'REJECTED' && (
+                          <Button
+                            color="success"
+                            variant="flat"
+                            className="font-medium"
+                            isDisabled={!selectedPhone.length}
+                            onPress={() => {
+                              setShowApproveModal(true);
+                            }}>
+                            Approve
+                          </Button>
+                        )}
                         
                       </div>
 
