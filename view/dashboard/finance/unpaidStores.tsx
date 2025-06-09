@@ -12,8 +12,11 @@ import { SelectField } from "@/components/reususables";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Phone No.", uid: "PhoneNo", sortable: true },
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Store Name", uid: "fullName", sortable: true },
+	{ name: "Bank Name", uid: "bankName", sortable: true },
+	{ name: "Account Number", uid: "accountNumber", sortable: true },
+	{ name: "Account Name", uid: "accountName", sortable: true },
 	{ name: "Amount", uid: "Amount", sortable: true },
 	{ name: "Status", uid: "Status", sortable: true },
 	{ name: "Actions", uid: "actions" },
@@ -202,10 +205,14 @@ export default function UnpaidStoresView() {
 			raw.map((r: StoreOnLoan) => ({
 				...r,
 				id: r.storeId,
-				fullName: r.store.storeName || '',
-				PhoneNo: r.store.phoneNumber || '',
+				customerId: r.loanRecord?.customer?.customerId || "N/A",
+				bankName: r.store.bankName || "N/A",
+				accountNumber: r.store.accountNumber || "N/A",
+				accountName: r.store.accountName || "N/A",
+				fullName: r.store.storeName || "N/A",
+				PhoneNo: r.store.phoneNumber || "N/A",
 				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
-				Status: r.status || '',
+				Status: r.status || "N/A",
 			})),
 		[raw]
 	);
