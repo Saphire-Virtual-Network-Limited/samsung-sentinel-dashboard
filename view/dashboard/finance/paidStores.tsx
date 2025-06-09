@@ -17,6 +17,7 @@ const columns: ColumnDef[] = [
 	{ name: "Bank Name", uid: "bankName", sortable: true },
 	{ name: "Account Number", uid: "accountNumber", sortable: true },
 	{ name: "Account Name", uid: "accountName", sortable: true },
+	{ name: "Payment Channel", uid: "payChannel", sortable: true },
 	{ name: "Amount", uid: "Amount", sortable: true },
 	{ name: "Status", uid: "Status", sortable: true },
 	{ name: "Actions", uid: "actions" },
@@ -36,11 +37,16 @@ type StoreOnLoan = {
   storeOnLoanId: string;
   storeId: string;
   loanRecordId: string;
+  tnxId: string | null;
+  sessionId: string | null;
+  reference: string | null;
+  payChannel: string | null;
   amount: number;
   status: string;
   createdAt: string;
   updatedAt: string;
   channel: string;
+  bankUsed: string;
   store: {
       storeOldId: number;
       storeName: string;
@@ -201,6 +207,7 @@ export default function PaidStoresView() {
 				accountName: r.store.accountName || "N/A",
 				fullName: r.store.storeName || "N/A",
 				PhoneNo: r.store.phoneNumber || "N/A",
+				payChannel: r.payChannel || r.bankUsed || "N/A",
 				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
 				Status: r.status || "N/A",
 			})),
