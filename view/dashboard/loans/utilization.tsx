@@ -12,14 +12,19 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Age", uid: "age", sortable: true },
+	{ name: "Full Name", uid: "fullName", sortable: true },
+	{ name: "BVN", uid: "bvn", sortable: true },
+	// { name: "Date of Birth", uid: "dob", sortable: true },
 	{ name: "Device Price", uid: "devicePrice", sortable: true },
-	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
 	{ name: "Down Payment", uid: "downPayment", sortable: true },
-	{ name: "Monthly Repay.", uid: "monthlyRepayment", sortable: true },
-	{ name: "Duration", uid: "duration", sortable: true },
+	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
+	// { name: "Monthly Repay.", uid: "monthlyRepayment", sortable: true },
+	{ name: "Tenor in Days", uid: "tenorInDays", sortable: true },
+	{ name: "First Payment Date", uid: "firstPaymentDate", sortable: true },
+	{ name: "Device Name", uid: "deviceName", sortable: true },
 	{ name: "Loan Status", uid: "loanStatus", sortable: true },
+	{ name: "Created At", uid: "updatedAt", sortable: true },
+	// { name: "Channel", uid: "channel", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -140,7 +145,7 @@ type LoanRecord = {
 };
 
 
-export default function LoansView() {
+export default function UtilizationView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
@@ -201,14 +206,20 @@ export default function LoansView() {
 				...r,
 				// customerId: r.customer?.customerId || 'N/A',
 				fullName: r.customer?.firstName && r.customer?.lastName ? `${capitalize(r.customer.firstName)} ${capitalize(r.customer.lastName)}` : 'N/A',
-				age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
-				monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',		
-				duration: r.duration ? `${r.duration} months` : 'N/A',
+				bvn: r.customer?.bvn || 'N/A',
+				dob: r.customer?.dob || 'N/A',
+				// age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
+				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',		
+				tenorInDays: r.duration ? `${r.duration * 30} days` : 'N/A',
 				status: r.status || 'N/A',
 				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : 'N/A',
 				downPayment: r.downPayment ? `₦${r.downPayment.toLocaleString()}` : 'N/A',
 				devicePrice: r.devicePrice ? `₦${r.devicePrice.toLocaleString()}` : 'N/A',
-				loanStatus: r.loanStatus || 'N/A'	
+				loanStatus: r.loanStatus || 'N/A',
+				deviceName: r.device?.deviceName || 'N/A',
+				updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : 'N/A',
+                firstPaymentDate: r.updatedAt ? new Date(new Date(r.updatedAt).setMonth(new Date(r.updatedAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
+				
 			})),
 		[raw]
 	);
