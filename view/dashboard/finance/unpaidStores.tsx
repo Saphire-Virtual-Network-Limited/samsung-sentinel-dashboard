@@ -20,6 +20,7 @@ const columns: ColumnDef[] = [
 	{ name: "Payment Channel", uid: "payChannel", sortable: true },
 	{ name: "Amount", uid: "Amount", sortable: true },
 	{ name: "Status", uid: "Status", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -220,6 +221,7 @@ export default function UnpaidStoresView() {
 				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
 				payChannel: r.payChannel || r.bankUsed || "N/A",
 				Status: r.status || "N/A",
+				createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A',
 			})),
 		[raw]
 	);
