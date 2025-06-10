@@ -22,8 +22,9 @@ const columns: ColumnDef[] = [
 	{ name: "Tenor in Days", uid: "tenorInDays", sortable: true },
 	{ name: "First Payment Date", uid: "firstPaymentDate", sortable: true },
 	{ name: "Device Name", uid: "deviceName", sortable: true },
+	{ name: "Device IMEI", uid: "imei", sortable: true },
 	{ name: "Loan Status", uid: "loanStatus", sortable: true },
-	{ name: "Created At", uid: "updatedAt", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true },
 	// { name: "Channel", uid: "channel", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
@@ -142,6 +143,33 @@ type LoanRecord = {
 		updatedAt: string;
 		storeId: string;
 	};
+	DeviceOnLoan?: Array<{
+		deviceOnLoanId: string;
+		deviceId: string;
+		loanRecordId: string;
+		status: string;
+		createdAt: string;
+		updatedAt: string;
+		channel: string;
+		imei: string;
+		amount: number;
+		devicePrice: number;
+	}>;
+	StoresOnLoan?: Array<{
+		storeOnLoanId: string;
+		storeId: string;
+		loanRecordId: string;
+		tnxId: string | null;
+		sessionId: string | null;
+		reference: string | null;
+		payChannel: string | null;
+		amount: number;
+		status: string;
+		createdAt: string;
+		updatedAt: string;
+		channel: string;
+		bankUsed: string;
+	}>;
 };
 
 
@@ -216,8 +244,9 @@ export default function UtilizationView() {
 				downPayment: r.downPayment ? `₦${r.downPayment.toLocaleString()}` : 'N/A',
 				devicePrice: r.devicePrice ? `₦${r.devicePrice.toLocaleString()}` : 'N/A',
 				loanStatus: r.loanStatus || 'N/A',
+				imei: r.DeviceOnLoan?.[0]?.imei || 'N/A',
 				deviceName: r.device?.deviceName || 'N/A',
-				updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : 'N/A',
+				createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A',
                 firstPaymentDate: r.updatedAt ? new Date(new Date(r.updatedAt).setMonth(new Date(r.updatedAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
 				
 			})),

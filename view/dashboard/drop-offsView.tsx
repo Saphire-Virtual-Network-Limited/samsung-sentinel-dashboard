@@ -12,13 +12,13 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "name", sortable: true },
-	{ name: "TAT", uid: "totalTransactionTime" },
-	{ name: "HST", uid: "mostTimeConsumingScreen" },
-	{ name: "Time Spent.", uid: "timeTakenOnScreen" },
-	{ name: "Mandate Time", uid: "mandateTime" },
-	{ name: "Payment Time", uid: "paymentTime" },
-	{ name: "Fulfillment Time", uid: "fullfillmentTime" },
-	{ name: "Enrollment Time", uid: "enrollmentTime" },
+	{ name: "TAT", uid: "totalTransactionTime", sortable: true },
+	{ name: "HST", uid: "mostTimeConsumingScreen", sortable: true },
+	{ name: "Time Spent.", uid: "timeTakenOnScreen", sortable: true },
+	{ name: "Mandate Time", uid: "mandateTime", sortable: true },
+	{ name: "Payment Time", uid: "paymentTime", sortable: true },
+	{ name: "Fulfillment Time", uid: "fullfillmentTime", sortable: true },
+	{ name: "Enrollment Time", uid: "enrollmentTime", sortable: true },
 	{ name: "Actions", uid: "actions" }
 ];
 

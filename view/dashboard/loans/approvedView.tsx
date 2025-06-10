@@ -137,6 +137,33 @@ type LoanRecord = {
 		updatedAt: string;
 		storeId: string;
 	};
+	DeviceOnLoan?: Array<{
+		deviceOnLoanId: string;
+		deviceId: string;
+		loanRecordId: string;
+		status: string;
+		createdAt: string;
+		updatedAt: string;
+		channel: string;
+		imei: string;
+		amount: number;
+		devicePrice: number;
+	}>;
+	StoresOnLoan?: Array<{
+		storeOnLoanId: string;
+		storeId: string;
+		loanRecordId: string;
+		tnxId: string | null;
+		sessionId: string | null;
+		reference: string | null;
+		payChannel: string | null;
+		amount: number;
+		status: string;
+		createdAt: string;
+		updatedAt: string;
+		channel: string;
+		bankUsed: string;
+	}>;
 };
 
 
