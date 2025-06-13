@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerRecord, capitalize, calculateAge } from "@/lib";
+import { getAllCustomerRecord, capitalize } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps } from "@heroui/react";
@@ -39,7 +39,6 @@ const columns: ColumnDef[] = [
     { name: "Loan Amount", uid: "loanAmount", sortable: true },
     { name: "Down Payment", uid: "downPayment", sortable: true },
 	{ name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
-    // { name: "No. of Payments", uid: "duration", sortable: true },
     { name: "Amount Remaining", uid: "amountRemaining", sortable: true },
     { name: "Loan Tenure", uid: "duration", sortable: true },
     { name: "Application Date", uid: "createdAt", sortable: true },
@@ -53,6 +52,23 @@ const columns: ColumnDef[] = [
     { name: "Region", uid: "mbeRegion", sortable: true },
     { name: "State", uid: "mbeState", sortable: true },
     { name: "Source", uid: "source", sortable: true },
+    { name: "Loan Status", uid: "loanStatus", sortable: true },
+    { name: "Actions", uid: "actions"},
+];
+
+// Display columns for table view
+const displayColumns: ColumnDef[] = [
+    // { name: "Customer Id", uid: "customerId", sortable: true },
+    { name: "Name", uid: "fullName", sortable: true },
+    { name: "Phone No.", uid: "bvnPhoneNumber", sortable: true },
+    // { name: "Email", uid: "email", sortable: true },
+    // { name: "Device Name", uid: "deviceName", sortable: true },
+	{ name: "Device Price", uid: "devicePrice", sortable: true },
+	{ name: "Insurance Price", uid: "insurancePrice", sortable: true },
+	{ name: "Store Price", uid: "storePrice", sortable: true },
+	{ name: "Margin", uid: "margin", sortable: true },
+    { name: "Loan Amount", uid: "loanAmount", sortable: true },
+    { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
     { name: "Loan Status", uid: "loanStatus", sortable: true },
     { name: "Actions", uid: "actions"},
 ];
@@ -556,7 +572,7 @@ export default function UniqueEngageView() {
 				<TableSkeleton columns={columns.length} rows={10} />
 			) : (
 				<GenericTable<CustomerRecord>
-					columns={columns}
+					columns={displayColumns}
 					data={sorted}
 					allCount={filtered.length}
 					exportData={filtered}
