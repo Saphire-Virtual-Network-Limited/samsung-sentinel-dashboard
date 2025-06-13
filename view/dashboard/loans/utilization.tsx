@@ -19,14 +19,12 @@ const columns: ColumnDef[] = [
 	{ name: "Down Payment", uid: "downPayment", sortable: true },
 	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
 	// { name: "Monthly Repay.", uid: "monthlyRepayment", sortable: true },
-	{ name: "Tenor in Days", uid: "tenorInDays", sortable: true },
-	{ name: "First Payment Date", uid: "firstPaymentDate", sortable: true },
-	{ name: "Device Name", uid: "deviceName", sortable: true },
-	{ name: "Device IMEI", uid: "imei", sortable: true },
-	{ name: "Loan Status", uid: "loanStatus", sortable: true },
-	{ name: "Created At", uid: "createdAt", sortable: true },
-	// { name: "Channel", uid: "channel", sortable: true },
-	{ name: "Actions", uid: "actions" },
+	{ name: "Tenor", uid: "tenorInDays", sortable: true },
+	{ name: "First Payment", uid: "firstPaymentDate", sortable: true },
+	{ name: "Device", uid: "deviceName", sortable: true },
+	{ name: "IMEI", uid: "imei", sortable: true },
+	{ name: "Status", uid: "loanStatus", sortable: true },
+	{ name: "Created", uid: "createdAt", sortable: true },
 ];
 
 const statusOptions = [
@@ -387,42 +385,43 @@ export default function UtilizationView() {
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
-			
-			{isLoading ? (
-				<TableSkeleton columns={columns.length} rows={10} />
-			) : (
-				<GenericTable<LoanRecord>
-					columns={columns}
-					data={sorted}
-					allCount={filtered.length}
-					exportData={filtered}
-					isLoading={isLoading}
-					filterValue={filterValue}
-					onFilterChange={(v) => {
-						setFilterValue(v);
-						setPage(1);
-					}}
-					statusOptions={statusOptions}
-					statusFilter={statusFilter}
-					onStatusChange={setStatusFilter}
-					statusColorMap={statusColorMap}
-					showStatus={false}
-					sortDescriptor={sortDescriptor}
-					onSortChange={setSortDescriptor}
-					page={page}
-					pages={pages}
-					onPageChange={setPage}
-					exportFn={exportFn}
-					renderCell={renderCell}
-					hasNoRecords={hasNoRecords}
-					onDateFilterChange={handleDateFilter}
-					initialStartDate={startDate}
-					initialEndDate={endDate}
-				/>
-			)}
-			
+			<div className="w-full overflow-hidden">
+				<div className="mb-4 flex justify-center md:justify-end">
+				</div>
+				
+				{isLoading ? (
+					<TableSkeleton columns={columns.length} rows={10} />
+				) : (
+					<GenericTable<LoanRecord>
+						columns={columns}
+						data={sorted}
+						allCount={filtered.length}
+						exportData={filtered}
+						isLoading={isLoading}
+						filterValue={filterValue}
+						onFilterChange={(v) => {
+							setFilterValue(v);
+							setPage(1);
+						}}
+						statusOptions={statusOptions}
+						statusFilter={statusFilter}
+						onStatusChange={setStatusFilter}
+						statusColorMap={statusColorMap}
+						showStatus={false}
+						sortDescriptor={sortDescriptor}
+						onSortChange={setSortDescriptor}
+						page={page}
+						pages={pages}
+						onPageChange={setPage}
+						exportFn={exportFn}
+						renderCell={renderCell}
+						hasNoRecords={hasNoRecords}
+						onDateFilterChange={handleDateFilter}
+						initialStartDate={startDate}
+						initialEndDate={endDate}
+					/>
+				)}
+			</div>
 
 			<Modal
 				isOpen={isOpen}

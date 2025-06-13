@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { UnapprovedRefereesPage } from "@/view/dashboard";
+import AllCustomerRefereesPage from "@/view/dashboard/verify-Referee/allCustomerRef";
 
 const VerifyPage = () => {
 	return (
-		<UnapprovedRefereesPage />
+		<AllCustomerRefereesPage />
 	);
 };
 

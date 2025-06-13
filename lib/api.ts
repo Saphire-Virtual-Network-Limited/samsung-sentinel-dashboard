@@ -179,6 +179,13 @@ export async function getPaidStores(startDate?: string, endDate?: string) {
 
 //** Referees */
 
+export async function getAllReferees(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/all-kyc${query}`, "GET");
+}
+
+
+
 export async function getUnapprovedReferees(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
