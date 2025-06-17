@@ -19,96 +19,46 @@ const columns: ColumnDef[] = [
 	{ name: "Payment Time", uid: "paymentTime", sortable: true },
 	{ name: "Fulfillment Time", uid: "fullfillmentTime", sortable: true },
 	{ name: "Enrollment Time", uid: "enrollmentTime", sortable: true },
+	{ name: "BVN check", uid: "bvnCheck", sortable: true },
+	{ name: "Loan Eligibility", uid: "loanEligibility", sortable: true },
+	{ name: "Card tokenize", uid: "cardTokenization", sortable: true },
+	{ name: "Loan Data", uid: "loanData", sortable: true },	
+	{ name: "KYC", uid: "kyc", sortable: true },
+	{ name: "Mandate", uid: "mandate", sortable: true },
+	{ name: "Downpayment", uid: "downpayment", sortable: true },
+	{ name: "Device Enrollment", uid: "deviceEnrollment", sortable: true },
+	{ name: "Device Enrollment Completed", uid: "deviceEnrollmentCompleted", sortable: true },
 	{ name: "Actions", uid: "actions" }
 ];
 
+const exportColumns: ColumnDef[] = [
+	{ name: "Name", uid: "name", sortable: true },
+	{ name: "TAT", uid: "totalTransactionTime", sortable: true },	
+	{ name: "HST", uid: "mostTimeConsumingScreen", sortable: true },
+	{ name: "Time Spent.", uid: "timeTakenOnScreen", sortable: true },
+	{ name: "Mandate Time", uid: "mandateTime", sortable: true },
+	{ name: "Payment Time", uid: "paymentTime", sortable: true },
+	{ name: "Fulfillment Time", uid: "fullfillmentTime", sortable: true },
+	{ name: "Enrollment Time", uid: "enrollmentTime", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true }
+];
+
 type CustomerRecord = {
-	customerId: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	bvn: string;
-	dob: string;
-	dobMisMatch: boolean;
-	createdAt: string;
-	updatedAt: string;
-	customerLoanDiskId: string;
-	channel: string;
-	bvnPhoneNumber: string;
-	mainPhoneNumber: string;
-	mbeId: string | null;
-	monoCustomerConnectedCustomerId: string;
-	Wallet?: {
-		wallet_id: string;
-		accountNumber: string;
-		bankName: string;
-		dva_id: number;
-		accountName: string;
-		bankId: number;
-		currency: string;
-		cust_code: string;
-		cust_id: number;
-		userId: string | null;
-		created_at: string;
-		updated_at: string;
-		customerId: string;
-	};
-	WalletBalance?: {
-		balanceId: string;
-		userId: string | null;
-		balance: number;
-		lastBalance: number;
-		created_at: string;
-		updated_at: string;
-		customerId: string;
-	};
-	TransactionHistory?: Array<{
-		transactionHistoryId: string;
-		amount: number;
-		paymentType: string;
-		prevBalance: number;
-		newBalance: number;
-		paymentReference: string;
-		extRef: string;
-		currency: string;
-		channel: string;
-		charge: number;
-		chargeNarration: string;
-		senderBank: string | null;
-		senderAccount: string | null;
-		recieverBank: string | null;
-		recieverAccount: string | null;
-		paymentDescription: string;
-		paid_at: string | null;
-		createdAt: string;
-		updatedAt: string;
-		userid: string | null;
-		customersCustomerId: string;
-	}>;
-	LoanRecord?: Array<{
-		loanRecordId: string;
-		customerId: string;
-		loanDiskId: string;
-		lastPoint: string;
-		channel: string;
-		loanStatus: string;
-		createdAt: string;
-		updatedAt: string;
-		loanAmount: number;
-		deviceId: string;
-		downPayment: number;
-		insurancePackage: string;
-		insurancePrice: number;
-		mbsEligibleAmount: number;
-		payFrequency: string;
-		storeId: string;
-		devicePrice: number;
-		deviceAmount: number;
-		monthlyRepayment: number;
-		duration: number;
-		interestAmount: number;
-		LoanRecordCard: any[];
-	}>;
+	customerId: string,
+	name: string,
+	email: string,
+	totalTransactionTime: string,
+	mostTimeConsumingScreen: string,
+	timeTakenOnScreen: string,
+	fullfillmentTime: string,
+	paymentTime: string,
+	enrollmentTime: string,
+	mandateTime: string
+	screenName: string,
+	channel: string,
+	screenTime: string,
+	apiResponseTime: string,
+	createdAt: string
 };
 
 export default function DropOffsPage() {
@@ -165,6 +115,8 @@ export default function DropOffsPage() {
 			revalidateIfStale: true // Revalidate if data is stale
 		}
 	);
+
+	console.log(raw);
 
 	const filtered = useMemo(() => {
 		let list = [...raw];

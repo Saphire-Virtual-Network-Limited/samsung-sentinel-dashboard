@@ -235,4 +235,10 @@ export async function updateLinkStatus(customerId: string) {
 	return apiCall(`/admin/customers/update-kyc/${customerId}`, "POST");
 }
 
+// get all sentinel sales/data
+export async function getAllSentinelData(startDate?: string, endDate?: string) {
+	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/customers/sentinel${query}`, "GET");
+}
+
 

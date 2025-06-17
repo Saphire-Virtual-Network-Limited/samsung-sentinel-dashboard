@@ -22,6 +22,8 @@ import { singleStoreView } from "./finance/singleStoreView";
 import UtilizationView from "./loans/utilization";  
 import AllCustomerRefereesPage from "./verify-Referee/allCustomerRef";
 import UniqueEngageView from "./reports/uniqueEngage";
+import SentinelPage from "./sentinel/sentinel"; 
+import NewHomeView from "./newHomeView";
 
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView };

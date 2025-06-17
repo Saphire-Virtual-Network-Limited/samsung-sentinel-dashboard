@@ -102,6 +102,7 @@ export function AppSidebar() {
 		{ icon: Store, title: "Stores", url: "/access/dev/stores", id: "developer-stores" },
 		{ icon: Code, title: "API Docs", url: apiDocsUrl, id: "developer-api-docs" },
 		{ icon: ChartBar, title: "Drop-offs", url: "/access/dev/drop-offs", id: "developer-drop-offs" },
+		{ icon: ChartBar, title: "Sentinel", url: "/access/dev/sales", id: "developer-sales" },
 	];
 
 	const verificationItems: MenuItem[] = [
