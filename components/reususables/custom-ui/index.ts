@@ -11,6 +11,10 @@ import CardSkeleton from "./cardSkeleton";
 import TableSkeleton from "./tableSkeleton";
 import PaymentReceipt from "./paymentReceipt";
 import DynamicQRCode from "./qrCode";
-import NewDashCard from "./newDashCard";
+import DailyDashCard from "./dailyDashCard";
+import InceptionDashCard from "./inceptionDashCard";
+import DeviceDashAnalytic from "./deviceDashAnalytic";
+import ScreenReport from "./screenReport";
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, NewDashCard };
+
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeletonLoader, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenReport };

@@ -247,6 +247,20 @@ export async function getDailyReport(sales_channel?: string) {
 	return apiCall(`/admin/analytics/daily-report${query}`, "GET");
 }
 
+export async function getInceptionReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/inception${query}`, "GET");
+}
+
+export async function getDeviceDashAnalytic() {
+	return apiCall(`/admin/analytics/devices`, "GET");
+}
+
+export async function getDropOffReport(screen?: string) {
+	const query = screen ? `?screen=${screen}` : "";
+	return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
+}
+
 
 
 
