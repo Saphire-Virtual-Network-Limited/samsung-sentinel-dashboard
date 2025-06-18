@@ -1,11 +1,12 @@
 "use client";
 
 import React from 'react'
+import { DashCard, NewDashCard } from "@/components/reususables"
 
 const NewHomeView = () => {
   return (
     <div>
-        <h1>New Home View</h1>
+        <NewDashCard />     
     </div>
   )
 }

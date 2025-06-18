@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, getAllSentinelData, getAllCustomerRecord } from "@/lib";
+import { capitalize,getAllCustomerRecord } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps } from "@heroui/react";

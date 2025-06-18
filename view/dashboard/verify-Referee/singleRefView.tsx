@@ -566,7 +566,7 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                             Reject
                           </Button>
                         )}
-                        {customer?.CustomerKYC?.[0]?.generalStatus === 'REJECTED' && (role === 'admin' || role === 'dev') && (
+                        {customer?.CustomerKYC?.[0]?.generalStatus === 'REJECTED' && (
                           <Button
                             color="success"
                             variant="flat"

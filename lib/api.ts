@@ -241,4 +241,12 @@ export async function getAllSentinelData(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/customers/sentinel${query}`, "GET");
 }
 
+//** Dashboard analytics */
+export async function getDailyReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/daily-report${query}`, "GET");
+}
+
+
+
 
