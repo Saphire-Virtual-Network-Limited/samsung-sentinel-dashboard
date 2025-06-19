@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
-import { Card, CardBody, CardHeader, Input } from "@heroui/react";
+import { Card, CardBody, CardHeader } from "@heroui/react";
 import Link from "next/link";
 import {  getDropOffReport } from "@/lib";
 import { TrendingDown, TrendingUp } from "lucide-react";
@@ -173,183 +173,336 @@ const ScreenReport = () => {
             <p className="text-gray-500 text-lg">No data available for screen reports</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className={cn("text-left py-4 px-6 text-sm font-semibold text-gray-700", GeneralSans_SemiBold.className)}>
-                      Screen
-                    </th>
-                    <th className={cn("text-right py-4 px-6 text-sm font-semibold text-gray-700", GeneralSans_SemiBold.className)}>
-                      Today
-                    </th>
-                    <th className={cn("text-right py-4 px-6 text-sm font-semibold text-gray-700", GeneralSans_SemiBold.className)}>
-                      MTD
-                    </th>
-                    <th className={cn("text-right py-4 px-6 text-sm font-semibold text-gray-700", GeneralSans_SemiBold.className)}>
-                      YTD
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      BVN Credit Check
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(bvnData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(bvnData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(bvnData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Loan Eligibility Check
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanEligibilityData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanEligibilityData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanEligibilityData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Card Tokenization
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(cardTokenizationData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(cardTokenizationData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(cardTokenizationData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Mandate Creation
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateCreationData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateCreationData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateCreationData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      KYC Submission
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(kycSubmissionData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(kycSubmissionData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(kycSubmissionData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Loan Data Submission
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanDataSubmissionData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanDataSubmissionData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(loanDataSubmissionData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Down Payment
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(downPaymentData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(downPaymentData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(downPaymentData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Virtual Account Creation
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(virtualAccountCreationData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(virtualAccountCreationData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(virtualAccountCreationData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Mandate Approved
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateApprovedData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateApprovedData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(mandateApprovedData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Device Enrollment Started
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentStartedData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentStartedData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentStartedData.ytd)}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className={cn("py-4 px-6 text-sm text-gray-900", GeneralSans_Meduim.className)}>
-                      Device Enrollment Completed
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentCompletedData.daily)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentCompletedData.mtd)}
-                    </td>
-                    <td className={cn("py-4 px-6 text-sm text-right font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
-                      {formatNumber(deviceEnrollmentCompletedData.ytd)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div className="grid auto-rows-min gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 py-4">
+            <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>BVN Credit Check</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(bvnData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(bvnData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(bvnData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Loan Eligibility Check</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanEligibilityData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanEligibilityData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanEligibilityData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Card Tokenization</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(cardTokenizationData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(cardTokenizationData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(cardTokenizationData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Mandate Creation</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateCreationData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateCreationData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateCreationData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>KYC Submission</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(kycSubmissionData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(kycSubmissionData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(kycSubmissionData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Loan Data Submission</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanDataSubmissionData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanDataSubmissionData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(loanDataSubmissionData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Down Payment</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(downPaymentData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(downPaymentData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(downPaymentData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Virtual Account Creation</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(virtualAccountCreationData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(virtualAccountCreationData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(virtualAccountCreationData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Mandate Approved</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateApprovedData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateApprovedData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(mandateApprovedData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Device Enrollment Started</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentStartedData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentStartedData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentStartedData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
+
+              <Card
+              as={Link}
+              isPressable
+              href={"#"}
+              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
+              <CardHeader className="flex items-start justify-between pb-2">
+                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Device Enrollment Completed</h1>
+              </CardHeader>
+              <CardBody className="space-y-2">
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentCompletedData.daily)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentCompletedData.mtd)}
+                  </p>
+              </div>
+              <div className="flex items-center justify-between">
+                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>YTD</h1>
+                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
+                  {formatNumber(deviceEnrollmentCompletedData.ytd)}
+                  </p>
+              </div>
+              </CardBody>
+              </Card>
           </div>
         )}
       </>
