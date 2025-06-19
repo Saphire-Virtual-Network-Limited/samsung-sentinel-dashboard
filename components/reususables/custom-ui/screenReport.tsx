@@ -149,11 +149,11 @@ const ScreenReport = () => {
     };
 
     // Build dynamic metrics from API response
-    const metrics = [
-      formatMetric("Total Drop Offs", formatNumber(bvnData.daily), "0", "#"),
-      formatMetric("MTD Drop Offs", formatNumber(bvnData.mtd), "0", "#", true),
-      formatMetric("YTD Drop Offs", formatNumber(bvnData.ytd), "0", "#", true),
-    ];
+    // const metrics = [
+    //   formatMetric("Total Drop Offs", formatNumber(bvnData.daily), "0", "#"),
+    //   formatMetric("MTD Drop Offs", formatNumber(bvnData.mtd), "0", "#", true),
+    //   formatMetric("YTD Drop Offs", formatNumber(bvnData.ytd), "0", "#", true),
+    // ];
 
     return (
       <>
