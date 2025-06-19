@@ -5,7 +5,7 @@ import { DashCard, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenR
 
 const NewHomeView = () => {
   return (
-    <div>
+    <div className='space-y-6'>
         <DailyDashCard /> 
         <InceptionDashCard />
         <DeviceDashAnalytic />

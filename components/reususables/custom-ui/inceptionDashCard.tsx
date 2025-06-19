@@ -2,48 +2,57 @@
 
 import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
-import {  Card, CardBody, CardHeader } from "@heroui/react";
+import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
-import {  getInceptionReport } from "@/lib";
-
+import { getInceptionReport } from "@/lib";
+import { BarChart3, Smartphone, DollarSign, Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import { useState } from "react";
 
 const InceptionDashCard = () => {
+    const [hasNoRecords, setHasNoRecords] = useState(false);
 
     const sales_channels = ["", "samsung", "xiaomi", "oppo"];
 
-    	// Fetch data for all channels in parallel
-	const { data: reports = [] } = useSWR(
-		["inception-report-multi", ...sales_channels],
-		async () => {
-			try {
-				const results = await Promise.all(
-					sales_channels.map((channel) =>
-						getInceptionReport(channel)
-							.then((r) => r.data || {})
-							.catch((error) => {
-								console.error(`Error fetching data for ${channel}:`, error);
-								return {};
-							})
-					)
-				);
-				
-				return results;
-			} catch (error) {
-				console.error("Error fetching daily reports:", error);
-				return [];
-			}
-		},
-		{
-			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
-			shouldRetryOnError: false,
-			keepPreviousData: true,
-			revalidateIfStale: true
-		}
-	);
+    // Fetch data for all channels in parallel
+    const { data: reports = [], isLoading } = useSWR(
+        ["inception-report-multi", ...sales_channels],
+        async () => {
+            try {
+                const results = await Promise.all(
+                    sales_channels.map((channel) =>
+                        getInceptionReport(channel)
+                            .then((r) => r.data || {})
+                            .catch((error) => {
+                                console.error(`Error fetching data for ${channel}:`, error);
+                                return {};
+                            })
+                    )
+                );
+                
+                if (results.every(result => !result || Object.keys(result).length === 0)) {
+                    setHasNoRecords(true);
+                } else {
+                    setHasNoRecords(false);
+                }
+                
+                return results;
+            } catch (error) {
+                console.error("Error fetching inception reports:", error);
+                setHasNoRecords(true);
+                return [];
+            }
+        },
+        {
+            revalidateOnFocus: true,
+            dedupingInterval: 60000,
+            refreshInterval: 60000,
+            shouldRetryOnError: false,
+            keepPreviousData: true,
+            revalidateIfStale: true
+        }
+    );
 
-    console.log("inception reports", reports);
+    // console.log("inception reports", reports);
 
     // Extract data for each channel
     const overall = reports[0] || {};
@@ -78,172 +87,148 @@ const InceptionDashCard = () => {
     const xiaomiData = getChannelData(xiaomi);
     const oppoData = getChannelData(oppo);
 
-    // console.log("reports", reports);
+    // Channel configuration with colors and icons
+    const channelConfig = {
+      overall: {
+        name: "Overall",
+        color: "from-indigo-500 to-indigo-600",
+        bgColor: "bg-indigo-50",
+        borderColor: "border-indigo-200",
+        icon: <BarChart3 className="w-5 h-5 text-indigo-600" />
+      },
+      samsung: {
+        name: "Samsung",
+        color: "from-purple-500 to-purple-600",
+        bgColor: "bg-purple-50",
+        borderColor: "border-purple-200",
+        icon: <Smartphone className="w-5 h-5 text-purple-600" />
+      },
+      xiaomi: {
+        name: "Xiaomi",
+        color: "from-orange-500 to-orange-600",
+        bgColor: "bg-orange-50",
+        borderColor: "border-orange-200",
+        icon: <Smartphone className="w-5 h-5 text-orange-600" />
+      },
+      oppo: {
+        name: "Oppo",
+        color: "from-green-500 to-green-600",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        icon: <Smartphone className="w-5 h-5 text-green-600" />
+      }
+    };
+
+    const renderMetricRow = (label: string, value: string | number, isCurrency: boolean = false) => (
+      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+        <span className={cn("text-xs text-gray-600", GeneralSans_Meduim.className)}>
+          {label}
+        </span>
+        <span className={cn("text-sm font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
+          {isCurrency ? `₦${formatNumber(value)}` : formatNumber(value)}
+        </span>
+      </div>
+    );
+
+    const renderChannelCard = (channel: keyof typeof channelConfig, data: any) => {
+      const config = channelConfig[channel];
+      
+      return (
+        <Card
+          as={Link}
+          isPressable
+          href={"#"}
+          className={cn(
+            "group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+            config.borderColor,
+            "hover:border-gray-300"
+          )}
+        >
+          {/* Gradient header */}
+          <div className={cn("bg-gradient-to-r p-4", config.color)}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className={cn("p-2 rounded-lg", config.bgColor)}>
+                  {config.icon}
+                </div>
+                <h2 className={cn("text-white font-semibold text-lg", GeneralSans_SemiBold.className)}>
+                  {config.name}
+                </h2>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card body */}
+          <CardBody className="p-4 space-y-1">
+            {renderMetricRow("Total Loans", data.Total_Inception_Loan)}
+            {renderMetricRow("Total Value", data.Total_Inception_Loan_Value, true)}
+            {renderMetricRow("Average Value", data.Average_Inception_Loan_Value, true)}
+            {renderMetricRow("Enrolled Devices", data.Total_Enrolled_Devices_Since_Inception)}
+          </CardBody>
+
+          {/* Hover effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        </Card>
+      );
+    };
 
     return (
-      <>
-
-        <pre style={{ background: '#f3f3f3', color: '#333', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '1.2rem', fontWeight: 'bold', overflowX: 'auto' }}>since inception</pre>
-
-        <div className="grid auto-rows-min gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 py-4">
-            <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Overall</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.Total_Inception_Loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦ ${formatNumber(overallData.Total_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦ ${formatNumber(overallData.Average_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Enrolled Devices</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.Total_Enrolled_Devices_Since_Inception)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Samsung</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(samsungData.Total_Inception_Loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(samsungData.Total_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(samsungData.Average_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Enrolled Devices</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(samsungData.Total_Enrolled_Devices_Since_Inception)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Xiaomi</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(xiaomiData.Total_Inception_Loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(xiaomiData.Total_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(xiaomiData.Average_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Enrolled Devices</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.Total_Enrolled_Devices_Since_Inception)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Oppo</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                    <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(oppoData.Total_Inception_Loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(oppoData.Total_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                    <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(oppoData.Average_Inception_Loan_Value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Enrolled Devices</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(oppoData.Total_Enrolled_Devices_Since_Inception)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center sm:text-left">
+          <h1 className={cn("text-2xl sm:text-3xl font-bold text-gray-900 mb-2", GeneralSans_SemiBold.className)}>
+            Since Inception Performance
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base">
+            Cumulative loan performance and device enrollment statistics
+          </p>
         </div>
-      </>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {renderChannelCard('overall', overallData)}
+          {renderChannelCard('samsung', samsungData)}
+          {renderChannelCard('xiaomi', xiaomiData)}
+          {renderChannelCard('oppo', oppoData)}
+        </div>
+
+        {/* Loading state */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
+                <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="flex justify-between">
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* No records state */}
+        {hasNoRecords && !isLoading && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BarChart3 className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className={cn("text-lg font-semibold text-gray-900 mb-2", GeneralSans_SemiBold.className)}>
+              No Data Available
+            </h3>
+            <p className="text-gray-600">
+              There are no inception records available for the selected channels.
+            </p>
+          </div>
+        )}
+      </div>
     );
 };
 

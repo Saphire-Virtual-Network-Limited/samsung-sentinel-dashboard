@@ -2,59 +2,57 @@
 
 import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import {  getDailyReport } from "@/lib";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp, DollarSign, Users, Calendar, BarChart3, Phone, Smartphone } from "lucide-react";
 import { useState } from "react";
 
-
 const DailyDashCard = () => {
-
     const [hasNoRecords, setHasNoRecords] = useState(false);
 
     const sales_channels = ["", "samsung", "xiaomi", "oppo"];
 
-    	// Fetch data for all channels in parallel
-	const { data: reports = [], isLoading } = useSWR(
-		["daily-report-multi", ...sales_channels],
-		async () => {
-			try {
-				const results = await Promise.all(
-					sales_channels.map((channel) =>
-						getDailyReport(channel)
-							.then((r) => r.data || {})
-							.catch((error) => {
-								console.error(`Error fetching data for ${channel}:`, error);
-								return {};
-							})
-					)
-				);
-				
-				if (results.every(result => !result || Object.keys(result).length === 0)) {
-					setHasNoRecords(true);
-				} else {
-					setHasNoRecords(false);
-				}
-				
-				return results;
-			} catch (error) {
-				console.error("Error fetching daily reports:", error);
-				setHasNoRecords(true);
-				return [];
-			}
-		},
-		{
-			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
-			shouldRetryOnError: false,
-			keepPreviousData: true,
-			revalidateIfStale: true
-		}
-	);
+    // Fetch data for all channels in parallel
+    const { data: reports = [], isLoading } = useSWR(
+        ["daily-report-multi", ...sales_channels],
+        async () => {
+            try {
+                const results = await Promise.all(
+                    sales_channels.map((channel) =>
+                        getDailyReport(channel)
+                            .then((r) => r.data || {})
+                            .catch((error) => {
+                                console.error(`Error fetching data for ${channel}:`, error);
+                                return {};
+                            })
+                    )
+                );
+                
+                if (results.every(result => !result || Object.keys(result).length === 0)) {
+                    setHasNoRecords(true);
+                } else {
+                    setHasNoRecords(false);
+                }
+                
+                return results;
+            } catch (error) {
+                console.error("Error fetching daily reports:", error);
+                setHasNoRecords(true);
+                return [];
+            }
+        },
+        {
+            revalidateOnFocus: true,
+            dedupingInterval: 60000,
+            refreshInterval: 60000,
+            shouldRetryOnError: false,
+            keepPreviousData: true,
+            revalidateIfStale: true
+        }
+    );
 
-    console.log("NEW DAILY reports", reports);
+  console.log("NEW DAILY reports", reports);
 
     // Extract data for each channel
     const overall = reports[0] || {};
@@ -80,7 +78,6 @@ const DailyDashCard = () => {
         average_value: channelData.Average_Today_Loan_Value || "0",
         This_month_MTD_loan: channelData.Total_Today_MTD_Loan || 0,
         Last_month_LTD_loan: channelData.Total_Today_LTD_Loan || 0,
-        
       };
     };
 
@@ -89,8 +86,6 @@ const DailyDashCard = () => {
     const samsungData = getChannelData(samsung);
     const xiaomiData = getChannelData(xiaomi);
     const oppoData = getChannelData(oppo);
-
-    // console.log("reports", reports);
 
     // Helper to format each metric card
     const formatMetric = (title: string, value: string | number, change: string, href: string, hasNaira: boolean = false) => {
@@ -122,208 +117,154 @@ const DailyDashCard = () => {
       formatMetric("Last Month LTD Loan", formatNumber(overallData.Last_month_LTD_loan), "0", "#"),
     ];
 
-    return (
-      <>
+    // Channel configuration with colors and icons
+    const channelConfig = {
+      overall: {
+        name: "Overall",
+        color: "from-blue-500 to-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+        icon: <BarChart3 className="w-5 h-5 text-blue-600" />
+      },
+      samsung: {
+        name: "Samsung",
+        color: "from-purple-500 to-purple-600",
+        bgColor: "bg-purple-50",
+        borderColor: "border-purple-200",
+        icon: <Smartphone className="w-5 h-5 text-purple-600" />
+      },
+      xiaomi: {
+        name: "Xiaomi",
+        color: "from-orange-500 to-orange-600",
+        bgColor: "bg-orange-50",
+        borderColor: "border-orange-200",
+        icon: <Smartphone className="w-5 h-5 text-orange-600" />
+      },
+      oppo: {
+        name: "Oppo",
+        color: "from-green-500 to-green-600",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        icon: <Smartphone className="w-5 h-5 text-green-600" />
+      }
+    };
 
+    const renderMetricRow = (label: string, value: string | number, isCurrency: boolean = false) => (
+      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+        <span className={cn("text-xs text-gray-600", GeneralSans_Meduim.className)}>
+          {label}
+        </span>
+        <span className={cn("text-sm font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
+          {isCurrency ? `₦${formatNumber(value)}` : formatNumber(value)}
+        </span>
+      </div>
+    );
+
+    const renderChannelCard = (channel: keyof typeof channelConfig, data: any) => {
+      const config = channelConfig[channel];
+      
+      return (
+        <Card
+          as={Link}
+          isPressable
+          href={"#"}
+          className={cn(
+            "group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+            config.borderColor,
+            "hover:border-gray-300"
+          )}
+        >
+          {/* Gradient header */}
+          <div className={cn("bg-gradient-to-r p-4", config.color)}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className={cn("p-2 rounded-lg", config.bgColor)}>
+                  {config.icon}
+                </div>
+                <h2 className={cn("text-white font-semibold text-lg", GeneralSans_SemiBold.className)}>
+                  {config.name}
+                </h2>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card body */}
+          <CardBody className="p-4 space-y-1">
+            {renderMetricRow("Today Loan", data.today_loan)}
+            {renderMetricRow("Total Value", data.total_value, true)}
+            {renderMetricRow("Average Value", data.average_value, true)}
+            {renderMetricRow("MTD Loans", data.This_month_MTD_loan)}
+            {renderMetricRow("Last Month", data.Last_month_LTD_loan)}
+          </CardBody>
+
+          {/* Hover effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        </Card>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <p className="text-slate-600 text-lg">
-            Loan performance overview for{" "}
-            {new Date().toLocaleDateString("en-US", {
+        <div className="text-center sm:text-left">
+          {/* <h1 className={cn("text-2xl sm:text-3xl font-bold text-gray-900 mb-2", GeneralSans_SemiBold.className)}>
+            Daily Loan Performance
+          </h1> */}
+          {/* <p className="text-gray-600 text-sm sm:text-base">
+            Overview for {new Date().toLocaleDateString("en-US", {
               weekday: "long",
               year: "numeric",
               month: "long",
               day: "numeric",
             })}
-          </p>
+          </p> */}
         </div>
-        <div className="grid auto-rows-min gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 py-4">
-            <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Overall</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
 
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.today_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦ ${formatNumber(overallData.total_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦ ${formatNumber(overallData.average_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.This_month_MTD_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Last Month</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(overallData.Last_month_LTD_loan)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Samsung</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(samsungData.today_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(samsungData.total_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(samsungData.average_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(samsungData.This_month_MTD_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Last Month</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(samsungData.Last_month_LTD_loan)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Xiaomi</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(xiaomiData.today_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(xiaomiData.total_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(xiaomiData.average_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(xiaomiData.This_month_MTD_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Last Month</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(xiaomiData.Last_month_LTD_loan)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
-              <Card
-              as={Link}
-              isPressable
-              href={"#"}
-              className="rounded-xl hover:shadow-md transition-all duration-300 p-3 sm:p-4 cursor-pointer">
-              <CardHeader className="flex items-start justify-between pb-2">
-                  <h1 className={cn("text-[13px] sm:text-[14px] text-gray-600", GeneralSans_Meduim.className)}>Oppo</h1>
-              </CardHeader>
-              <CardBody className="space-y-2">
-              <div className="flex items-center justify-between">
-                    <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Today Loan</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(oppoData.today_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Sum</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(oppoData.total_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                    <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Avg.</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`₦${formatNumber(oppoData.average_value)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>MTD</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(oppoData.This_month_MTD_loan)}`}
-                  </p>
-              </div>
-              <div className="flex items-center justify-between">
-                  <h1 className={cn("text-[11px] sm:text-[12px] text-gray-600", GeneralSans_Meduim.className)}>Last Month</h1>
-
-                  <p className={cn("text-xs sm:text-sm font-semibold text-gray-800", GeneralSans_SemiBold.className)}>
-                  {`${formatNumber(oppoData.Last_month_LTD_loan)}`}
-                  </p>
-              </div>
-              </CardBody>
-              </Card>
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {renderChannelCard('overall', overallData)}
+          {renderChannelCard('samsung', samsungData)}
+          {renderChannelCard('xiaomi', xiaomiData)}
+          {renderChannelCard('oppo', oppoData)}
         </div>
-      </>
+
+        {/* Loading state */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
+                <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
+                  {[...Array(5)].map((_, j) => (
+                    <div key={j} className="flex justify-between">
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* No records state */}
+        {hasNoRecords && !isLoading && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BarChart3 className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className={cn("text-lg font-semibold text-gray-900 mb-2", GeneralSans_SemiBold.className)}>
+              No Data Available
+            </h3>
+            <p className="text-gray-600">
+              There are no loan records available for the selected date range.
+            </p>
+          </div>
+        )}
+      </div>
     );
 };
 
