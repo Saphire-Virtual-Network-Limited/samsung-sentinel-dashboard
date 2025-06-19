@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
-import { Card, CardBody, CardHeader, Input } from "@heroui/react";
+import { Card, CardBody, CardHeader } from "@heroui/react";
 import Link from "next/link";
 import {  getDailyReport } from "@/lib";
 import { TrendingDown, TrendingUp } from "lucide-react";

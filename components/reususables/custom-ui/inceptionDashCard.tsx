@@ -5,18 +5,14 @@ import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
 import {  Card, CardBody, CardHeader } from "@heroui/react";
 import Link from "next/link";
 import {  getInceptionReport } from "@/lib";
-import { TrendingDown, TrendingUp } from "lucide-react";
-import { useState } from "react";
 
 
 const InceptionDashCard = () => {
 
-    const [hasNoRecords, setHasNoRecords] = useState(false);
-
     const sales_channels = ["", "samsung", "xiaomi", "oppo"];
 
     	// Fetch data for all channels in parallel
-	const { data: reports = [], isLoading } = useSWR(
+	const { data: reports = [] } = useSWR(
 		["inception-report-multi", ...sales_channels],
 		async () => {
 			try {
@@ -31,16 +27,9 @@ const InceptionDashCard = () => {
 					)
 				);
 				
-				if (results.every(result => !result || Object.keys(result).length === 0)) {
-					setHasNoRecords(true);
-				} else {
-					setHasNoRecords(false);
-				}
-				
 				return results;
 			} catch (error) {
 				console.error("Error fetching daily reports:", error);
-				setHasNoRecords(true);
 				return [];
 			}
 		},
@@ -90,34 +79,6 @@ const InceptionDashCard = () => {
     const oppoData = getChannelData(oppo);
 
     // console.log("reports", reports);
-
-    // Helper to format each metric card
-    const formatMetric = (title: string, value: string | number, change: string, href: string, hasNaira: boolean = false) => {
-      const numericChange = parseFloat(change);
-      const isPositive = numericChange > 0;
-      const trendIcon = isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />;
-      const changeColor = isPositive ? "text-green-600" : "text-red-600";
-      const changeBg = isPositive ? "bg-green-100" : "bg-red-100";
-
-      return {
-        title,
-        value,
-        change: `${change}%`,
-        trendIcon,
-        changeColor,
-        changeBg,
-        href,
-        hasNaira
-      };
-    };
-
-    // Build dynamic metrics from API response
-    const metrics = [
-      formatMetric("Total Inception Loan", formatNumber(overallData.Total_Inception_Loan), "0", "#"),
-      formatMetric("Total Inception Loan Value", formatNumber(overallData.Total_Inception_Loan_Value), "0", "#", true),
-      formatMetric("Average Inception Loan Value", formatNumber(overallData.Average_Inception_Loan_Value), "0", "#", true),
-      formatMetric("Total Enrolled Devices Since Inception", formatNumber(overallData.Total_Enrolled_Devices_Since_Inception), "0", "#"),
-    ];
 
     return (
       <>
