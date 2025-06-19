@@ -11,7 +11,7 @@ import { useState } from "react";
 const InceptionDashCard = () => {
     const [hasNoRecords, setHasNoRecords] = useState(false);
 
-    const sales_channels = ["", "samsung", "xiaomi", "oppo"];
+    const sales_channels = ["", "samsung", "xiaomi", "oppo", "MBE"];
 
     // Fetch data for all channels in parallel
     const { data: reports = [], isLoading } = useSWR(
@@ -59,7 +59,7 @@ const InceptionDashCard = () => {
     const samsung = reports[1] || {};
     const xiaomi = reports[2] || {};
     const oppo = reports[3] || {};
-
+    const mbe = reports[4] || {};
     // Helper to format numbers with commas
     const formatNumber = (num: string | number) => {
       if (typeof num === 'string' && num.includes('.')) {
@@ -86,7 +86,7 @@ const InceptionDashCard = () => {
     const samsungData = getChannelData(samsung);
     const xiaomiData = getChannelData(xiaomi);
     const oppoData = getChannelData(oppo);
-
+    const mbeData = getChannelData(mbe);
     // Channel configuration with colors and icons
     const channelConfig = {
       overall: {
@@ -116,6 +116,13 @@ const InceptionDashCard = () => {
         bgColor: "bg-green-50",
         borderColor: "border-green-200",
         icon: <Smartphone className="w-5 h-5 text-green-600" />
+      },
+      mbe: {
+        name: "MBE",
+        color: "from-red-500 to-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        icon: <Smartphone className="w-5 h-5 text-red-600" />
       }
     };
 
@@ -188,16 +195,17 @@ const InceptionDashCard = () => {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {renderChannelCard('overall', overallData)}
           {renderChannelCard('samsung', samsungData)}
           {renderChannelCard('xiaomi', xiaomiData)}
           {renderChannelCard('oppo', oppoData)}
+          {renderChannelCard('mbe', mbeData)}
         </div>
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
