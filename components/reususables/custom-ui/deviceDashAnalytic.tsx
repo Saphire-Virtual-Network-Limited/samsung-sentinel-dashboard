@@ -2,11 +2,11 @@
 
 import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
-import { Button, Card, CardBody, CardHeader, Input } from "@heroui/react";
+import { Card, CardBody, CardHeader } from "@heroui/react";
 import Link from "next/link";
 import {  getDeviceDashAnalytic } from "@/lib";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 
 const DeviceDashAnalytic = () => {
