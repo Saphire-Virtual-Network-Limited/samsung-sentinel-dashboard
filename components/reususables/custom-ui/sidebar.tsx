@@ -50,7 +50,7 @@ export function AppSidebar() {
 		{ icon: Users, title: "Customers", url: "/access/admin/customers", id: "admin-customers" },
 		{
 			icon: Users,
-			title: "Referees",
+			title: "Verification",
 			id: "admin-referees",
 			subItems: [
 				{ title: "Pending", url: "/access/admin/referees/unapproved-referees" },
