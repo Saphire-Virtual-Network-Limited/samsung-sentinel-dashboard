@@ -127,8 +127,8 @@ const InceptionDashCard = () => {
     };
 
     const renderMetricRow = (label: string, value: string | number, isCurrency: boolean = false) => (
-      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-        <span className={cn("text-xs text-gray-600", GeneralSans_Meduim.className)}>
+      <div className="flex flex-row items-center justify-between lg:flex-col lg:items-start xl:flex-col xl:items-start py-2 border-b border-gray-100 last:border-b-0">
+        <span className={cn("text-xs text-gray-600 lg:mb-1 xl:mb-1", GeneralSans_Meduim.className)}>
           {label}
         </span>
         <span className={cn("text-sm font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
@@ -152,13 +152,13 @@ const InceptionDashCard = () => {
           )}
         >
           {/* Gradient header */}
-          <div className={cn("bg-gradient-to-r p-4", config.color)}>
+          <div className={cn("bg-gradient-to-r p-3", config.color)}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className={cn("p-2 rounded-lg", config.bgColor)}>
+                <div className={cn("p-1.5 rounded-lg", config.bgColor)}>
                   {config.icon}
                 </div>
-                <h2 className={cn("text-white font-semibold text-lg", GeneralSans_SemiBold.className)}>
+                <h2 className={cn("text-white font-semibold text-base", GeneralSans_SemiBold.className)}>
                   {config.name}
                 </h2>
               </div>
@@ -195,7 +195,7 @@ const InceptionDashCard = () => {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {renderChannelCard('overall', overallData)}
           {renderChannelCard('samsung', samsungData)}
           {renderChannelCard('xiaomi', xiaomiData)}
@@ -205,8 +205,8 @@ const InceptionDashCard = () => {
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
                 <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
