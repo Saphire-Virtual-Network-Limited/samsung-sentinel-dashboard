@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { DropOffsView, SamsungReport, UniqueEngageView, XiaomiReport } from "@/view/dashboard";
+import { DropOffsView, SamsungReport, UniqueEngageView, XiaomiReport, OppoReport } from "@/view/dashboard";
 
 
 import React from "react";
@@ -48,6 +48,12 @@ const SummaryReportView = () => {
 					title="MBE"
 					className="lg:p-4 text-base">
 					<MbeReport />
+				</Tab>
+				<Tab
+					key="Oppo Report"
+					title="Oppo"
+					className="lg:p-4 text-base">
+					<OppoReport />
 				</Tab>
 
 			</Tabs>

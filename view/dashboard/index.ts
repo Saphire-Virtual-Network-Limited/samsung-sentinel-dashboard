@@ -26,6 +26,7 @@ import SentinelPage from "./sentinel/sentinel";
 import NewHomeView from "./newHomeView";    
 import SamsungReport from "./reports/samsungReport";
 import XiaomiReport from "./reports/xiaomiReport";
+import OppoReport from "./reports/oppoReport";
 
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport, OppoReport  };
