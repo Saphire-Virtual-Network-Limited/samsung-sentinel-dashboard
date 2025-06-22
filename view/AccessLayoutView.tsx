@@ -99,16 +99,16 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 	return (
 		<SidebarProvider>
 			<AppSidebar />
-			<SidebarInset className="flex flex-col p-2">
-				<header className="sticky z-50 top-0 flex h-16 shrink-0 items-center justify-between px-4 gap-2 border-b bg-white">
+			<SidebarInset className="flex flex-col p-2 transition-all duration-300 ease-in-out">
+				<header className="sticky z-50 top-0 flex h-16 shrink-0 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 border-b bg-white transition-all duration-300 ease-in-out">
 					{/* Left side */}
-					<div className="flex items-center gap-4">
-						<SidebarTrigger className="-ml-1 text-primary" />
+					<div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+						<SidebarTrigger className="-ml-1 text-primary hover:bg-gray-100 rounded-md p-1 transition-all duration-200 ease-in-out" />
 						<Separator
 							orientation="vertical"
-							className="h-4"
+							className="h-4 hidden sm:block"
 						/>
-						<div className="pb-3 w-full">
+						<div className="pb-3 w-full max-w-xs sm:max-w-sm lg:max-w-md">
 							<SelectField
 								key={products.length}
 								htmlFor="product-search"
@@ -126,12 +126,12 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 					</div>
 
 					{/* Right side */}
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-2 sm:gap-3">
 						<Button
 							variant="secondary"
 							size="icon"
-							className="rounded-full bg-primary/10">
-							<Bell className="lg:h-5 lg:w-5 h-3 w-3" />
+							className="rounded-full bg-primary/10 hover:bg-primary/20 transition-all duration-200 ease-in-out">
+							<Bell className="h-4 w-4 sm:h-5 sm:w-5" />
 						</Button>
 						<Separator
 							orientation="vertical"
@@ -144,9 +144,9 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 					</div>
 				</header>
 
-				<div className="flex flex-1 flex-col gap-4 p-1 lg:px-8 py-4 lg:py-6">
-					<div className="w-full p-3 lg:p-0 py-2 pb-3">
-						<h1 className="text-2xl font-semibold text-gray-800 mb-1.5">
+				<div className="flex flex-1 flex-col gap-3 sm:gap-4 p-2 sm:p-4 lg:px-8 lg:py-6 transition-all duration-300 ease-in-out">
+					<div className="w-full p-2 sm:p-3 lg:p-0 py-2 pb-3">
+						<h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1 sm:mb-1.5 transition-all duration-200 ease-in-out">
 							{isDashboard ? (
 								<>
 									{getGreeting()}, <span className="text-primary">{userName}</span>
@@ -155,9 +155,13 @@ export default function AccessLayoutView({ children }: { children: React.ReactNo
 								pageTitle
 							)}
 						</h1>
-						<p className="text-gray-500 text-xs lg:text-sm">{isDashboard ? "here's what's happening today." : `Manage your ${pageTitle.toLowerCase()}`}</p>
+						<p className="text-gray-500 text-xs sm:text-sm transition-all duration-200 ease-in-out">
+							{isDashboard ? "here's what's happening today." : `Manage your ${pageTitle.toLowerCase()}`}
+						</p>
 					</div>
-					<div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min">{children}</div>
+					<div className="min-h-[calc(100vh-12rem)] sm:min-h-[calc(100vh-14rem)] flex-1 rounded-xl md:min-h-min transition-all duration-300 ease-in-out">
+						{children}
+					</div>
 				</div>
 			</SidebarInset>
 		</SidebarProvider>

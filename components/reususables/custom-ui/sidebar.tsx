@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard, Check, X } from "lucide-react";
+import { Home, Users, Settings, LogOut, ChartBar, ChevronDown, Store, Package2Icon, Phone, Code, CreditCard, Check, X, UserCheck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +11,8 @@ import { IoBusiness } from "react-icons/io5";
 // Define types for menu items
 type SubItem = {
 	title: string;
-	url: string;
+	url?: string;
+	subItems?: SubItem[];
 };
 
 type MenuItem = {
@@ -26,6 +27,7 @@ export function AppSidebar() {
 	const { logout, userResponse } = useAuth();
 	const { setOpenMobile, isMobile } = useSidebar();
 	const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
+	const [openNestedMenus, setOpenNestedMenus] = useState<{ [key: string]: boolean }>({});
 
 	const handleLogout = async () => {
 		try {
@@ -49,7 +51,7 @@ export function AppSidebar() {
 		{ icon: CreditCard, title: "Loans", url: "/access/admin/loans", id: "admin-loans" },
 		{ icon: Users, title: "Customers", url: "/access/admin/customers", id: "admin-customers" },
 		{
-			icon: Users,
+			icon: UserCheck,
 			title: "Verification",
 			id: "admin-referees",
 			subItems: [
@@ -65,7 +67,16 @@ export function AppSidebar() {
 			title: "Reports",
 			id: "admin-reports",
 			subItems: [
-				{ title: "Sales", url: "/access/admin/reports/sales" },
+				{ 
+					title: "Sales", 
+					subItems: [
+						{ title: "Overview", url: "/access/admin/reports/sales" },
+						{ title: "MBE Report", url: "/access/admin/reports/sales/mbe" },
+						{ title: "Samsung Report", url: "/access/admin/reports/sales/samsung" },
+						{ title: "Xiaomi Report", url: "/access/admin/reports/sales/xiaomi" },
+						{ title: "Oppo Report", url: "/access/admin/reports/sales/oppo" },
+					]
+				},
 				{ title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/admin/reports/tracker" },
 			],
@@ -154,36 +165,44 @@ export function AppSidebar() {
 		}));
 	};
 
+	const toggleNestedMenu = (id: string) => {
+		setOpenNestedMenus((prev) => ({
+			...prev,
+			[id]: !prev[id],
+		}));
+	};
+
 	return (
 		<>
 			<Sidebar
 				variant="sidebar"
-				className="border-none outline-none shadow-none">
-				<SidebarHeader className="bg-black border-b border-gray-800 ">
+				className="border-none outline-none shadow-none sidebar-transition">
+				<SidebarHeader className="bg-black border-b border-gray-800 sidebar-transition">
 					<SidebarMenu>
-						<SidebarMenuItem className="py-4">
+						<SidebarMenuItem className="py-2">
 							<SidebarMenuButton
 								size="lg"
 								asChild
-								className="hover:bg-black">
+								className="hover:bg-black sidebar-transition sidebar-focus">
 								<Link
 									href="/dashboard"
 									onClick={handleLinkClick}>
-									<div className="flex items-center justify-center gap-3 px-1 p-4">
-										<div>
+									<div className="flex items-center justify-center gap-3 px-1 p-4 sidebar-transition">
+										<div className="flex-shrink-0">
 											<Image
 												src="/images/SapphireCredit Approved Logo icon.png"
-												alt="Debiz Food Logo"
+												alt="Sapphire Credit Logo"
 												width={50}
 												height={50}
 												aria-label="Sapphire Credit Logo"
-												className="object-contain"
+												className="object-contain sidebar-transition"
 												style={{ height: "auto" }}
 											/>
 										</div>
-										<div className="flex flex-col">
-											<span className="text-white font-bold  text-xl">Sapphire Credit</span>
-											{/* <span className="text-white font-bold text-lg">Credit</span> */}
+										<div className="flex flex-col min-w-0">
+											<span className="text-white font-bold text-lg sm:text-xl sidebar-text">
+												Sapphire Credit
+											</span>
 										</div>
 									</div>
 								</Link>
@@ -192,35 +211,73 @@ export function AppSidebar() {
 					</SidebarMenu>
 				</SidebarHeader>
 
-				<SidebarContent className="bg-black text-white pb-8 px-5">
-					<SidebarMenu className="mt-8 flex flex-1 flex-col gap-8">
+				<SidebarContent className="bg-black text-white pb-8 px-3 sm:px-5 sidebar-transition sidebar-scroll">
+					<SidebarMenu className="mt-4 flex flex-1 flex-col gap-2 sm:gap-4">
 						{items.map((item) => (
 							<SidebarMenuItem
 								key={item.id || item.title}
-								className="flex flex-col gap-2">
+								className="flex flex-col gap-1 sm:gap-2">
 								{item.subItems ? (
 									<>
 										<SidebarMenuButton
-											className="hover:bg-gray-900 hover:text-white w-full"
+											className="sidebar-item-hover w-full rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus"
 											onClick={() => item.id && toggleMenu(item.id)}>
 											<div className="flex items-center justify-between w-full">
-												<div className="flex items-center gap-2">
-													<item.icon style={{ width: "20px", height: "20px" }} />
-													<span className="text-sm lg:text-base">{item.title}</span>
+												<div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+													<item.icon 
+														className="sidebar-icon" 
+														style={{ width: "18px", height: "18px" }} 
+													/>
+													<span className="text-sm sm:text-base font-medium sidebar-text">
+														{item.title}
+													</span>
 												</div>
-												<ChevronDown className={`w-4 h-4 transition-transform ${item.id && openMenus[item.id] ? "rotate-180" : ""}`} />
+												<ChevronDown 
+													className={`w-4 h-4 flex-shrink-0 sidebar-transition ${
+														item.id && openMenus[item.id] ? "rotate-180" : ""
+													}`} 
+												/>
 											</div>
 										</SidebarMenuButton>
 										{item.id && openMenus[item.id] && (
-											<div className="ml-6 flex flex-col gap-2">
+											<div className="ml-4 sm:ml-6 flex flex-col gap-1 sm:gap-2 sidebar-submenu">
 												{item.subItems.map((subItem) => (
-													<Link
-														key={subItem.title}
-														href={subItem.url}
-														onClick={handleLinkClick}
-														className="text-sm hover:text-gray-400 py-2">
-														{subItem.title}
-													</Link>
+													<div key={subItem.title}>
+														{subItem.subItems ? (
+															<>
+																<button
+																	onClick={() => toggleNestedMenu(`${item.id}-${subItem.title}`)}
+																	className="text-sm hover:text-gray-300 hover:bg-gray-800 py-2 px-3 sm:px-4 rounded-md sidebar-transition font-medium sidebar-focus w-full text-left flex items-center justify-between">
+																	<span>{subItem.title}</span>
+																	<ChevronDown 
+																		className={`w-3 h-3 flex-shrink-0 sidebar-transition ${
+																			openNestedMenus[`${item.id}-${subItem.title}`] ? "rotate-180" : ""
+																		}`} 
+																	/>
+																</button>
+																{openNestedMenus[`${item.id}-${subItem.title}`] && (
+																	<div className="ml-4 flex flex-col gap-1 sm:gap-2">
+																		{subItem.subItems.map((nestedItem) => (
+																			<Link
+																				key={nestedItem.title}
+																				href={nestedItem.url || "#"}
+																				onClick={handleLinkClick}
+																				className="text-sm hover:text-gray-300 hover:bg-gray-800 py-2 px-3 sm:px-4 rounded-md sidebar-transition font-medium sidebar-focus">
+																				{nestedItem.title}
+																			</Link>
+																		))}
+																	</div>
+																)}
+															</>
+														) : (
+															<Link
+																href={subItem.url || "#"}
+																onClick={handleLinkClick}
+																className="text-sm hover:text-gray-300 hover:bg-gray-800 py-2 px-3 sm:px-4 rounded-md sidebar-transition font-medium sidebar-focus">
+																{subItem.title}
+															</Link>
+														)}
+													</div>
 												))}
 											</div>
 										)}
@@ -228,12 +285,18 @@ export function AppSidebar() {
 								) : (
 									<SidebarMenuButton
 										asChild
-										className="hover:bg-primary hover:text-white w-full">
+										className="hover:bg-primary hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus">
 										<Link
 											href={item.url || "#"}
-											onClick={handleLinkClick}>
-											<item.icon style={{ width: "20px", height: "20px" }} />
-											<span className="text-sm lg:text-base">{item.title}</span>
+											onClick={handleLinkClick}
+											className="flex items-center gap-2.5 sm:gap-3 w-full">
+											<item.icon 
+												className="sidebar-icon" 
+												style={{ width: "18px", height: "18px" }} 
+											/>
+											<span className="text-sm sm:text-base font-medium sidebar-text">
+												{item.title}
+											</span>
 										</Link>
 									</SidebarMenuButton>
 								)}
@@ -242,32 +305,41 @@ export function AppSidebar() {
 					</SidebarMenu>
 				</SidebarContent>
 
-				<SidebarFooter className="bg-black text-white border-t border-gray-800">
-					<SidebarMenu className="py-4 px-3 flex flex-1 flex-col gap-6">
-						<SidebarMenuItem className="flex flex-col gap-2">
+				<SidebarFooter className="bg-black text-white border-t border-gray-800 sidebar-transition">
+					<SidebarMenu className="py-2 px-2 sm:px-3 flex flex-1 flex-col gap-1 sm:gap-2">
+						<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
 							<SidebarMenuButton
 								asChild
-								className="hover:bg-primary hover:text-white w-full">
+								className="hover:bg-primary hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus">
 								<Link
 									href="/access/settings"
-									onClick={handleLinkClick}>
-									<Settings style={{ width: "16px", height: "16px" }} />
-									<span className="text-sm lg:text-base">Settings</span>
+									onClick={handleLinkClick}
+									className="flex items-center gap-2.5 sm:gap-3 w-full">
+									<Settings 
+										className="sidebar-icon" 
+										style={{ width: "16px", height: "16px" }} 
+									/>
+									<span className="text-sm sm:text-base font-medium sidebar-transition">
+										Settings
+									</span>
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 
-						<SidebarMenuItem className="flex flex-col gap-2">
+						<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
 							<SidebarMenuButton
 								asChild
-								className="hover:bg-primary hover:text-white w-full">
+								className="hover:bg-red-600 hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus">
 								<button
 									onClick={() => {
 										handleLogout();
 										if (isMobile) setOpenMobile(false);
 									}}
-									className="flex items-center gap-2 w-full text-sm lg:text-base">
-									<LogOut style={{ width: "16px", height: "16px" }} />
+									className="flex items-center gap-2.5 sm:gap-3 w-full text-sm sm:text-base font-medium sidebar-transition">
+									<LogOut 
+										className="sidebar-icon" 
+										style={{ width: "16px", height: "16px" }} 
+									/>
 									<span>Log Out</span>
 								</button>
 							</SidebarMenuButton>

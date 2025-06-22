@@ -94,35 +94,40 @@ const InceptionDashCard = () => {
         color: "from-indigo-500 to-indigo-600",
         bgColor: "bg-indigo-50",
         borderColor: "border-indigo-200",
-        icon: <BarChart3 className="w-5 h-5 text-indigo-600" />
+        icon: <BarChart3 className="w-5 h-5 text-indigo-600" />,
+        url: "/access/admin/reports/sales/overview"
       },
       samsung: {
         name: "Samsung",
         color: "from-purple-500 to-purple-600",
         bgColor: "bg-purple-50",
         borderColor: "border-purple-200",
-        icon: <Smartphone className="w-5 h-5 text-purple-600" />
+        icon: <Smartphone className="w-5 h-5 text-purple-600" />,
+        url: "/access/admin/reports/sales/samsung"
       },
       xiaomi: {
         name: "Xiaomi",
         color: "from-orange-500 to-orange-600",
         bgColor: "bg-orange-50",
         borderColor: "border-orange-200",
-        icon: <Smartphone className="w-5 h-5 text-orange-600" />
+        icon: <Smartphone className="w-5 h-5 text-orange-600" />,
+        url: "/access/admin/reports/sales/xiaomi"
       },
       oppo: {
         name: "Oppo",
         color: "from-green-500 to-green-600",
         bgColor: "bg-green-50",
         borderColor: "border-green-200",
-        icon: <Smartphone className="w-5 h-5 text-green-600" />
+        icon: <Smartphone className="w-5 h-5 text-green-600" />,
+        url: "/access/admin/reports/sales/oppo"
       },
       mbe: {
         name: "MBE",
         color: "from-red-500 to-red-600",
         bgColor: "bg-red-50",
         borderColor: "border-red-200",
-        icon: <Smartphone className="w-5 h-5 text-red-600" />
+        icon: <Smartphone className="w-5 h-5 text-red-600" />,
+        url: "/access/admin/reports/sales/mbe"
       }
     };
 
@@ -144,7 +149,7 @@ const InceptionDashCard = () => {
         <Card
           as={Link}
           isPressable
-          href={"#"}
+          href={config.url}
           className={cn(
             "group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
             config.borderColor,
@@ -197,10 +202,10 @@ const InceptionDashCard = () => {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {renderChannelCard('overall', overallData)}
+          {renderChannelCard('mbe', mbeData)}
           {renderChannelCard('samsung', samsungData)}
           {renderChannelCard('xiaomi', xiaomiData)}
           {renderChannelCard('oppo', oppoData)}
-          {renderChannelCard('mbe', mbeData)}
         </div>
 
         {/* Loading state */}

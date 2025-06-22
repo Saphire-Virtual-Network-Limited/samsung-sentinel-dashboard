@@ -23,7 +23,9 @@ import UtilizationView from "./loans/utilization";
 import AllCustomerRefereesPage from "./verify-Referee/allCustomerRef";
 import UniqueEngageView from "./reports/uniqueEngage";
 import SentinelPage from "./sentinel/sentinel"; 
-import NewHomeView from "./newHomeView";
+import NewHomeView from "./newHomeView";    
+import SamsungReport from "./reports/samsungReport";
+import XiaomiReport from "./reports/xiaomiReport";
 
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport };
