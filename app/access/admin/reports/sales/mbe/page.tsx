@@ -1,9 +1,9 @@
-    import MbeReport from '@/view/dashboard/reports/mbe'
+import SummaryReportMbeView from '@/view/dashboard/reports/sales/mbe/mbeSummary'
 import React from 'react'
 
 const MBEPage = () => {
   return (
-    <MbeReport />
+    <SummaryReportMbeView />
   )
 }
 

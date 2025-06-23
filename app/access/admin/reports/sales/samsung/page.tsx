@@ -1,9 +1,9 @@
-import SamsungReport from '@/view/dashboard/reports/samsungReport'
+import SummaryReportSamsungView from '@/view/dashboard/reports/sales/samsung/samsungSummary'
 import React from 'react'
 
 const SamsungPage = () => {
   return (
-    <SamsungReport />
+    <SummaryReportSamsungView />
   )
 }
 

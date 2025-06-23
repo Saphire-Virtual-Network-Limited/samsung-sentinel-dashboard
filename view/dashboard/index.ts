@@ -24,9 +24,19 @@ import AllCustomerRefereesPage from "./verify-Referee/allCustomerRef";
 import UniqueEngageView from "./reports/uniqueEngage";
 import SentinelPage from "./sentinel/sentinel"; 
 import NewHomeView from "./newHomeView";    
-import SamsungReport from "./reports/samsungReport";
-import XiaomiReport from "./reports/xiaomiReport";
-import OppoReport from "./reports/oppoReport";
+import SamsungReport from "./reports/sales/samsung/samsungReport";
+import XiaomiReport from "./reports/sales/xiaomi/xiaomiReport";
+import OppoReport from "./reports/sales/oppo/oppoReport";  
+import CollectionCustomerPage from "../collections/customerView";
+import GeneralEngageXiaomi from "./reports/sales/xiaomi/generalEngage";
+import GeneralEngageSamsung from "./reports/sales/samsung/generalEngage";
+import GeneralEngageOppo from "./reports/sales/oppo/generalEngage";
+import GeneralEngageMbe from "./reports/sales/mbe/generalEngage";
+import MbeReport from "./reports/sales/mbe/mbe";
+import SummaryReportMbeView from "./reports/sales/mbe/mbeSummary";
+import SummaryReportXiaomiView from "./reports/sales/xiaomi/xiaomiSummary";
+import SummaryReportOppoView from "./reports/sales/oppo/oppoSummary";
+import SummaryReportSamsungView from "./reports/sales/samsung/samsungSummary";
 
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport, OppoReport  };
+export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport, OppoReport, CollectionCustomerPage, GeneralEngageXiaomi, GeneralEngageSamsung, GeneralEngageOppo, GeneralEngageMbe, MbeReport, SummaryReportMbeView, SummaryReportXiaomiView, SummaryReportOppoView, SummaryReportSamsungView };

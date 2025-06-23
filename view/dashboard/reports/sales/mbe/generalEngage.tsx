@@ -373,7 +373,7 @@ type CustomerRecord = {
 	};
 };
 
-export default function MbeReport() {
+export default function GeneralEngageMbe() {
 	const router = useRouter();
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
@@ -478,7 +478,7 @@ export default function MbeReport() {
 	);
 
 	const filtered = useMemo(() => {
-		let list = [...customers].filter(c => c.LoanRecord?.[0]?.loanStatus === 'APPROVED' && c.regBy?.title !== 'XIAOMI PROMOTER' && c.regBy?.title !== 'SAMSUNG PROMOTER');
+		let list = [...customers].filter(c => c.regBy?.title !== 'XIAOMI PROMOTER' && c.regBy?.title !== 'SAMSUNG PROMOTER' && c.regBy?.title !== 'OPPO PROMOTER');
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 

@@ -79,7 +79,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 				<Input
 					isClearable
 					className="w-full sm:max-w-[44%]"
-					placeholder="Search by name or email…"
+					placeholder="Search by ID, Name, BVN"
 					startContent={<SearchIcon className="w-3" />}
 					value={filterValue}
 					onClear={() => onFilterChange("")}

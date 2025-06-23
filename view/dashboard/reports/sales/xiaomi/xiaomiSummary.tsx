@@ -1,13 +1,11 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { DropOffsView, SamsungReport, UniqueEngageView, XiaomiReport, OppoReport } from "@/view/dashboard";
+import { DropOffsView, UniqueEngageView, XiaomiReport, GeneralEngageXiaomi } from "@/view/dashboard";
 
 
 import React from "react";
-import MbeReport from "./sales/mbe/mbe";
-
-const SummaryReportView = () => {
+const SummaryReportXiaomiView = () => {
 	return (
 		<div className="flex w-full flex-col">
 			<Tabs
@@ -23,21 +21,21 @@ const SummaryReportView = () => {
 					key="General Engagement"
 					title="General Engagement"
 					className="lg:p-4 text-base">
-					<DropOffsView />	
+					<GeneralEngageXiaomi />	
 				</Tab>
 				<Tab
 					key="Unique Engagement"
 					title="Unique Engagement"
 					className="lg:p-4 text-base">
-					<UniqueEngageView />        
+					<XiaomiReport />        
 				</Tab>
-				
-				
-				
+
+
+
 
 			</Tabs>
 		</div>
 	);
 };
 
-export default SummaryReportView;
+export default SummaryReportXiaomiView;

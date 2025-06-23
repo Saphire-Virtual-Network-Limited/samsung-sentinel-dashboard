@@ -1,9 +1,9 @@
-import OppoReport from '@/view/dashboard/reports/oppoReport'
+import SummaryReportOppoView from '@/view/dashboard/reports/sales/oppo/oppoSummary'
 import React from 'react'
 
 const OppoPage = () => {    
   return (
-    <OppoReport />
+    <SummaryReportOppoView />
   )
 }
 

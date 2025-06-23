@@ -70,11 +70,12 @@ export function AppSidebar() {
 				{ 
 					title: "Sales", 
 					subItems: [
-						{ title: "Overview", url: "/access/admin/reports/sales" },
+						{ title: "Overview", url: "/access/admin/reports/sales/overview" },
 						{ title: "MBE Report", url: "/access/admin/reports/sales/mbe" },
 						{ title: "Samsung Report", url: "/access/admin/reports/sales/samsung" },
 						{ title: "Xiaomi Report", url: "/access/admin/reports/sales/xiaomi" },
 						{ title: "Oppo Report", url: "/access/admin/reports/sales/oppo" },
+						{ title: "Sentinel", url: "/access/admin/reports/sales/sentinel" },
 					]
 				},
 				{ title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
@@ -137,6 +138,23 @@ export function AppSidebar() {
 		{ icon: CreditCard, title: "Loans", url: "/access/support/loans", id: "support-loans" },
 	];
 
+	const collectionItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/collection/", id: "collection-dashboard" },
+		{ icon: CreditCard, title: "Customers", url: "/access/collection/customers", id: "collection-customers" },
+		{
+			icon: CreditCard,
+			title: "Reports",
+			id: "collection-reports",
+			subItems: [
+				{ title: "Overview", url: "/access/collection/reports/overview" },
+				{ title: "MBE Report", url: "/access/collection/reports/mbe" },
+				{ title: "Samsung Report", url: "/access/collection/reports/samsung" },
+				{ title: "Xiaomi Report", url: "/access/collection/reports/xiaomi" },
+				{ title: "Oppo Report", url: "/access/collection/reports/oppo" },
+			],
+		},
+	];
+
 	// Get items based on user role
 	const items: MenuItem[] = (() => {
 		const role = userResponse?.data?.role;
@@ -153,6 +171,9 @@ export function AppSidebar() {
 				return financeItems;
 			case "SUPPORT":
 				return supportItems;
+			case "COLLECTION_ADMIN":
+			case "COLLECTION_OFFICER":
+				return collectionItems;
 			default:
 				return [];
 		}
