@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { DropOffsView, UniqueEngageView, XiaomiReport, GeneralEngageXiaomi, GeneralEngageSamsung, SamsungReport, OppoReport, GeneralEngageOppo } from "@/view/dashboard";
+import { DropOffsView, UniqueEngageView, XiaomiReport, GeneralEngageXiaomi, GeneralEngageSamsung, SamsungReport, OppoReport, GeneralEngageOppo, OverviewReport, GeneralEngageOverview } from "@/view/dashboard";
 
 
 import React from "react";
@@ -21,13 +21,13 @@ const SummaryReportOverviewView = () => {
 					key="General Engagement"
 					title="General Engagement"
 					className="lg:p-4 text-base">
-					<GeneralEngageOppo />	
+					<GeneralEngageOverview />	
 				</Tab>
 				<Tab
 					key="Unique Engagement"
 					title="Unique Engagement"
 					className="lg:p-4 text-base">
-					<OppoReport />        
+					<OverviewReport />        
 				</Tab>
 
 
