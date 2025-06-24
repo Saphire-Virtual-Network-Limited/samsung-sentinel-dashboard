@@ -5,13 +5,13 @@ import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import {  getDailyReport } from "@/lib";
-import { TrendingDown, TrendingUp, DollarSign, Users, Calendar, BarChart3, Phone, Smartphone } from "lucide-react";
+import { TrendingDown, TrendingUp,BarChart3, Smartphone } from "lucide-react";
 import { useState } from "react";
 
 const DailyDashCard = () => {
     const [hasNoRecords, setHasNoRecords] = useState(false);
 
-    const sales_channels = ["", "samsung", "xiaomi", "oppo", "MBE"];
+    const sales_channels = ["", "samsung", "xiaomi", "oppo", "MBE", "GLO"];
 
     // Fetch data for all channels in parallel
     const { data: reports = [], isLoading } = useSWR(
@@ -60,6 +60,7 @@ const DailyDashCard = () => {
     const xiaomi = reports[2] || {};
     const oppo = reports[3] || {};
     const mbe = reports[4] || {};
+    const glo = reports[5] || {};
     // Helper to format numbers with commas
     const formatNumber = (num: string | number) => {
       if (typeof num === 'string' && num.includes('.')) {
@@ -87,6 +88,7 @@ const DailyDashCard = () => {
     const xiaomiData = getChannelData(xiaomi);
     const oppoData = getChannelData(oppo);
     const mbeData = getChannelData(mbe);
+    const gloData = getChannelData(glo);
     // Helper to format each metric card
     const formatMetric = (title: string, value: string | number, change: string, href: string, hasNaira: boolean = false) => {
       const numericChange = parseFloat(change);
@@ -124,7 +126,7 @@ const DailyDashCard = () => {
         color: "from-blue-500 to-blue-600",
         bgColor: "bg-blue-50",
         borderColor: "border-blue-200",
-        icon: <BarChart3 className="w-5 h-5 text-blue-600" />,
+        icon: <BarChart3 className="w-4 h-4 text-blue-600" />,
         url: "/access/admin/reports/sales/overview"
       },
       mbe: {
@@ -132,7 +134,7 @@ const DailyDashCard = () => {
         color: "from-red-500 to-red-600",
         bgColor: "bg-red-50",
         borderColor: "border-red-200",
-        icon: <Smartphone className="w-5 h-5 text-red-600" />,
+        icon: <Smartphone className="w-4 h-4 text-red-600" />,
         url: "/access/admin/reports/sales/mbe"
       },
       samsung: {
@@ -140,7 +142,7 @@ const DailyDashCard = () => {
         color: "from-purple-500 to-purple-600",
         bgColor: "bg-purple-50",
         borderColor: "border-purple-200",
-        icon: <Smartphone className="w-5 h-5 text-purple-600" />,
+        icon: <Smartphone className="w-4 h-4 text-purple-600" />,
         url: "/access/admin/reports/sales/samsung"
       },
       xiaomi: {
@@ -148,7 +150,7 @@ const DailyDashCard = () => {
         color: "from-orange-500 to-orange-600",
         bgColor: "bg-orange-50",
         borderColor: "border-orange-200",
-        icon: <Smartphone className="w-5 h-5 text-orange-600" />,
+        icon: <Smartphone className="w-4 h-4 text-orange-600" />,
         url: "/access/admin/reports/sales/xiaomi"
       },
       oppo: {
@@ -156,18 +158,25 @@ const DailyDashCard = () => {
         color: "from-green-500 to-green-600",
         bgColor: "bg-green-50",
         borderColor: "border-green-200",
-        icon: <Smartphone className="w-5 h-5 text-green-600" />,
+        icon: <Smartphone className="w-4 h-4 text-green-600" />,
         url: "/access/admin/reports/sales/oppo"
       },
-      
+      glo: {
+        name: "GLO",
+        color: "from-yellow-500 to-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+        icon: <Smartphone className="w-4 h-4 text-yellow-600" />,
+        url: "/access/admin/reports/sales/glo"
+      }
     };
 
     const renderMetricRow = (label: string, value: string | number, isCurrency: boolean = false) => (
-      <div className="flex flex-row items-center justify-between lg:flex-col lg:items-start  xl:flex-col xl:items-start py-2 border-b border-gray-100 last:border-b-0">
-        <span className={cn("text-xs text-gray-600 lg:mb-1 xl:mb-1", GeneralSans_Meduim.className)}>
+      <div className="flex flex-row items-center justify-between lg:flex-col lg:items-start  xl:flex-col xl:items-start py-1 border-b border-gray-100 last:border-b-0">
+        <span className={cn("text-xs text-gray-600 lg:mb-0.5 xl:mb-0.5", GeneralSans_Meduim.className)}>
           {label}
         </span>
-        <span className={cn("text-sm font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
+        <span className={cn("text-xs font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
           {isCurrency ? `₦${formatNumber(value)}` : formatNumber(value)}
         </span>
       </div>
@@ -182,7 +191,7 @@ const DailyDashCard = () => {
           isPressable
           href={config.url}
           className={cn(
-            "group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+            "group relative overflow-hidden rounded-xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] min-h-[200px]",
             config.borderColor,
             "hover:border-gray-300"
           )}
@@ -194,7 +203,7 @@ const DailyDashCard = () => {
                 <div className={cn("p-1.5 rounded-lg", config.bgColor)}>
                   {config.icon}
                 </div>
-                <h2 className={cn("text-white font-semibold text-base", GeneralSans_SemiBold.className)}>
+                <h2 className={cn("text-white font-semibold text-sm", GeneralSans_SemiBold.className)}>
                   {config.name}
                 </h2>
               </div>
@@ -205,7 +214,7 @@ const DailyDashCard = () => {
           </div>
 
           {/* Card body */}
-          <CardBody className="p-4 space-y-1">
+          <CardBody className="p-4 space-y-3">
             {renderMetricRow("Today Loan", data.today_loan)}
             {renderMetricRow("Total Value", data.total_value, true)}
             {renderMetricRow("Average Value", data.average_value, true)}
@@ -230,12 +239,13 @@ const DailyDashCard = () => {
           {renderChannelCard('samsung', samsungData)}
           {renderChannelCard('xiaomi', xiaomiData)}
           {renderChannelCard('oppo', oppoData)}
+          {/* {renderChannelCard('glo', gloData)} */}
         </div>
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+            {[...Array(6)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
                 <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
