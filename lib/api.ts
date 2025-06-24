@@ -1,4 +1,5 @@
 import axios from "axios";
+import { cachedApiCall, generateCacheKey } from "./cache";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -6,6 +7,8 @@ export interface ApiCallOptions {
 	cache?: RequestCache;
 	revalidate?: number;
 	appKey?: string;
+	useCache?: boolean;
+	cacheTTL?: number;
 }
 
 async function apiCall(endpoint: string, method: string, body?: any, options?: ApiCallOptions) {
@@ -67,6 +70,25 @@ async function apiCall(endpoint: string, method: string, body?: any, options?: A
 		console.log(`Error in ${method} ${endpoint}:`, errorMessage);
 		throw new Error(errorMessage);
 	}
+}
+
+// Cached API call wrapper
+async function cachedApiCallWrapper<T>(
+	endpoint: string,
+	params: Record<string, any> = {},
+	options?: ApiCallOptions
+): Promise<T> {
+	const cacheKey = generateCacheKey(endpoint, params);
+	
+	if (options?.useCache !== false) {
+		return cachedApiCall(
+			cacheKey,
+			() => apiCall(endpoint, "GET", undefined, options),
+			options?.cacheTTL
+		);
+	}
+	
+	return apiCall(endpoint, "GET", undefined, options);
 }
 
 // *** Auth ***
@@ -148,7 +170,73 @@ export async function getAllCustomerRecord(startDate?: string, endDate?: string)
 	return apiCall(`/admin/customers/record${query}`, "GET");
 }
 
+// New optimized customer record functions
+export interface CustomerRecordParams {
+	page?: number;
+	limit?: number;
+	search?: string;
+	sortBy?: string;
+	sortOrder?: 'asc' | 'desc';
+	startDate?: string;
+	endDate?: string;
+	status?: string;
+	region?: string;
+	state?: string;
+}
 
+export interface PaginatedCustomerResponse {
+	data: any[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
+
+export async function getPaginatedCustomerRecords(params: CustomerRecordParams = {}) {
+	const queryParams = new URLSearchParams();
+	
+	if (params.page) queryParams.append('page', params.page.toString());
+	if (params.limit) queryParams.append('limit', params.limit.toString());
+	if (params.search) queryParams.append('search', params.search);
+	if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+	if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+	if (params.startDate) queryParams.append('startDate', params.startDate);
+	if (params.endDate) queryParams.append('endDate', params.endDate);
+	if (params.status) queryParams.append('status', params.status);
+	if (params.region) queryParams.append('region', params.region);
+	if (params.state) queryParams.append('state', params.state);
+	
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	const endpoint = `/admin/customers/paginated${query}`;
+	
+	// Use caching for paginated requests with shorter TTL
+	return cachedApiCallWrapper(endpoint, params, {
+		useCache: true,
+		cacheTTL: 2 * 60 * 1000, // 2 minutes cache
+	});
+}
+
+// Lightweight customer list for quick loading
+export async function getCustomerList(params: CustomerRecordParams = {}) {
+	const queryParams = new URLSearchParams();
+	
+	if (params.page) queryParams.append('page', params.page.toString());
+	if (params.limit) queryParams.append('limit', params.limit.toString());
+	if (params.search) queryParams.append('search', params.search);
+	if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+	if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+	if (params.startDate) queryParams.append('startDate', params.startDate);
+	if (params.endDate) queryParams.append('endDate', params.endDate);
+	
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	const endpoint = `/admin/customers/list${query}`;
+	
+	// Use caching for list requests
+	return cachedApiCallWrapper(endpoint, params, {
+		useCache: true,
+		cacheTTL: 5 * 60 * 1000, // 5 minutes cache
+	});
+}
 
 export interface verifyCustomerReferenceNumber {
 	customerId: string;

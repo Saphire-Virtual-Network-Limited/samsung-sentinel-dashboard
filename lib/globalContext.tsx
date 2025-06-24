@@ -94,8 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 					case "SALES":
 						return currentPath.startsWith("/access/sales");
 					case "COLLECTION_ADMIN":
+						return currentPath.startsWith("/access/collection-admin");
 					case "COLLECTION_OFFICER":
-						return currentPath.startsWith("/access/collection");
+						return currentPath.startsWith("/access/collection-officer");
 					case "USER":
 					case "MERCHANT":
 					case "AGENT":
@@ -138,8 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 						router.replace("/access/sales");
 						break;
 					case "COLLECTION_ADMIN":
+						router.replace("/access/collection-admin");
+						break;
 					case "COLLECTION_OFFICER":
-						router.replace("/access/collection");
+						router.replace("/access/collection-officer");
 						break;
 					default:
 						showToast({

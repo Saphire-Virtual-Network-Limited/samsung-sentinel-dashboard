@@ -777,78 +777,10 @@ export default function CollectionSingleCustomerPage() {
               </div>
             </div>
 
-             {/* COMMUNICATION LOG */}
-             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-                <div className="p-3 border-b border-default-200">
-                  <h3 className="text-lg font-semibold text-default-900">Communication LOG</h3>
-                </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-default-200">
-                  <thead className="bg-default-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
-                        S/N
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
-                        Message
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
-                        Time
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-default-200">
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center justify-center text-default-500">
-                          <svg 
-                            className="w-12 h-12 mb-4 text-default-300" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round" 
-                              strokeWidth={2} 
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                            />
-                          </svg>
-                          <p className="text-sm font-medium">No communication logs available</p>
-                          <p className="text-xs mt-1">There are no messages to display at this time.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
 
-
-              {/* Post Communication Log */}
-              <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-                <div className="p-4">
-                  <FormField
-                    label="Post Communication"
-                    htmlFor="message"
-                    type="text"
-                    id="message"
-                    placeholder="Enter Communication Message"
-                    value={""}
-                    size="sm"
-                  />
-                  <Button
-                   className="mt-4"
-                   size="sm"
-                   color="primary"
-                   variant="solid"
-                   >Post</Button>
-                </div>
-
-              </div>
-              </div>
 
               {/* Device Activity Actions*/}
-              <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
                 <div className="p-3 border-b border-default-200">
                   <h3 className="text-lg font-semibold text-default-900">Device Activity Actions</h3>
                 </div>
@@ -867,6 +799,8 @@ export default function CollectionSingleCustomerPage() {
                       { label: "Send Overdue Reminder Message", value: "send_overdue_reminder_message" },
                       { label: "Lock Device", value: "lock_device" },
                       { label: "Unlock Device", value: "unlock_device" },
+                      { label: "Release Device", value: "release_device" },
+
                     ]}
                     onChange={(e) => {}}
                   />
@@ -1444,54 +1378,6 @@ export default function CollectionSingleCustomerPage() {
               </div>
             </div>
 
-            {/* Mono Customer */}
-            {/* <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">Mono Customer</h3>
-              </div>
-              <div className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Connected Customer ID</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.connectedCustomerId || 'N/A'}</div>
-                  </div>
-                  
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Temporary Account ID</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.tempAccountId || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Email</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.email || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Name</div>
-                    <div className="font-medium text-default-900">{customer.MonoCustomer?.name || 'N/A'}</div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Created At</div>
-                    <div className="font-medium text-default-900">
-                      {customer.MonoCustomer?.createdAt ? new Date(customer.MonoCustomer.createdAt).toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">Updated At</div>
-                    <div className="font-medium text-default-900">
-                      {customer.MonoCustomer?.updatedAt ? new Date(customer.MonoCustomer.updatedAt).toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-default-50 rounded-lg p-4 mt-4">
-                    <div className="text-sm text-default-500 mb-1">Mono URL</div>
-                    <div className="font-medium text-default-900">
-                      <div className="bg-white rounded-lg p-2 border border-default-200">
-                        {customer.MonoCustomer?.monourl || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-              </div>
-            </div> */}
-
             {/* Store Information */}
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden mt-8">
               <div className="p-3 border-b border-default-200">
@@ -1705,21 +1591,18 @@ export default function CollectionSingleCustomerPage() {
                         1
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        ₦50,000
+                        ₦50
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        Insufficient funds
+                        Testing
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        2024-01-20
+                        2025-06-24
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        2024-01-27
+                        2025-06-24
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                        <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm">
-                          Confirm Pay
-                        </button>
                         <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm">
                           Retry Debit
                         </button>
@@ -1810,6 +1693,76 @@ export default function CollectionSingleCustomerPage() {
                 </table>
               </div>
             </div>
+
+                         {/* COMMUNICATION LOG */}
+                         <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="p-3 border-b border-default-200">
+                  <h3 className="text-lg font-semibold text-default-900">Communication LOG</h3>
+                </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-default-200">
+                  <thead className="bg-default-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
+                        S/N
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
+                        Message
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider">
+                        Time
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-default-200">
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center text-default-500">
+                          <svg 
+                            className="w-12 h-12 mb-4 text-default-300" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                            />
+                          </svg>
+                          <p className="text-sm font-medium">No communication logs available</p>
+                          <p className="text-xs mt-1">There are no messages to display at this time.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+
+              {/* Post Communication Log */}
+              <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="p-4">
+                  <FormField
+                    label="Post Communication"
+                    htmlFor="message"
+                    type="text"
+                    id="message"
+                    placeholder="Enter Communication Message"
+                    value={""}
+                    size="sm"
+                  />
+                  <Button
+                   className="mt-4"
+                   size="sm"
+                   color="primary"
+                   variant="solid"
+                   >Post</Button>
+                </div>
+
+              </div>
+              </div>
 
           </div>
 
