@@ -232,19 +232,9 @@ const DailyDashCard = () => {
       <div className="space-y-6">
        
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-          {renderChannelCard('overall', overallData)}
-          {renderChannelCard('mbe', mbeData)}
-          {renderChannelCard('samsung', samsungData)}
-          {renderChannelCard('xiaomi', xiaomiData)}
-          {renderChannelCard('oppo', oppoData)}
-          {/* {renderChannelCard('glo', gloData)} */}
-        </div>
-
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
@@ -258,6 +248,18 @@ const DailyDashCard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Cards Grid - Only show when not loading */}
+        {!isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+            {renderChannelCard('overall', overallData)}
+            {renderChannelCard('mbe', mbeData)}
+            {renderChannelCard('samsung', samsungData)}
+            {renderChannelCard('xiaomi', xiaomiData)}
+            {renderChannelCard('oppo', oppoData)}
+            {/* {renderChannelCard('glo', gloData)} */}
           </div>
         )}
 
