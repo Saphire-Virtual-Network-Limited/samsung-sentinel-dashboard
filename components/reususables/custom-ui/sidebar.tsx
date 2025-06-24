@@ -142,6 +142,16 @@ export function AppSidebar() {
 		{ title: "Dashboard", icon: Home, url: "/access/collection/", id: "collection-dashboard" },
 		{ icon: CreditCard, title: "Customers", url: "/access/collection/customers", id: "collection-customers" },
 		{
+			icon: UserCheck,
+			title: "Verification",
+			id: "collection-verification",
+			subItems: [
+				{ title: "Pending", url: "/access/collection/referees/unapproved-referees" },
+				{ title: "Approved", url: "/access/collection/referees/approved-referees" },
+				{ title: "Rejected", url: "/access/collection/referees/rejected-referees" },
+			],
+		},
+		{
 			icon: CreditCard,
 			title: "Reports",
 			id: "collection-reports",
