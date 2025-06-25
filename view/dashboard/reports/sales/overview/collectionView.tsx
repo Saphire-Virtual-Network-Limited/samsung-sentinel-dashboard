@@ -41,6 +41,7 @@ const columns: ColumnDef[] = [
     { name: "Sale Channel", uid: "saleChannel", sortable: true },
     { name: "Sale Rep", uid: "sale_Rep", sortable: true },
     { name: "Store Name", uid: "storeName", sortable: true },
+    { name: "Down Payment", uid: "downPayment", sortable: true },
     { name: "Actions", uid: "actions"}
 ];
 
@@ -442,7 +443,8 @@ export default function CollectionOverviewView() {
                 service: r.LoanRecord?.[0]?.channel || 'N/A',
                 saleChannel: r.regBy?.title || 'N/A',
                 sale_Rep: r.regBy?.firstname && r.regBy?.lastname ? `${r.regBy.firstname} ${r.regBy.lastname}` : 'N/A',
-                storeName: r.LoanRecord?.[0]?.store?.storeName || 'N/A'
+                storeName: r.LoanRecord?.[0]?.store?.storeName || 'N/A',
+                downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
 			})),
 		[raw]
 	);
