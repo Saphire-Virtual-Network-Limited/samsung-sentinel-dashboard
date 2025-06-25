@@ -242,23 +242,57 @@ const DailyDashCard = () => {
     // Chart component to display channel data
     const renderChannelChart = () => {
       const chartData = [
-        { name: 'MBE', value: mbeData.today_loan, color: '#ef4444' },
-        { name: 'Samsung', value: samsungData.today_loan, color: '#8b5cf6' },
-        { name: 'Xiaomi', value: xiaomiData.today_loan, color: '#f97316' },
-        { name: 'Oppo', value: oppoData.today_loan, color: '#22c55e' },
-        { name: 'GLO', value: gloData.today_loan, color: '#eab308' },
-        { name: '9Mobile', value: nineMobileData.today_loan, color: '#ec4899' },
+        { 
+          name: 'MBE', 
+          mtd: mbeData.This_month_MTD_loan, 
+          lmtd: mbeData.Last_month_LTD_loan,
+          color: '#ef4444'
+        },
+        { 
+          name: 'Samsung', 
+          mtd: samsungData.This_month_MTD_loan, 
+          lmtd: samsungData.Last_month_LTD_loan,
+          color: '#8b5cf6'
+        },
+        { 
+          name: 'Xiaomi', 
+          mtd: xiaomiData.This_month_MTD_loan, 
+          lmtd: xiaomiData.Last_month_LTD_loan,
+          color: '#f97316'
+        },
+        { 
+          name: 'Oppo', 
+          mtd: oppoData.This_month_MTD_loan, 
+          lmtd: oppoData.Last_month_LTD_loan,
+          color: '#22c55e'
+        },
+        { 
+          name: 'GLO', 
+          mtd: gloData.This_month_MTD_loan, 
+          lmtd: gloData.Last_month_LTD_loan,
+          color: '#eab308'
+        },
+        { 
+          name: '9Mobile', 
+          mtd: nineMobileData.This_month_MTD_loan, 
+          lmtd: nineMobileData.Last_month_LTD_loan,
+          color: '#ec4899'
+        },
       ];
 
       const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
+          const data = payload[0].payload;
           return (
             <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
               <p className={cn("font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
                 {label}
               </p>
               <p className={cn("text-sm text-gray-600", GeneralSans_Meduim.className)}>
-                Today Loans: {formatNumber(payload[0].value)}
+                MTD Loans: {formatNumber(data.mtd)}
+              </p>
+              <p className={cn("text-sm text-gray-600", GeneralSans_Meduim.className)}>
+                Last Month LTD: {formatNumber(data.lmtd)}
               </p>
             </div>
           );
@@ -276,7 +310,7 @@ const DailyDashCard = () => {
               </h3>
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              Today&apos;s loan distribution across channels
+              Month Till Date vs Last Month Till Date
             </p>
           </div>
           <CardBody className="p-0">
@@ -298,9 +332,14 @@ const DailyDashCard = () => {
                     width={40}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+                  <Bar dataKey="mtd" radius={[2, 2, 0, 0]} name="MTD">
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="lmtd" radius={[2, 2, 0, 0]} name="Last Month LTD" fill="#94a3b8">
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-lmtd-${index}`} fill="#94a3b8" />
                     ))}
                   </Bar>
                 </BarChart>
