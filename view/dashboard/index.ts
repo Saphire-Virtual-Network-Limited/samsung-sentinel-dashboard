@@ -1,5 +1,5 @@
 import HomeView from "./homeView";
-import CustomerView from "./customer/customerView";  
+import CustomerView from "./customer/customerView";
 import DropOffsView from "./reports/drop-offsView";
 import LoansView from "./loans/loansView";
 import UnpaidStoresView from "./finance/unpaidStores";
@@ -11,22 +11,22 @@ import RejectedRefereesPage from "./verify-Referee/rejectedRef";
 import EnrolledView from "./loans/enrolledView";
 import ApprovedView from "./loans/approvedView";
 import DefaultedView from "./loans/defaultedView";
-import EnrolledDeviceView from "./devices/enrolledDeviceView";   
-import UnEnrolledDeviceView from "./devices/unEnrolledDeviceView"; 
-import AllDevices from "./devices/allDevicesView";          
-import DeviceSummaryView from "./devices/deviceSummary";   
+import EnrolledDeviceView from "./devices/enrolledDeviceView";
+import UnEnrolledDeviceView from "./devices/unEnrolledDeviceView";
+import AllDevices from "./devices/allDevicesView";
+import DeviceSummaryView from "./devices/deviceSummary";
 import SingleRefereeView from "./verify-Referee/singleRefView";
 import SingleCustomer from "./customer/singleCustomer";
 import StoreSummaryPage from "./finance/storeSummary";
 import { singleStoreView } from "./finance/singleStoreView";
-import UtilizationView from "./loans/utilization";  
+import UtilizationView from "./loans/utilization";
 import AllCustomerRefereesPage from "./verify-Referee/allCustomerRef";
 import UniqueEngageView from "./reports/uniqueEngage";
-import SentinelPage from "./sentinel/sentinel"; 
-import NewHomeView from "./newHomeView";    
+import SentinelPage from "./sentinel/sentinel";
+import NewHomeView from "./newHomeView";
 import SamsungReport from "./reports/sales/samsung/samsungReport";
 import XiaomiReport from "./reports/sales/xiaomi/xiaomiReport";
-import OppoReport from "./reports/sales/oppo/oppoReport";  
+import OppoReport from "./reports/sales/oppo/oppoReport";
 import CollectionCustomerPage from "../collections/customerView";
 import GeneralEngageXiaomi from "./reports/sales/xiaomi/generalEngage";
 import GeneralEngageSamsung from "./reports/sales/samsung/generalEngage";
@@ -38,9 +38,60 @@ import SummaryReportXiaomiView from "./reports/sales/xiaomi/xiaomiSummary";
 import SummaryReportOppoView from "./reports/sales/oppo/oppoSummary";
 import SummaryReportSamsungView from "./reports/sales/samsung/samsungSummary";
 import OverviewReport from "./reports/sales/overview/overviewReport";
-import GeneralEngageOverview from "./reports/sales/overview/generalEngage"; 
-import CollectionOverviewView from "./reports/sales/overview/collectionView";   
+import GeneralEngageOverview from "./reports/sales/overview/generalEngage";
+import CollectionOverviewView from "./reports/sales/overview/collectionView";
 import CollectionSamsungView from "./reports/sales/samsung/collectionView";
 import CollectionXiaomiView from "./reports/sales/xiaomi/collectionView";
+import AndroidActivationView from "./sales/android-tools/AndroidActivationView";
+import ActivationOtpView from "./sales/activities/ActivationOtpView";
+import NewSalesHomeView from "./sales/NewSalesHomeView";
 
-export { HomeView, CustomerView, DropOffsView, LoansView, UnpaidStoresView, AllStoresView, PaidStoresView, UnapprovedRefereesPage, ApprovedRefereesPage, RejectedRefereesPage, EnrolledView, ApprovedView, DefaultedView, EnrolledDeviceView, UnEnrolledDeviceView, AllDevices, DeviceSummaryView, SingleRefereeView, SingleCustomer, StoreSummaryPage, singleStoreView, UtilizationView, AllCustomerRefereesPage, UniqueEngageView, SentinelPage, NewHomeView, SamsungReport, XiaomiReport, OppoReport, CollectionCustomerPage, GeneralEngageXiaomi, GeneralEngageSamsung, GeneralEngageOppo, GeneralEngageMbe, MbeReport, SummaryReportMbeView, SummaryReportXiaomiView, SummaryReportOppoView, SummaryReportSamsungView, OverviewReport, GeneralEngageOverview, CollectionOverviewView, CollectionSamsungView, CollectionXiaomiView };
+export {
+  NewSalesHomeView,
+  AndroidActivationView,
+  ActivationOtpView,
+  HomeView,
+  CustomerView,
+  DropOffsView,
+  LoansView,
+  UnpaidStoresView,
+  AllStoresView,
+  PaidStoresView,
+  UnapprovedRefereesPage,
+  ApprovedRefereesPage,
+  RejectedRefereesPage,
+  EnrolledView,
+  ApprovedView,
+  DefaultedView,
+  EnrolledDeviceView,
+  UnEnrolledDeviceView,
+  AllDevices,
+  DeviceSummaryView,
+  SingleRefereeView,
+  SingleCustomer,
+  StoreSummaryPage,
+  singleStoreView,
+  UtilizationView,
+  AllCustomerRefereesPage,
+  UniqueEngageView,
+  SentinelPage,
+  NewHomeView,
+  SamsungReport,
+  XiaomiReport,
+  OppoReport,
+  CollectionCustomerPage,
+  GeneralEngageXiaomi,
+  GeneralEngageSamsung,
+  GeneralEngageOppo,
+  GeneralEngageMbe,
+  MbeReport,
+  SummaryReportMbeView,
+  SummaryReportXiaomiView,
+  SummaryReportOppoView,
+  SummaryReportSamsungView,
+  OverviewReport,
+  GeneralEngageOverview,
+  CollectionOverviewView,
+  CollectionSamsungView,
+  CollectionXiaomiView,
+};
