@@ -7,11 +7,12 @@ import Link from "next/link";
 import {  getDailyReport } from "@/lib";
 import { TrendingDown, TrendingUp,BarChart3, Smartphone } from "lucide-react";
 import { useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const DailyDashCard = () => {
     const [hasNoRecords, setHasNoRecords] = useState(false);
 
-    const sales_channels = ["", "samsung", "xiaomi", "oppo", "MBE", "GLO"];
+    const sales_channels = ["", "samsung", "xiaomi", "oppo", "MBE", "GLO", "9MOBILE"];
 
     // Fetch data for all channels in parallel
     const { data: reports = [], isLoading } = useSWR(
@@ -61,6 +62,7 @@ const DailyDashCard = () => {
     const oppo = reports[3] || {};
     const mbe = reports[4] || {};
     const glo = reports[5] || {};
+    const nineMobile = reports[6] || {};
     // Helper to format numbers with commas
     const formatNumber = (num: string | number) => {
       if (typeof num === 'string' && num.includes('.')) {
@@ -89,6 +91,7 @@ const DailyDashCard = () => {
     const oppoData = getChannelData(oppo);
     const mbeData = getChannelData(mbe);
     const gloData = getChannelData(glo);
+    const nineMobileData = getChannelData(nineMobile);
     // Helper to format each metric card
     const formatMetric = (title: string, value: string | number, change: string, href: string, hasNaira: boolean = false) => {
       const numericChange = parseFloat(change);
@@ -168,6 +171,14 @@ const DailyDashCard = () => {
         borderColor: "border-yellow-200",
         icon: <Smartphone className="w-4 h-4 text-yellow-600" />,
         url: "/access/admin/reports/sales/glo"
+      },
+      nineMobile: {
+        name: "9Mobile",
+        color: "from-pink-500 to-pink-600",
+        bgColor: "bg-pink-50",
+        borderColor: "border-pink-200",
+        icon: <Smartphone className="w-4 h-4 text-pink-600" />,
+        url: "/access/admin/reports/sales/9mobile"
       }
     };
 
@@ -228,15 +239,128 @@ const DailyDashCard = () => {
       );
     };
 
+    // Chart component to display channel data
+    const renderChannelChart = () => {
+      const chartData = [
+        { 
+          name: 'MBE', 
+          mtd: mbeData.This_month_MTD_loan, 
+          lmtd: mbeData.Last_month_LTD_loan,
+          color: '#ef4444'
+        },
+        { 
+          name: 'Samsung', 
+          mtd: samsungData.This_month_MTD_loan, 
+          lmtd: samsungData.Last_month_LTD_loan,
+          color: '#8b5cf6'
+        },
+        { 
+          name: 'Xiaomi', 
+          mtd: xiaomiData.This_month_MTD_loan, 
+          lmtd: xiaomiData.Last_month_LTD_loan,
+          color: '#f97316'
+        },
+        { 
+          name: 'Oppo', 
+          mtd: oppoData.This_month_MTD_loan, 
+          lmtd: oppoData.Last_month_LTD_loan,
+          color: '#22c55e'
+        },
+        { 
+          name: 'GLO', 
+          mtd: gloData.This_month_MTD_loan, 
+          lmtd: gloData.Last_month_LTD_loan,
+          color: '#eab308'
+        },
+        { 
+          name: '9Mobile', 
+          mtd: nineMobileData.This_month_MTD_loan, 
+          lmtd: nineMobileData.Last_month_LTD_loan,
+          color: '#ec4899'
+        },
+      ];
+
+      const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+          const data = payload[0].payload;
+          return (
+            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+              <p className={cn("font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
+                {label}
+              </p>
+              <p className={cn("text-sm text-gray-600", GeneralSans_Meduim.className)}>
+                MTD Loans: {formatNumber(data.mtd)}
+              </p>
+              <p className={cn("text-sm text-gray-600", GeneralSans_Meduim.className)}>
+                Last Month LTD: {formatNumber(data.lmtd)}
+              </p>
+            </div>
+          );
+        }
+        return null;
+      };
+
+      return (
+          <Card className="h-[350px] border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 border-b border-gray-200">
+            <div className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4 text-gray-600" />
+              <h3 className={cn("text-base font-semibold text-gray-900", GeneralSans_SemiBold.className)}>
+                Channel Performance
+              </h3>
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Month Till Date vs Last Month Till Date
+            </p>
+          </div>
+          <CardBody className="p-0">
+            <div className="h-full w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 25, right: 20, left: -5, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => formatNumber(value)}
+                    width={40}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="mtd" radius={[2, 2, 0, 0]} name="MTD">
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="lmtd" radius={[2, 2, 0, 0]} name="Last Month LTD" fill="#94a3b8">
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-lmtd-${index}`} fill="#94a3b8" />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardBody>
+        </Card>
+      );
+    };
+
     return (
       <div className="space-y-6">
        
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Left Column - Overall and Chart Skeletons (1/3 width) */}
+            <div className="space-y-4">
+              {/* Overall Card Skeleton */}
+              <div className="animate-pulse">
                 <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
                 <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
                   {[...Array(5)].map((_, j) => (
@@ -247,19 +371,56 @@ const DailyDashCard = () => {
                   ))}
                 </div>
               </div>
-            ))}
+              
+              {/* Chart Skeleton */}
+              <div className="animate-pulse">
+                <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
+                <div className="bg-white p-4 rounded-b-2xl border">
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Column - 6 Channel Card Skeletons (2/3 width) */}
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 h-16 rounded-t-2xl"></div>
+                  <div className="bg-white p-4 space-y-3 rounded-b-2xl border">
+                    {[...Array(5)].map((_, j) => (
+                      <div key={j} className="flex justify-between">
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                        <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Cards Grid - Only show when not loading */}
         {!isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {renderChannelCard('overall', overallData)}
-            {renderChannelCard('mbe', mbeData)}
-            {renderChannelCard('samsung', samsungData)}
-            {renderChannelCard('xiaomi', xiaomiData)}
-            {renderChannelCard('oppo', oppoData)}
-            {/* {renderChannelCard('glo', gloData)} */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Left Column - Overall and Chart (1/3 width) */}
+            <div className="space-y-4">
+              {/* Overall Card */}
+              {renderChannelCard('overall', overallData)}
+              
+              {/* Chart Card */}
+              {renderChannelChart()}
+            </div>
+            
+            {/* Right Column - 6 Channel Cards (2/3 width) */}
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {renderChannelCard('mbe', mbeData)}
+              {renderChannelCard('samsung', samsungData)}
+              {renderChannelCard('xiaomi', xiaomiData)}
+              {renderChannelCard('oppo', oppoData)}
+              {renderChannelCard('glo', gloData)}
+              {renderChannelCard('nineMobile', nineMobileData)}
+            </div>
           </div>
         )}
 

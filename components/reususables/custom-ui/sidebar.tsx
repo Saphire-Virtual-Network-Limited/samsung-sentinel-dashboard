@@ -138,17 +138,17 @@ export function AppSidebar() {
 		{ icon: CreditCard, title: "Loans", url: "/access/support/loans", id: "support-loans" },
 	];
 
-	const collectionItems: MenuItem[] = [
-		{ title: "Dashboard", icon: Home, url: "/access/collection/", id: "collection-dashboard" },
-		{ icon: CreditCard, title: "Customers", url: "/access/collection/customers", id: "collection-customers" },
+	const collectionAdminItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/collection-admin/", id: "collection-admin-dashboard" },
+		{ icon: CreditCard, title: "Customers", url: "/access/collection-admin/customers", id: "collection-admin-customers" },
 		{
 			icon: UserCheck,
 			title: "Verification",
 			id: "collection-verification",
 			subItems: [
-				{ title: "Pending", url: "/access/collection/referees/unapproved-referees" },
-				{ title: "Approved", url: "/access/collection/referees/approved-referees" },
-				{ title: "Rejected", url: "/access/collection/referees/rejected-referees" },
+				{ title: "Pending", url: "/access/collection-admin/referees/unapproved-referees" },
+				{ title: "Approved", url: "/access/collection-admin/referees/approved-referees" },
+				{ title: "Rejected", url: "/access/collection-admin/referees/rejected-referees" },
 			],
 		},
 		{
@@ -156,14 +156,31 @@ export function AppSidebar() {
 			title: "Reports",
 			id: "collection-reports",
 			subItems: [
-				{ title: "Overview", url: "/access/collection/reports/overview" },
-				{ title: "MBE Report", url: "/access/collection/reports/mbe" },
-				{ title: "Samsung Report", url: "/access/collection/reports/samsung" },
-				{ title: "Xiaomi Report", url: "/access/collection/reports/xiaomi" },
-				{ title: "Oppo Report", url: "/access/collection/reports/oppo" },
+				{ title: "Overview", url: "/access/collection-admin/reports/overview" },
+				{ title: "MBE Report", url: "/access/collection-admin/reports/mbe" },
+				{ title: "Samsung Report", url: "/access/collection-admin/reports/samsung" },
+				{ title: "Xiaomi Report", url: "/access/collection-admin/reports/xiaomi" },
+				{ title: "Oppo Report", url: "/access/collection-admin/reports/oppo" },
 			],
 		},
 	];
+	const collectionOfficerItems: MenuItem[] = [
+		{ title: "Dashboard", icon: Home, url: "/access/collection-officer/", id: "collection-officer-dashboard" },
+		{ icon: CreditCard, title: "Customers", url: "/access/collection-officer/customers", id: "collection-officer-customers" },
+		{
+			icon: CreditCard,
+			title: "Reports",
+			id: "collection-reports",
+			subItems: [
+				{ title: "Overview", url: "/access/collection-officer/reports/overview" },
+				{ title: "MBE Report", url: "/access/collection-officer/reports/mbe" },
+				{ title: "Samsung Report", url: "/access/collection-officer/reports/samsung" },
+				{ title: "Xiaomi Report", url: "/access/collection-officer/reports/xiaomi" },
+				{ title: "Oppo Report", url: "/access/collection-officer/reports/oppo" },
+			],
+		},
+	];
+
 
 	// Get items based on user role
 	const items: MenuItem[] = (() => {
@@ -182,8 +199,9 @@ export function AppSidebar() {
 			case "SUPPORT":
 				return supportItems;
 			case "COLLECTION_ADMIN":
+				return collectionAdminItems;
 			case "COLLECTION_OFFICER":
-				return collectionItems;
+				return collectionOfficerItems;
 			default:
 				return [];
 		}

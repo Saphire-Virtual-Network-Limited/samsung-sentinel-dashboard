@@ -13,60 +13,42 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
-    { name: "Customer Id", uid: "customerId", sortable: true },
-    { name: "Name", uid: "fullName", sortable: true },
-    { name: "Phone No.", uid: "bvnPhoneNumber", sortable: true },
-    { name: "Alt. No.", uid: "mainPhoneNumber", sortable: true },
-    { name: "Email", uid: "email", sortable: true },
+    { name: "Customer ID", uid: "customerId", sortable: true },
+    { name: "Full Name", uid: "fullName", sortable: true },
     { name: "Age", uid: "age", sortable: true },
-    { name: "House No.", uid: "houseNumber", sortable: true },
-    { name: "Street", uid: "streetAddress", sortable: true },
-    { name: "Nearest Bus Stop", uid: "nearestBusStop", sortable: true },
-    { name: "City", uid: "city", sortable: true },
-    { name: "Region", uid: "customerRegion", sortable: true },
-    { name: "State", uid: "customerState", sortable: true },
-    { name: "Occupation", uid: "occupation", sortable: true },
-    { name: "Business Name", uid: "businessName", sortable: true },
-    { name: "Business Address", uid: "businessAddress", sortable: true },
-    { name: "Device Name", uid: "deviceName", sortable: true },
-    { name: "IMEI", uid: "imei", sortable: true },
-    { name: "Device Status", uid: "deviceStatus", sortable: true },
-    { name: "Insurance Package", uid: "insurancePackage", sortable: true },
-    { name: "Insurance Price", uid: "insurancePrice", sortable: true },
-    { name: "Device Price", uid: "devicePrice", sortable: true },
-    { name: "Store Price", uid: "storePrice", sortable: true },
-    // { name: "Margin", uid: "margin", sortable: true },
+    { name: "Email", uid: "email", sortable: true },
+    { name: "Phone", uid: "phone", sortable: true },
+    { name: "Alt Phone", uid: "altPhone", sortable: true },
+    { name: "State", uid: "state", sortable: true },
     { name: "Loan Amount", uid: "loanAmount", sortable: true },
-    { name: "Down Payment", uid: "downPayment", sortable: true },
-	{ name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
-    { name: "Amount Remaining", uid: "amountRemaining", sortable: true },
-    { name: "Loan Tenure", uid: "duration", sortable: true },
-    { name: "Application Date", uid: "createdAt", sortable: true },
-    { name: "Next Pay Date", uid: "nextPayDate", sortable: true },
-    { name: "Next Pay Amount", uid: "nextPayAmount", sortable: true },
-    { name: "Completion Date", uid: "completionDate", sortable: true },
+    { name: "Duration", uid: "duration", sortable: true },
+    { name: "Start Date", uid: "startDate", sortable: true },
+    { name: "End Date", uid: "endDate", sortable: true },
+    { name: "Interest", uid: "interest", sortable: true },
+    { name: "Loan Balance", uid: "loanBalance", sortable: true },
+    { name: "Amount Paid", uid: "AmountPaid", sortable: true },
+    { name: "Total Amount", uid: "totalAmount", sortable: true },
+    { name: "Principal Repaid", uid: "PrincipalRepaid", sortable: true },
+    { name: "Interest Repaid", uid: "interestRepaid", sortable: true },
+    { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
+    { name: "Number of Repayments", uid: "numberOfRepayments", sortable: true },
+    { name: "Number of Missed Repayments", uid: "numberOfMissedRepayments", sortable: true },
+    { name: "Due Date", uid: "DueDate", sortable: true },
+    { name: "Status", uid: "Status", sortable: true },
+    { name: "Device Name", uid: "deviceName", sortable: true },
+    { name: "Device IMEI", uid: "deviceImei", sortable: true },
+    { name: "Service", uid: "service", sortable: true },
     { name: "Sale Channel", uid: "saleChannel", sortable: true },
-    { name: "Sale Person", uid: "salePerson", sortable: true },
+    { name: "Sale Rep", uid: "sale_Rep", sortable: true },
     { name: "Store Name", uid: "storeName", sortable: true },
-    { name: "Cluster", uid: "cluster", sortable: true },
-    { name: "Region", uid: "mbeRegion", sortable: true },
-    { name: "State", uid: "mbeState", sortable: true },
-    { name: "Source", uid: "source", sortable: true },
-    { name: "Loan Status", uid: "loanStatus", sortable: true },
-    { name: "Actions", uid: "actions"},
+    { name: "Down Payment", uid: "downPayment", sortable: true },
+    { name: "Actions", uid: "actions"}
 ];
 
 // Display columns for table view
 const displayColumns: ColumnDef[] = [
-    // { name: "Customer Id", uid: "customerId", sortable: true },
     { name: "Name", uid: "fullName", sortable: true },
-    { name: "Phone No.", uid: "bvnPhoneNumber", sortable: true },
-    // { name: "Email", uid: "email", sortable: true },
-    // { name: "Device Name", uid: "deviceName", sortable: true },
 	{ name: "Device Price", uid: "devicePrice", sortable: true },
-	{ name: "Insurance Price", uid: "insurancePrice", sortable: true },
-	{ name: "Store Price", uid: "storePrice", sortable: true },
-	// { name: "Margin", uid: "margin", sortable: true },
     { name: "Loan Amount", uid: "loanAmount", sortable: true },
     { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
     { name: "Loan Status", uid: "loanStatus", sortable: true },
@@ -373,7 +355,7 @@ type CustomerRecord = {
 	};
 };
 
-export default function OverviewReport() {
+export default function CollectionOverviewView() {
 	const router = useRouter();
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
@@ -432,47 +414,37 @@ export default function OverviewReport() {
 		() =>
 			raw.map((r: CustomerRecord) => ({
 				...r,
+                devicePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
+                loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A',
                 customerId: r.customerId || 'N/A',
 				fullName: (r.firstName ? r.firstName[0].toUpperCase() + r.firstName.slice(1).toLowerCase() : '') + ' ' + (r.lastName ? r.lastName[0].toUpperCase() + r.lastName.slice(1).toLowerCase() : '') || 'N/A',
 				age: r.dob ? `${new Date().getFullYear() - new Date(r.dob).getFullYear()}` : 'N/A',
-				houseNumber: r.CustomerKYC?.[0]?.houseNumber || 'N/A',
-				streetAddress: r.CustomerKYC?.[0]?.streetAddress || 'N/A',
-				nearestBusStop: r.CustomerKYC?.[0]?.nearestBusStop || 'N/A',
-				city: r.CustomerKYC?.[0]?.town || 'N/A',
-				customerRegion: r.CustomerKYC?.[0]?.localGovernment || 'N/A',
-				customerState: r.CustomerKYC?.[0]?.state || 'N/A',
-				occupation: r.CustomerKYC?.[0]?.occupation || 'N/A',
-				businessName: r.CustomerKYC?.[0]?.businessName || 'N/A',
-				businessAddress: r.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A',
-				deviceName: r.LoanRecord?.[0]?.deviceName || 'N/A',
-				imei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
-				deviceStatus: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.status || 'N/A',
-				insurancePackage: r.LoanRecord?.[0]?.insurancePackage || 'N/A',
-				insurancePrice: r.LoanRecord?.[0]?.insurancePrice ? `₦${r.LoanRecord[0].insurancePrice.toLocaleString()}` : 'N/A',
-				devicePrice: r.LoanRecord?.[0]?.device?.price ? `₦${r.LoanRecord[0].device.price.toLocaleString()}` : 'N/A',
-				storePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
-				margin: r.LoanRecord?.[0]?.devicePrice && r.LoanRecord?.[0]?.device?.price ? 
-					`₦${(Number(r.LoanRecord[0].devicePrice) - Number(r.LoanRecord[0].device.price)).toLocaleString()}` : 'N/A',
-				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
-				downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
-				duration: r.LoanRecord?.[0]?.duration || 'N/A',
-				loanTenure: r.LoanRecord?.[0]?.duration || 'N/A',
-				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-				amountRemaining: r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord[0]?.duration ? `₦${(r.LoanRecord[0].monthlyRepayment * r.LoanRecord[0].duration).toLocaleString()}` : 'N/A',
-				createdAt: r.LoanRecord?.[0]?.createdAt ? new Date(r.LoanRecord[0].createdAt).toLocaleDateString() : 'N/A',
-				nextPayDate: r.LoanRecord?.[0]?.createdAt ? new Date(new Date(r.LoanRecord[0].createdAt).setMonth(new Date(r.LoanRecord[0].createdAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
-				nextPayAmount: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-				completionDate: r.LoanRecord?.[0]?.createdAt ? new Date(new Date(r.LoanRecord[0].createdAt).setMonth(new Date(r.LoanRecord[0].createdAt).getMonth() + r.LoanRecord[0].duration)).toLocaleDateString() : 'N/A',
-				saleChannel: r.regBy?.title || 'N/A',
-				salePerson: (r.regBy?.firstname && r.regBy?.lastname) ? `${r.regBy.firstname} ${r.regBy.lastname}` : 'N/A',
-				storeName: r.LoanRecord?.[0]?.store?.storeName || 'N/A',
-				cluster: r.LoanRecord?.[0]?.store?.clusterId || 'N/A',
-				// mbeRegion: r.LoanRecord?.[0]?.store?.region || 'N/A',
-				mbeRegion: r.CustomerKYC?.[0]?.localGovernment || 'N/A',
-				mbeState: r.LoanRecord?.[0]?.store?.state || 'N/A',
-				source: r.CustomerKYC?.[0]?.source || 'N/A',
-				loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A',
-               
+                email: r.email || 'N/A',
+                phone: r.bvnPhoneNumber || 'N/A',
+                altPhone: r.mainPhoneNumber || 'N/A',
+                state: r.CustomerKYC?.[0]?.state || 'N/A',
+                loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
+                duration: r.LoanRecord?.[0]?.duration || 'N/A',
+                startDate: r.LoanRecord?.[0]?.updatedAt ? new Date(r.LoanRecord[0].updatedAt).toLocaleDateString() : 'N/A',
+                endDate: r.LoanRecord?.[0]?.updatedAt ? new Date(new Date(r.LoanRecord[0].updatedAt).setMonth(new Date(r.LoanRecord[0].updatedAt).getMonth() + r.LoanRecord[0].duration)).toLocaleDateString() : 'N/A',
+                interest: "9.50%",
+                loanBalance: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
+                AmountPaid: "0",
+                totalAmount: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
+                PrincipalRepaid: r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord?.[0]?.interestAmount ? `₦${(r.LoanRecord[0].monthlyRepayment - r.LoanRecord[0].interestAmount).toLocaleString()}` : 'N/A',
+                interestRepaid: r.LoanRecord?.[0]?.interestAmount ? `₦${(r.LoanRecord[0].interestAmount).toLocaleString()}` : 'N/A',
+                monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
+                numberOfRepayments: "0",
+                numberOfMissedRepayments: "0",
+                DueDate: r.LoanRecord?.[0]?.updatedAt ? new Date(new Date(r.LoanRecord[0].updatedAt).setMonth(new Date(r.LoanRecord[0].updatedAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
+                Status: "running",
+                deviceName: r.LoanRecord?.[0]?.deviceName || 'N/A',
+                deviceImei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
+                service: r.LoanRecord?.[0]?.channel || 'N/A',
+                saleChannel: r.regBy?.title || 'N/A',
+                sale_Rep: r.regBy?.firstname && r.regBy?.lastname ? `${r.regBy.firstname} ${r.regBy.lastname}` : 'N/A',
+                storeName: r.LoanRecord?.[0]?.store?.storeName || 'N/A',
+                downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
 			})),
 		[raw]
 	);
@@ -514,11 +486,11 @@ export default function OverviewReport() {
 	// Export all filtered
 	const exportFn = async (data: CustomerRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Customers");
+		const ws = wb.addWorksheet("Collection Overview");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "customers_Records.xlsx");
+		saveAs(new Blob([buf]), "collection_overview.xlsx");
 	};
 
 	// Render each cell, including actions dropdown:
