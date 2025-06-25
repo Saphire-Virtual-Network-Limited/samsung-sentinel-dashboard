@@ -78,67 +78,68 @@ export function AppSidebar() {
   const apiDocsUrl = process.env.NEXT_PUBLIC_API_DOCS_URL;
 
   const conditionalSentinelItems: MenuItem[] =
-    selectedProduct === "Sentinel"
-      ? [
+    //    selectedProduct === "Sentinel"
+    //     ?
+    [
+      {
+        icon: BriefcaseBusiness,
+        title: "Activities",
+        id: "finance-stores",
+        subItems: [
           {
-            icon: BriefcaseBusiness,
-            title: "Activities",
-            id: "finance-stores",
-            subItems: [
-              {
-                title: "Activation OTP",
-                url: "/access/sales/activities/activation-otp",
-              },
-              {
-                title: "Approved",
-                url: "/access/sales/referees/approved-referees",
-              },
-              {
-                title: "Rejected",
-                url: "/access/sales/referees/rejected-referees",
-              },
-            ],
+            title: "Activation OTP",
+            url: "/access/sales/activities/activation-otp",
           },
           {
-            icon: IoLogoAndroid,
-            title: "Android Tools",
-            id: "android-tools",
-            subItems: [
-              {
-                title: "Android Activation",
-                url: "/access/sales/android-tools/android-activation",
-              },
-              {
-                title: "Approved",
-                url: "/access/sales/referees/approved-referees",
-              },
-              {
-                title: "Rejected",
-                url: "/access/sales/referees/rejected-referees",
-              },
-            ],
+            title: "Approved",
+            url: "/access/sales/referees/approved-referees",
           },
           {
-            icon: IoLogoApple,
-            title: "IOS Tools",
-            id: "ios-tools",
-            subItems: [
-              {
-                title: "IOS Activation",
-                url: "/access/sales/ios-tools/ios-activation",
-              },
-              {
-                title: "Approved",
-                url: "/access/sales/referees/approved-referees",
-              },
-              {
-                title: "Rejected",
-                url: "/access/sales/referees/rejected-referees",
-              },
-            ],
+            title: "Rejected",
+            url: "/access/sales/referees/rejected-referees",
           },
-        ]
-      : [];
+        ],
+      },
+      {
+        icon: IoLogoAndroid,
+        title: "Android Tools",
+        id: "android-tools",
+        subItems: [
+          {
+            title: "Android Activation",
+            url: "/access/sales/android-tools/android-activation",
+          },
+          {
+            title: "Approved",
+            url: "/access/sales/referees/approved-referees",
+          },
+          {
+            title: "Rejected",
+            url: "/access/sales/referees/rejected-referees",
+          },
+        ],
+      },
+      {
+        icon: IoLogoApple,
+        title: "IOS Tools",
+        id: "ios-tools",
+        subItems: [
+          {
+            title: "IOS Activation",
+            url: "/access/sales/ios-tools/ios-activation",
+          },
+          {
+            title: "Approved",
+            url: "/access/sales/referees/approved-referees",
+          },
+          {
+            title: "Rejected",
+            url: "/access/sales/referees/rejected-referees",
+          },
+        ],
+      },
+    ];
+  // : [];
 
   const adminItems: MenuItem[] = [
     {
@@ -227,12 +228,6 @@ export function AppSidebar() {
       id: "sales-dashboard",
     },
     ...conditionalSentinelItems,
-    {
-      icon: IoBusiness,
-      title: "Staff",
-      url: "/access/sales/staff",
-      id: "sales-staff",
-    },
     {
       icon: ChartBar,
       title: "Reports",
@@ -520,7 +515,9 @@ export function AppSidebar() {
       case "VERIFICATION_OFFICER":
         return verificationItems;
       case "DEVELOPER":
-        return salesItems; // developerItems;
+        return developerItems;
+      case "SALES":
+        return salesItems;
       case "FINANCE":
         return financeItems;
       case "SUPPORT":
