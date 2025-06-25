@@ -453,7 +453,7 @@ export default function OverviewReport() {
 				storePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
 				margin: r.LoanRecord?.[0]?.devicePrice && r.LoanRecord?.[0]?.device?.price ? 
 					`₦${(Number(r.LoanRecord[0].devicePrice) - Number(r.LoanRecord[0].device.price)).toLocaleString()}` : 'N/A',
-				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
+				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
 				downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
 				duration: r.LoanRecord?.[0]?.duration || 'N/A',
 				loanTenure: r.LoanRecord?.[0]?.duration || 'N/A',
