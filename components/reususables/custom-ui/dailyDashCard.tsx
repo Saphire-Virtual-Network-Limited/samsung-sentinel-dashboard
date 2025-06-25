@@ -276,7 +276,7 @@ const DailyDashCard = () => {
               </h3>
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              Today's loan distribution across channels
+              Today&apos;s loan distribution across channels
             </p>
           </div>
           <CardBody className="p-0">
