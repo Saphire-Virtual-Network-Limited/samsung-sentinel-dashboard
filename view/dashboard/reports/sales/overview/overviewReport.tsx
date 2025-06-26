@@ -484,13 +484,13 @@ export default function OverviewReport() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.firstName.toLowerCase().includes(f) || 
-			c.lastName.toLowerCase().includes(f) || 
-			c.email.toLowerCase().includes(f) ||
+				c.firstName?.toLowerCase().includes(f) || 
+			c.lastName?.toLowerCase().includes(f) || 
+			c.email?.toLowerCase().includes(f) ||
 			c.bvnPhoneNumber?.toLowerCase().includes(f) ||
 			c.mainPhoneNumber?.toLowerCase().includes(f) ||
 			c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
-			c.customerId.toLowerCase().includes(f) ||
+			c.customerId?.toLowerCase().includes(f) ||
 			(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
 			c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
 			c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||

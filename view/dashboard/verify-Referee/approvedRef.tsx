@@ -191,13 +191,13 @@ export default function ApprovedRefereesPage() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.firstName.toLowerCase().includes(f) || 
-				c.lastName.toLowerCase().includes(f) ||
-				c.email.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f) ||
-				c.bvnPhoneNumber.includes(f) ||
-				c.mainPhoneNumber.includes(f) ||
-				c.bvn.includes(f) ||
+				c.firstName?.toLowerCase().includes(f) || 
+				c.lastName?.toLowerCase().includes(f) ||
+				c.email?.toLowerCase().includes(f) ||
+				c.customerId?.toLowerCase().includes(f) ||
+				c.bvnPhoneNumber?.includes(f) ||
+				c.mainPhoneNumber?.includes(f) ||
+				c.bvn?.includes(f) ||
 				(c.CustomerKYC?.[0]?.phone2 && c.CustomerKYC[0].phone2.includes(f)) ||
 				(c.CustomerKYC?.[0]?.phone3 && c.CustomerKYC[0].phone3.includes(f)) ||
 				(c.CustomerKYC?.[0]?.phone4 && c.CustomerKYC[0].phone4.includes(f)) ||

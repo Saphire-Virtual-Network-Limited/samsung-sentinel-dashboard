@@ -29,10 +29,6 @@ const SummaryReportXiaomiView = () => {
 					className="lg:p-4 text-base">
 					<XiaomiReport />        
 				</Tab>
-
-
-
-
 			</Tabs>
 		</div>
 	);

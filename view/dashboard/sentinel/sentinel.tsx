@@ -443,11 +443,11 @@ export default function SentinelPage() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.email.toLowerCase().includes(f) ||
+				c.fullName?.toLowerCase().includes(f) || 
+				c.email?.toLowerCase().includes(f) ||
 				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f) ||
-				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
+				c.customerId?.toLowerCase().includes(f) ||
+				(c.bvn && c.bvn?.toString().toLowerCase().includes(f)) ||
 				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
 				c.deviceImei?.toLowerCase().includes(f)
 			);
