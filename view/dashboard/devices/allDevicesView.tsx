@@ -131,6 +131,8 @@ export default function AllDevicesView() {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
 				const deviceName = (c.deviceName || '').toLowerCase();
+				const deviceId = (c.newDeviceId || '').toLowerCase();
+				const oldDeviceId = (c.oldDeviceId || '').toLowerCase();
 				const deviceManufacturer = (c.deviceManufacturer || '').toLowerCase();
 				const deviceType = (c.deviceType || '').toLowerCase();
 				const price = (c.price || '').toLowerCase();
@@ -138,6 +140,8 @@ export default function AllDevicesView() {
 				const SLD = (c.SLD || '').toLowerCase();
 				
 				return deviceName.includes(f) || 
+					   deviceId.includes(f) ||
+					   oldDeviceId.includes(f) ||
 					   deviceManufacturer.includes(f) || 
 					   deviceType.includes(f) || 
 					   price.includes(f) || 
