@@ -129,11 +129,20 @@ export default function DropOffsPage() {
 					const bvn = (c.bvn || '').toLowerCase();
 					const customerId = (c.customerId || '').toLowerCase();
 					const phone = (c.mainPhoneNumber || '').toLowerCase();
+					const regBy = (c.regBy?.mbe_old_id || '').toLowerCase();
+					const accountNumber = (c.CustomerAccountDetails?.[0]?.accountNumber || '').toLowerCase();
+					const loanRecordId = (c.LoanRecord?.[0]?.loanRecordId || '').toLowerCase();
+					const storeId = (c.LoanRecord?.[0]?.storeId || '').toLowerCase();
+
 					
 					return name.includes(f) || 
 						   bvn.includes(f) || 
 						   customerId.includes(f) || 
-						   phone.includes(f);
+						   phone.includes(f) ||
+						   regBy.includes(f) ||
+						   accountNumber.includes(f) ||
+						   loanRecordId.includes(f) ||
+						   storeId.includes(f);
 				} catch (error) {
 					console.error('Error in filter:', error);
 					return false;

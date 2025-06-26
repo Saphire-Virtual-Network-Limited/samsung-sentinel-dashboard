@@ -195,10 +195,15 @@ type UnapprovedRefereeRecord = {
 				c.fullName.toLowerCase().includes(f) || 
 				c.email.toLowerCase().includes(f) ||
 				c.mainPhoneNumber.includes(f) ||
+				c.bvnPhoneNumber.includes(f) ||
 				c.customerId.includes(f) ||
 				c.bvn.includes(f) ||
 				(c.CustomerKYC?.[0]?.phone2 && c.CustomerKYC[0].phone2.includes(f)) ||
-				(c.CustomerKYC?.[0]?.phone3 && c.CustomerKYC[0].phone3.includes(f))
+				(c.CustomerKYC?.[0]?.phone3 && c.CustomerKYC[0].phone3.includes(f)) ||
+				(c.CustomerKYC?.[0]?.phone4 && c.CustomerKYC[0].phone4.includes(f)) ||
+				(c.CustomerKYC?.[0]?.phone5 && c.CustomerKYC[0].phone5.includes(f)) ||
+				c.LoanRecord?.[0]?.loanRecordId.includes(f) ||
+				c.LoanRecord?.[0]?.storeId.includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

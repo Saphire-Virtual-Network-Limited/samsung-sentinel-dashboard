@@ -14,6 +14,8 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
     { name: "Store Name", uid: "storeName" },
+	{ name: "Customer Id", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
     { name: "Phone Number", uid: "bvnPhoneNumber" },
     { name: "Device IMEI", uid: "deviceImei" },
@@ -28,6 +30,8 @@ const columns: ColumnDef[] = [
 // Define all columns for export
 const exportColumns: ColumnDef[] = [
     { name: "Store Name", uid: "storeName" },
+	{ name: "Customer Id", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
     { name: "Phone Number", uid: "bvnPhoneNumber" },
     { name: "Email", uid: "email" },

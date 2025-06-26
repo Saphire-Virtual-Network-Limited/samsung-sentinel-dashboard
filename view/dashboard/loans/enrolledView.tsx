@@ -209,6 +209,8 @@ export default function EnrolledView() {
 				try {
 					// Safely check each field with proper null checks
 					const fullName = (c.fullName || '').toLowerCase();
+					const firstName = (c.firstName || '').toLowerCase();
+					const lastName = (c.lastName || '').toLowerCase();
 					const email = (c.email || '').toLowerCase();
 					const bvn = (c.bvn || '').toLowerCase();
 					const customerId = (c.customerId || '').toLowerCase();
@@ -216,15 +218,21 @@ export default function EnrolledView() {
 					const deviceName = (c.deviceName || '').toLowerCase();
 					const deviceModel = (c.deviceModelNumber || '').toLowerCase();
 					const deviceRam = (c.deviceRam || '').toLowerCase();
-					
+					const loanRecordId = (c.loanRecordId || '').toLowerCase();
+					const storeId = (c.storeId || '').toLowerCase();
+
 					return fullName.includes(f) || 
+						   firstName.includes(f) ||
+						   lastName.includes(f) ||	
 						   email.includes(f) || 
 						   bvn.includes(f) || 
 						   customerId.includes(f) || 
 						   phone.includes(f) || 
 						   deviceName.includes(f) || 
 						   deviceModel.includes(f) || 
-						   deviceRam.includes(f);
+							deviceRam.includes(f) ||
+						   loanRecordId.includes(f) ||
+						   storeId.includes(f);
 				} catch (error) {
 					console.error('Error in filter:', error);
 					return false;
