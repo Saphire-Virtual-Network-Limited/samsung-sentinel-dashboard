@@ -446,7 +446,7 @@ export default function SamsungReport() {
 				occupation: r.CustomerKYC?.[0]?.occupation || 'N/A',
 				businessName: r.CustomerKYC?.[0]?.businessName || 'N/A',
 				businessAddress: r.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A',
-				deviceName: r.LoanRecord?.[0]?.deviceName || 'N/A',
+				deviceName: r.LoanRecord?.[0]?.device?.deviceName || 'N/A',
 				imei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
 				deviceStatus: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.status || 'N/A',
 				insurancePackage: r.LoanRecord?.[0]?.insurancePackage || 'N/A',

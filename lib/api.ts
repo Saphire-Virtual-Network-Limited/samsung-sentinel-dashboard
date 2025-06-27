@@ -305,14 +305,30 @@ export async function getAllDevices(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/device/all${query}`, "GET");
 }
 
-export async function getAllEnrolledDevices(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/enrolled${query}`, "GET");
+export async function getAllEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	if (status) {
+		query += `?status=${status}`;
+		if (startDate && endDate) {
+			query += `&startDate=${startDate}&endDate=${endDate}`;
+		}
+	} else if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
+	}
+	return apiCall(`/admin/device/status${query}`, "GET");
 }
 
-export async function getAllUnEnrolledDevices(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/unenrolled${query}`, "GET");
+export async function getAllUnEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	if (status) {
+		query += `?status=${status}`;
+		if (startDate && endDate) {
+			query += `&startDate=${startDate}&endDate=${endDate}`;
+		}
+	} else if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
+	}
+	return apiCall(`/admin/device/status${query}`, "GET");
 }
 
 
