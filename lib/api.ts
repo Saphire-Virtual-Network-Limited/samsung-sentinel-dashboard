@@ -364,6 +364,20 @@ export async function getDropOffReport(screen?: string) {
 	return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
 }
 
+// collection dashboard
+
+export async function getDailyCollectionReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/collections/daily-report${query}`, "GET");
+}
+
+export async function getInceptionCollectionReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/collections/inception${query}`, "GET");
+}
+
+
+
 //** Sync Stores from 1.9 dashboard */
 
 export async function syncStores() {
