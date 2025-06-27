@@ -16,6 +16,9 @@ import {
   X,
   UserCheck,
   BriefcaseBusiness,
+  ClipboardCheckIcon,
+  Wrench,
+  BarChart3,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import {
@@ -59,7 +62,7 @@ export function AppSidebar() {
   const [openNestedMenus, setOpenNestedMenus] = useState<{
     [key: string]: boolean;
   }>({});
-  const { label: selectedProduct } = useSelectedProduct();
+  const { value: selectedProduct } = useSelectedProduct();
   const handleLogout = async () => {
     try {
       logout();
@@ -140,84 +143,234 @@ export function AppSidebar() {
       },
     ];
   // : [];
+  const adminRootItems: MenuItem[] =
+    selectedProduct === "Root"
+      ? [
+          {
+            title: "Dashboard",
+            icon: Home,
+            url: "/access/admin/",
+            id: "admin-dashboard",
+          },
+          {
+            icon: CreditCard,
+            title: "Loans",
+            url: "/access/admin/loans",
+            id: "admin-loans",
+          },
+          {
+            icon: Users,
+            title: "Customers",
+            url: "/access/admin/customers",
+            id: "admin-customers",
+          },
+          {
+            icon: UserCheck,
+            title: "Verification",
+            id: "admin-referees",
+            subItems: [
+              {
+                title: "Pending",
+                url: "/access/admin/referees/unapproved-referees",
+              },
+              {
+                title: "Approved",
+                url: "/access/admin/referees/approved-referees",
+              },
+              {
+                title: "Rejected",
+                url: "/access/admin/referees/rejected-referees",
+              },
+            ],
+          },
+          {
+            icon: Store,
+            title: "Stores",
+            url: "/access/admin/stores",
+            id: "admin-stores",
+          },
+          {
+            icon: IoBusiness,
+            title: "Staff",
+            url: "/access/admin/staff",
+            id: "admin-staff",
+          },
+          {
+            icon: ChartBar,
+            title: "Reports",
+            id: "admin-reports",
+            subItems: [
+              {
+                title: "Sales",
+                subItems: [
+                  {
+                    title: "Overview",
+                    url: "/access/admin/reports/sales/overview",
+                  },
+                  {
+                    title: "MBE Report",
+                    url: "/access/admin/reports/sales/mbe",
+                  },
+                  {
+                    title: "Samsung Report",
+                    url: "/access/admin/reports/sales/samsung",
+                  },
+                  {
+                    title: "Xiaomi Report",
+                    url: "/access/admin/reports/sales/xiaomi",
+                  },
+                  {
+                    title: "Oppo Report",
+                    url: "/access/admin/reports/sales/oppo",
+                  },
+                  {
+                    title: "Sentinel",
+                    url: "/access/admin/reports/sales/sentinel",
+                  },
+                ],
+              },
+              { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
+              { title: "Tracker", url: "/access/admin/reports/tracker" },
+            ],
+          },
+          {
+            icon: Package2Icon,
+            title: "Inventory",
+            id: "admin-inventory",
+            subItems: [
+              { title: "Devices", url: "/access/admin/inventory/devices" },
+              { title: "TVs", url: "/access/admin/inventory/tvs" },
+              { title: "Solar", url: "/access/admin/inventory/solar" },
+            ],
+          },
+        ]
+      : [];
+
+  const adminAndroidItems: MenuItem[] =
+    selectedProduct === "Android"
+      ? [
+          {
+            title: "Dashboard",
+            icon: Home,
+            url: "/access/admin/android/",
+            id: "admin-android-dashboard",
+          },
+          {
+            icon: ChartBar,
+            title: "Reports",
+            id: "admin-android-reports",
+            subItems: [
+              {
+                title: "Sales",
+                subItems: [
+                  {
+                    title: "All Activation Report",
+                    url: "/access/sales/reports/sales/overview",
+                  },
+                  {
+                    title: "Sentiflex Activation Report",
+                    url: "/access/sales/reports/sales/mbe",
+                  },
+                  {
+                    title: "Sentinel Activation Report",
+                    url: "/access/sales/reports/sales/samsung",
+                  },
+                ],
+              },
+
+              { title: "Tracker", url: "/access/sales/reports/tracker" },
+            ],
+          },
+          {
+            title: "Claims",
+            icon: BriefcaseBusiness,
+            url: "/access/sales/reports/drop-offs",
+            subItems: [
+              {
+                title: "All Device Claim Requests",
+                url: "/access/sales/reports/drop-offs",
+              },
+            ],
+          },
+          {
+            title: "Tools",
+            icon: Wrench,
+            url: "/access/sales/reports/drop-offs",
+          },
+          {
+            title: "Statistics",
+            icon: BarChart3,
+            url: "/access/sales/reports/drop-offs",
+          },
+        ]
+      : [];
+
+  const adminRelayItems: MenuItem[] =
+    selectedProduct === "Relay"
+      ? [
+          {
+            title: "Dashboard",
+            icon: Home,
+            url: "/access/admin/relay/",
+            id: "admin-relay-dashboard",
+          },
+          {
+            icon: ChartBar,
+            title: "Reports",
+            id: "admin-relay-reports",
+            subItems: [
+              {
+                title: "Sales",
+                subItems: [
+                  {
+                    title: "All Sales Report",
+                    url: "/access/sales/reports/sales/overview",
+                  },
+                  {
+                    title: "MBE Sales Report",
+                    url: "/access/sales/reports/sales/mbe",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            title: "Tools",
+            icon: Wrench,
+            url: "/access/sales/reports/drop-offs",
+            subItems: [
+              {
+                title: "Item Manager",
+                url: "/access/sales/reports/drop-offs",
+              },
+              {
+                title: "Active Sales User",
+                url: "/access/sales/reports/drop-offs",
+              },
+            ],
+          },
+          {
+            title: "Statistics",
+            icon: BarChart3,
+            url: "/access/sales/reports/drop-offs",
+            subItems: [
+              {
+                title: "Daily Analytics",
+                url: "/access/sales/reports/drop-offs",
+              },
+              {
+                title: "MTD Analytics",
+                url: "/access/sales/reports/drop-offs",
+              },
+            ],
+          },
+        ]
+      : [];
 
   const adminItems: MenuItem[] = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      url: "/access/admin/",
-      id: "admin-dashboard",
-    },
-    {
-      icon: CreditCard,
-      title: "Loans",
-      url: "/access/admin/loans",
-      id: "admin-loans",
-    },
-    {
-      icon: Users,
-      title: "Customers",
-      url: "/access/admin/customers",
-      id: "admin-customers",
-    },
-    {
-      icon: UserCheck,
-      title: "Verification",
-      id: "admin-referees",
-      subItems: [
-        { title: "Pending", url: "/access/admin/referees/unapproved-referees" },
-        { title: "Approved", url: "/access/admin/referees/approved-referees" },
-        { title: "Rejected", url: "/access/admin/referees/rejected-referees" },
-      ],
-    },
-    {
-      icon: Store,
-      title: "Stores",
-      url: "/access/admin/stores",
-      id: "admin-stores",
-    },
-    {
-      icon: IoBusiness,
-      title: "Staff",
-      url: "/access/admin/staff",
-      id: "admin-staff",
-    },
-    {
-      icon: ChartBar,
-      title: "Reports",
-      id: "admin-reports",
-      subItems: [
-        {
-          title: "Sales",
-          subItems: [
-            { title: "Overview", url: "/access/admin/reports/sales/overview" },
-            { title: "MBE Report", url: "/access/admin/reports/sales/mbe" },
-            {
-              title: "Samsung Report",
-              url: "/access/admin/reports/sales/samsung",
-            },
-            {
-              title: "Xiaomi Report",
-              url: "/access/admin/reports/sales/xiaomi",
-            },
-            { title: "Oppo Report", url: "/access/admin/reports/sales/oppo" },
-            { title: "Sentinel", url: "/access/admin/reports/sales/sentinel" },
-          ],
-        },
-        { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
-        { title: "Tracker", url: "/access/admin/reports/tracker" },
-      ],
-    },
-    {
-      icon: Package2Icon,
-      title: "Inventory",
-      id: "admin-inventory",
-      subItems: [
-        { title: "Devices", url: "/access/admin/inventory/devices" },
-        { title: "TVs", url: "/access/admin/inventory/tvs" },
-        { title: "Solar", url: "/access/admin/inventory/solar" },
-      ],
-    },
+    ...adminRootItems,
+    ...adminRelayItems,
+    ...adminAndroidItems,
   ];
 
   const salesItems: MenuItem[] = [
@@ -226,6 +379,23 @@ export function AppSidebar() {
       icon: Home,
       url: "/access/sales/",
       id: "sales-dashboard",
+    },
+    {
+      title: "Report Sales",
+      icon: ClipboardCheckIcon,
+      url: "/access/sales/report-sales",
+      id: "report-sales",
+      subItems: [
+        {
+          title: "Accessories Sales ",
+          url: "/access/sales/report-sales/accessories-sales",
+        },
+        {
+          title: "Accessories Trade-In ",
+          url: "/access/sales/report-sales/accessories-trade-in",
+        },
+        { title: "Devices ", url: "/access/sales/report-sales/devices" },
+      ],
     },
     ...conditionalSentinelItems,
     {
@@ -506,7 +676,7 @@ export function AppSidebar() {
 
   // Get items based on user role
   const items: MenuItem[] = (() => {
-    const role = userResponse?.data?.role;
+    const role = "ADMIN"; //userResponse?.data?.role;
     switch (role) {
       case "SUPER_ADMIN":
       case "ADMIN":
