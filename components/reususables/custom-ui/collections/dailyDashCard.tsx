@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn,} from "@/lib";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
-import {  getDailyReport } from "@/lib";
+import {  getDailyCollectionReport } from "@/lib";
 import { TrendingDown, TrendingUp,BarChart3, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -21,7 +21,7 @@ const DailyDashCardCollections = () => {
             try {
                 const results = await Promise.all(
                     sales_channels.map((channel) =>
-                        getDailyReport(channel)
+                        getDailyCollectionReport(channel)   
                             .then((r) => r.data || {})
                             .catch((error) => {
                                 console.error(`Error fetching data for ${channel}:`, error);
@@ -76,11 +76,11 @@ const DailyDashCardCollections = () => {
     // Helper to get channel data
     const getChannelData = (channelData: any) => {
       return {
-        today_loan: channelData.Total_Today_Loan || 0,
-        total_value: channelData.Total_Today_Loan_Value || "0",
-        average_value: channelData.Average_Today_Loan_Value || "0",
-        This_month_MTD_loan: channelData.Total_Today_MTD_Loan || 0,
-        Last_month_LTD_loan: channelData.Total_Today_LTD_Loan || 0,
+        today_due_loan: channelData.Total_Today_Due_Loans || 0,
+        total_due_value: channelData.Total_Today_Due_Loan_Value || "0",
+        average_due_value: channelData.Average_Today_Due_Loan_Value || "0",
+        this_month_mtd_due_loan: channelData.Total_Today_MTD_Due_Loans || 0,
+        last_month_ltd_due_loan: channelData.Total_Today_LTD_Due_Loans || 0,
       };
     };
 
@@ -114,12 +114,12 @@ const DailyDashCardCollections = () => {
 
     // Build dynamic metrics from API response
     const metrics = [
-      formatMetric("Total Due Repayments", formatNumber(overallData.today_loan), "0", "#"),
-      formatMetric("Total Due Repayments Value", formatNumber(overallData.total_value), "0", "#", true),
-      formatMetric("Average Due Repayments Value", formatNumber(overallData.average_value), "0", "#", true),
+      formatMetric("Total Due Repayments", formatNumber(overallData.today_due_loan), "0", "#"),
+      formatMetric("Total Due Repayments Value", formatNumber(overallData.total_due_value), "0", "#", true),
+      formatMetric("Average Due Repayments Value", formatNumber(overallData.average_due_value), "0", "#", true),
       formatMetric("Today Date", overall.Today_Date || "", "0", "#"),
-      formatMetric("This Month MTD Repayments", formatNumber(overallData.This_month_MTD_loan), "0", "#"),
-      formatMetric("Last Month LTD Repayments", formatNumber(overallData.Last_month_LTD_loan), "0", "#"),
+      formatMetric("This Month MTD Repayments", formatNumber(overallData.this_month_mtd_due_loan), "0", "#"),
+      formatMetric("Last Month LTD Repayments", formatNumber(overallData.last_month_ltd_due_loan), "0", "#"),
     ];
 
     // Channel configuration with colors and icons
@@ -226,11 +226,11 @@ const DailyDashCardCollections = () => {
 
           {/* Card body */}
           <CardBody className="p-4 space-y-3">
-            {renderMetricRow("Today Due Repayments", data.today_loan)}
-            {renderMetricRow("Total Due Repayments Value", data.total_value, true)}
-            {renderMetricRow("Average Due Repayments Value", data.average_value, true)}
-            {renderMetricRow("MTD Repayments", data.This_month_MTD_loan)}
-            {renderMetricRow("Last Month LTD Repayments", data.Last_month_LTD_loan)}
+            {renderMetricRow("Today Due Repayments", data.today_due_loan)}
+            {renderMetricRow("Total Due Repayments Value", data.total_due_value, true)}
+            {renderMetricRow("Average Due Repayments Value", data.average_due_value, true)}
+            {renderMetricRow("MTD Repayments", data.this_month_mtd_due_loan)}
+            {renderMetricRow("Last Month LTD Repayments", data.last_month_ltd_due_loan)}
           </CardBody>
 
           {/* Hover effect overlay */}
@@ -244,38 +244,38 @@ const DailyDashCardCollections = () => {
       const chartData = [
         { 
           name: 'MBE', 
-          mtd: mbeData.This_month_MTD_loan, 
-          lmtd: mbeData.Last_month_LTD_loan,
+          mtd: mbeData.this_month_mtd_due_loan, 
+          lmtd: mbeData.last_month_ltd_due_loan,
           color: '#ef4444'
         },
         { 
           name: 'Samsung', 
-          mtd: samsungData.This_month_MTD_loan, 
-          lmtd: samsungData.Last_month_LTD_loan,
+          mtd: samsungData.this_month_mtd_due_loan, 
+          lmtd: samsungData.last_month_ltd_due_loan,
           color: '#8b5cf6'
         },
         { 
           name: 'Xiaomi', 
-          mtd: xiaomiData.This_month_MTD_loan, 
-          lmtd: xiaomiData.Last_month_LTD_loan,
+          mtd: xiaomiData.this_month_mtd_due_loan, 
+          lmtd: xiaomiData.last_month_ltd_due_loan,
           color: '#f97316'
         },
         { 
           name: 'Oppo', 
-          mtd: oppoData.This_month_MTD_loan, 
-          lmtd: oppoData.Last_month_LTD_loan,
+          mtd: oppoData.this_month_mtd_due_loan, 
+          lmtd: oppoData.last_month_ltd_due_loan,
           color: '#22c55e'
         },
         { 
           name: 'GLO', 
-          mtd: gloData.This_month_MTD_loan, 
-          lmtd: gloData.Last_month_LTD_loan,
+          mtd: gloData.this_month_mtd_due_loan, 
+          lmtd: gloData.last_month_ltd_due_loan,
           color: '#eab308'
         },
         { 
           name: '9Mobile', 
-          mtd: nineMobileData.This_month_MTD_loan, 
-          lmtd: nineMobileData.Last_month_LTD_loan,
+          mtd: nineMobileData.this_month_mtd_due_loan, 
+          lmtd: nineMobileData.last_month_ltd_due_loan,
           color: '#ec4899'
         },
       ];

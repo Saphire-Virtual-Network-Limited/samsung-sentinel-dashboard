@@ -13,6 +13,7 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
     { name: "Customer ID", uid: "customerId", sortable: true },
     { name: "Full Name", uid: "fullName", sortable: true },
     { name: "Age", uid: "age", sortable: true },
@@ -416,6 +417,7 @@ export default function CollectionXiaomiView() {
                 devicePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
                 loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A',
                 customerId: r.customerId || 'N/A',
+				loanRecordId: r.LoanRecord?.[0]?.loanRecordId || 'N/A',
 				fullName: (r.firstName ? r.firstName[0].toUpperCase() + r.firstName.slice(1).toLowerCase() : '') + ' ' + (r.lastName ? r.lastName[0].toUpperCase() + r.lastName.slice(1).toLowerCase() : '') || 'N/A',
 				age: r.dob ? `${new Date().getFullYear() - new Date(r.dob).getFullYear()}` : 'N/A',
                 email: r.email || 'N/A',
@@ -452,12 +454,17 @@ export default function CollectionXiaomiView() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.email.toLowerCase().includes(f) ||
-				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f) ||
-				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
+				c.firstName?.toLowerCase().includes(f) || 
+			c.lastName?.toLowerCase().includes(f) || 
+			c.email?.toLowerCase().includes(f) ||
+			c.bvnPhoneNumber?.toLowerCase().includes(f) ||
+			c.mainPhoneNumber?.toLowerCase().includes(f) ||
+			c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
+			c.customerId?.toLowerCase().includes(f) ||
+			(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
+			c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
+			c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+			c.CustomerAccountDetails?.[0]?.accountNumber?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

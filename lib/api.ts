@@ -273,7 +273,6 @@ export async function getAllReferees(startDate?: string, endDate?: string) {
 }
 
 
-
 export async function getUnapprovedReferees(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
@@ -306,14 +305,30 @@ export async function getAllDevices(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/device/all${query}`, "GET");
 }
 
-export async function getAllEnrolledDevices(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/enrolled${query}`, "GET");
+export async function getAllEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	if (status) {
+		query += `?status=${status}`;
+		if (startDate && endDate) {
+			query += `&startDate=${startDate}&endDate=${endDate}`;
+		}
+	} else if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
+	}
+	return apiCall(`/admin/device/status${query}`, "GET");
 }
 
-export async function getAllUnEnrolledDevices(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/unenrolled${query}`, "GET");
+export async function getAllUnEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	if (status) {
+		query += `?status=${status}`;
+		if (startDate && endDate) {
+			query += `&startDate=${startDate}&endDate=${endDate}`;
+		}
+	} else if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
+	}
+	return apiCall(`/admin/device/status${query}`, "GET");
 }
 
 
@@ -347,6 +362,26 @@ export async function getDeviceDashAnalytic() {
 export async function getDropOffReport(screen?: string) {
 	const query = screen ? `?screen=${screen}` : "";
 	return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
+}
+
+// collection dashboard
+
+export async function getDailyCollectionReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/collections/daily-report${query}`, "GET");
+}
+
+export async function getInceptionCollectionReport(sales_channel?: string) {
+	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+	return apiCall(`/admin/analytics/collections/inception${query}`, "GET");
+}
+
+
+
+//** Sync Stores from 1.9 dashboard */
+
+export async function syncStores() {
+	return apiCall(`/resources/sync-stores`, "GET");
 }
 
 

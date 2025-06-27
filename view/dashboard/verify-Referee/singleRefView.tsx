@@ -516,25 +516,27 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
               </div>
               <div className="p-6 space-y-8">
 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
 
-                <SelectField
-                  key="phone-select"
-                  htmlFor="phone-select"
-                  id="phone-select"
-                  placeholder={isLoading ? "Loading referees..." : phones?.length > 0 ? "Choose Referees" : "No referee number available"}
-                  defaultSelectedKeys={selectedPhone}
-                  onChange={(value) => handlePhoneChange(value as string)}
-                  options={phones}
-                  size="md"
-                />
+                <div className="w-full sm:w-auto">
+                  <SelectField
+                    key="phone-select"
+                    htmlFor="phone-select"
+                    id="phone-select"
+                    placeholder={isLoading ? "Loading referees..." : phones?.length > 0 ? "Choose Referees" : "No referee number available"}
+                    defaultSelectedKeys={selectedPhone}
+                    onChange={(value) => handlePhoneChange(value as string)}
+                    options={phones}
+                    size="md"
+                  />
+                </div>
 
                         {customer?.CustomerKYC?.[0]?.generalStatus === 'PENDING' && (
-                          <>
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                             <Button
                               color="success"
                               variant="flat"
-                              className="font-medium"
+                              className="font-medium w-full sm:w-auto"
                               isDisabled={!selectedPhone.length}
                               onPress={() => {
                                 setShowApproveModal(true);
@@ -544,21 +546,21 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
 
                             <Button
                               color="danger"
-                              variant="flat"
-                              className="font-medium"
+                              variant="flat" 
+                              className="font-medium w-full sm:w-auto"
                               isDisabled={!selectedPhone.length}
                               onPress={() => {
                                 setShowRejectModal(true);
                               }}>
                               Reject
                             </Button>
-                          </>
+                          </div>
                         )}
                         {customer?.CustomerKYC?.[0]?.generalStatus === 'APPROVED' && (
                           <Button
                             color="danger"
                             variant="flat"
-                            className="font-medium"
+                            className="font-medium w-full sm:w-auto"
                             isDisabled={!selectedPhone.length}
                             onPress={() => {
                               setShowRejectModal(true);
@@ -570,7 +572,7 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                           <Button
                             color="success"
                             variant="flat"
-                            className="font-medium"
+                            className="font-medium w-full sm:w-auto"
                             isDisabled={!selectedPhone.length}
                             onPress={() => {
                               setShowApproveModal(true);

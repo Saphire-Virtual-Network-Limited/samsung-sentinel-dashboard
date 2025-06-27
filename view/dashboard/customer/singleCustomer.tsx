@@ -304,8 +304,6 @@ export default function CollectionSingleCustomerPage() {
   const [isLoading, setIsLoading] = useState(true);
 
 
-
-
   useEffect(() => {
     const fetchCustomer = async () => {
       if (!params.id) {
@@ -314,7 +312,7 @@ export default function CollectionSingleCustomerPage() {
       }
 
       try {
-        let response = await getAllCustomerRecord();
+        const response = await getAllCustomerRecord();
         const customerData = response.data.find(
           (c: CustomerRecord) => c.customerId === params.id
         );
@@ -374,22 +372,13 @@ export default function CollectionSingleCustomerPage() {
       {/* Header Section */}
       <div className="bg-white border-b border-default-200">
         <div className=" py-6">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {/* <Button
-                variant="light"
-                startContent={<ArrowLeft />}
-                className="hover:bg-default-100 transition-colors"
-                onPress={() => router.back()}>
-                Back
-              </Button> */}
               <div>
                 <h1 className="text-lg font-bold text-default-900">
                   {customer.firstName} {customer.lastName}
                 </h1>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
               <Chip
                 color={customer.dobMisMatch ? "danger" : "success"}
                 variant="flat"
@@ -398,6 +387,14 @@ export default function CollectionSingleCustomerPage() {
                 {customer.dobMisMatch === false ? 'DOB Verified' : 'DOB Mismatch'}
               </Chip>
             </div>
+            <Button
+              variant="flat"
+              color="primary"
+              startContent={<ArrowLeft />}
+              onPress={() => router.back()}
+            >
+              Go Back
+            </Button>
           </div>
         </div>
       </div>

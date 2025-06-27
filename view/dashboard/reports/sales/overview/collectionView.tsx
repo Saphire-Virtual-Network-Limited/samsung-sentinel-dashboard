@@ -454,12 +454,16 @@ export default function CollectionOverviewView() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.email.toLowerCase().includes(f) ||
-				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f) ||
-				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
+			c.fullName?.toLowerCase().includes(f) || 
+			c.email?.toLowerCase().includes(f) ||
+			c.phone?.toLowerCase().includes(f) ||
+			c.altPhone?.toLowerCase().includes(f) ||
+			c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
+			c.customerId?.toLowerCase().includes(f) ||
+			(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
+			c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
+			c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+			c.CustomerAccountDetails?.[0]?.accountNumber?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

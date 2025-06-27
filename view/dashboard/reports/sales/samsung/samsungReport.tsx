@@ -14,6 +14,7 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
     { name: "Customer Id", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
     { name: "Name", uid: "fullName", sortable: true },
     { name: "Phone No.", uid: "bvnPhoneNumber", sortable: true },
     { name: "Alt. No.", uid: "mainPhoneNumber", sortable: true },
@@ -433,6 +434,7 @@ export default function SamsungReport() {
 			raw.map((r: CustomerRecord) => ({
 				...r,
                 customerId: r.customerId || 'N/A',
+				loanRecordId: r.LoanRecord?.[0]?.loanRecordId || 'N/A',
 				fullName: (r.firstName ? r.firstName[0].toUpperCase() + r.firstName.slice(1).toLowerCase() : '') + ' ' + (r.lastName ? r.lastName[0].toUpperCase() + r.lastName.slice(1).toLowerCase() : '') || 'N/A',
 				age: r.dob ? `${new Date().getFullYear() - new Date(r.dob).getFullYear()}` : 'N/A',
 				houseNumber: r.CustomerKYC?.[0]?.houseNumber || 'N/A',
@@ -444,7 +446,7 @@ export default function SamsungReport() {
 				occupation: r.CustomerKYC?.[0]?.occupation || 'N/A',
 				businessName: r.CustomerKYC?.[0]?.businessName || 'N/A',
 				businessAddress: r.CustomerKYC?.[0]?.applicantBusinessAddress || 'N/A',
-				deviceName: r.LoanRecord?.[0]?.deviceName || 'N/A',
+				deviceName: r.LoanRecord?.[0]?.device?.deviceName || 'N/A',
 				imei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
 				deviceStatus: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.status || 'N/A',
 				insurancePackage: r.LoanRecord?.[0]?.insurancePackage || 'N/A',
@@ -482,12 +484,17 @@ export default function SamsungReport() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.email.toLowerCase().includes(f) ||
-				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f) ||
-				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
+				c.firstName?.toLowerCase().includes(f) || 
+			c.lastName?.toLowerCase().includes(f) || 
+			c.email?.toLowerCase().includes(f) ||
+			c.bvnPhoneNumber?.toLowerCase().includes(f) ||
+			c.mainPhoneNumber?.toLowerCase().includes(f) ||
+			c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
+			c.customerId?.toLowerCase().includes(f) ||
+			(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
+			c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
+			c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+			c.CustomerAccountDetails?.[0]?.accountNumber?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

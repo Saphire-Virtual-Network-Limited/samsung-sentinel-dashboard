@@ -188,7 +188,21 @@ export default function RejectedRefereesPage() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f) || c.customerId.toLowerCase().includes(f));
+			list = list.filter((c) => 
+				(c.firstName || '').toLowerCase().includes(f) || 
+				(c.lastName || '').toLowerCase().includes(f) ||
+				(c.email || '').toLowerCase().includes(f) || 
+				(c.customerId || '').toLowerCase().includes(f) ||
+				(c.bvnPhoneNumber || '').includes(f) ||
+				(c.mainPhoneNumber || '').includes(f) ||
+				(c.LoanRecord?.[0]?.loanRecordId || '').includes(f) ||
+				(c.LoanRecord?.[0]?.storeId || '').includes(f) ||
+				(c.bvn || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone2 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone3 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone4 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone5 || '').includes(f)
+			);
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
