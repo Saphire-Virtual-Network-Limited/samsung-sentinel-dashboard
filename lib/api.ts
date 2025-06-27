@@ -273,7 +273,6 @@ export async function getAllReferees(startDate?: string, endDate?: string) {
 }
 
 
-
 export async function getUnapprovedReferees(startDate?: string, endDate?: string) {
 	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
@@ -347,6 +346,12 @@ export async function getDeviceDashAnalytic() {
 export async function getDropOffReport(screen?: string) {
 	const query = screen ? `?screen=${screen}` : "";
 	return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
+}
+
+//** Sync Stores from 1.9 dashboard */
+
+export async function syncStores() {
+	return apiCall(`/resources/sync-stores`, "GET");
 }
 
 

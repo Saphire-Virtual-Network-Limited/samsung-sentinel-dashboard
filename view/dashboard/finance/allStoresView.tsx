@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores } from "@/lib";
+import { getAllStores, showToast, syncStores } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
@@ -83,6 +83,25 @@ export default function AllStoresView() {
 		setStartDate(start);
 		setEndDate(end);
 	};
+
+
+
+	const [isSyncing, setIsSyncing] = useState(false);
+
+// Fetch sync stores from 1.9 dashboard
+ const syncStoresFn = async () => {
+	setIsSyncing(true);
+	try {
+		const response = await syncStores();
+		showToast({ type: "success",message: "Stores synced successfully",duration: 3000 });
+		mutate(["stores-records"]);
+	} catch (error: any) {
+		console.error("Error syncing stores:", error);
+		showToast({ type: "error",message: error.message ||"Error syncing stores",duration: 3000 });
+	} finally {
+		setIsSyncing(false);
+	}
+ }
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
@@ -217,8 +236,7 @@ export default function AllStoresView() {
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
+		
 			
 			{isLoading ? (
 				<TableSkeleton columns={columns.length} rows={10} />
@@ -252,6 +270,24 @@ export default function AllStoresView() {
 					initialEndDate={endDate}
 				/>
 			)}
+
+<div className="mb-4 flex justify-center md:justify-start mt-4 gap-4 items-center">
+			<Button
+				color="primary"
+				variant="solid"
+				className="w-fit sm:w-auto"
+				onPress={() => {
+					syncStoresFn();
+				}}
+				isLoading={isSyncing}
+			>
+				Sync Stores
+			</Button>
+			<p className="text-sm text-default-500">
+			Sync Stores will update the stores list with the latest data from the 1.9 dashboard.
+		</p>
+		</div>
+		
 			
 
 			<Modal

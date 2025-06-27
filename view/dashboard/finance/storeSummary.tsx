@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react'
-import { Tabs, Tab, cn } from "@heroui/react";
+import { Tabs, Tab, cn, Button } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
 import { UnpaidStoresView, PaidStoresView } from "@/view";
 import AllStoresView from '@/view/dashboard/finance/allStoresView';
@@ -9,6 +9,7 @@ import AllStoresView from '@/view/dashboard/finance/allStoresView';
 
 const StoreSummaryPage = () => {
   return (
+	<>
     <div className="flex w-full flex-col">
 			<Tabs
 				aria-label="Options"
@@ -42,6 +43,8 @@ const StoreSummaryPage = () => {
 
 			</Tabs>
 		</div>
+		
+	</>
   )
 }
 
