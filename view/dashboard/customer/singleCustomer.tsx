@@ -304,8 +304,6 @@ export default function CollectionSingleCustomerPage() {
   const [isLoading, setIsLoading] = useState(true);
 
 
-
-
   useEffect(() => {
     const fetchCustomer = async () => {
       if (!params.id) {
@@ -314,7 +312,7 @@ export default function CollectionSingleCustomerPage() {
       }
 
       try {
-        let response = await getAllCustomerRecord();
+        const response = await getAllCustomerRecord();
         const customerData = response.data.find(
           (c: CustomerRecord) => c.customerId === params.id
         );

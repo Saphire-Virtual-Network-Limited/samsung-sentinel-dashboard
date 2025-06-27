@@ -484,7 +484,7 @@ export default function XiaomiReport() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.firstName?.toLowerCase().includes(f) || 
+			c.firstName?.toLowerCase().includes(f) || 
 			c.lastName?.toLowerCase().includes(f) || 
 			c.email?.toLowerCase().includes(f) ||
 			c.bvnPhoneNumber?.toLowerCase().includes(f) ||
