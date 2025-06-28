@@ -411,22 +411,27 @@ export default function CollectionCustomerPage() {
 		let list = [...customers];
 
 		// Filter to show only customers with approved loan status
-		list = list.filter((c) => {
-			const loanRecord = c.LoanRecord?.[0];
-			return loanRecord && loanRecord.loanStatus === 'APPROVED';
-		});
+		// list = list.filter((c) => {
+		// 	const loanRecord = c.LoanRecord?.[0];
+		// 	return loanRecord && loanRecord.loanStatus === 'APPROVED';
+		// });
 
 
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
+				c.fullName.toLowerCase().includes(f) ||
+				c.firstName.toLowerCase().includes(f) ||
+				c.lastName.toLowerCase().includes(f) ||
 				c.email.toLowerCase().includes(f) ||
 				c.bvnPhoneNumber?.toLowerCase().includes(f) ||
+				c.mainPhoneNumber?.toLowerCase().includes(f) ||
+				c.mbeId?.toLowerCase().includes(f) ||
 				c.customerId.toLowerCase().includes(f) ||
 				(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f)
-
+				c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+				c.LoanRecord?.[0]?.loanStatus?.toLowerCase().includes(f) ||
+				c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
