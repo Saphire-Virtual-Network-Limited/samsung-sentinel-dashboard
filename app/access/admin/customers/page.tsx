@@ -1,9 +1,7 @@
-import React from 'react'
-import CustomerPage from '@/view/dashboard/customer/customerView'
+import React from "react";
+import CustomerPage from "@/view/dashboard/customer/customerView";
 const Page = () => {
-  return (
-	<CustomerPage />
-  )
-}
+  return <CustomerPage />;
+};
 
 export default Page;

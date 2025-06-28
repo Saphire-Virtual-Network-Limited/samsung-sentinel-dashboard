@@ -46,7 +46,7 @@ export default function AccessLayoutView({
   >([
     { label: "Relay", value: "Relay" },
     { label: "Android", value: "Android" },
-    { label: "Root", value: "Root" },
+    //  { label: "Root", value: "Root" },
   ]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<string[]>([]);
