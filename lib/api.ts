@@ -4,386 +4,493 @@ import { cachedApiCall, generateCacheKey } from "./cache";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export interface ApiCallOptions {
-	cache?: RequestCache;
-	revalidate?: number;
-	appKey?: string;
-	useCache?: boolean;
-	cacheTTL?: number;
+  cache?: RequestCache;
+  revalidate?: number;
+  appKey?: string;
+  useCache?: boolean;
+  cacheTTL?: number;
 }
 
-async function apiCall(endpoint: string, method: string, body?: any, options?: ApiCallOptions) {
-	try {
-		const headers: any = {
-			Accept: "*/*",
-			"x-app-key": options?.appKey,
-		};
+async function apiCall(
+  endpoint: string,
+  method: string,
+  body?: any,
+  options?: ApiCallOptions
+) {
+  try {
+    const headers: any = {
+      Accept: "*/*",
+      "x-app-key": options?.appKey,
+    };
 
-		if (typeof window !== "undefined") {
-			const sapphireProduct = localStorage.getItem("Sapphire-Credit-Product");
-			if (sapphireProduct) {
-				headers["Sapphire-Credit-Product"] = sapphireProduct;
-			}
-		}
+    if (typeof window !== "undefined") {
+      const sapphireProduct = localStorage.getItem("Sapphire-Credit-Product");
+      if (sapphireProduct) {
+        headers["Sapphire-Credit-Product"] = sapphireProduct;
+      }
+    }
 
-		const config: any = {
-			method,
-			url: `${apiUrl}${endpoint}`,
-			headers,
-			withCredentials: true,
-		};
+    const config: any = {
+      method,
+      url: `${apiUrl}${endpoint}`,
+      headers,
+      withCredentials: true,
+    };
 
-		if (method !== "GET" && method !== "HEAD" && body) {
-			if (body instanceof FormData) {
-				delete headers["Content-Type"];
-				config.data = body;
-			} else {
-				headers["Content-Type"] = "application/json";
-				config.data = JSON.stringify(body);
-			}
-		}
+    if (method !== "GET" && method !== "HEAD" && body) {
+      if (body instanceof FormData) {
+        delete headers["Content-Type"];
+        config.data = body;
+      } else {
+        headers["Content-Type"] = "application/json";
+        config.data = JSON.stringify(body);
+      }
+    }
 
-		if (method === "GET") {
-			if (options?.cache) {
-				config.cache = options.cache;
-			}
-			if (options?.revalidate !== undefined) {
-				config.revalidate = options.revalidate;
-			}
-		}
+    if (method === "GET") {
+      if (options?.cache) {
+        config.cache = options.cache;
+      }
+      if (options?.revalidate !== undefined) {
+        config.revalidate = options.revalidate;
+      }
+    }
 
-		const response = await axios(config);
-		return response.data;
-	} catch (error: any) {
-		const status = error?.response?.status;
+    const response = await axios(config);
+    return response.data;
+  } catch (error: any) {
+    const status = error?.response?.status;
 
-		// If Unauthorized, clear session and redirect to login
-		if (status === 401 && typeof window !== "undefined") {
-			// Clear any stored product key
-			localStorage.removeItem("Sapphire-Credit-Product");
-			// Redirect user to admin login
-			window.location.href = "/auth/login";
-			// Return a never‑resolving promise to stop further execution
-			return new Promise(() => {});
-		}
+    // If Unauthorized, clear session and redirect to login
+    if (status === 401 && typeof window !== "undefined") {
+      // Clear any stored product key
+      localStorage.removeItem("Sapphire-Credit-Product");
+      // Redirect user to admin login
+      window.location.href = "/auth/login";
+      // Return a never‑resolving promise to stop further execution
+      return new Promise(() => {});
+    }
 
-		const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
-		console.log(`Error in ${method} ${endpoint}:`, errorMessage);
-		throw new Error(errorMessage);
-	}
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Something went wrong";
+    console.log(`Error in ${method} ${endpoint}:`, errorMessage);
+    throw new Error(errorMessage);
+  }
 }
 
 // Cached API call wrapper
 async function cachedApiCallWrapper<T>(
-	endpoint: string,
-	params: Record<string, any> = {},
-	options?: ApiCallOptions
+  endpoint: string,
+  params: Record<string, any> = {},
+  options?: ApiCallOptions
 ): Promise<T> {
-	const cacheKey = generateCacheKey(endpoint, params);
-	
-	if (options?.useCache !== false) {
-		return cachedApiCall(
-			cacheKey,
-			() => apiCall(endpoint, "GET", undefined, options),
-			options?.cacheTTL
-		);
-	}
-	
-	return apiCall(endpoint, "GET", undefined, options);
+  const cacheKey = generateCacheKey(endpoint, params);
+
+  if (options?.useCache !== false) {
+    return cachedApiCall(
+      cacheKey,
+      () => apiCall(endpoint, "GET", undefined, options),
+      options?.cacheTTL
+    );
+  }
+
+  return apiCall(endpoint, "GET", undefined, options);
 }
 
 // *** Auth ***
 
 export interface adminLogin {
-	email: string;
-	password: string;
+  email: string;
+  password: string;
 }
 
 export async function loginAdmin(adminLogin: adminLogin) {
-	return apiCall("/admin/login", "POST", adminLogin);
+  return apiCall("/admin/login", "POST", adminLogin);
 }
 
 export async function getAdminProfile() {
-	return apiCall("/admin/profile", "GET");
+  return apiCall("/admin/profile", "GET");
 }
 
 export async function logoutAdmin() {
-	return apiCall("/admin/logout", "POST");
+  return apiCall("/admin/logout", "POST");
 }
 
 export async function getAllProducts() {
-	return apiCall("/admin/products", "GET");
+  return apiCall("/admin/products", "GET");
 }
 
 //** Loans */
 
 //get all loan data
 export async function getAllLoanData(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/loan/data${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/loan/data${query}`, "GET");
 }
 
 //get all loan record
 export async function getAllLoanRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/loan/record${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/loan/record${query}`, "GET");
 }
 
-export async function getAllEnrolledRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/loan/enrolled${query}`, "GET");
+export async function getAllEnrolledRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/loan/enrolled${query}`, "GET");
 }
 
-export async function getAllApprovedRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/loan/approved${query}`, "GET");
+export async function getAllApprovedRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/loan/approved${query}`, "GET");
 }
 
-export async function getAllDefaultedRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/loan/defaulted${query}`, "GET");
+export async function getAllDefaultedRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
-
-
 
 //** Devices */
 
 export async function getAllDevicesData(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/data${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/device/data${query}`, "GET");
 }
 
 //** Reports Drop offs */
 
 export async function getDropOffsData(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/drop-off/data${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/drop-off/data${query}`, "GET");
 }
 
 export async function getDropOffsRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/drop-off/record${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/drop-off/record${query}`, "GET");
 }
 
 //get all customer record
-export async function getAllCustomerRecord(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/record${query}`, "GET");
+export async function getAllCustomerRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/record${query}`, "GET");
 }
 
 // New optimized customer record functions
 export interface CustomerRecordParams {
-	page?: number;
-	limit?: number;
-	search?: string;
-	sortBy?: string;
-	sortOrder?: 'asc' | 'desc';
-	startDate?: string;
-	endDate?: string;
-	status?: string;
-	region?: string;
-	state?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  region?: string;
+  state?: string;
 }
 
 export interface PaginatedCustomerResponse {
-	data: any[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
+  data: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
-export async function getPaginatedCustomerRecords(params: CustomerRecordParams = {}) {
-	const queryParams = new URLSearchParams();
-	
-	if (params.page) queryParams.append('page', params.page.toString());
-	if (params.limit) queryParams.append('limit', params.limit.toString());
-	if (params.search) queryParams.append('search', params.search);
-	if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-	if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-	if (params.startDate) queryParams.append('startDate', params.startDate);
-	if (params.endDate) queryParams.append('endDate', params.endDate);
-	if (params.status) queryParams.append('status', params.status);
-	if (params.region) queryParams.append('region', params.region);
-	if (params.state) queryParams.append('state', params.state);
-	
-	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-	const endpoint = `/admin/customers/paginated${query}`;
-	
-	// Use caching for paginated requests with shorter TTL
-	return cachedApiCallWrapper(endpoint, params, {
-		useCache: true,
-		cacheTTL: 2 * 60 * 1000, // 2 minutes cache
-	});
+export async function getPaginatedCustomerRecords(
+  params: CustomerRecordParams = {}
+) {
+  const queryParams = new URLSearchParams();
+
+  if (params.page) queryParams.append("page", params.page.toString());
+  if (params.limit) queryParams.append("limit", params.limit.toString());
+  if (params.search) queryParams.append("search", params.search);
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+  if (params.startDate) queryParams.append("startDate", params.startDate);
+  if (params.endDate) queryParams.append("endDate", params.endDate);
+  if (params.status) queryParams.append("status", params.status);
+  if (params.region) queryParams.append("region", params.region);
+  if (params.state) queryParams.append("state", params.state);
+
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+  const endpoint = `/admin/customers/paginated${query}`;
+
+  // Use caching for paginated requests with shorter TTL
+  return cachedApiCallWrapper(endpoint, params, {
+    useCache: true,
+    cacheTTL: 2 * 60 * 1000, // 2 minutes cache
+  });
 }
 
 // Lightweight customer list for quick loading
 export async function getCustomerList(params: CustomerRecordParams = {}) {
-	const queryParams = new URLSearchParams();
-	
-	if (params.page) queryParams.append('page', params.page.toString());
-	if (params.limit) queryParams.append('limit', params.limit.toString());
-	if (params.search) queryParams.append('search', params.search);
-	if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-	if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-	if (params.startDate) queryParams.append('startDate', params.startDate);
-	if (params.endDate) queryParams.append('endDate', params.endDate);
-	
-	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-	const endpoint = `/admin/customers/list${query}`;
-	
-	// Use caching for list requests
-	return cachedApiCallWrapper(endpoint, params, {
-		useCache: true,
-		cacheTTL: 5 * 60 * 1000, // 5 minutes cache
-	});
+  const queryParams = new URLSearchParams();
+
+  if (params.page) queryParams.append("page", params.page.toString());
+  if (params.limit) queryParams.append("limit", params.limit.toString());
+  if (params.search) queryParams.append("search", params.search);
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+  if (params.startDate) queryParams.append("startDate", params.startDate);
+  if (params.endDate) queryParams.append("endDate", params.endDate);
+
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+  const endpoint = `/admin/customers/list${query}`;
+
+  // Use caching for list requests
+  return cachedApiCallWrapper(endpoint, params, {
+    useCache: true,
+    cacheTTL: 5 * 60 * 1000, // 5 minutes cache
+  });
 }
 
 export interface verifyCustomerReferenceNumber {
-	customerId: string;
-	phoneNumber: string;
-	phoneVerified: boolean;
-	comment: string;
+  customerId: string;
+  phoneNumber: string;
+  phoneVerified: boolean;
+  comment: string;
 }
 
-export async function verifyCustomerReferenceNumber(verifyCustomerReferenceNumber: verifyCustomerReferenceNumber) {
-	return apiCall("/admin/customers/verify-reference", "POST", verifyCustomerReferenceNumber);
+export async function verifyCustomerReferenceNumber(
+  verifyCustomerReferenceNumber: verifyCustomerReferenceNumber
+) {
+  return apiCall(
+    "/admin/customers/verify-reference",
+    "POST",
+    verifyCustomerReferenceNumber
+  );
 }
 
 //** Stores */
 
 export async function getAllStores() {
-	return apiCall("/admin/stores/record", "GET");
+  return apiCall("/admin/stores/record", "GET");
 }
 
 export async function getUnpaidStores(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/stores/unpaid${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/stores/unpaid${query}`, "GET");
 }
 
 export async function getPaidStores(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/stores/paid${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/stores/paid${query}`, "GET");
 }
 
 //** Referees */
 
 export async function getAllReferees(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/all-kyc${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/all-kyc${query}`, "GET");
 }
 
-
-export async function getUnapprovedReferees(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
+export async function getUnapprovedReferees(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/unapproved-refreees${query}`, "GET");
 }
 
-export async function getApprovedReferees(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/approved-refreees${query}`, "GET");
+export async function getApprovedReferees(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/approved-refreees${query}`, "GET");
 }
 
-export async function getRejectedReferees(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/rejected-refreees${query}`, "GET");
+export async function getRejectedReferees(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/rejected-refreees${query}`, "GET");
 }
 
 export interface updateStoreStatus {
-	status: string;
-	storeOnLoanId: string;
-	bankUsed: string;
+  status: string;
+  storeOnLoanId: string;
+  bankUsed: string;
 }
 
 export async function updateStoreStatus(updateStoreStatus: updateStoreStatus) {
-	return apiCall("/admin/stores/update-payment", "PUT", updateStoreStatus);
+  return apiCall("/admin/stores/update-payment", "PUT", updateStoreStatus);
 }
 
 //** Devices */
 
 export async function getAllDevices(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/device/all${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/device/all${query}`, "GET");
 }
 
-export async function getAllEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
-	let query = "";
-	if (status) {
-		query += `?status=${status}`;
-		if (startDate && endDate) {
-			query += `&startDate=${startDate}&endDate=${endDate}`;
-		}
-	} else if (startDate && endDate) {
-		query = `?startDate=${startDate}&endDate=${endDate}`;
-	}
-	return apiCall(`/admin/device/status${query}`, "GET");
+export async function getAllEnrolledDevices(
+  status?: string,
+  startDate?: string,
+  endDate?: string
+) {
+  let query = "";
+  if (status) {
+    query += `?status=${status}`;
+    if (startDate && endDate) {
+      query += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+  } else if (startDate && endDate) {
+    query = `?startDate=${startDate}&endDate=${endDate}`;
+  }
+  return apiCall(`/admin/device/status${query}`, "GET");
 }
 
-export async function getAllUnEnrolledDevices(status?: string, startDate?: string, endDate?: string) {
-	let query = "";
-	if (status) {
-		query += `?status=${status}`;
-		if (startDate && endDate) {
-			query += `&startDate=${startDate}&endDate=${endDate}`;
-		}
-	} else if (startDate && endDate) {
-		query = `?startDate=${startDate}&endDate=${endDate}`;
-	}
-	return apiCall(`/admin/device/status${query}`, "GET");
+export async function getAllUnEnrolledDevices(
+  status?: string,
+  startDate?: string,
+  endDate?: string
+) {
+  let query = "";
+  if (status) {
+    query += `?status=${status}`;
+    if (startDate && endDate) {
+      query += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+  } else if (startDate && endDate) {
+    query = `?startDate=${startDate}&endDate=${endDate}`;
+  }
+  return apiCall(`/admin/device/status${query}`, "GET");
 }
-
 
 //** Link Details */
 
 export async function updateLinkStatus(customerId: string) {
-	return apiCall(`/admin/customers/update-kyc/${customerId}`, "POST");
+  return apiCall(`/admin/customers/update-kyc/${customerId}`, "POST");
 }
 
 // get all sentinel sales/data
 export async function getAllSentinelData(startDate?: string, endDate?: string) {
-	const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-	return apiCall(`/admin/customers/sentinel${query}`, "GET");
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/sentinel${query}`, "GET");
 }
 
 //** Dashboard analytics */
 export async function getDailyReport(sales_channel?: string) {
-	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
-	return apiCall(`/admin/analytics/daily-report${query}`, "GET");
+  const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+  return apiCall(`/admin/analytics/daily-report${query}`, "GET");
 }
 
 export async function getInceptionReport(sales_channel?: string) {
-	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
-	return apiCall(`/admin/analytics/inception${query}`, "GET");
+  const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+  return apiCall(`/admin/analytics/inception${query}`, "GET");
 }
 
 export async function getDeviceDashAnalytic() {
-	return apiCall(`/admin/analytics/devices`, "GET");
+  return apiCall(`/admin/analytics/devices`, "GET");
 }
 
 export async function getDropOffReport(screen?: string) {
-	const query = screen ? `?screen=${screen}` : "";
-	return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
+  const query = screen ? `?screen=${screen}` : "";
+  return apiCall(`/admin/analytics/drop-off-report${query}`, "GET");
 }
 
 // collection dashboard
 
 export async function getDailyCollectionReport(sales_channel?: string) {
-	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
-	return apiCall(`/admin/analytics/collections/daily-report${query}`, "GET");
+  const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+  return apiCall(`/admin/analytics/collections/daily-report${query}`, "GET");
 }
 
 export async function getInceptionCollectionReport(sales_channel?: string) {
-	const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
-	return apiCall(`/admin/analytics/collections/inception${query}`, "GET");
+  const query = sales_channel ? `?sales_channel=${sales_channel}` : "";
+  return apiCall(`/admin/analytics/collections/inception${query}`, "GET");
 }
-
-
 
 //** Sync Stores from 1.9 dashboard */
 
 export async function syncStores() {
-	return apiCall(`/resources/sync-stores`, "GET");
+  return apiCall(`/resources/sync-stores`, "GET");
 }
 
+// ============================================================================
+// AGENTS
+// ============================================================================
 
+export async function getAllAgentRecord(
+  startDate?: string,
+  endDate?: string,
+  options?: ApiCallOptions
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/agent/get/agents${query}`, "GET", undefined, options);
+}
 
+export async function updateAgentStatus(
+  {
+    status,
+    mbeId,
+  }: {
+    status: "APPROVED" | "REJECTED" | any;
+    mbeId: string;
+  },
+  options?: ApiCallOptions
+) {
+  return apiCall(`/agent/update/status`, "PUT", { status, mbeId }, options);
+}
 
+export async function updateAgentGuarantorStatus(
+  {
+    status,
+    mbeId,
+    guarantorId,
+  }: {
+    status: "APPROVED" | "REJECTED" | any;
+    mbeId: string;
+    guarantorId: string;
+  },
+  options?: ApiCallOptions
+) {
+  return apiCall(
+    `/agent/guarantor/verify`,
+    "POST",
+    { status, mbeId, guarantorId },
+    options
+  );
+}
+
+export async function exportAllAgentDetails(options?: ApiCallOptions) {
+  return apiCall(`/agent/export/all-details`, "GET", undefined, options);
+}
+
+export async function deleteAgentDetails(data: any, options?: ApiCallOptions) {
+  return apiCall(`/agent/delete`, "DELETE", data, options);
+}

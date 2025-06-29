@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerRecord, capitalize, calculateAge } from "@/lib";
+import { getAllAgentRecord, capitalize, calculateAge } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import {
@@ -21,13 +21,13 @@ import {
 } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-import { CustomerRecord } from "./types";
+import { AgentsData, AgentRecord } from "./types";
 import { statusOptions, columns, statusColorMap } from "./constants";
 
-export default function CustomerPage() {
+export default function SalesUsersPage() {
   const router = useRouter();
   const pathname = usePathname();
-  // Get the role from the URL path (e.g., /access/dev/customers -> dev)
+  // Get the role from the URL path (e.g., /access/dev/staff/agents -> dev)
   const role = pathname.split("/")[2];
   // --- date filter state ---
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -49,21 +49,23 @@ export default function CustomerPage() {
     setStartDate(start);
     setEndDate(end);
   };
-
+  const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
   // Fetch data based on date filter
   const { data: raw = [], isLoading } = useSWR(
     startDate && endDate
-      ? ["customer-records", startDate, endDate]
-      : "customer-records",
+      ? ["sales-agent-records", startDate, endDate]
+      : "sales-agent-records",
     () =>
-      getAllCustomerRecord(startDate, endDate)
+      getAllAgentRecord(startDate, endDate, {
+        appKey: MOBIFLEX_APP_KEY,
+      })
         .then((r) => {
-          if (!r.data || r.data.length === 0) {
+          if (!r.data?.data || r.data?.data?.length === 0) {
             setHasNoRecords(true);
             return [];
           }
           setHasNoRecords(false);
-          return r.data;
+          return r?.data?.data;
         })
         .catch((error) => {
           console.error("Error fetching customer records:", error);
@@ -82,50 +84,50 @@ export default function CustomerPage() {
 
   console.log(raw);
 
-  const customers = useMemo(
-    () =>
-      raw.map((r: CustomerRecord) => ({
-        ...r,
-        fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-
-        age: calculateAge(r.dob),
-        state: r.CustomerKYC?.[0]?.state || "N/A",
-        city: r.CustomerKYC?.[0]?.town || "N/A",
-        bvnPhoneNumber: r.bvnPhoneNumber,
-        loanAmount: r.LoanRecord?.[0]?.loanAmount
-          ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}`
-          : "N/A",
-        region: r.CustomerKYC?.[0]?.localGovernment || "N/A",
-      })),
-    [raw]
-  );
+  // FIX: Remove the extra .data access since raw is already the data array
+  const salesStaff = useMemo(() => {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((r: AgentRecord) => ({
+      ...r,
+      fullName: `${capitalize(r.firstname)} ${capitalize(r.lastname)}`,
+      age: calculateAge(r.dob),
+      state: r?.MbeKyc?.state || "N/A",
+      city: r?.MbeKyc?.city || "N/A",
+      bvnPhoneNumber: r.bvnPhoneNumber,
+      title: r?.title || "N/A",
+      mainPhoneNumber: r.phone,
+    }));
+  }, [raw]);
 
   const filtered = useMemo(() => {
-    let list = [...customers];
+    // Add safety check
+    if (!salesStaff || !Array.isArray(salesStaff)) {
+      return [];
+    }
+
+    let list = [...salesStaff];
     if (filterValue) {
       const f = filterValue.toLowerCase();
       list = list.filter(
-        (c) =>
-          c.firstName.toLowerCase().includes(f) ||
-          c.lastName.toLowerCase().includes(f) ||
+        (c: AgentRecord) =>
+          c.firstname.toLowerCase().includes(f) ||
+          c.lastname.toLowerCase().includes(f) ||
           c.email.toLowerCase().includes(f) ||
           c.bvnPhoneNumber?.toLowerCase().includes(f) ||
-          c.mainPhoneNumber?.toLowerCase().includes(f) ||
-          c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
-          c.customerId.toLowerCase().includes(f) ||
+          c.phone?.toLowerCase().includes(f) ||
+          c.title?.toLowerCase().includes(f) ||
+          c.mbeId.toLowerCase().includes(f) ||
           (c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-          c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
-          c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
-          c.CustomerAccountDetails?.[0]?.accountNumber
-            ?.toLowerCase()
-            .includes(f)
+          String(c?.customersCount)?.toLowerCase().includes(f) ||
+          //     c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+          c.MbeAccountDetails?.accountNumber?.toLowerCase().includes(f)
       );
     }
     if (statusFilter.size > 0) {
-      list = list.filter((c) => statusFilter.has(c.status || ""));
+      list = list.filter((c) => statusFilter.has(c.accountStatus || ""));
     }
     return list;
-  }, [customers, filterValue, statusFilter]);
+  }, [salesStaff, filterValue, statusFilter]);
 
   const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
   const paged = useMemo(() => {
@@ -135,29 +137,29 @@ export default function CustomerPage() {
 
   const sorted = React.useMemo(() => {
     return [...paged].sort((a, b) => {
-      const aVal = a[sortDescriptor.column as keyof CustomerRecord];
-      const bVal = b[sortDescriptor.column as keyof CustomerRecord];
+      const aVal = a[sortDescriptor.column as keyof AgentRecord];
+      const bVal = b[sortDescriptor.column as keyof AgentRecord];
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [paged, sortDescriptor]);
 
   // Export all filtered
-  const exportFn = async (data: CustomerRecord[]) => {
+  const exportFn = async (data: AgentRecord[]) => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Customers");
     ws.columns = columns
       .filter((c) => c.uid !== "actions")
       .map((c) => ({ header: c.name, key: c.uid, width: 20 }));
     data.forEach((r) =>
-      ws.addRow({ ...r, status: capitalize(r.status || "") })
+      ws.addRow({ ...r, status: capitalize(r.accountStatus || "") })
     );
     const buf = await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf]), "Customer_Records.xlsx");
   };
 
   // Render each cell, including actions dropdown:
-  const renderCell = (row: CustomerRecord, key: string) => {
+  const renderCell = (row: AgentRecord, key: string) => {
     if (key === "actions") {
       return (
         <div className="flex justify-end">
@@ -171,7 +173,7 @@ export default function CustomerPage() {
               <DropdownItem
                 key="view"
                 onPress={() =>
-                  router.push(`/access/${role}/customers/${row.customerId}`)
+                  router.push(`/access/${role}/staff/agents/${row.mbeId}`)
                 }
               >
                 View
@@ -181,15 +183,15 @@ export default function CustomerPage() {
         </div>
       );
     }
-    if (key === "status") {
+    if (key === "accountStatus") {
       return (
         <Chip
           className="capitalize"
-          color={statusColorMap[row.status || ""]}
+          color={statusColorMap[row.accountStatus || ""]}
           size="sm"
           variant="flat"
         >
-          {capitalize(row.status || "")}
+          {capitalize(row.accountStatus || "")}
         </Chip>
       );
     }
@@ -198,7 +200,7 @@ export default function CustomerPage() {
         <div
           className="capitalize cursor-pointer"
           onClick={() =>
-            router.push(`/access/${role}/customers/${row.customerId}`)
+            router.push(`/access/${role}/staff/agents/${row.mbeId}`)
           }
         >
           {(row as any)[key]}
@@ -208,9 +210,7 @@ export default function CustomerPage() {
     return (
       <div
         className="text-small cursor-pointer"
-        onClick={() =>
-          router.push(`/access/${role}/customers/${row.customerId}`)
-        }
+        onClick={() => router.push(`/access/${role}/staff/agents/${row.mbeId}`)}
       >
         {(row as any)[key]}
       </div>
@@ -224,7 +224,7 @@ export default function CustomerPage() {
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={10} />
       ) : (
-        <GenericTable<CustomerRecord>
+        <GenericTable<AgentRecord>
           columns={columns}
           data={sorted}
           allCount={filtered.length}
