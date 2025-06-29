@@ -687,7 +687,7 @@ export function AppSidebar() {
       case "VERIFICATION_OFFICER":
         return verificationItems;
       case "DEVELOPER":
-        return adminItems; //developerItems;
+        return developerItems;
       case "SALES":
         return salesItems;
       case "FINANCE":

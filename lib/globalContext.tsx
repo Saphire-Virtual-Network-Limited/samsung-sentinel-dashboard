@@ -130,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       })();
 
       if (!isAllowedRoute) {
-        return; // todo: remove before deployment
         switch (userRole) {
           case "SUPER_ADMIN":
             router.replace("/access/admin");
