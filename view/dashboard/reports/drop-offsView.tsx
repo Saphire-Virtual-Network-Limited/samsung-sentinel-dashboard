@@ -116,7 +116,7 @@ export default function DropOffsPage() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const filtered = useMemo(() => {
 		let list = [...raw];

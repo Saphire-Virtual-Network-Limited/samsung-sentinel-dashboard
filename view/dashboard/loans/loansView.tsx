@@ -182,7 +182,7 @@ export default function LoansView() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>

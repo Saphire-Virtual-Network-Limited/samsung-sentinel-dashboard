@@ -427,7 +427,7 @@ export default function XiaomiReport() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>

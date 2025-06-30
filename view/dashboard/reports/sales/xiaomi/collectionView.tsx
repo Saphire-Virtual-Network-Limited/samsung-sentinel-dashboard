@@ -408,7 +408,7 @@ export default function CollectionXiaomiView() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>
