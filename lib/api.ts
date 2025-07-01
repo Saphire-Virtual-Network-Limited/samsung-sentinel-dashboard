@@ -61,6 +61,7 @@ async function apiCall(
   } catch (error: any) {
     const status = error?.response?.status;
 
+    /**
     // If Unauthorized, clear session and redirect to login
     if (status === 401 && typeof window !== "undefined") {
       // Clear any stored product key
@@ -70,7 +71,7 @@ async function apiCall(
       // Return a never‑resolving promise to stop further execution
       return new Promise(() => {});
     }
-
+ */
     const errorMessage =
       error?.response?.data?.message ||
       error?.message ||
@@ -452,6 +453,18 @@ export async function getAllAgentRecord(
   const query =
     startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
   return apiCall(`/agent/get/agents${query}`, "GET", undefined, options);
+}
+
+export async function getAgentDevice(
+  { mbeId }: { mbeId: string },
+  options?: ApiCallOptions
+) {
+  return apiCall(
+    `/agent/erp/admin/item-balances/${mbeId}`,
+    "GET",
+    undefined,
+    options
+  );
 }
 
 export async function updateAgentStatus(

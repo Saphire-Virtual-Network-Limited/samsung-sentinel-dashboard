@@ -6,6 +6,7 @@ import {
   updateAgentStatus,
   updateAgentGuarantorStatus,
   deleteAgentDetails,
+  getAgentDevice,
 } from "@/lib";
 import {
   Avatar,
@@ -36,14 +37,40 @@ import {
   MapPin,
   Clock,
   ChevronDown,
+  ChevronUp,
   Trash2,
   MoreVertical,
+  Smartphone,
+  Calendar,
+  Hash,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { AccountStatus, type AgentRecord } from "./types";
 import useSWR from "swr";
+
+// Types for device data
+interface DeviceItem {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  availableQty: number;
+  serialNumbers: string[];
+  createdAt: string;
+  updatedAt: string;
+  mbeId: string;
+  expiryDate?: string; // Optional expiry date
+}
+
+interface DeviceResponse {
+  statusCode: number;
+  statusType: string;
+  message: string;
+  data: DeviceItem[];
+  responseTime: string;
+  channel: string;
+}
 
 // Utility Components
 const LoadingSpinner = () => (
@@ -78,24 +105,73 @@ const InfoCard = ({
   children,
   className = "",
   icon,
+  collapsible = false,
+  defaultExpanded = true,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
-}) => (
-  <div
-    className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-  >
-    <div className="p-4 border-b border-default-200">
-      <div className="flex items-center gap-2">
-        {icon}
-        <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  if (!collapsible) {
+    return (
+      <div
+        className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
+      >
+        <div className="p-4 border-b border-default-200">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          </div>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
+    >
+      <div
+        className="p-4 border-b border-default-200 cursor-pointer hover:bg-default-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          </div>
+          <Button
+            variant="light"
+            size="sm"
+            isIconOnly
+            className="text-default-500"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+      <div
+        className={`transition-all duration-300 ease-in-out ${
+          isExpanded
+            ? "max-h-none opacity-100"
+            : "max-h-0 opacity-0 overflow-hidden"
+        }`}
+      >
+        <div className="p-6">{children}</div>
       </div>
     </div>
-    <div className="p-6">{children}</div>
-  </div>
-);
+  );
+};
 
 const InfoField = ({
   label,
@@ -140,6 +216,133 @@ const EmptyState = ({
     <p className="text-default-500 text-sm">{description}</p>
   </div>
 );
+
+const DeviceCard = ({ device }: { device: DeviceItem }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpiringSoon =
+    device.expiryDate &&
+    new Date(device.expiryDate) <=
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const isExpired =
+    device.expiryDate && new Date(device.expiryDate) < new Date();
+
+  return (
+    <div className="bg-default-50 rounded-lg p-3 border border-default-200">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-default-900 text-sm truncate">
+            {device.itemName}
+          </h4>
+          <div className="flex items-center gap-2 text-xs text-default-500">
+            <span>#{device.itemCode}</span>
+            <span>•</span>
+            <span>
+              {device.availableQty} unit{device.availableQty !== 1 ? "s" : ""}
+            </span>
+            {device.expiryDate && (
+              <>
+                <span>•</span>
+                <span
+                  className={
+                    isExpired
+                      ? "text-danger"
+                      : isExpiringSoon
+                      ? "text-warning"
+                      : "text-success"
+                  }
+                >
+                  {isExpired
+                    ? "Expired"
+                    : isExpiringSoon
+                    ? "Due Soon"
+                    : "Active"}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+        <Button
+          variant="light"
+          size="md"
+          isIconOnly
+          className="text-default-400 hover:text-default-600 w-fit"
+          onPress={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? <span>Hide</span> : <span>View More</span>}
+        </Button>
+      </div>
+
+      {/* Compact Serial Numbers */}
+      <div className="space-y-1">
+        <div className="text-xs text-default-500">Serial Numbers:</div>
+        {isExpanded ? (
+          // Expanded view - individual cards
+          <div className="space-y-1">
+            {device.serialNumbers.map((serial, index) => (
+              <div
+                key={serial}
+                className="flex items-center justify-between bg-white rounded px-2 py-1 text-xs"
+              >
+                <span className="text-default-600">#{index + 1}</span>
+                <Snippet
+                  codeString={serial}
+                  size="sm"
+                  className="text-xs"
+                  hideSymbol
+                >
+                  {serial}
+                </Snippet>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Compact view - chips
+          <div className="hidden flex flex-wrap gap-1">
+            {device.serialNumbers.slice(0, 3).map((serial) => (
+              <Snippet
+                key={serial}
+                codeString={serial}
+                size="sm"
+                className="text-xs"
+                hideSymbol
+              >
+                {serial.length > 8 ? `${serial.slice(0, 8)}...` : serial}
+              </Snippet>
+            ))}
+            {device.serialNumbers.length > 3 && (
+              <Chip size="sm" variant="flat" className="text-xs">
+                +{device.serialNumbers.length - 3} more
+              </Chip>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer - only show if expanded or has expiry */}
+      {(isExpanded || device.expiryDate) && (
+        <div className="flex items-center justify-between text-xs text-default-500 mt-2 pt-2 border-t border-default-200">
+          <span>
+            Assigned: {new Date(device.createdAt).toLocaleDateString()}
+          </span>
+          {device.expiryDate && (
+            <span
+              className={
+                isExpired
+                  ? "text-danger"
+                  : isExpiringSoon
+                  ? "text-warning"
+                  : "text-success"
+              }
+            >
+              Return by: {new Date(device.expiryDate).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const getStatusColor = (status?: string) => {
   switch (status) {
@@ -232,6 +435,25 @@ const fetchAgent = async (agentId: string) => {
   return agentData;
 };
 
+// Fetcher function for agent devices
+const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
+  //return testDeviceData.data;
+
+  if (!agentId) {
+    throw new Error("Agent ID is required");
+  }
+  try {
+    const response: DeviceResponse = await getAgentDevice(
+      { mbeId: agentId },
+      { appKey: MOBIFLEX_APP_KEY }
+    );
+    return response?.data || [];
+  } catch (error) {
+    console.error("Error fetching agent devices:", error);
+    return [];
+  }
+};
+
 // Main Component
 export default function AgentSinglePage() {
   const params = useParams();
@@ -275,6 +497,21 @@ export default function AgentSinglePage() {
     revalidateOnReconnect: true,
     dedupingInterval: 30000,
   });
+
+  // Use SWR for agent devices
+  const {
+    data: devices,
+    error: devicesError,
+    isLoading: devicesLoading,
+  } = useSWR(
+    agent ? `agent-devices-${agent.mbeId}` : null,
+    () => fetchAgentDevices(agent!.mbeId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000, // Cache for 1 minute
+    }
+  );
 
   const handleStatusUpdate = async (newStatus: AccountStatus) => {
     if (!agent) return;
@@ -547,7 +784,6 @@ export default function AgentSinglePage() {
                           </DropdownItem>,
                         ]
                       : []),
-
                     ...(!isRejected
                       ? [
                           <DropdownItem
@@ -562,7 +798,6 @@ export default function AgentSinglePage() {
                           </DropdownItem>,
                         ]
                       : []),
-
                     <DropdownItem
                       key="delete"
                       startContent={<Trash2 className="w-4 h-4" />}
@@ -574,7 +809,6 @@ export default function AgentSinglePage() {
                   ]}
                 </DropdownMenu>
               </Dropdown>
-
               <Button
                 variant="flat"
                 color="primary"
@@ -765,6 +999,8 @@ export default function AgentSinglePage() {
             <InfoCard
               title="Personal Information"
               icon={<User className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
             >
               <div className="grid gap-4">
                 <InfoField label="Agent ID" value={agent.mbeId} copyable />
@@ -808,6 +1044,8 @@ export default function AgentSinglePage() {
             <InfoCard
               title="Statistics"
               icon={<Users className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
             >
               <div className="grid gap-4">
                 <InfoField
@@ -824,11 +1062,59 @@ export default function AgentSinglePage() {
 
           {/* Right Column - Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Agent Devices */}
+            <InfoCard
+              title="Agent Devices"
+              icon={<Smartphone className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
+            >
+              {devicesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : devices && devices.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-default-600">
+                      Individual devices currently assigned to this agent
+                    </p>
+                    <Chip size="sm" variant="flat" color="primary">
+                      {devices.reduce(
+                        (total, device) => total + device.serialNumbers.length,
+                        0
+                      )}{" "}
+                      Total Device
+                      {devices.reduce(
+                        (total, device) => total + device.serialNumbers.length,
+                        0
+                      ) !== 1
+                        ? "s"
+                        : ""}
+                    </Chip>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {devices.map((device) => (
+                      <DeviceCard key={device.id} device={device} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Devices Assigned"
+                  description="This agent currently has no devices assigned to them."
+                  icon={<Smartphone className="w-6 h-6 text-default-400" />}
+                />
+              )}
+            </InfoCard>
+
             {/* Main Store Information */}
             {mainStore?.storeNew ? (
               <InfoCard
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -861,6 +1147,7 @@ export default function AgentSinglePage() {
                       {mainStore.storeNew.isArchived ? "Archived" : "Active"}
                     </Chip>
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Store ID"
@@ -893,12 +1180,14 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.region}
                     />
                   </div>
+
                   <div className="grid grid-cols-1 gap-4">
                     <InfoField
                       label="Address"
                       value={mainStore.storeNew.address}
                     />
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Phone Number"
@@ -909,6 +1198,7 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.storeEmail}
                     />
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
@@ -934,6 +1224,7 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
@@ -950,6 +1241,7 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-semibold text-default-900 flex items-center gap-2">
@@ -1010,6 +1302,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Store Assigned"
@@ -1024,6 +1318,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField label="KYC ID" value={kyc.kycId} copyable />
@@ -1055,6 +1351,7 @@ export default function AgentSinglePage() {
                     }
                   />
                 </div>
+
                 <div className="mt-4">
                   <InfoField label="Full Address" value={kyc.fullAddress} />
                 </div>
@@ -1063,6 +1360,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No KYC Information"
@@ -1077,6 +1376,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField
@@ -1137,6 +1438,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Bank Account Details"
@@ -1151,6 +1454,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="space-y-6">
                   {agent.MbeGuarantor.map((guarantor, index) => (
@@ -1204,6 +1509,7 @@ export default function AgentSinglePage() {
                           </Dropdown>
                         </div>
                       </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InfoField
                           label="Guarantor ID"
@@ -1239,6 +1545,7 @@ export default function AgentSinglePage() {
                           }
                         />
                       </div>
+
                       <div className="mt-4">
                         <InfoField
                           label="Address"
@@ -1253,6 +1560,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Guarantors"
@@ -1267,3 +1576,109 @@ export default function AgentSinglePage() {
     </div>
   );
 }
+
+// You can use this JavaScript object directly in your code for testing
+const testDeviceData = {
+  statusCode: 200,
+  statusType: "OK",
+  message: "Item balances fetched",
+  data: [
+    {
+      id: "cmc3j1vht029pn214trxn6igt",
+      itemCode: "1967",
+      itemName: "POCO X7 PRO (12GB+512GB)",
+      availableQty: 4,
+      serialNumbers: [
+        "753412896012",
+        "753412896013",
+        "753412896014",
+        "753412896015",
+      ],
+      createdAt: "2025-06-19T15:19:56.849Z",
+      updatedAt: "2025-06-27T15:34:50.163Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-08-15T00:00:00.000Z", // Expiring soon
+    },
+    {
+      id: "cmc3fv8cs00lgn2140hhfvdwr",
+      itemCode: "1514",
+      itemName: "NOKIA G10 3GB+32GB",
+      availableQty: 2,
+      serialNumbers: ["7C1F56D4-J3", "7C1F56D4-J4"],
+      createdAt: "2025-06-19T13:50:48.076Z",
+      updatedAt: "2025-06-27T15:34:50.163Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-07-20T00:00:00.000Z", // Expired
+    },
+    {
+      id: "cmbi5ux2o01umpb14yvoxw4t6",
+      itemCode: "1897",
+      itemName: "Samsung Galaxy A55 8GB/256GB",
+      availableQty: 3,
+      serialNumbers: ["SM-A556B001234", "SM-A556B001235", "SM-A556B001236"],
+      createdAt: "2025-06-04T16:27:27.600Z",
+      updatedAt: "2025-06-29T16:29:11.009Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-12-31T00:00:00.000Z", // Active
+    },
+    {
+      id: "cmc26io6r00m0qc14cqgg8e2d",
+      itemCode: "1911",
+      itemName: "iPhone 15 Pro Max 256GB",
+      availableQty: 5,
+      serialNumbers: [
+        "F2LW8J9XQ1MN",
+        "F2LW8J9XQ1MP",
+        "F2LW8J9XQ1MQ",
+        "F2LW8J9XQ1MR",
+        "F2LW8J9XQ1MS",
+      ],
+      createdAt: "2025-06-18T16:41:19.348Z",
+      updatedAt: "2025-06-29T16:29:11.009Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-09-30T00:00:00.000Z", // Active
+    },
+    {
+      id: "cmd45fg7h00n1rd15efgh9i3e",
+      itemCode: "2001",
+      itemName: "Samsung Galaxy S24 Ultra 512GB",
+      availableQty: 1,
+      serialNumbers: ["SM-S928B789012"],
+      createdAt: "2025-06-25T10:15:30.123Z",
+      updatedAt: "2025-06-30T08:45:22.456Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-07-05T00:00:00.000Z", // Expired
+    },
+    {
+      id: "cme56hi8j00o2se16fghi0j4f",
+      itemCode: "1750",
+      itemName: "Tecno Spark 20 Pro 8GB+256GB",
+      availableQty: 6,
+      serialNumbers: [
+        "TN-SP20P-001",
+        "TN-SP20P-002",
+        "TN-SP20P-003",
+        "TN-SP20P-004",
+        "TN-SP20P-005",
+        "TN-SP20P-006",
+      ],
+      createdAt: "2025-06-20T14:30:45.789Z",
+      updatedAt: "2025-06-28T16:20:10.234Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      // No expiry date - permanent assignment
+    },
+    {
+      id: "cmf67jk9l00p3tf17ghij1k5g",
+      itemCode: "1888",
+      itemName: "Infinix Note 40 Pro 12GB+256GB",
+      availableQty: 2,
+      serialNumbers: ["INF-N40P-7890", "INF-N40P-7891"],
+      createdAt: "2025-06-22T09:45:12.567Z",
+      updatedAt: "2025-06-30T11:30:55.890Z",
+      mbeId: "cmbhy6tjc00cgpb14w8khi122",
+      expiryDate: "2025-08-01T00:00:00.000Z", // Due soon
+    },
+  ],
+  responseTime: "0.02 seconds",
+  channel: "Mobiflex",
+};
