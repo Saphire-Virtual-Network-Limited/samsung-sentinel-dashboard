@@ -1,13 +1,15 @@
 "use client";
 
 import {
-  getAllAgentRecord,
   showToast,
-  updateAgentStatus,
   updateAgentGuarantorStatus,
   deleteAgentDetails,
   getAgentDevice,
+  getAgentRecordByMbeId,
+  updateAgentAddressStatus,
 } from "@/lib";
+import { useAuth } from "@/lib";
+
 import {
   Avatar,
   Button,
@@ -26,13 +28,12 @@ import {
   DropdownItem,
   Divider,
 } from "@heroui/react";
+
 import {
   ArrowLeft,
   CreditCard,
   User,
   Users,
-  Check,
-  X,
   Store,
   MapPin,
   Clock,
@@ -41,13 +42,12 @@ import {
   Trash2,
   MoreVertical,
   Smartphone,
-  Calendar,
-  Hash,
 } from "lucide-react";
+
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
-import { AccountStatus, type AgentRecord } from "./types";
+import type { AccountStatus, AgentRecord } from "./types";
 import useSWR from "swr";
 
 // Types for device data
@@ -60,7 +60,7 @@ interface DeviceItem {
   createdAt: string;
   updatedAt: string;
   mbeId: string;
-  expiryDate?: string; // Optional expiry date
+  expiryDate?: string;
 }
 
 interface DeviceResponse {
@@ -176,14 +176,19 @@ const InfoCard = ({
 const InfoField = ({
   label,
   value,
+  endComponent,
   copyable = false,
 }: {
   label: string;
   value?: string | null;
+  endComponent?: React.ReactNode;
   copyable?: boolean;
 }) => (
   <div className="bg-default-50 rounded-lg p-4">
-    <div className="text-sm text-default-500 mb-1">{label}</div>
+    <div className="flex items-center justify-between mb-1">
+      <div className="text-sm text-default-500">{label}</div>
+      {endComponent}
+    </div>
     <div className="font-medium text-default-900 flex items-center gap-2">
       {value || "N/A"}
       {copyable && value && (
@@ -222,13 +227,13 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
   const isExpiringSoon =
     device.expiryDate &&
     new Date(device.expiryDate) <=
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
   const isExpired =
     device.expiryDate && new Date(device.expiryDate) < new Date();
 
   return (
     <div className="bg-default-50 rounded-lg p-3 border border-default-200">
-      {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-default-900 text-sm truncate">
@@ -273,11 +278,9 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
         </Button>
       </div>
 
-      {/* Compact Serial Numbers */}
       <div className="space-y-1">
         <div className="text-xs text-default-500">Serial Numbers:</div>
         {isExpanded ? (
-          // Expanded view - individual cards
           <div className="space-y-1">
             {device.serialNumbers.map((serial, index) => (
               <div
@@ -297,7 +300,6 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
             ))}
           </div>
         ) : (
-          // Compact view - chips
           <div className="hidden flex flex-wrap gap-1">
             {device.serialNumbers.slice(0, 3).map((serial) => (
               <Snippet
@@ -319,7 +321,6 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
         )}
       </div>
 
-      {/* Footer - only show if expanded or has expiry */}
       {(isExpanded || device.expiryDate) && (
         <div className="flex items-center justify-between text-xs text-default-500 mt-2 pt-2 border-t border-default-200">
           <span>
@@ -381,19 +382,21 @@ const GuarantorStatusChip = ({ status }: { status: string }) => {
   );
 };
 
+const AddressStatusChip = ({ status }: { status: string }) => {
+  return (
+    <Chip color={getStatusColor(status)} variant="flat" size="sm">
+      {status}
+    </Chip>
+  );
+};
+
 const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
 
-const mockUpdateAgentStatus = async (
-  agentId: string,
-  newStatus: AccountStatus
-) => {
-  // Simulate API call
-  await updateAgentStatus(
-    { status: newStatus, mbeId: agentId },
-    { appKey: MOBIFLEX_APP_KEY }
-  );
-  console.log(`Updating agent ${agentId} status to ${newStatus}`);
-  return { success: true, message: `Agent status updated to ${newStatus}` };
+// Delete agent function
+const mockDeleteAgent = async (agentId: string) => {
+  await deleteAgentDetails({ mbeId: agentId });
+  console.log(`Deleting agent ${agentId}`);
+  return { success: true, message: "Agent deleted successfully" };
 };
 
 // Mock function to update guarantor status
@@ -402,20 +405,28 @@ const mockUpdateGuarantorStatus = async (
   newStatus: string,
   agentId: string
 ) => {
-  // Simulate API call delay
-  await updateAgentGuarantorStatus(
-    { status: newStatus, mbeId: agentId, guarantorId },
-    { appKey: MOBIFLEX_APP_KEY }
-  );
+  await updateAgentGuarantorStatus({
+    status: newStatus,
+    mbeId: agentId,
+    guarantorId,
+  });
   console.log(`Updating guarantor ${guarantorId} status to ${newStatus}`);
   return { success: true, message: `Guarantor status updated to ${newStatus}` };
 };
 
-// Delete agent function
-const mockDeleteAgent = async (agentId: string) => {
-  await deleteAgentDetails({ mbeId: agentId }, { appKey: MOBIFLEX_APP_KEY });
-  console.log(`Deleting agent ${agentId}`);
-  return { success: true, message: "Agent deleted successfully" };
+// Mock function to update address status
+const mockUpdateAddressStatus = async (
+  kycId: string,
+  newStatus: string,
+  agentId: string
+) => {
+  await updateAgentAddressStatus({
+    status: newStatus,
+    mbeId: agentId,
+    kycId,
+  });
+  console.log(`Updating address ${kycId} status to ${newStatus}`);
+  return { success: true, message: `Address status updated to ${newStatus}` };
 };
 
 // Fetcher function for useSWR
@@ -423,12 +434,8 @@ const fetchAgent = async (agentId: string) => {
   if (!agentId) {
     throw new Error("Agent ID is required");
   }
-  const response = await getAllAgentRecord(undefined, undefined, {
-    appKey: MOBIFLEX_APP_KEY,
-  });
-  const agentData: AgentRecord = response?.data?.data?.find(
-    (a: AgentRecord) => a.mbeId == agentId
-  );
+  const response = await getAgentRecordByMbeId(agentId);
+  const agentData: AgentRecord = response?.data?.data;
   if (!agentData) {
     throw new Error("Agent not found");
   }
@@ -437,8 +444,6 @@ const fetchAgent = async (agentId: string) => {
 
 // Fetcher function for agent devices
 const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
-  //return testDeviceData.data;
-
   if (!agentId) {
     throw new Error("Agent ID is required");
   }
@@ -458,45 +463,46 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
 export default function AgentSinglePage() {
   const params = useParams();
   const router = useRouter();
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const { userResponse } = useAuth();
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
   );
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<AccountStatus | null>(
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState<string | null>(
     null
   );
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isConfirmOpen,
-    onOpen: onConfirmOpen,
-    onClose: onConfirmClose,
-  } = useDisclosure();
   const {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
-
+  const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
   // Use SWR for data fetching
+  const userId = userResponse?.data?.userId;
   const {
     data: agent,
     error,
     isLoading,
     mutate,
-  } = useSWR("sales-agent-records", () => fetchAgent(params.id as string), {
-    onError: (error) => {
-      console.error("Error fetching agent:", error);
-      showToast({
-        type: "error",
-        message: error.message || "Failed to fetch agent data",
-        duration: 5000,
-      });
-    },
-    revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-    dedupingInterval: 30000,
-  });
+  } = useSWR(
+    "sales-agent-records",
+    () =>
+      fetchAgent(isScanPartner ? (userId as string) : (params.id as string)),
+    {
+      onError: (error) => {
+        console.error("Error fetching agent:", error);
+        showToast({
+          type: "error",
+          message: error.message || "Failed to fetch agent data",
+          duration: 5000,
+        });
+      },
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 30000,
+    }
+  );
 
   // Use SWR for agent devices
   const {
@@ -509,41 +515,9 @@ export default function AgentSinglePage() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 60000, // Cache for 1 minute
+      dedupingInterval: 60000,
     }
   );
-
-  const handleStatusUpdate = async (newStatus: AccountStatus) => {
-    if (!agent) return;
-
-    setIsUpdatingStatus(true);
-    try {
-      const result = await mockUpdateAgentStatus(agent.mbeId, newStatus);
-      if (result.success) {
-        await mutate(
-          { ...agent, accountStatus: newStatus },
-          { revalidate: false }
-        );
-        showToast({
-          type: "success",
-          message: result.message,
-          duration: 3000,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      showToast({
-        type: "error",
-        message: "Failed to update agent status",
-        duration: 5000,
-      });
-      mutate();
-    } finally {
-      setIsUpdatingStatus(false);
-      onConfirmClose();
-      setPendingStatus(null);
-    }
-  };
 
   const handleGuarantorStatusUpdate = async (
     guarantorId: string,
@@ -559,7 +533,6 @@ export default function AgentSinglePage() {
         agent.mbeId
       );
       if (result.success) {
-        // Update the guarantor status in the local state
         const updatedGuarantors = agent.MbeGuarantor?.map((g) =>
           g.guarantorid === guarantorId
             ? { ...g, guarantorStatus: newStatus }
@@ -588,6 +561,48 @@ export default function AgentSinglePage() {
     }
   };
 
+  const handleAddressStatusUpdate = async (
+    kycId: string,
+    newStatus: string
+  ) => {
+    if (!agent) return;
+
+    setIsUpdatingAddress(kycId);
+    try {
+      const result = await mockUpdateAddressStatus(
+        kycId,
+        newStatus,
+        agent.mbeId
+      );
+      if (result.success) {
+        // Update the KYC status in the local state
+        const updatedKyc = agent.MbeKyc
+          ? {
+              ...agent.MbeKyc,
+              addressStatus: newStatus as AccountStatus,
+            }
+          : agent.MbeKyc;
+
+        await mutate({ ...agent, MbeKyc: updatedKyc! }, { revalidate: false });
+        showToast({
+          type: "success",
+          message: result.message,
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating address status:", error);
+      showToast({
+        type: "error",
+        message: "Failed to update address status",
+        duration: 5000,
+      });
+      mutate();
+    } finally {
+      setIsUpdatingAddress(null);
+    }
+  };
+
   const handleDeleteAgent = async () => {
     if (!agent) return;
 
@@ -600,7 +615,6 @@ export default function AgentSinglePage() {
           message: result.message,
           duration: 3000,
         });
-        // Navigate back after successful deletion
         router.back();
       }
     } catch (error) {
@@ -616,17 +630,6 @@ export default function AgentSinglePage() {
     }
   };
 
-  const handleStatusClick = (status: AccountStatus) => {
-    setPendingStatus(status);
-    onConfirmOpen();
-  };
-
-  const confirmStatusUpdate = () => {
-    if (pendingStatus) {
-      handleStatusUpdate(pendingStatus);
-    }
-  };
-
   // Handle loading state
   if (isLoading) return <LoadingSpinner />;
 
@@ -638,22 +641,13 @@ export default function AgentSinglePage() {
   const kyc = agent.MbeKyc;
   const accountDetails = agent.MbeAccountDetails;
   const mainStore = agent.storesNew;
-  const isApproved = agent.accountStatus === AccountStatus.APPROVED;
-  const isRejected = agent.accountStatus === AccountStatus.REJECTED;
-
-  const getStatusActionText = () => {
-    if (pendingStatus == AccountStatus.APPROVED) return "approve";
-    if (pendingStatus == AccountStatus.REJECTED) return "reject";
-    return "update";
-  };
-
-  const getStatusActionColor = () => {
-    if (pendingStatus === AccountStatus.APPROVED) return "text-success";
-    if (pendingStatus === AccountStatus.REJECTED) return "text-danger";
-    return "text-primary";
-  };
 
   const guarantorStatusOptions = [
+    { key: "APPROVED", label: "Approved", color: "success" },
+    { key: "REJECTED", label: "Rejected", color: "danger" },
+  ];
+
+  const addressStatusOptions = [
     { key: "APPROVED", label: "Approved", color: "success" },
     { key: "REJECTED", label: "Rejected", color: "danger" },
   ];
@@ -709,37 +703,13 @@ export default function AgentSinglePage() {
 
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center gap-3">
-              {!isApproved && (
-                <Button
-                  color="success"
-                  variant="flat"
-                  size="sm"
-                  startContent={<Check className="w-4 h-4" />}
-                  onPress={() => handleStatusClick(AccountStatus.APPROVED)}
-                  isDisabled={isUpdatingStatus || isDeleting}
-                >
-                  Approve
-                </Button>
-              )}
-              {!isRejected && (
-                <Button
-                  color="danger"
-                  variant="flat"
-                  size="sm"
-                  startContent={<X className="w-4 h-4" />}
-                  onPress={() => handleStatusClick(AccountStatus.REJECTED)}
-                  isDisabled={isUpdatingStatus || isDeleting}
-                >
-                  Reject
-                </Button>
-              )}
               <Button
                 color="danger"
                 variant="light"
                 size="sm"
                 startContent={<Trash2 className="w-4 h-4" />}
                 onPress={onDeleteOpen}
-                isDisabled={isUpdatingStatus || isDeleting}
+                isDisabled={isDeleting}
               >
                 Delete
               </Button>
@@ -763,50 +733,20 @@ export default function AgentSinglePage() {
                     variant="flat"
                     size="sm"
                     isIconOnly
-                    isDisabled={isUpdatingStatus || isDeleting}
+                    isDisabled={isDeleting}
                   >
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Agent actions">
-                  {[
-                    ...(!isApproved
-                      ? [
-                          <DropdownItem
-                            key="approve"
-                            startContent={<Check className="w-4 h-4" />}
-                            className="text-success"
-                            onPress={() =>
-                              handleStatusClick(AccountStatus.APPROVED)
-                            }
-                          >
-                            Approve Agent
-                          </DropdownItem>,
-                        ]
-                      : []),
-                    ...(!isRejected
-                      ? [
-                          <DropdownItem
-                            key="reject"
-                            startContent={<X className="w-4 h-4" />}
-                            className="text-danger"
-                            onPress={() =>
-                              handleStatusClick(AccountStatus.REJECTED)
-                            }
-                          >
-                            Reject Agent
-                          </DropdownItem>,
-                        ]
-                      : []),
-                    <DropdownItem
-                      key="delete"
-                      startContent={<Trash2 className="w-4 h-4" />}
-                      className="text-danger"
-                      onPress={onDeleteOpen}
-                    >
-                      Delete Agent
-                    </DropdownItem>,
-                  ]}
+                  <DropdownItem
+                    key="delete"
+                    startContent={<Trash2 className="w-4 h-4" />}
+                    className="text-danger"
+                    onPress={onDeleteOpen}
+                  >
+                    Delete Agent
+                  </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
               <Button
@@ -822,100 +762,6 @@ export default function AgentSinglePage() {
           </div>
         </div>
       </div>
-
-      {/* Status Update Confirmation Modal */}
-      <Modal
-        isOpen={isConfirmOpen}
-        onClose={onConfirmClose}
-        size="md"
-        placement="center"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold">Confirm Status Update</h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={agent?.imageUrl || "/placeholder.svg"}
-                  alt={`${agent?.firstname} ${agent?.lastname}`}
-                  className="w-12 h-12"
-                />
-                <div>
-                  <p className="font-medium">
-                    {agent?.firstname} {agent?.lastname}
-                  </p>
-                  <p className="text-small text-default-500">{agent?.email}</p>
-                </div>
-              </div>
-              <div className="bg-default-50 rounded-lg p-4">
-                <p className="text-sm text-default-600 mb-2">
-                  Are you sure you want to{" "}
-                  <span className={`font-semibold ${getStatusActionColor()}`}>
-                    {getStatusActionText()}
-                  </span>{" "}
-                  this agent?
-                </p>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-default-500">Current status:</span>
-                  <Chip
-                    color={getStatusColor(agent?.accountStatus)}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {agent?.accountStatus || "PENDING"}
-                  </Chip>
-                  <span className="text-default-400">→</span>
-                  <Chip
-                    color={getStatusColor(pendingStatus || "")}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {pendingStatus || ""}
-                  </Chip>
-                </div>
-              </div>
-              {pendingStatus === AccountStatus.REJECTED && (
-                <div className="bg-danger-50 border border-danger-200 rounded-lg p-3">
-                  <p className="text-small text-danger-600">
-                    <strong>Warning:</strong> Rejecting this agent will prevent
-                    them from accessing their account and conducting
-                    transactions.
-                  </p>
-                </div>
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onConfirmClose}
-              isDisabled={isUpdatingStatus}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={
-                pendingStatus === AccountStatus.APPROVED ? "success" : "danger"
-              }
-              onPress={confirmStatusUpdate}
-              isLoading={isUpdatingStatus}
-              isDisabled={isUpdatingStatus}
-            >
-              {isUpdatingStatus
-                ? `${
-                    getStatusActionText().charAt(0).toUpperCase() +
-                    getStatusActionText().slice(1)
-                  }ing...`
-                : `${
-                    getStatusActionText().charAt(0).toUpperCase() +
-                    getStatusActionText().slice(1)
-                  } Agent`}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -1015,8 +861,14 @@ export default function AgentSinglePage() {
                 <InfoField label="Date of Birth" value={agent.dob} />
                 <InfoField label="Username" value={agent.username} />
                 <InfoField label="Channel" value={agent.channel} />
-                <InfoField label="State" value={agent.state} />
-                <InfoField label="City" value={agent.city} />
+                <InfoField
+                  label="State"
+                  value={agent.state || agent?.MbeKyc?.state}
+                />
+                <InfoField
+                  label="City"
+                  value={agent.city || agent?.MbeKyc?.city}
+                />
                 <InfoField
                   label="Active Status"
                   value={agent.isActive ? "Active" : "Inactive"}
@@ -1353,7 +1205,49 @@ export default function AgentSinglePage() {
                 </div>
 
                 <div className="mt-4">
-                  <InfoField label="Full Address" value={kyc.fullAddress} />
+                  <InfoField
+                    label="Full Address"
+                    value={kyc.fullAddress}
+                    endComponent={
+                      <div className="flex items-center gap-2">
+                        <AddressStatusChip
+                          status={kyc.addressStatus || "PENDING"}
+                        />
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Button
+                              variant="flat"
+                              size="sm"
+                              endContent={<ChevronDown className="w-4 h-4" />}
+                              isDisabled={isUpdatingAddress === kyc.kycId}
+                              isLoading={isUpdatingAddress === kyc.kycId}
+                            >
+                              Update Status
+                            </Button>
+                          </DropdownTrigger>
+                          <DropdownMenu
+                            aria-label="Address status actions"
+                            onAction={(key) =>
+                              handleAddressStatusUpdate(
+                                kyc.kycId,
+                                key as string
+                              )
+                            }
+                          >
+                            {addressStatusOptions.map((option) => (
+                              <DropdownItem
+                                key={option.key}
+                                className={`text-${option.color}`}
+                                color={option.color as any}
+                              >
+                                {option.label}
+                              </DropdownItem>
+                            ))}
+                          </DropdownMenu>
+                        </Dropdown>
+                      </div>
+                    }
+                  />
                 </div>
               </InfoCard>
             ) : (
@@ -1509,7 +1403,6 @@ export default function AgentSinglePage() {
                           </Dropdown>
                         </div>
                       </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InfoField
                           label="Guarantor ID"
@@ -1545,7 +1438,6 @@ export default function AgentSinglePage() {
                           }
                         />
                       </div>
-
                       <div className="mt-4">
                         <InfoField
                           label="Address"
@@ -1576,109 +1468,3 @@ export default function AgentSinglePage() {
     </div>
   );
 }
-
-// You can use this JavaScript object directly in your code for testing
-const testDeviceData = {
-  statusCode: 200,
-  statusType: "OK",
-  message: "Item balances fetched",
-  data: [
-    {
-      id: "cmc3j1vht029pn214trxn6igt",
-      itemCode: "1967",
-      itemName: "POCO X7 PRO (12GB+512GB)",
-      availableQty: 4,
-      serialNumbers: [
-        "753412896012",
-        "753412896013",
-        "753412896014",
-        "753412896015",
-      ],
-      createdAt: "2025-06-19T15:19:56.849Z",
-      updatedAt: "2025-06-27T15:34:50.163Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-08-15T00:00:00.000Z", // Expiring soon
-    },
-    {
-      id: "cmc3fv8cs00lgn2140hhfvdwr",
-      itemCode: "1514",
-      itemName: "NOKIA G10 3GB+32GB",
-      availableQty: 2,
-      serialNumbers: ["7C1F56D4-J3", "7C1F56D4-J4"],
-      createdAt: "2025-06-19T13:50:48.076Z",
-      updatedAt: "2025-06-27T15:34:50.163Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-07-20T00:00:00.000Z", // Expired
-    },
-    {
-      id: "cmbi5ux2o01umpb14yvoxw4t6",
-      itemCode: "1897",
-      itemName: "Samsung Galaxy A55 8GB/256GB",
-      availableQty: 3,
-      serialNumbers: ["SM-A556B001234", "SM-A556B001235", "SM-A556B001236"],
-      createdAt: "2025-06-04T16:27:27.600Z",
-      updatedAt: "2025-06-29T16:29:11.009Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-12-31T00:00:00.000Z", // Active
-    },
-    {
-      id: "cmc26io6r00m0qc14cqgg8e2d",
-      itemCode: "1911",
-      itemName: "iPhone 15 Pro Max 256GB",
-      availableQty: 5,
-      serialNumbers: [
-        "F2LW8J9XQ1MN",
-        "F2LW8J9XQ1MP",
-        "F2LW8J9XQ1MQ",
-        "F2LW8J9XQ1MR",
-        "F2LW8J9XQ1MS",
-      ],
-      createdAt: "2025-06-18T16:41:19.348Z",
-      updatedAt: "2025-06-29T16:29:11.009Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-09-30T00:00:00.000Z", // Active
-    },
-    {
-      id: "cmd45fg7h00n1rd15efgh9i3e",
-      itemCode: "2001",
-      itemName: "Samsung Galaxy S24 Ultra 512GB",
-      availableQty: 1,
-      serialNumbers: ["SM-S928B789012"],
-      createdAt: "2025-06-25T10:15:30.123Z",
-      updatedAt: "2025-06-30T08:45:22.456Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-07-05T00:00:00.000Z", // Expired
-    },
-    {
-      id: "cme56hi8j00o2se16fghi0j4f",
-      itemCode: "1750",
-      itemName: "Tecno Spark 20 Pro 8GB+256GB",
-      availableQty: 6,
-      serialNumbers: [
-        "TN-SP20P-001",
-        "TN-SP20P-002",
-        "TN-SP20P-003",
-        "TN-SP20P-004",
-        "TN-SP20P-005",
-        "TN-SP20P-006",
-      ],
-      createdAt: "2025-06-20T14:30:45.789Z",
-      updatedAt: "2025-06-28T16:20:10.234Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      // No expiry date - permanent assignment
-    },
-    {
-      id: "cmf67jk9l00p3tf17ghij1k5g",
-      itemCode: "1888",
-      itemName: "Infinix Note 40 Pro 12GB+256GB",
-      availableQty: 2,
-      serialNumbers: ["INF-N40P-7890", "INF-N40P-7891"],
-      createdAt: "2025-06-22T09:45:12.567Z",
-      updatedAt: "2025-06-30T11:30:55.890Z",
-      mbeId: "cmbhy6tjc00cgpb14w8khi122",
-      expiryDate: "2025-08-01T00:00:00.000Z", // Due soon
-    },
-  ],
-  responseTime: "0.02 seconds",
-  channel: "Mobiflex",
-};

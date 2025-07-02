@@ -118,6 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             return currentPath.startsWith("/access/collection-admin");
           case "COLLECTION_OFFICER":
             return currentPath.startsWith("/access/collection-officer");
+          case "SCAN_PARTNER":
+            return currentPath.startsWith("/access/scan-partner");
           case "USER":
           case "MERCHANT":
           case "AGENT":
@@ -152,6 +154,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             break;
           case "HUMAN_RESOURCE":
             router.replace("/access/hr");
+            break;
+
+          case "SCAN_PARTNER":
+            router.replace("/access/scan-partner");
             break;
           case "INVENTORY_MANAGER":
             router.replace("/access/inventory");

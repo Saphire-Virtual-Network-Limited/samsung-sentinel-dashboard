@@ -14,6 +14,7 @@ export interface MbeKyc {
   createdAt: string;
   updatedAt: string;
   channel: string;
+  addressStatus?: AccountStatus;
 }
 
 export interface MbeGuarantor {
