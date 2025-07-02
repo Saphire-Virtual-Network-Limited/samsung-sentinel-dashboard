@@ -210,8 +210,12 @@ export function AppSidebar() {
       id: "admin-staff",
       subItems: [
         {
-          title: "Sales Users",
+          title: "Sales Agent",
           url: "/access/admin/staff/agents",
+        },
+        {
+          title: "MBE",
+          url: "/access/admin/staff/mbe",
         },
         {
           title: "SCAN Partners",
@@ -389,10 +393,121 @@ export function AppSidebar() {
         ]
       : [];
 
+  const subAdminItems: MenuItem[] = [
+    {
+      title: "Dashboard",
+      icon: Home,
+      url: "/access/sub-admin/",
+      id: "sub-admin-dashboard",
+    },
+    {
+      icon: CreditCard,
+      title: "Loans",
+      url: "/access/sub-admin/loans",
+      id: "sub-admin-loans",
+    },
+    {
+      icon: Users,
+      title: "Customers",
+      url: "/access/sub-admin/customers",
+      id: "sub-admin-customers",
+    },
+    {
+      icon: UserCheck,
+      title: "Verification",
+      id: "sub-admin-referees",
+      subItems: [
+        {
+          title: "Pending",
+          url: "/access/sub-admin/referees/unapproved-referees",
+        },
+        {
+          title: "Approved",
+          url: "/access/sub-admin/referees/approved-referees",
+        },
+        {
+          title: "Rejected",
+          url: "/access/sub-admin/referees/rejected-referees",
+        },
+      ],
+    },
+    {
+      icon: Store,
+      title: "Stores",
+      url: "/access/sub-admin/stores",
+      id: "sub-admin-stores",
+    },
+    {
+      icon: IoBusiness,
+      title: "Staff",
+      url: "/access/sub-admin/staff",
+      id: "sub-admin-staff",
+      subItems: [
+        {
+          title: "Sales Agent",
+          url: "/access/sub-admin/staff/agents",
+        },
+        {
+          title: "MBE",
+          url: "/access/sub-admin/staff/mbe",
+        },
+      ],
+    },
+    {
+      icon: ChartBar,
+      title: "Reports",
+      id: "sub-admin-reports",
+      subItems: [
+        {
+          title: "Sales",
+          subItems: [
+            {
+              title: "Overview",
+              url: "/access/sub-admin/reports/sales/overview",
+            },
+            {
+              title: "MBE Report",
+              url: "/access/sub-admin/reports/sales/mbe",
+            },
+            {
+              title: "Samsung Report",
+              url: "/access/sub-admin/reports/sales/samsung",
+            },
+            {
+              title: "Xiaomi Report",
+              url: "/access/sub-admin/reports/sales/xiaomi",
+            },
+            {
+              title: "Oppo Report",
+              url: "/access/sub-admin/reports/sales/oppo",
+            },
+            {
+              title: "Sentinel",
+              url: "/access/sub-admin/reports/sales/sentinel",
+            },
+          ],
+        },
+        { title: "Drop-offs", url: "/access/sub-admin/reports/drop-offs" },
+        { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
+      ],
+    },
+    {
+      icon: Package2Icon,
+      title: "Inventory",
+      id: "sub-admin-inventory",
+      subItems: [
+        { title: "Devices", url: "/access/sub-admin/inventory/devices" },
+        { title: "TVs", url: "/access/sub-admin/inventory/tvs" },
+        { title: "Solar", url: "/access/sub-admin/inventory/solar" },
+      ],
+    },
+  ];
+
   const adminItems: MenuItem[] = [
     ...adminRootItems,
     ...adminRelayItems,
     ...adminAndroidItems,
+    ...subAdminItems,
   ];
 
   const salesItems: MenuItem[] = [
@@ -701,8 +816,9 @@ export function AppSidebar() {
     const role = userResponse?.data?.role;
     switch (role) {
       case "SUPER_ADMIN":
-      case "ADMIN":
         return adminItems;
+      case "ADMIN":
+        return subAdminItems;
       case "VERIFICATION":
       case "VERIFICATION_OFFICER":
         return verificationItems;
