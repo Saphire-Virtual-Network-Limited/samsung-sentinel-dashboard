@@ -194,8 +194,12 @@ export function AppSidebar() {
       id: "admin-staff",
       subItems: [
         {
-          title: "Sales Users",
+          title: "Sales Agent",
           url: "/access/admin/staff/agents",
+        },
+        {
+          title: "MBE",
+          url: "/access/admin/staff/mbe",
         },
       ],
     },

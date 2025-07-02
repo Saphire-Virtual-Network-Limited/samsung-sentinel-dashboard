@@ -494,3 +494,14 @@ export async function exportAllAgentDetails(options?: ApiCallOptions) {
 export async function deleteAgentDetails(data: any, options?: ApiCallOptions) {
   return apiCall(`/agent/delete`, "DELETE", data, options);
 }
+
+// ============================================================================
+// GET MBE DETAILS WITH 
+// ============================================================================
+
+
+export async function getMBEwithCustomer(mbeId?: string, page?: number, limit?: number) {
+  const query = mbeId ? `?mbeId=${mbeId}&page=${page}&limit=${limit}` : "";
+  return apiCall(`/admin/mbe/records${query}`, "GET");
+}
+

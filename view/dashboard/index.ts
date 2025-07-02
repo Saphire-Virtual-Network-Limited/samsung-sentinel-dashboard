@@ -45,8 +45,12 @@ import CollectionXiaomiView from "./reports/sales/xiaomi/collectionView";
 import AndroidActivationView from "./sales/android-tools/AndroidActivationView";
 import ActivationOtpView from "./sales/activities/ActivationOtpView";
 import NewSalesHomeView from "./sales/NewSalesHomeView";
+import MBEPage from "./staff/MBE/mbeView";
+import SingleMBEPage from "./staff/MBE/singleMBE";
 
 export {
+  MBEPage,
+  SingleMBEPage,
   NewSalesHomeView,
   AndroidActivationView,
   ActivationOtpView,
@@ -94,4 +98,6 @@ export {
   CollectionOverviewView,
   CollectionSamsungView,
   CollectionXiaomiView,
+  
+
 };
