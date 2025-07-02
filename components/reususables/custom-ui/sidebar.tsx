@@ -222,7 +222,6 @@ export function AppSidebar() {
           title: "SCAN Partners",
           url: "/access/admin/staff/scan-partners",
         },
-
       ],
     },
     {
@@ -453,6 +452,10 @@ export function AppSidebar() {
           title: "MBE",
           url: "/access/sub-admin/staff/mbe",
         },
+        {
+          title: "SCAN Partners",
+          url: "/access/sub-admin/staff/scan-partners",
+        },
       ],
     },
     {
@@ -510,7 +513,6 @@ export function AppSidebar() {
     ...adminRelayItems,
     ...adminAndroidItems,
     ...subAdminItems,
-
   ];
 
   const salesItems: MenuItem[] = [
