@@ -531,7 +531,7 @@ export async function exportAllAgentDetails(options?: ApiCallOptions) {
 }
 
 export async function deleteAgentDetails(data: any, options?: ApiCallOptions) {
-  return apiCall(`/admin/mbe/delete-agent`, "DELETE", data, options);
+  return apiCall(`/admin/mbe/delete-agent`, "POST", data, options);
 }
 
 // ============================================================================
@@ -561,11 +561,14 @@ export async function getScanPartnerByUserId(
 }
 
 // ============================================================================
-// GET MBE DETAILS WITH 
+// GET MBE DETAILS WITH
 // ============================================================================
 
-
-export async function getMBEwithCustomer(mbeId?: string, page?: number, limit?: number) {
+export async function getMBEwithCustomer(
+  mbeId?: string,
+  page?: number,
+  limit?: number
+) {
   const query = mbeId ? `?mbeId=${mbeId}&page=${page}&limit=${limit}` : "";
   return apiCall(`/admin/mbe/records${query}`, "GET");
 }
@@ -580,23 +583,33 @@ export async function deleteCustomer(customerId: string) {
 
 // Update customer LastPoint
 
-export async function updateCustomerLastPoint(customerId: string, lastPoint: string) {
-  return apiCall(`/admin/customers/update-last-point?customerId=${customerId}&lastPoint=${lastPoint}`, "PUT");
+export async function updateCustomerLastPoint(
+  customerId: string,
+  lastPoint: string
+) {
+  return apiCall(
+    `/admin/customers/update-last-point?customerId=${customerId}&lastPoint=${lastPoint}`,
+    "PUT"
+  );
 }
 
 // Update customer virtual wallet balance
 
-export async function updateCustomerVirtualWalletBalance(customerId: string, amount: number) {
-  return apiCall(`/admin/customers/update-wallet?customerId=${customerId}&amount=${amount}`, "PUT");
+export async function updateCustomerVirtualWalletBalance(
+  customerId: string,
+  amount: number
+) {
+  return apiCall(
+    `/admin/customers/update-wallet?customerId=${customerId}&amount=${amount}`,
+    "PUT"
+  );
 }
 
 // Create customer virtual wallet
 
 export async function createCustomerVirtualWallet(customerId: string) {
-  return apiCall(`/admin/customers/create-customer-wallet/${customerId}`, "POST");
+  return apiCall(
+    `/admin/customers/create-customer-wallet/${customerId}`,
+    "POST"
+  );
 }
-
-
-
-
-
