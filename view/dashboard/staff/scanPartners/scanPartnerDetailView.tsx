@@ -320,6 +320,8 @@ export default function ScanPartnerSinglePage() {
   };
 
   const role = getUserRole(String(userResponse?.data?.role));
+  const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
+  const userId = userResponse?.data?.userId;
 
   const {
     data: scanPartner,
@@ -328,7 +330,10 @@ export default function ScanPartnerSinglePage() {
     mutate,
   } = useSWR(
     "scan-partner-record",
-    () => fetchScanPartner(params.id as string),
+    () =>
+      fetchScanPartner(
+        isScanPartner ? (userId as string) : (params.id as string)
+      ),
     {
       onError: (error) => {
         console.error("Error fetching scan partner:", error);

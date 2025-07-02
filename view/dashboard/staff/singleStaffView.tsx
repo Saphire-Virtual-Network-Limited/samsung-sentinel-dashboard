@@ -477,7 +477,6 @@ export default function AgentSinglePage() {
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
-  const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
   // Use SWR for data fetching
   const userId = userResponse?.data?.userId;
   const {
@@ -488,7 +487,7 @@ export default function AgentSinglePage() {
   } = useSWR(
     "sales-agent-records",
     () =>
-      fetchAgent(isScanPartner ? (userId as string) : (params.id as string)),
+      fetchAgent((params.id as string)),
     {
       onError: (error) => {
         console.error("Error fetching agent:", error);
