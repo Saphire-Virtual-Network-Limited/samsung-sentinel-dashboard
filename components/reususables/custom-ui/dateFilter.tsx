@@ -9,26 +9,48 @@ interface DateFilterProps {
 	onFilterChange: (startDate: string, endDate: string) => void;
 	initialStartDate?: string;
 	initialEndDate?: string;
+	defaultDateRange?: { days: number }; // e.g., { days: 7 } for past 7 days
 	className?: string;
 	isLoading?: boolean;
 }
 
-const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDate, initialEndDate, className, isLoading = false }) => {
+const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDate, initialEndDate, defaultDateRange, className, isLoading = false }) => {
 	// Range state for DateRangePicker
 	const [range, setRange] = useState<{ start: DateValue | null; end: DateValue | null }>({
 		start: null,
 		end: null,
 	});
 
-	// Initialize the picker if initial dates are provided
+	// Function to calculate default date range
+	const getDefaultDateRange = (days: number) => {
+		const endDate = new Date();
+		const startDate = new Date();
+		startDate.setDate(endDate.getDate() - days);
+		
+		return {
+			start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+			end: endDate.toISOString().split('T')[0]     // YYYY-MM-DD format
+		};
+	};
+
+	// Initialize the picker if initial dates are provided or apply default range
 	useEffect(() => {
 		if (initialStartDate && initialEndDate) {
 			setRange({
 				start: parseDate(initialStartDate),
 				end: parseDate(initialEndDate),
 			});
+		} else if (defaultDateRange && !initialStartDate && !initialEndDate) {
+			// Apply default date range and trigger the filter
+			const defaultRange = getDefaultDateRange(defaultDateRange.days);
+			setRange({
+				start: parseDate(defaultRange.start),
+				end: parseDate(defaultRange.end),
+			});
+			// Automatically apply the default filter
+			onFilterChange(defaultRange.start, defaultRange.end);
 		}
-	}, [initialStartDate, initialEndDate]);
+	}, [initialStartDate, initialEndDate, defaultDateRange, onFilterChange]);
 
 	// Validate that both start and end are set and start <= end
 	const isValidRange = (r: { start: DateValue | null; end: DateValue | null }) => {

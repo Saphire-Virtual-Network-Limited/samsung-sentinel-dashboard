@@ -67,8 +67,8 @@ const ActivationOtpView = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    // e.preventDefault();
     if (!validateForm()) return;
     if (formData.otpType === "email") await handleSendEmail();
     else if (formData.otpType === "sms") await handleSendSms();

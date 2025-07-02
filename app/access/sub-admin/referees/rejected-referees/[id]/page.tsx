@@ -1,0 +1,21 @@
+"use client";
+import React from "react";
+import { SingleRefereeView } from "@/view/dashboard";
+
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function SingleRefereePage({ params }: PageProps) {
+  const resolvedParams = React.use(params);
+  const role = "dev"; // Hardcoded for this route
+
+  return (
+    <SingleRefereeView 
+      id={resolvedParams.id} 
+      role={role}
+    />
+  );
+}

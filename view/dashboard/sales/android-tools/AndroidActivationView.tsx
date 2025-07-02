@@ -41,8 +41,8 @@ const AndroidActivationView = () => {
     () => !validateForm(),
     [formData, validateForm]
   );
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    // e.preventDefault();
     if (!validateForm()) return;
 
     // Submit logic here — possibly sending a FormData payload

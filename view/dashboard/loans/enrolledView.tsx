@@ -183,7 +183,7 @@ export default function EnrolledView() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>

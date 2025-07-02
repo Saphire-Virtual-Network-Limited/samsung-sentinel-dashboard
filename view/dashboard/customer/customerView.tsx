@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerRecord, capitalize, calculateAge } from "@/lib";
+import { getAllCustomerRecord, capitalize, calculateAge, deleteCustomer, showToast, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import {
@@ -23,16 +23,26 @@ import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { CustomerRecord } from "./types";
 import { statusOptions, columns, statusColorMap } from "./constants";
+import {  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+
 
 export default function CustomerPage() {
   const router = useRouter();
   const pathname = usePathname();
   // Get the role from the URL path (e.g., /access/dev/customers -> dev)
   const role = pathname.split("/")[2];
+
+  const { userResponse } = useAuth();
+  const userEmail = userResponse?.data?.email || "";
+
   // --- date filter state ---
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [hasNoRecords, setHasNoRecords] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
+  const { isOpen: isCancelBill, onOpen: onCancelBill, onClose: onCancelBillClose } = useDisclosure();
+
 
   // --- table state ---
   const [filterValue, setFilterValue] = useState("");
@@ -80,7 +90,7 @@ export default function CustomerPage() {
     }
   );
 
-  console.log(raw);
+  // console.log(raw);
 
   const customers = useMemo(
     () =>
@@ -156,6 +166,22 @@ export default function CustomerPage() {
     saveAs(new Blob([buf]), "Customer_Records.xlsx");
   };
 
+
+  const handleCancelBill = async (customerId: string) => {
+    try {
+      setIsButtonLoading(true);
+      const response = await deleteCustomer(customerId);
+      showToast({ type: "success", message: "Bill cancelled successfully", duration: 3000 });
+      console.log(response);
+      onCancelBillClose();
+    } catch (error: any) {
+      console.error("Error cancelling bill:", error);
+      showToast({ type: "error", message: error.message, duration: 8000 });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
+
   // Render each cell, including actions dropdown:
   const renderCell = (row: CustomerRecord, key: string) => {
     if (key === "actions") {
@@ -176,6 +202,17 @@ export default function CustomerPage() {
               >
                 View
               </DropdownItem>
+              {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+                <DropdownItem
+                  key="cancelBill"
+                  onPress={() => {
+                    onCancelBill();
+                    setSelectedCustomer(row);
+                  }}
+                >
+                  Cancel Bill
+                </DropdownItem>
+              ) : null}
             </DropdownMenu>
           </Dropdown>
         </div>
@@ -251,8 +288,55 @@ export default function CustomerPage() {
           onDateFilterChange={handleDateFilter}
           initialStartDate={startDate}
           initialEndDate={endDate}
+          defaultDateRange={{ days: 2 }}
         />
       )}
+
+<Modal
+				isOpen={isCancelBill}
+				onClose={onCancelBillClose}
+				size="lg">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Confirm Customer Bill Cancellation</ModalHeader>
+							<ModalBody>
+								<p className="text-md text-default-500">
+									Are you sure you want to cancel this customer's bill?  This action cannot be undone.
+								</p>
+
+
+                {selectedCustomer && (
+                  <div className="mt-4">
+                    <p className="font-medium">Customer Name: {selectedCustomer.firstName} {selectedCustomer.lastName}</p>
+                    <p className="font-medium">BVN: {selectedCustomer.bvn}</p>  
+                    <p className="font-medium">Customer ID: {selectedCustomer.customerId}</p>
+                  </div>
+                )}
+								
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => selectedCustomer && handleCancelBill(selectedCustomer.customerId)}  
+									isLoading={isButtonLoading}>
+									Confirm
+								</Button>
+								<Button
+									color="danger"
+									variant="light"
+									onPress={() => {
+										onCancelBillClose();
+										setSelectedCustomer(null);
+									}}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
     </>
   );
 }

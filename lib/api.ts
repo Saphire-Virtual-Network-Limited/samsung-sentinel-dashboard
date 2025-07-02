@@ -559,3 +559,44 @@ export async function getScanPartnerByUserId(
     options
   );
 }
+
+// ============================================================================
+// GET MBE DETAILS WITH 
+// ============================================================================
+
+
+export async function getMBEwithCustomer(mbeId?: string, page?: number, limit?: number) {
+  const query = mbeId ? `?mbeId=${mbeId}&page=${page}&limit=${limit}` : "";
+  return apiCall(`/admin/mbe/records${query}`, "GET");
+}
+
+// ============================================================================
+// CANCEL/DELETE BILL
+// ============================================================================
+
+export async function deleteCustomer(customerId: string) {
+  return apiCall(`/admin/customers/delete-customer/${customerId}`, "DELETE");
+}
+
+// Update customer LastPoint
+
+export async function updateCustomerLastPoint(customerId: string, lastPoint: string) {
+  return apiCall(`/admin/customers/update-last-point?customerId=${customerId}&lastPoint=${lastPoint}`, "PUT");
+}
+
+// Update customer virtual wallet balance
+
+export async function updateCustomerVirtualWalletBalance(customerId: string, amount: number) {
+  return apiCall(`/admin/customers/update-wallet?customerId=${customerId}&amount=${amount}`, "PUT");
+}
+
+// Create customer virtual wallet
+
+export async function createCustomerVirtualWallet(customerId: string) {
+  return apiCall(`/admin/customers/create-customer-wallet/${customerId}`, "POST");
+}
+
+
+
+
+

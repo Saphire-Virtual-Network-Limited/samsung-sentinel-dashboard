@@ -427,7 +427,7 @@ export default function OverviewReport() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>
