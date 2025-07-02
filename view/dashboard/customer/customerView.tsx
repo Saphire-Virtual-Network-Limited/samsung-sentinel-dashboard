@@ -34,6 +34,8 @@ export default function CustomerPage() {
 
   const { userResponse } = useAuth();
   const userName = userResponse?.data?.firstName || "";
+  const userRole = userResponse?.data?.role || "";
+  const userEmail = userResponse?.data?.email || "";
 
   // --- date filter state ---
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -202,7 +204,7 @@ export default function CustomerPage() {
               >
                 View
               </DropdownItem>
-              {(role === "dev" || (role === "admin" && userName === "Soneye")) ? (
+              {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
                 <DropdownItem
                   key="cancelBill"
                   onPress={() => {
