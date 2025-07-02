@@ -516,13 +516,13 @@ export async function deleteCustomer(customerId: string) {
 // Update customer LastPoint
 
 export async function updateCustomerLastPoint(customerId: string, lastPoint: string) {
-  return apiCall(`/admin/customers/update-last-point/${customerId}`, "PUT", { lastPoint });
+  return apiCall(`/admin/customers/update-last-point?customerId=${customerId}&lastPoint=${lastPoint}`, "PUT");
 }
 
 // Update customer virtual wallet balance
 
 export async function updateCustomerVirtualWalletBalance(customerId: string, amount: number) {
-  return apiCall(`/admin/customers/update-virtual-wallet-balance/${customerId}`, "PUT", { amount });
+  return apiCall(`/admin/customers/update-wallet?customerId=${customerId}&amount=${amount}`, "PUT");
 }
 
 // Create customer virtual wallet

@@ -1,19 +1,40 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getAllCustomerRecord, showToast } from "@/lib";
+import { getAllCustomerRecord, showToast, updateCustomerLastPoint, updateCustomerVirtualWalletBalance, useAuth } from "@/lib";
 import { PaymentReceipt } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
+import {  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+
 
 export default function CollectionSingleCustomerPage() {
-  const params = useParams();
+
+
   const router = useRouter();
+  const pathname = usePathname();
+  // Get the role from the URL path (e.g., /access/dev/customers -> dev)
+  const role = pathname.split("/")[2];
+
+  const { userResponse } = useAuth();
+  const userEmail = userResponse?.data?.email || "";
+  const params = useParams();
+
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
+  const [amount, setAmount] = useState<string>("");
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [lastPoint, setLastPoint] = useState<string>("");
+
+
+
+  const { isOpen: isUpdateWallet, onOpen: onUpdateWallet, onClose: onUpdateWalletClose } = useDisclosure();
+  const { isOpen: isUpdateLastPoint, onOpen: onUpdateLastPoint, onClose: onUpdateLastPointClose } = useDisclosure();
+
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -81,6 +102,72 @@ export default function CollectionSingleCustomerPage() {
         </div>
       </div>
     );
+  }
+
+  const handleUpdateWalletBalance = async () => {
+    if (!amount || isNaN(Number(amount))) {
+      showToast({
+        type: "error",
+        message: "Please enter a valid amount",
+        duration: 5000
+      });
+      return;
+    }
+
+    setIsButtonLoading(true);
+    try {
+      const response = await updateCustomerVirtualWalletBalance(customer.customerId, Number(amount));
+      console.log(response);
+      showToast({type: "success", 
+        message: "Wallet balance updated successfully",
+        duration: 5000
+      });
+      onUpdateWalletClose();
+      setAmount("");
+      setSelectedCustomer(null);
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to update wallet balance",
+        duration: 5000
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  }
+
+  const handleUpdateLastPoint = async () => {
+    if (!lastPoint) {
+      showToast({
+        type: "error",
+        message: "Please select a last point",
+        duration: 5000
+      });
+      return;
+    }
+
+    setIsButtonLoading(true);
+    try {
+      const response = await updateCustomerLastPoint(customer.customerId, lastPoint);
+      console.log(response);
+      showToast({type: "success", 
+        message: "Last point updated successfully",
+        duration: 5000
+      });
+      onUpdateLastPointClose();
+      setLastPoint("");
+      setSelectedCustomer(null);
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",  
+        message: error.message || "Failed to update last point",
+        duration: 5000
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
   }
 
   return (
@@ -888,6 +975,8 @@ export default function CollectionSingleCustomerPage() {
                         : "N/A"}
                     </div>
                   </div>
+
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">
                       Loan Updated At
@@ -900,6 +989,23 @@ export default function CollectionSingleCustomerPage() {
                         : "N/A"}
                     </div>
                   </div>
+
+                  {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+
+                          <div className="bg-default-50 rounded-lg p-4">
+
+                          <button
+                            className="bg-primary text-white px-4 py-2 rounded-md"
+                            onClick={() => {
+                            onUpdateLastPoint();
+                            setSelectedCustomer(customer);
+                            }}>
+                            Update Last Point
+                          </button>
+
+                          </div>
+
+                          ) : null}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
                   <div className="bg-default-50 rounded-lg p-4">
@@ -1352,6 +1458,23 @@ export default function CollectionSingleCustomerPage() {
                         : "N/A"}
                     </div>
                   </div>
+
+                  {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+
+                   <div className="bg-default-50 rounded-lg p-4">
+
+                    <button
+                     className="bg-primary text-white px-4 py-2 rounded-md"
+                     onClick={() => {
+                      onUpdateWallet();
+                      setSelectedCustomer(customer);
+                     }}>
+                      Update Wallet Balance
+                    </button>
+                    
+                  </div>
+
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -2116,6 +2239,118 @@ export default function CollectionSingleCustomerPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+				isOpen={isUpdateWallet}
+				onClose={onUpdateWalletClose}
+				size="lg">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Update Wallet Balance</ModalHeader>
+							<ModalBody>
+								<p className="text-md text-default-500">
+									Are you sure you want to update this customer's wallet balance?  This action cannot be undone.
+								</p>
+
+                <FormField
+                    label="Amount"
+                    htmlFor="amount"
+                    type="number"
+                    id="amount"
+                    placeholder="Enter Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e as string)}  
+                    size="sm"
+                  />
+								
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => selectedCustomer && handleUpdateWalletBalance()}  
+									isLoading={isButtonLoading}>
+									Confirm
+								</Button>
+								<Button
+									color="danger"
+									variant="light"
+									onPress={() => {
+										onUpdateWalletClose();
+										setSelectedCustomer(null);
+										setAmount("");
+									}}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+
+      <Modal
+				isOpen={isUpdateLastPoint}
+				onClose={onUpdateLastPointClose}
+				size="lg">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Update Last Point</ModalHeader>
+							<ModalBody>
+								<p className="text-md text-default-500">
+									Are you sure you want to update this customer's last point?  This action cannot be undone.
+								</p>
+
+                <SelectField
+                  label="Last Point"
+                  htmlFor="lastPoint"
+                  id="lastPoint"
+                  placeholder="Select Last Point"
+                  options={[
+                    { label: "BVN Credit Check", value: "BVN Credit Check" },
+                    { label: "Loan Eligibility Check", value: "Loan Eligibility Check" },
+                    { label: "Card Tokenization", value: "Card Tokenization" },
+                    { label: "KYC Submission", value: "KYC Submission" },
+                    { label: "Mandate Creation", value: "Mandate Creation" },
+                    { label: "Loan Data Submission", value: "Loan Data Submission" },
+                    { label: "Down Payment", value: "Down Payment" },
+                    { label: "Virtual Account Creation", value: "Virtual Account Creation" },
+                    { label: "Mandate Approved", value: "Mandate Approved" },
+                    { label: "Device Enrollment Started", value: "Device Enrollment Started" },
+                    { label: "Device Enrollment Completed", value: "Device Enrollment Completed" }
+                  ]}
+                                     onChange={(e) => setLastPoint(e as string)}
+                  size="sm"
+                />
+
+
+
+								
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => selectedCustomer && handleUpdateLastPoint()}  
+									isLoading={isButtonLoading}>
+									Confirm
+								</Button>
+								<Button
+									color="danger"
+									variant="light"
+									onPress={() => {
+										onUpdateLastPointClose();
+										setSelectedCustomer(null);
+									}}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
     </div>
   );
 }

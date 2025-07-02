@@ -37,10 +37,11 @@ export interface GenericTableProps<T> {
 	onDateFilterChange?: (start: string, end: string) => void;
 	initialStartDate?: string;
 	initialEndDate?: string;
+	defaultDateRange?: { days: number };
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
-	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate } = props;
+	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate, defaultDateRange } = props;
 
 	// Exclude status column if hidden
 	const displayedColumns = [
@@ -92,6 +93,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 						initialStartDate={startDate}
 						initialEndDate={endDate}
 						isLoading={isLoading}
+						defaultDateRange={defaultDateRange}
 					/>
 				)}
 				<div className="flex gap-3">

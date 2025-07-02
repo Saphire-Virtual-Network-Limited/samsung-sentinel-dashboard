@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
@@ -33,8 +33,6 @@ export default function CustomerPage() {
   const role = pathname.split("/")[2];
 
   const { userResponse } = useAuth();
-  const userName = userResponse?.data?.firstName || "";
-  const userRole = userResponse?.data?.role || "";
   const userEmail = userResponse?.data?.email || "";
 
   // --- date filter state ---
@@ -290,6 +288,7 @@ export default function CustomerPage() {
           onDateFilterChange={handleDateFilter}
           initialStartDate={startDate}
           initialEndDate={endDate}
+          defaultDateRange={{ days: 2 }}
         />
       )}
 
