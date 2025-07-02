@@ -312,7 +312,14 @@ export default function ScanPartnerSinglePage() {
   // Use SWR for data fetching
 
   const { userResponse } = useAuth();
-  const role = userResponse?.data?.role;
+  const getUserRole = (userRole: string) => {
+    const role = userRole.toLowerCase();
+    if (role === "admin") return "sub-admin";
+    if (role === "super-admin") return "admin";
+    return role;
+  };
+
+  const role = getUserRole(String(userResponse?.data?.role));
 
   const {
     data: scanPartner,
