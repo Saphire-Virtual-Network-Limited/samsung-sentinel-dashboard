@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           case "SUPER_ADMIN":
             return currentPath.startsWith("/access/admin");
           case "ADMIN":
-            return currentPath.startsWith("/access/admin/sub");
+            return currentPath.startsWith("/access/sub-admin");
           case "DEVELOPER":
             return currentPath.startsWith("/access/dev");
           case "FINANCE":
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             router.replace("/access/admin");
             break;
           case "ADMIN":
-            router.replace("/access/admin/sub");
+            router.replace("/access/sub-admin");  
             break;
           case "DEVELOPER":
             router.replace("/access/dev");
