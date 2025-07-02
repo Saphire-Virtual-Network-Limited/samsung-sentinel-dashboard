@@ -5,6 +5,7 @@ import {
   showToast,
   suspendUser as suspendScanPartner,
   capitalize,
+  useAuth,
 } from "@/lib";
 
 import {
@@ -307,9 +308,12 @@ export default function ScanPartnerSinglePage() {
   } = useDisclosure();
 
   // Get the role from the URL path
-  const role = window.location.pathname.split("/")[2] || "admin";
 
   // Use SWR for data fetching
+
+  const { userResponse } = useAuth();
+  const role = userResponse?.data?.role;
+
   const {
     data: scanPartner,
     error,
