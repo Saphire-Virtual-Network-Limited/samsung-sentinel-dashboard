@@ -454,7 +454,7 @@ export function AppSidebar() {
         },
         {
           title: "SCAN Partners",
-          url: "/access/admin/staff/scan-partners",
+          url: "/access/sub-admin/staff/scan-partners",
         },
       ],
     },
