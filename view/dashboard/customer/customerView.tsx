@@ -202,7 +202,7 @@ export default function CustomerPage() {
               >
                 View
               </DropdownItem>
-              {(role === "dev" || (role === "admin" && userName === "Timileyin")) ? (
+              {(role === "dev" || (role === "admin" && userName === "Soneye")) ? (
                 <DropdownItem
                   key="cancelBill"
                   onPress={() => {
