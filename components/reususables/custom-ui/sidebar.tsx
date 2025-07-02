@@ -143,6 +143,22 @@ export function AppSidebar() {
       },
     ];
   // : [];
+
+  const scanParterItems: MenuItem[] = [
+    {
+      icon: IoBusiness,
+      title: "Staff",
+      url: "/access/scan-partner/staff",
+      id: "scan-partner-staff",
+      subItems: [
+        {
+          title: "Profile",
+          url: `/access/scan-partner/profile`,
+        },
+      ],
+    },
+  ];
+
   const adminRootItems: MenuItem[] = [
     {
       title: "Dashboard",
@@ -201,6 +217,12 @@ export function AppSidebar() {
           title: "MBE",
           url: "/access/admin/staff/mbe",
         },
+
+        {
+          title: "SCAN Partners",
+          url: "/access/admin/staff/scan-partners",
+        },
+
       ],
     },
     {
@@ -488,7 +510,7 @@ export function AppSidebar() {
     ...adminRelayItems,
     ...adminAndroidItems,
     ...subAdminItems,
-    
+
   ];
 
   const salesItems: MenuItem[] = [
@@ -815,6 +837,9 @@ export function AppSidebar() {
         return collectionAdminItems;
       case "COLLECTION_OFFICER":
         return collectionOfficerItems;
+
+      case "SCAN_PARTNER":
+        return scanParterItems;
       default:
         return [];
     }

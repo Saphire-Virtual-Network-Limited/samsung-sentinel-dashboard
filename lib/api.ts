@@ -61,6 +61,7 @@ async function apiCall(
   } catch (error: any) {
     const status = error?.response?.status;
 
+    /**
     // If Unauthorized, clear session and redirect to login
     if (status === 401 && typeof window !== "undefined") {
       // Clear any stored product key
@@ -70,7 +71,7 @@ async function apiCall(
       // Return a never‑resolving promise to stop further execution
       return new Promise(() => {});
     }
-
+ */
     const errorMessage =
       error?.response?.data?.message ||
       error?.message ||
@@ -165,6 +166,17 @@ export async function getAllDefaultedRecord(
   return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
+//** Users Management */
+
+export async function suspendUser({
+  adminId,
+  status,
+}: {
+  adminId: string;
+  status: string;
+}) {
+  return apiCall("/admin/suspend", "POST");
+}
 //** Devices */
 
 export async function getAllDevicesData(startDate?: string, endDate?: string) {
@@ -451,20 +463,47 @@ export async function getAllAgentRecord(
 ) {
   const query =
     startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
-  return apiCall(`/agent/get/agents${query}`, "GET", undefined, options);
+  return apiCall(`/admin/mbe/records${query}`, "GET", undefined, options);
 }
 
-export async function updateAgentStatus(
+export async function getAgentRecordByMbeId(
+  mbeId: string,
+
+  options?: ApiCallOptions
+) {
+  return apiCall(`/admin/mbe/get/${mbeId}`, "GET", undefined, options);
+}
+
+export async function getAgentDevice(
+  { mbeId }: { mbeId: string },
+  options?: ApiCallOptions
+) {
+  return apiCall(
+    `/agent/erp/admin/item-balances/${mbeId}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+export async function updateAgentAddressStatus(
   {
     status,
     mbeId,
+    kycId,
   }: {
     status: "APPROVED" | "REJECTED" | any;
     mbeId: string;
+    kycId: string;
   },
   options?: ApiCallOptions
 ) {
-  return apiCall(`/agent/update/status`, "PUT", { status, mbeId }, options);
+  return apiCall(
+    `/admin/mbe/verify-address`,
+    "POST",
+    { status, mbeId, kycId },
+    options
+  );
 }
 
 export async function updateAgentGuarantorStatus(
@@ -480,7 +519,7 @@ export async function updateAgentGuarantorStatus(
   options?: ApiCallOptions
 ) {
   return apiCall(
-    `/agent/guarantor/verify`,
+    `/admin/mbe/verify-guarantors`,
     "POST",
     { status, mbeId, guarantorId },
     options
@@ -492,7 +531,33 @@ export async function exportAllAgentDetails(options?: ApiCallOptions) {
 }
 
 export async function deleteAgentDetails(data: any, options?: ApiCallOptions) {
-  return apiCall(`/agent/delete`, "DELETE", data, options);
+  return apiCall(`/admin/mbe/delete-agent`, "DELETE", data, options);
+}
+
+// ============================================================================
+// SCAN PARTNERS
+// ============================================================================
+export async function getAllScanPartners(
+  startDate?: string,
+  endDate?: string,
+  options?: ApiCallOptions
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/mbe/scan-partners${query}`, "GET", undefined, options);
+}
+
+export async function getScanPartnerByUserId(
+  userId: string,
+
+  options?: ApiCallOptions
+) {
+  return apiCall(
+    `/admin/mbe/scan-partner/${userId}`,
+    "GET",
+    undefined,
+    options
+  );
 }
 
 // ============================================================================

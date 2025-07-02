@@ -1,12 +1,15 @@
 "use client";
 
 import {
-  getAllAgentRecord,
   showToast,
-  updateAgentStatus,
   updateAgentGuarantorStatus,
   deleteAgentDetails,
+  getAgentDevice,
+  getAgentRecordByMbeId,
+  updateAgentAddressStatus,
 } from "@/lib";
+import { useAuth } from "@/lib";
+
 import {
   Avatar,
   Button,
@@ -25,25 +28,49 @@ import {
   DropdownItem,
   Divider,
 } from "@heroui/react";
+
 import {
   ArrowLeft,
   CreditCard,
   User,
   Users,
-  Check,
-  X,
   Store,
   MapPin,
   Clock,
   ChevronDown,
+  ChevronUp,
   Trash2,
   MoreVertical,
+  Smartphone,
 } from "lucide-react";
+
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
-import { AccountStatus, type AgentRecord } from "./types";
+import type { AccountStatus, AgentRecord } from "./types";
 import useSWR from "swr";
+
+// Types for device data
+interface DeviceItem {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  availableQty: number;
+  serialNumbers: string[];
+  createdAt: string;
+  updatedAt: string;
+  mbeId: string;
+  expiryDate?: string;
+}
+
+interface DeviceResponse {
+  statusCode: number;
+  statusType: string;
+  message: string;
+  data: DeviceItem[];
+  responseTime: string;
+  channel: string;
+}
 
 // Utility Components
 const LoadingSpinner = () => (
@@ -78,36 +105,90 @@ const InfoCard = ({
   children,
   className = "",
   icon,
+  collapsible = false,
+  defaultExpanded = true,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
-}) => (
-  <div
-    className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-  >
-    <div className="p-4 border-b border-default-200">
-      <div className="flex items-center gap-2">
-        {icon}
-        <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  if (!collapsible) {
+    return (
+      <div
+        className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
+      >
+        <div className="p-4 border-b border-default-200">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          </div>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
+    >
+      <div
+        className="p-4 border-b border-default-200 cursor-pointer hover:bg-default-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          </div>
+          <Button
+            variant="light"
+            size="sm"
+            isIconOnly
+            className="text-default-500"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+      <div
+        className={`transition-all duration-300 ease-in-out ${
+          isExpanded
+            ? "max-h-none opacity-100"
+            : "max-h-0 opacity-0 overflow-hidden"
+        }`}
+      >
+        <div className="p-6">{children}</div>
       </div>
     </div>
-    <div className="p-6">{children}</div>
-  </div>
-);
+  );
+};
 
 const InfoField = ({
   label,
   value,
+  endComponent,
   copyable = false,
 }: {
   label: string;
   value?: string | null;
+  endComponent?: React.ReactNode;
   copyable?: boolean;
 }) => (
   <div className="bg-default-50 rounded-lg p-4">
-    <div className="text-sm text-default-500 mb-1">{label}</div>
+    <div className="flex items-center justify-between mb-1">
+      <div className="text-sm text-default-500">{label}</div>
+      {endComponent}
+    </div>
     <div className="font-medium text-default-900 flex items-center gap-2">
       {value || "N/A"}
       {copyable && value && (
@@ -140,6 +221,129 @@ const EmptyState = ({
     <p className="text-default-500 text-sm">{description}</p>
   </div>
 );
+
+const DeviceCard = ({ device }: { device: DeviceItem }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpiringSoon =
+    device.expiryDate &&
+    new Date(device.expiryDate) <=
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  const isExpired =
+    device.expiryDate && new Date(device.expiryDate) < new Date();
+
+  return (
+    <div className="bg-default-50 rounded-lg p-3 border border-default-200">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-default-900 text-sm truncate">
+            {device.itemName}
+          </h4>
+          <div className="flex items-center gap-2 text-xs text-default-500">
+            <span>#{device.itemCode}</span>
+            <span>•</span>
+            <span>
+              {device.availableQty} unit{device.availableQty !== 1 ? "s" : ""}
+            </span>
+            {device.expiryDate && (
+              <>
+                <span>•</span>
+                <span
+                  className={
+                    isExpired
+                      ? "text-danger"
+                      : isExpiringSoon
+                      ? "text-warning"
+                      : "text-success"
+                  }
+                >
+                  {isExpired
+                    ? "Expired"
+                    : isExpiringSoon
+                    ? "Due Soon"
+                    : "Active"}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+        <Button
+          variant="light"
+          size="md"
+          isIconOnly
+          className="text-default-400 hover:text-default-600 w-fit"
+          onPress={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? <span>Hide</span> : <span>View More</span>}
+        </Button>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-xs text-default-500">Serial Numbers:</div>
+        {isExpanded ? (
+          <div className="space-y-1">
+            {device.serialNumbers.map((serial, index) => (
+              <div
+                key={serial}
+                className="flex items-center justify-between bg-white rounded px-2 py-1 text-xs"
+              >
+                <span className="text-default-600">#{index + 1}</span>
+                <Snippet
+                  codeString={serial}
+                  size="sm"
+                  className="text-xs"
+                  hideSymbol
+                >
+                  {serial}
+                </Snippet>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="hidden flex flex-wrap gap-1">
+            {device.serialNumbers.slice(0, 3).map((serial) => (
+              <Snippet
+                key={serial}
+                codeString={serial}
+                size="sm"
+                className="text-xs"
+                hideSymbol
+              >
+                {serial.length > 8 ? `${serial.slice(0, 8)}...` : serial}
+              </Snippet>
+            ))}
+            {device.serialNumbers.length > 3 && (
+              <Chip size="sm" variant="flat" className="text-xs">
+                +{device.serialNumbers.length - 3} more
+              </Chip>
+            )}
+          </div>
+        )}
+      </div>
+
+      {(isExpanded || device.expiryDate) && (
+        <div className="flex items-center justify-between text-xs text-default-500 mt-2 pt-2 border-t border-default-200">
+          <span>
+            Assigned: {new Date(device.createdAt).toLocaleDateString()}
+          </span>
+          {device.expiryDate && (
+            <span
+              className={
+                isExpired
+                  ? "text-danger"
+                  : isExpiringSoon
+                  ? "text-warning"
+                  : "text-success"
+              }
+            >
+              Return by: {new Date(device.expiryDate).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const getStatusColor = (status?: string) => {
   switch (status) {
@@ -178,19 +382,21 @@ const GuarantorStatusChip = ({ status }: { status: string }) => {
   );
 };
 
+const AddressStatusChip = ({ status }: { status: string }) => {
+  return (
+    <Chip color={getStatusColor(status)} variant="flat" size="sm">
+      {status}
+    </Chip>
+  );
+};
+
 const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
 
-const mockUpdateAgentStatus = async (
-  agentId: string,
-  newStatus: AccountStatus
-) => {
-  // Simulate API call
-  await updateAgentStatus(
-    { status: newStatus, mbeId: agentId },
-    { appKey: MOBIFLEX_APP_KEY }
-  );
-  console.log(`Updating agent ${agentId} status to ${newStatus}`);
-  return { success: true, message: `Agent status updated to ${newStatus}` };
+// Delete agent function
+const mockDeleteAgent = async (agentId: string) => {
+  await deleteAgentDetails({ mbeId: agentId });
+  console.log(`Deleting agent ${agentId}`);
+  return { success: true, message: "Agent deleted successfully" };
 };
 
 // Mock function to update guarantor status
@@ -199,20 +405,28 @@ const mockUpdateGuarantorStatus = async (
   newStatus: string,
   agentId: string
 ) => {
-  // Simulate API call delay
-  await updateAgentGuarantorStatus(
-    { status: newStatus, mbeId: agentId, guarantorId },
-    { appKey: MOBIFLEX_APP_KEY }
-  );
+  await updateAgentGuarantorStatus({
+    status: newStatus,
+    mbeId: agentId,
+    guarantorId,
+  });
   console.log(`Updating guarantor ${guarantorId} status to ${newStatus}`);
   return { success: true, message: `Guarantor status updated to ${newStatus}` };
 };
 
-// Delete agent function
-const mockDeleteAgent = async (agentId: string) => {
-  await deleteAgentDetails({ mbeId: agentId }, { appKey: MOBIFLEX_APP_KEY });
-  console.log(`Deleting agent ${agentId}`);
-  return { success: true, message: "Agent deleted successfully" };
+// Mock function to update address status
+const mockUpdateAddressStatus = async (
+  kycId: string,
+  newStatus: string,
+  agentId: string
+) => {
+  await updateAgentAddressStatus({
+    status: newStatus,
+    mbeId: agentId,
+    kycId,
+  });
+  console.log(`Updating address ${kycId} status to ${newStatus}`);
+  return { success: true, message: `Address status updated to ${newStatus}` };
 };
 
 // Fetcher function for useSWR
@@ -220,93 +434,90 @@ const fetchAgent = async (agentId: string) => {
   if (!agentId) {
     throw new Error("Agent ID is required");
   }
-  const response = await getAllAgentRecord(undefined, undefined, {
-    appKey: MOBIFLEX_APP_KEY,
-  });
-  const agentData: AgentRecord = response?.data?.data?.find(
-    (a: AgentRecord) => a.mbeId == agentId
-  );
+  const response = await getAgentRecordByMbeId(agentId);
+  const agentData: AgentRecord = response?.data?.data;
   if (!agentData) {
     throw new Error("Agent not found");
   }
   return agentData;
 };
 
+// Fetcher function for agent devices
+const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
+  if (!agentId) {
+    throw new Error("Agent ID is required");
+  }
+  try {
+    const response: DeviceResponse = await getAgentDevice(
+      { mbeId: agentId },
+      { appKey: MOBIFLEX_APP_KEY }
+    );
+    return response?.data || [];
+  } catch (error) {
+    console.error("Error fetching agent devices:", error);
+    return [];
+  }
+};
+
 // Main Component
 export default function AgentSinglePage() {
   const params = useParams();
   const router = useRouter();
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const { userResponse } = useAuth();
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
   );
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<AccountStatus | null>(
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState<string | null>(
     null
   );
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isConfirmOpen,
-    onOpen: onConfirmOpen,
-    onClose: onConfirmClose,
-  } = useDisclosure();
   const {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
-
+  const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
   // Use SWR for data fetching
+  const userId = userResponse?.data?.userId;
   const {
     data: agent,
     error,
     isLoading,
     mutate,
-  } = useSWR("sales-agent-records", () => fetchAgent(params.id as string), {
-    onError: (error) => {
-      console.error("Error fetching agent:", error);
-      showToast({
-        type: "error",
-        message: error.message || "Failed to fetch agent data",
-        duration: 5000,
-      });
-    },
-    revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-    dedupingInterval: 30000,
-  });
-
-  const handleStatusUpdate = async (newStatus: AccountStatus) => {
-    if (!agent) return;
-
-    setIsUpdatingStatus(true);
-    try {
-      const result = await mockUpdateAgentStatus(agent.mbeId, newStatus);
-      if (result.success) {
-        await mutate(
-          { ...agent, accountStatus: newStatus },
-          { revalidate: false }
-        );
+  } = useSWR(
+    "sales-agent-records",
+    () =>
+      fetchAgent(isScanPartner ? (userId as string) : (params.id as string)),
+    {
+      onError: (error) => {
+        console.error("Error fetching agent:", error);
         showToast({
-          type: "success",
-          message: result.message,
-          duration: 3000,
+          type: "error",
+          message: error.message || "Failed to fetch agent data",
+          duration: 5000,
         });
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      showToast({
-        type: "error",
-        message: "Failed to update agent status",
-        duration: 5000,
-      });
-      mutate();
-    } finally {
-      setIsUpdatingStatus(false);
-      onConfirmClose();
-      setPendingStatus(null);
+      },
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 30000,
     }
-  };
+  );
+
+  // Use SWR for agent devices
+  const {
+    data: devices,
+    error: devicesError,
+    isLoading: devicesLoading,
+  } = useSWR(
+    agent ? `agent-devices-${agent.mbeId}` : null,
+    () => fetchAgentDevices(agent!.mbeId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000,
+    }
+  );
 
   const handleGuarantorStatusUpdate = async (
     guarantorId: string,
@@ -322,7 +533,6 @@ export default function AgentSinglePage() {
         agent.mbeId
       );
       if (result.success) {
-        // Update the guarantor status in the local state
         const updatedGuarantors = agent.MbeGuarantor?.map((g) =>
           g.guarantorid === guarantorId
             ? { ...g, guarantorStatus: newStatus }
@@ -351,6 +561,48 @@ export default function AgentSinglePage() {
     }
   };
 
+  const handleAddressStatusUpdate = async (
+    kycId: string,
+    newStatus: string
+  ) => {
+    if (!agent) return;
+
+    setIsUpdatingAddress(kycId);
+    try {
+      const result = await mockUpdateAddressStatus(
+        kycId,
+        newStatus,
+        agent.mbeId
+      );
+      if (result.success) {
+        // Update the KYC status in the local state
+        const updatedKyc = agent.MbeKyc
+          ? {
+              ...agent.MbeKyc,
+              addressStatus: newStatus as AccountStatus,
+            }
+          : agent.MbeKyc;
+
+        await mutate({ ...agent, MbeKyc: updatedKyc! }, { revalidate: false });
+        showToast({
+          type: "success",
+          message: result.message,
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating address status:", error);
+      showToast({
+        type: "error",
+        message: "Failed to update address status",
+        duration: 5000,
+      });
+      mutate();
+    } finally {
+      setIsUpdatingAddress(null);
+    }
+  };
+
   const handleDeleteAgent = async () => {
     if (!agent) return;
 
@@ -363,7 +615,6 @@ export default function AgentSinglePage() {
           message: result.message,
           duration: 3000,
         });
-        // Navigate back after successful deletion
         router.back();
       }
     } catch (error) {
@@ -379,17 +630,6 @@ export default function AgentSinglePage() {
     }
   };
 
-  const handleStatusClick = (status: AccountStatus) => {
-    setPendingStatus(status);
-    onConfirmOpen();
-  };
-
-  const confirmStatusUpdate = () => {
-    if (pendingStatus) {
-      handleStatusUpdate(pendingStatus);
-    }
-  };
-
   // Handle loading state
   if (isLoading) return <LoadingSpinner />;
 
@@ -401,22 +641,13 @@ export default function AgentSinglePage() {
   const kyc = agent.MbeKyc;
   const accountDetails = agent.MbeAccountDetails;
   const mainStore = agent.storesNew;
-  const isApproved = agent.accountStatus === AccountStatus.APPROVED;
-  const isRejected = agent.accountStatus === AccountStatus.REJECTED;
-
-  const getStatusActionText = () => {
-    if (pendingStatus == AccountStatus.APPROVED) return "approve";
-    if (pendingStatus == AccountStatus.REJECTED) return "reject";
-    return "update";
-  };
-
-  const getStatusActionColor = () => {
-    if (pendingStatus === AccountStatus.APPROVED) return "text-success";
-    if (pendingStatus === AccountStatus.REJECTED) return "text-danger";
-    return "text-primary";
-  };
 
   const guarantorStatusOptions = [
+    { key: "APPROVED", label: "Approved", color: "success" },
+    { key: "REJECTED", label: "Rejected", color: "danger" },
+  ];
+
+  const addressStatusOptions = [
     { key: "APPROVED", label: "Approved", color: "success" },
     { key: "REJECTED", label: "Rejected", color: "danger" },
   ];
@@ -472,37 +703,13 @@ export default function AgentSinglePage() {
 
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center gap-3">
-              {!isApproved && (
-                <Button
-                  color="success"
-                  variant="flat"
-                  size="sm"
-                  startContent={<Check className="w-4 h-4" />}
-                  onPress={() => handleStatusClick(AccountStatus.APPROVED)}
-                  isDisabled={isUpdatingStatus || isDeleting}
-                >
-                  Approve
-                </Button>
-              )}
-              {!isRejected && (
-                <Button
-                  color="danger"
-                  variant="flat"
-                  size="sm"
-                  startContent={<X className="w-4 h-4" />}
-                  onPress={() => handleStatusClick(AccountStatus.REJECTED)}
-                  isDisabled={isUpdatingStatus || isDeleting}
-                >
-                  Reject
-                </Button>
-              )}
               <Button
                 color="danger"
                 variant="light"
                 size="sm"
                 startContent={<Trash2 className="w-4 h-4" />}
                 onPress={onDeleteOpen}
-                isDisabled={isUpdatingStatus || isDeleting}
+                isDisabled={isDeleting}
               >
                 Delete
               </Button>
@@ -526,55 +733,22 @@ export default function AgentSinglePage() {
                     variant="flat"
                     size="sm"
                     isIconOnly
-                    isDisabled={isUpdatingStatus || isDeleting}
+                    isDisabled={isDeleting}
                   >
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Agent actions">
-                  {[
-                    ...(!isApproved
-                      ? [
-                          <DropdownItem
-                            key="approve"
-                            startContent={<Check className="w-4 h-4" />}
-                            className="text-success"
-                            onPress={() =>
-                              handleStatusClick(AccountStatus.APPROVED)
-                            }
-                          >
-                            Approve Agent
-                          </DropdownItem>,
-                        ]
-                      : []),
-
-                    ...(!isRejected
-                      ? [
-                          <DropdownItem
-                            key="reject"
-                            startContent={<X className="w-4 h-4" />}
-                            className="text-danger"
-                            onPress={() =>
-                              handleStatusClick(AccountStatus.REJECTED)
-                            }
-                          >
-                            Reject Agent
-                          </DropdownItem>,
-                        ]
-                      : []),
-
-                    <DropdownItem
-                      key="delete"
-                      startContent={<Trash2 className="w-4 h-4" />}
-                      className="text-danger"
-                      onPress={onDeleteOpen}
-                    >
-                      Delete Agent
-                    </DropdownItem>,
-                  ]}
+                  <DropdownItem
+                    key="delete"
+                    startContent={<Trash2 className="w-4 h-4" />}
+                    className="text-danger"
+                    onPress={onDeleteOpen}
+                  >
+                    Delete Agent
+                  </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
-
               <Button
                 variant="flat"
                 color="primary"
@@ -588,100 +762,6 @@ export default function AgentSinglePage() {
           </div>
         </div>
       </div>
-
-      {/* Status Update Confirmation Modal */}
-      <Modal
-        isOpen={isConfirmOpen}
-        onClose={onConfirmClose}
-        size="md"
-        placement="center"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold">Confirm Status Update</h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={agent?.imageUrl || "/placeholder.svg"}
-                  alt={`${agent?.firstname} ${agent?.lastname}`}
-                  className="w-12 h-12"
-                />
-                <div>
-                  <p className="font-medium">
-                    {agent?.firstname} {agent?.lastname}
-                  </p>
-                  <p className="text-small text-default-500">{agent?.email}</p>
-                </div>
-              </div>
-              <div className="bg-default-50 rounded-lg p-4">
-                <p className="text-sm text-default-600 mb-2">
-                  Are you sure you want to{" "}
-                  <span className={`font-semibold ${getStatusActionColor()}`}>
-                    {getStatusActionText()}
-                  </span>{" "}
-                  this agent?
-                </p>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-default-500">Current status:</span>
-                  <Chip
-                    color={getStatusColor(agent?.accountStatus)}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {agent?.accountStatus || "PENDING"}
-                  </Chip>
-                  <span className="text-default-400">→</span>
-                  <Chip
-                    color={getStatusColor(pendingStatus || "")}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {pendingStatus || ""}
-                  </Chip>
-                </div>
-              </div>
-              {pendingStatus === AccountStatus.REJECTED && (
-                <div className="bg-danger-50 border border-danger-200 rounded-lg p-3">
-                  <p className="text-small text-danger-600">
-                    <strong>Warning:</strong> Rejecting this agent will prevent
-                    them from accessing their account and conducting
-                    transactions.
-                  </p>
-                </div>
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onConfirmClose}
-              isDisabled={isUpdatingStatus}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={
-                pendingStatus === AccountStatus.APPROVED ? "success" : "danger"
-              }
-              onPress={confirmStatusUpdate}
-              isLoading={isUpdatingStatus}
-              isDisabled={isUpdatingStatus}
-            >
-              {isUpdatingStatus
-                ? `${
-                    getStatusActionText().charAt(0).toUpperCase() +
-                    getStatusActionText().slice(1)
-                  }ing...`
-                : `${
-                    getStatusActionText().charAt(0).toUpperCase() +
-                    getStatusActionText().slice(1)
-                  } Agent`}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -765,6 +845,8 @@ export default function AgentSinglePage() {
             <InfoCard
               title="Personal Information"
               icon={<User className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
             >
               <div className="grid gap-4">
                 <InfoField label="Agent ID" value={agent.mbeId} copyable />
@@ -779,8 +861,14 @@ export default function AgentSinglePage() {
                 <InfoField label="Date of Birth" value={agent.dob} />
                 <InfoField label="Username" value={agent.username} />
                 <InfoField label="Channel" value={agent.channel} />
-                <InfoField label="State" value={agent.state} />
-                <InfoField label="City" value={agent.city} />
+                <InfoField
+                  label="State"
+                  value={agent.state || agent?.MbeKyc?.state}
+                />
+                <InfoField
+                  label="City"
+                  value={agent.city || agent?.MbeKyc?.city}
+                />
                 <InfoField
                   label="Active Status"
                   value={agent.isActive ? "Active" : "Inactive"}
@@ -808,6 +896,8 @@ export default function AgentSinglePage() {
             <InfoCard
               title="Statistics"
               icon={<Users className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
             >
               <div className="grid gap-4">
                 <InfoField
@@ -824,11 +914,59 @@ export default function AgentSinglePage() {
 
           {/* Right Column - Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Agent Devices */}
+            <InfoCard
+              title="Agent Devices"
+              icon={<Smartphone className="w-5 h-5 text-default-600" />}
+              collapsible={true}
+              defaultExpanded={true}
+            >
+              {devicesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : devices && devices.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-default-600">
+                      Individual devices currently assigned to this agent
+                    </p>
+                    <Chip size="sm" variant="flat" color="primary">
+                      {devices.reduce(
+                        (total, device) => total + device.serialNumbers.length,
+                        0
+                      )}{" "}
+                      Total Device
+                      {devices.reduce(
+                        (total, device) => total + device.serialNumbers.length,
+                        0
+                      ) !== 1
+                        ? "s"
+                        : ""}
+                    </Chip>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {devices.map((device) => (
+                      <DeviceCard key={device.id} device={device} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Devices Assigned"
+                  description="This agent currently has no devices assigned to them."
+                  icon={<Smartphone className="w-6 h-6 text-default-400" />}
+                />
+              )}
+            </InfoCard>
+
             {/* Main Store Information */}
             {mainStore?.storeNew ? (
               <InfoCard
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -861,6 +999,7 @@ export default function AgentSinglePage() {
                       {mainStore.storeNew.isArchived ? "Archived" : "Active"}
                     </Chip>
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Store ID"
@@ -893,12 +1032,14 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.region}
                     />
                   </div>
+
                   <div className="grid grid-cols-1 gap-4">
                     <InfoField
                       label="Address"
                       value={mainStore.storeNew.address}
                     />
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Phone Number"
@@ -909,6 +1050,7 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.storeEmail}
                     />
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
@@ -934,6 +1076,7 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
@@ -950,6 +1093,7 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
+
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-semibold text-default-900 flex items-center gap-2">
@@ -1010,6 +1154,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Store Assigned"
@@ -1024,6 +1170,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField label="KYC ID" value={kyc.kycId} copyable />
@@ -1055,14 +1203,59 @@ export default function AgentSinglePage() {
                     }
                   />
                 </div>
+
                 <div className="mt-4">
-                  <InfoField label="Full Address" value={kyc.fullAddress} />
+                  <InfoField
+                    label="Full Address"
+                    value={kyc.fullAddress}
+                    endComponent={
+                      <div className="flex items-center gap-2">
+                        <AddressStatusChip
+                          status={kyc.addressStatus || "PENDING"}
+                        />
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Button
+                              variant="flat"
+                              size="sm"
+                              endContent={<ChevronDown className="w-4 h-4" />}
+                              isDisabled={isUpdatingAddress === kyc.kycId}
+                              isLoading={isUpdatingAddress === kyc.kycId}
+                            >
+                              Update Status
+                            </Button>
+                          </DropdownTrigger>
+                          <DropdownMenu
+                            aria-label="Address status actions"
+                            onAction={(key) =>
+                              handleAddressStatusUpdate(
+                                kyc.kycId,
+                                key as string
+                              )
+                            }
+                          >
+                            {addressStatusOptions.map((option) => (
+                              <DropdownItem
+                                key={option.key}
+                                className={`text-${option.color}`}
+                                color={option.color as any}
+                              >
+                                {option.label}
+                              </DropdownItem>
+                            ))}
+                          </DropdownMenu>
+                        </Dropdown>
+                      </div>
+                    }
+                  />
                 </div>
               </InfoCard>
             ) : (
               <InfoCard
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No KYC Information"
@@ -1077,6 +1270,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField
@@ -1137,6 +1332,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Bank Account Details"
@@ -1151,6 +1348,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <div className="space-y-6">
                   {agent.MbeGuarantor.map((guarantor, index) => (
@@ -1253,6 +1452,8 @@ export default function AgentSinglePage() {
               <InfoCard
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={true}
               >
                 <EmptyState
                   title="No Guarantors"
