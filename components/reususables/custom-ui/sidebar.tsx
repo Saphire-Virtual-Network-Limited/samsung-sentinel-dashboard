@@ -512,7 +512,6 @@ export function AppSidebar() {
     ...adminRootItems,
     ...adminRelayItems,
     ...adminAndroidItems,
-    ...subAdminItems,
   ];
 
   const salesItems: MenuItem[] = [
