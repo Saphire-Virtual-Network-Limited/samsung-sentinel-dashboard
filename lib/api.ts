@@ -623,4 +623,31 @@ export async function createCustomerVirtualWallet(customerId: string) {
   );
 }
 
+// ============================================================================
+// DEVICE lOCKING AND UNLOCKING
+// ============================================================================
 
+export async function lockDevice(imei: string) {
+  return apiCall(`/admin/device-locks/lock-v34`, "POST", {imei});
+}
+
+export async function unlockDevice(imei: string) {
+  return apiCall(`/admin/device-locks/unlock`, "POST", {imei});
+}
+
+export async function releaseDevice(imei: string) {
+  return apiCall("/admin/device/release", "POST", { imei });
+}
+
+// ** Reminder Messages **
+export async function sendReminderMessage(customerId: string, imei: string) {
+  return apiCall("/admin/customer/send-reminder", "POST", { customerId, imei });
+}
+
+export async function sendDueReminderMessage(customerId: string, imei: string) {
+  return apiCall("/admin/customer/send-due-reminder", "POST", { customerId, imei });
+}
+
+export async function sendOverdueReminderMessage(customerId: string, imei: string) {
+  return apiCall("/admin/customer/send-overdue-reminder", "POST", { customerId, imei });
+}

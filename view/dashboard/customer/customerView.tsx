@@ -196,11 +196,17 @@ export default function CustomerPage() {
             <DropdownMenu>
               <DropdownItem
                 key="view"
-                onPress={() =>
-                  router.push(`/access/${role}/customers/${row.customerId}`)
-                }
+                onPress={() => router.push(`/access/${role}/customers/${row.customerId}`)}
+                className="cursor-pointer"
               >
                 View
+              </DropdownItem>
+              <DropdownItem
+                key="viewInNewTab"
+                onPress={() => window.open(`/access/${role}/customers/${row.customerId}`, "_blank")}
+                className="cursor-pointer"
+              >
+                View in new tab
               </DropdownItem>
               {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
                 <DropdownItem
