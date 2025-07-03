@@ -166,6 +166,15 @@ export async function getAllDefaultedRecord(
   return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
+export async function getAllDueLoanRecord(
+  fromDate?: string,
+  toDate?: string
+) {
+  const query =
+    fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
+  return apiCall(`/admin/loan/due${query}`, "GET");
+}
+
 //** Users Management */
 
 export async function suspendUser({
@@ -613,3 +622,5 @@ export async function createCustomerVirtualWallet(customerId: string) {
     "POST"
   );
 }
+
+

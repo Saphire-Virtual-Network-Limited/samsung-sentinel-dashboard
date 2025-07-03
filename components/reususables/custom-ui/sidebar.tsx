@@ -733,6 +733,12 @@ export function AppSidebar() {
       id: "collection-admin-dashboard",
     },
     {
+      title: "Loans",
+      icon: Home,
+      url: "/access/collection-admin/loans",
+      id: "collection-admin-loans",
+    },
+    {
       icon: CreditCard,
       title: "Customers",
       url: "/access/collection-admin/customers",
