@@ -420,6 +420,7 @@ export default function LoansView() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
+					defaultDateRange={{ days: 2 }}
 				/>
 			)}
 			
