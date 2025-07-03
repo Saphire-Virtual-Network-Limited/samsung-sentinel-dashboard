@@ -59,6 +59,10 @@ const statusOptions = [
     { name: "Enrolled", uid: "enrolled" },
 	{ name: "Pending", uid: "pending" },
 	{ name: "Approved", uid: "approved" },
+    { name: "Running", uid: "running" },
+    { name: "Completed", uid: "completed" },
+    { name: "Cancelled", uid: "cancelled" },
+    { name: "Due", uid: "due" },
 	{ name: "Rejected", uid: "rejected" },
 	{ name: "Defaulted", uid: "defaulted" },
 ];
@@ -69,6 +73,10 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 	enrolled: "warning",
 	defaulted: "danger",
+	due: "warning",
+	completed: "success",
+	cancelled: "danger",
+	running: "warning",
 };  
 
 type DueLoanRecord = {
@@ -346,7 +354,7 @@ export default function DueLoansView() {
                 numberOfRepayments: "0",
                 numberOfMissedRepayments: "0",
                 DueDate: loanRecord?.updatedAt ? new Date(new Date(loanRecord.updatedAt).setMonth(new Date(loanRecord.updatedAt).getMonth() + 1)).toLocaleDateString('en-GB') : 'N/A',
-                Status: "running",
+                Status: "Running",
                 deviceName: loanRecord?.deviceName || 'N/A',
                 deviceImei: loanRecord?.DeviceOnLoan?.[0]?.imei || 'N/A',
                 service: loanRecord?.channel || 'N/A',
