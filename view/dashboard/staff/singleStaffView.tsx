@@ -462,8 +462,17 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
 // Main Component
 export default function AgentSinglePage() {
   const params = useParams();
-  const router = useRouter();
   const { userResponse } = useAuth();
+  const getUserRole = (userRole: string) => {
+    const role = userRole.toLowerCase();
+    if (role === "admin") return "sub-admin";
+    if (role === "super-admin") return "admin";
+    return role;
+  };
+  const role = getUserRole(String(userResponse?.data?.role));
+
+  const router = useRouter();
+
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
   );
@@ -484,24 +493,19 @@ export default function AgentSinglePage() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    "sales-agent-records",
-    () =>
-      fetchAgent((params.id as string)),
-    {
-      onError: (error) => {
-        console.error("Error fetching agent:", error);
-        showToast({
-          type: "error",
-          message: error.message || "Failed to fetch agent data",
-          duration: 5000,
-        });
-      },
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 30000,
-    }
-  );
+  } = useSWR("sales-agent-records", () => fetchAgent(params.id as string), {
+    onError: (error) => {
+      console.error("Error fetching agent:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to fetch agent data",
+        duration: 5000,
+      });
+    },
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 30000,
+  });
 
   // Use SWR for agent devices
   const {
@@ -849,6 +853,29 @@ export default function AgentSinglePage() {
             >
               <div className="grid gap-4">
                 <InfoField label="Agent ID" value={agent.mbeId} copyable />
+                {agent?.userId && (
+                  <InfoField
+                    endComponent={
+                      <Button
+                        variant="flat"
+                        color="primary"
+                        size="sm"
+                        onPress={() => {
+                          router.push(
+                            `/access/${role}/staff/scan-partners/${agent.userId}`
+                          );
+                        }}
+                        className="font-medium"
+                      >
+                        View Details
+                      </Button>
+                    }
+                    label="SCAN Partner ID"
+                    value={agent.userId}
+                    copyable
+                  />
+                )}
+
                 <InfoField
                   label="Full Name"
                   value={`${agent.firstname} ${agent.lastname}`.trim()}
