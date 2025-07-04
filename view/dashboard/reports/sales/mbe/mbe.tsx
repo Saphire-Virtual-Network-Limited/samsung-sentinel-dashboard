@@ -605,6 +605,7 @@ export default function MbeReport() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
+					defaultDateRange={{ days: 2 }}
 				/>
 			)}
 		</>

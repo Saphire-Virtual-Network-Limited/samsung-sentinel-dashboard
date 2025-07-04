@@ -47,6 +47,7 @@ import ActivationOtpView from "./sales/activities/ActivationOtpView";
 import NewSalesHomeView from "./sales/NewSalesHomeView";
 import MBEPage from "./staff/MBE/mbeView";
 import SingleMBEPage from "./staff/MBE/singleMBE";
+import DueLoansView from "./loans/dueLoansView";    
 
 export {
   MBEPage,
@@ -98,6 +99,6 @@ export {
   CollectionOverviewView,
   CollectionSamsungView,
   CollectionXiaomiView,
-  
+  DueLoansView,
 
 };

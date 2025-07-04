@@ -377,6 +377,7 @@ export default function DefaultedView() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
+					defaultDateRange={{ days: 2 }}
 				/>
 			)}
 			
