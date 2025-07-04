@@ -651,3 +651,11 @@ export async function sendDueReminderMessage(customerId: string, imei: string) {
 export async function sendOverdueReminderMessage(customerId: string, imei: string) {
   return apiCall("/admin/customer/send-overdue-reminder", "POST", { customerId, imei });
 }
+
+// ============================================================================
+// Change loan status  | Approved, Rejected, Defaulted, Due, Overdue
+// ============================================================================
+
+export async function changeLoanStatus(loanRecordId: string, status: string) {
+  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status });
+}

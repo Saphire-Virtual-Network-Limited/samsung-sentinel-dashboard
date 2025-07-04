@@ -7,6 +7,7 @@ import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
 import { getAllCustomerRecord, capitalize, calculateAge, deleteCustomer, showToast, useAuth } from "@/lib";
+import { hasPermission } from "@/lib/permissions";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import {
@@ -208,7 +209,7 @@ export default function CustomerPage() {
               >
                 View in new tab
               </DropdownItem>
-              {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+              {hasPermission(role, "canDeleteCustomers", userEmail) ? (
                 <DropdownItem
                   key="cancelBill"
                   onPress={() => {
