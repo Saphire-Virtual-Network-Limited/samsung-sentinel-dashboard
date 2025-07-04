@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Store,
   Package2Icon,
+  Users2,
   Phone,
   Code,
   CreditCard,
@@ -263,6 +264,16 @@ export function AppSidebar() {
       ],
     },
     {
+      icon: Users2,
+      title: "Users",
+      id: "admin-users",
+      subItems: [
+        { title: "Manage", url: "/access/admin/users/mange" },
+        { title: "Create", url: "/access/admin/users/create" },
+      ],
+    },
+
+    {
       icon: Package2Icon,
       title: "Inventory",
       id: "admin-inventory",
@@ -496,6 +507,16 @@ export function AppSidebar() {
         { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
       ],
     },
+    {
+      icon: Users2,
+      title: "Users",
+      id: "admin-users",
+      subItems: [
+        { title: "Manage", url: "/access/sub-admin/users/mange" },
+        { title: "Create", url: "/access/sub-admin/users/create" },
+      ],
+    },
+
     {
       icon: Package2Icon,
       title: "Inventory",
