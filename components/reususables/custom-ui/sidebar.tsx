@@ -512,7 +512,6 @@ export function AppSidebar() {
     ...adminRootItems,
     ...adminRelayItems,
     ...adminAndroidItems,
-    ...subAdminItems,
   ];
 
   const salesItems: MenuItem[] = [
@@ -732,6 +731,12 @@ export function AppSidebar() {
       icon: Home,
       url: "/access/collection-admin/",
       id: "collection-admin-dashboard",
+    },
+    {
+      title: "Loans",
+      icon: Home,
+      url: "/access/collection-admin/loans",
+      id: "collection-admin-loans",
     },
     {
       icon: CreditCard,

@@ -67,6 +67,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 };
 
+
 type CustomerRecord = {
 	customerId: string;
 	firstName: string;

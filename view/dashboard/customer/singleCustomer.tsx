@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getAllCustomerRecord, showToast, updateCustomerLastPoint, updateCustomerVirtualWalletBalance, useAuth } from "@/lib";
+import { getAllCustomerRecord, showToast, updateCustomerLastPoint, updateCustomerVirtualWalletBalance, useAuth, lockDevice, unlockDevice, releaseDevice, sendReminderMessage, sendDueReminderMessage, sendOverdueReminderMessage } from "@/lib";
 import { PaymentReceipt } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
@@ -29,11 +29,20 @@ export default function CollectionSingleCustomerPage() {
   const [amount, setAmount] = useState<string>("");
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [lastPoint, setLastPoint] = useState<string>("");
+  const [selectedAction, setSelectedAction] = useState<string>("");
+  const [deviceActionData, setDeviceActionData] = useState<{
+    action: string;
+    label: string;
+    description: string;
+    imei: string;
+  } | null>(null);
 
 
 
   const { isOpen: isUpdateWallet, onOpen: onUpdateWallet, onClose: onUpdateWalletClose } = useDisclosure();
   const { isOpen: isUpdateLastPoint, onOpen: onUpdateLastPoint, onClose: onUpdateLastPointClose } = useDisclosure();
+  const { isOpen: isLockDevice, onOpen: onLockDevice, onClose: onLockDeviceClose } = useDisclosure();
+  const { isOpen: isDeviceAction, onOpen: onDeviceAction, onClose: onDeviceActionClose } = useDisclosure();
 
 
   useEffect(() => {
@@ -169,6 +178,129 @@ export default function CollectionSingleCustomerPage() {
       setIsButtonLoading(false);
     }
   }
+
+  // Device action configuration
+  const deviceActions = [
+    {
+      label: "Send Reminder Message",
+      value: "send_reminder_message",
+      description: "Send a general reminder message to the customer",
+      color: "primary"
+    },
+    {
+      label: "Send Due Reminder Message", 
+      value: "send_due_reminder_message",
+      description: "Send a reminder message for due payments",
+      color: "warning"
+    },
+    {
+      label: "Send Overdue Reminder Message",
+      value: "send_overdue_reminder_message", 
+      description: "Send a reminder message for overdue payments",
+      color: "danger"
+    },
+    {
+      label: "Lock Device",
+      value: "lock_device",
+      description: "Lock the customer's device remotely",
+      color: "danger"
+    },
+    {
+      label: "Unlock Device", 
+      value: "unlock_device",
+      description: "Unlock the customer's device remotely",
+      color: "success"
+    },
+    {
+      label: "Release Device",
+      value: "release_device",
+      description: "Release the device from the customer's account",
+      color: "warning"
+    }
+  ];
+
+  // Unified device action handler
+  const handleDeviceAction = async (action: string, imei: string) => {
+    if (!imei || imei === "N/A") {
+      showToast({
+        type: "error",
+        message: "No device found",
+        duration: 5000
+      });
+      return;
+    }
+
+    setIsButtonLoading(true);
+    try {
+      let response;
+      let successMessage = "";
+
+      switch (action) {
+        case "send_reminder_message":
+          response = await sendReminderMessage(customer.customerId, imei);
+          successMessage = "Reminder message sent successfully";
+          break;
+        case "send_due_reminder_message":
+          response = await sendDueReminderMessage(customer.customerId, imei);
+          successMessage = "Due reminder message sent successfully";
+          break;
+        case "send_overdue_reminder_message":
+          response = await sendOverdueReminderMessage(customer.customerId, imei);
+          successMessage = "Overdue reminder message sent successfully";
+          break;
+        case "lock_device":
+          response = await lockDevice(imei);
+          successMessage = "Device locked successfully";
+          break;
+        case "unlock_device":
+          response = await unlockDevice(imei);
+          successMessage = "Device unlocked successfully";
+          break;
+        case "release_device":
+          response = await releaseDevice(imei);
+          successMessage = "Device released successfully";
+          break;
+        default:
+          throw new Error("Invalid action");
+      }
+
+      console.log(response);
+      showToast({
+        type: "success",
+        message: successMessage,
+        duration: 5000
+      });
+      onDeviceActionClose();
+      setSelectedAction("");
+      setDeviceActionData(null);
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",
+        message: error.message || `Failed to ${action.replace(/_/g, ' ')}`,
+        duration: 5000
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
+
+  // Handle action selection and modal opening
+  const handleActionSelection = (actionValue: string) => {
+    const action = deviceActions.find(a => a.value === actionValue);
+    if (!action) return;
+
+    const imei = customer.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || "N/A";
+    
+    setDeviceActionData({
+      action: action.value,
+      label: action.label,
+      description: action.description,
+      imei: imei
+    });
+    
+    onDeviceAction();
+  };
 
   return (
     <div className="min-h-screen bg-default-50">
@@ -759,15 +891,18 @@ export default function CollectionSingleCustomerPage() {
               </div>
             </div>
 
-            {/* Device Activity Actions*/}
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">
-                  Device Activity Actions
-                </h3>
-              </div>
 
+            {/* locking and unlocking device*/}
+            
+
+            {/* Device Activity Actions*/}
+            {(role === 'dev' || role === 'collection-admin' || role === 'sub-admin') && (
               <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="p-3 border-b border-default-200">
+                  <h3 className="text-lg font-semibold text-default-900">
+                    Device Activity Actions
+                  </h3>
+                </div>
                 <div className="p-4">
                   <SelectField
                     label="Trigger Action"
@@ -775,36 +910,26 @@ export default function CollectionSingleCustomerPage() {
                     id="action"
                     placeholder="Select Action"
                     size="sm"
-                    options={[
-                      {
-                        label: "Send Reminder Message",
-                        value: "send_reminder_message",
-                      },
-                      {
-                        label: "Send due Reminder Message",
-                        value: "send_due_reminder_message",
-                      },
-                      {
-                        label: "Send Overdue Reminder Message",
-                        value: "send_overdue_reminder_message",
-                      },
-                      { label: "Lock Device", value: "lock_device" },
-                      { label: "Unlock Device", value: "unlock_device" },
-                      { label: "Release Device", value: "release_device" },
-                    ]}
-                    onChange={(e) => {}}
+                    defaultSelectedKeys={selectedAction ? [selectedAction] : []}
+                    options={deviceActions.map(action => ({
+                      label: action.label,
+                      value: action.value
+                    }))}
+                    onChange={(e) => setSelectedAction(e as string)}
                   />
                   <Button
                     className="mt-4"
                     size="sm"
                     color="primary"
                     variant="solid"
+                    isDisabled={!selectedAction}
+                    onPress={() => handleActionSelection(selectedAction)}
                   >
                     Trigger
                   </Button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column - Referees and Loan Info */}
@@ -2325,9 +2450,6 @@ export default function CollectionSingleCustomerPage() {
                   size="sm"
                 />
 
-
-
-								
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
 								<Button
@@ -2351,6 +2473,65 @@ export default function CollectionSingleCustomerPage() {
 					)}
 				</ModalContent>
 			</Modal>
+
+      {/* Dynamic Device Action Modal */}
+      <Modal
+        isOpen={isDeviceAction}
+        onClose={onDeviceActionClose}
+        size="lg">
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>{deviceActionData?.label}</ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <p className="text-md text-default-500">
+                    {deviceActionData?.description}
+                  </p>
+                  
+                  <div className="bg-default-50 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-medium text-default-700">Customer Details:</p>
+                    <p className="text-sm text-default-600">
+                      Name: {customer?.firstName} {customer?.lastName}
+                    </p>
+                    <p className="text-sm text-default-600">
+                      Device: {customer?.LoanRecord?.[0]?.deviceName || "N/A"}
+                    </p>
+                    <p className="text-sm text-default-600">
+                      IMEI: {deviceActionData?.imei || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+                    <p className="text-sm text-warning-700 font-medium">
+                      ⚠️ Warning: This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </ModalBody>
+              <ModalFooter className="flex gap-2">
+                <Button
+                  color="success"
+                  variant="solid"
+                  onPress={() => deviceActionData && handleDeviceAction(deviceActionData.action, deviceActionData.imei)}
+                  isLoading={isButtonLoading}>
+                  Confirm
+                </Button>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => {
+                    onDeviceActionClose();
+                    setSelectedAction("");
+                    setDeviceActionData(null);
+                  }}>
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
