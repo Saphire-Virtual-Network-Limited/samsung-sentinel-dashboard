@@ -2,15 +2,23 @@
 
 import React, { useState } from "react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Pagination, ChipProps, SortDescriptor } from "@heroui/react";
-import { ChevronDownIcon, DownloadIcon, SearchIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon, PlusIcon, SearchIcon } from "lucide-react";
 import DateFilter from "./dateFilter";
 import { showToast } from "@/lib";
+import { useRouter } from "next/navigation";
 
 
 export interface ColumnDef {
 	name: string;
 	uid: string;
 	sortable?: boolean;
+}
+
+export interface AdditionalButton {
+	text: string;
+	onClick: () => void;
+	isLoading?: boolean;
+	color?: "primary" | "secondary" | "success" | "warning" | "danger";
 }
 
 export interface GenericTableProps<T> {
@@ -38,10 +46,16 @@ export interface GenericTableProps<T> {
 	initialStartDate?: string;
 	initialEndDate?: string;
 	defaultDateRange?: { days: number };
+	createButton?: {
+		text: string;
+		onClick: () => void;
+		isLoading?: boolean;
+	};
+	additionalButtons?: AdditionalButton[];
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
-	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate, defaultDateRange } = props;
+	const { columns, data, allCount, exportData, isLoading, filterValue, onFilterChange, statusOptions = [], statusFilter, onStatusChange = () => {}, showStatus = true, sortDescriptor, onSortChange, page, pages, onPageChange, exportFn, renderCell, hasNoRecords, onDateFilterChange, initialStartDate, initialEndDate, defaultDateRange, createButton, additionalButtons } = props;
 
 	// Exclude status column if hidden
 	const displayedColumns = [
@@ -86,6 +100,35 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 					onClear={() => onFilterChange("")}
 					onValueChange={onFilterChange}
 				/>
+
+				<div className="flex gap-2">
+					{createButton && (
+						<Button 
+							color="primary"
+							variant="flat"
+							className="px-8"
+							endContent={<PlusIcon className="w-3" />}
+							onPress={createButton.onClick}
+							isLoading={createButton.isLoading}
+						>
+							{createButton.text}
+						</Button>
+					)}
+
+					{additionalButtons?.map((button, index) => (
+						<Button
+							key={index}
+							color={button.color || "primary"}
+							variant="solid"
+							className="px-8"
+							onPress={button.onClick}
+							isLoading={button.isLoading}
+						>
+							{button.text}
+						</Button>
+					))}
+				</div>
+
 				{onDateFilterChange && (
 					<DateFilter
 						className="w-full flex justify-end"

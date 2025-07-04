@@ -9,6 +9,7 @@ import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
+import { useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "storeName", sortable: true },
@@ -62,6 +63,7 @@ export default function AllStoresView() {
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<StoreRecord | null>(null);
 
+	const router = useRouter();
 
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -268,6 +270,21 @@ export default function AllStoresView() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
+					createButton={{
+						text: "Create Store",
+						onClick: () => {
+							router.push("/access/admin/stores/create");
+						}
+					}}
+					additionalButtons={[		
+						{
+							text: "Sync Stores",
+							onClick: () => {
+								syncStoresFn();
+							},
+							isLoading: isSyncing
+						}
+					]}
 				/>
 			)}
 

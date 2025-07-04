@@ -295,7 +295,7 @@ export default function CustomerPage() {
           onDateFilterChange={handleDateFilter}
           initialStartDate={startDate}
           initialEndDate={endDate}
-          defaultDateRange={{ days: 2 }}
+          defaultDateRange={{ days: 1 }}
         />
       )}
 

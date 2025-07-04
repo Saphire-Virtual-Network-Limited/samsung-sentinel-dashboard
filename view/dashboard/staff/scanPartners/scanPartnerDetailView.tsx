@@ -163,103 +163,110 @@ const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
     return statusColorMap[status] || "default";
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent card click when clicking on buttons or dropdown
+    if ((e.target as HTMLElement).closest('button, [role="button"]')) {
+      return;
+    }
+    router.push(`/access/${role}/staff/agents/${agent.mbeId}`);
+  };
+
   return (
-    <Card
-      className="hover:shadow-md transition-shadow cursor-pointer"
-      isPressable
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <Avatar
-              src={agent.imageUrl || "/placeholder.svg"}
-              alt={`${agent.firstname} ${agent.lastname}`}
-              className="w-10 h-10"
-              color={getStatusColor(agent.accountStatus)}
-            />
-            <div>
-              <h4 className="font-semibold text-default-900 capitalize">
-                {agent.firstname} {agent.lastname}
-              </h4>
-              <p className="text-sm text-default-500">{agent.email}</p>
+    <div onClick={handleCardClick}>
+      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={agent.imageUrl || "/placeholder.svg"}
+                alt={`${agent.firstname} ${agent.lastname}`}
+                className="w-10 h-10"
+                color={getStatusColor(agent.accountStatus)}
+              />
+              <div>
+                <h4 className="font-semibold text-default-900 capitalize">
+                  {agent.firstname} {agent.lastname}
+                </h4>
+                <p className="text-sm text-default-500">{agent.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Chip
+                color={getStatusColor(agent.accountStatus)}
+                variant="flat"
+                size="sm"
+              >
+                {capitalize(agent.accountStatus)}
+              </Chip>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button isIconOnly size="sm" variant="light">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu>
+                  <DropdownItem
+                    key="view"
+                    startContent={<ExternalLink className="w-4 h-4" />}
+                    onPress={() =>
+                      router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+                    }
+                  >
+                    View Details
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Chip
-              color={getStatusColor(agent.accountStatus)}
-              variant="flat"
+        </CardHeader>
+        <CardBody className="pt-0">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-default-400" />
+              <span className="text-default-600">ID:</span>
+              <span className="font-mono text-xs">{agent.mbeId}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-default-400" />
+              <span className="text-default-600">{agent.phone}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-default-400" />
+              <span className="text-default-600">Role:</span>
+              <span className="capitalize">{agent.role.toLowerCase()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-default-400" />
+              <span className="text-default-600">Joined:</span>
+              <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+          <div className="mt-3 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  agent.isActive ? "bg-success" : "bg-danger"
+                }`}
+              ></div>
+              <span className="text-sm text-default-600">
+                {agent.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+            <Button
               size="sm"
+              variant="flat"
+              color="primary"
+              startContent={<ExternalLink className="w-4 h-4" />}
+              onPress={() =>
+                router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+              }
             >
-              {capitalize(agent.accountStatus)}
-            </Chip>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem
-                  key="view"
-                  startContent={<ExternalLink className="w-4 h-4" />}
-                  onPress={() =>
-                    router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
-                  }
-                >
-                  View Details
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+              View Details
+            </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardBody className="pt-0">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Hash className="w-4 h-4 text-default-400" />
-            <span className="text-default-600">ID:</span>
-            <span className="font-mono text-xs">{agent.mbeId}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-default-400" />
-            <span className="text-default-600">{agent.phone}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-default-400" />
-            <span className="text-default-600">Role:</span>
-            <span className="capitalize">{agent.role.toLowerCase()}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-default-400" />
-            <span className="text-default-600">Joined:</span>
-            <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-        <div className="mt-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                agent.isActive ? "bg-success" : "bg-danger"
-              }`}
-            ></div>
-            <span className="text-sm text-default-600">
-              {agent.isActive ? "Active" : "Inactive"}
-            </span>
-          </div>
-          <Button
-            size="sm"
-            variant="flat"
-            color="primary"
-            startContent={<ExternalLink className="w-4 h-4" />}
-            onPress={() =>
-              router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
-            }
-          >
-            View Details
-          </Button>
-        </div>
-      </CardBody>
-    </Card>
+        </CardBody>
+      </Card>
+    </div>
   );
 };
 
