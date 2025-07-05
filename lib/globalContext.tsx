@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             router.replace("/access/admin");
             break;
           case "ADMIN":
-            router.replace("/access/sub-admin");  
+            router.replace("/access/sub-admin");
             break;
           case "DEVELOPER":
             router.replace("/access/dev");
@@ -187,6 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         message: "Failed to fetch user profile",
         duration: 3000,
       });
+      // Handle invite routes specially - don't redirect to login
+      if (
+        pathName.startsWith("/invite") ||
+        pathName.startsWith("/auth/invite")
+      ) {
+        router.replace(pathName);
+        return;
+      }
       router.replace(`/auth/login?callbackUrl=${encodeURIComponent(pathName)}`);
     } finally {
       setIsLoading(false);
@@ -196,7 +204,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const isAuthRoute = pathName.startsWith("/auth");
     const isPublicRoute = pathName.startsWith("/verify-code");
-    if (isAuthRoute || isPublicRoute) {
+    const isInviteRoute = pathName.startsWith("/invite"); // Added invite route check
+
+    if (isAuthRoute || isPublicRoute || isInviteRoute) {
       setUserResponse(null);
       setIsLoading(false);
       return;

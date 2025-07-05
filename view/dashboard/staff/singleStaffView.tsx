@@ -464,9 +464,10 @@ export default function AgentSinglePage() {
   const params = useParams();
   const { userResponse } = useAuth();
   const getUserRole = (userRole: string) => {
-    const role = userRole.toLowerCase();
+    const role = userRole.toLowerCase().replace(/_/g, "-");
     if (role === "admin") return "sub-admin";
     if (role === "super-admin") return "admin";
+
     return role;
   };
   const role = getUserRole(String(userResponse?.data?.role));
@@ -732,14 +733,15 @@ export default function AgentSinglePage() {
             <div className="flex md:hidden items-center gap-2">
               <Dropdown>
                 <DropdownTrigger>
-                  <Button
-                    variant="flat"
-                    size="sm"
-                    isIconOnly
-                    isDisabled={isDeleting}
+                  <div
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-default-600 bg-default-100 hover:bg-default-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      pointerEvents: isDeleting ? "none" : "auto",
+                      opacity: isDeleting ? 0.5 : 1,
+                    }}
                   >
                     <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Agent actions">
                   <DropdownItem

@@ -164,10 +164,7 @@ const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
   };
 
   return (
-    <Card
-      className="hover:shadow-md transition-shadow cursor-pointer"
-      isPressable
-    >
+    <Card className="hover:shadow-md transition-shadow cursor-pointer">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
@@ -194,9 +191,13 @@ const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
             </Chip>
             <Dropdown>
               <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
+                <div
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
+                  role="button"
+                  tabIndex={0}
+                >
                   <MoreVertical className="w-4 h-4" />
-                </Button>
+                </div>
               </DropdownTrigger>
               <DropdownMenu>
                 <DropdownItem
@@ -460,14 +461,13 @@ export default function ScanPartnerSinglePage() {
             <div className="flex md:hidden items-center gap-2">
               <Dropdown>
                 <DropdownTrigger>
-                  <Button
-                    variant="flat"
-                    size="sm"
-                    isIconOnly
-                    isDisabled={isDeleting}
+                  <div
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
+                    role="button"
+                    tabIndex={0}
                   >
                     <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Scan partner actions">
                   <DropdownItem

@@ -27,10 +27,21 @@ export const useInviteAcceptor = (): UseInviteAcceptorReturn => {
     async (
       inviteData: InviteAcceptFormData
     ): Promise<AcceptInviteResponse | null> => {
+      // More robust validation - check for empty strings specifically
+
+      console.log("Form data received:", {
+        password: inviteData.password,
+        confirmPassword: inviteData.confirmPassword,
+        adminId: inviteData.adminId,
+        passwordLength: inviteData.password?.length,
+        confirmPasswordLength: inviteData.confirmPassword?.length,
+        adminIdLength: inviteData.adminId?.length,
+      });
+
       if (
-        !inviteData.password ||
-        !inviteData.confirmPassword ||
-        !inviteData.adminId
+        !inviteData.password?.trim() ||
+        !inviteData.confirmPassword?.trim() ||
+        !inviteData.adminId?.trim()
       ) {
         const errorMsg = "All fields are required";
         setError(new Error(errorMsg));
@@ -53,6 +64,18 @@ export const useInviteAcceptor = (): UseInviteAcceptorReturn => {
         return null;
       }
 
+      // Additional password length validation
+      if (inviteData.password.length < 8) {
+        const errorMsg = "Password must be at least 8 characters long";
+        setError(new Error(errorMsg));
+        showToast({
+          type: "error",
+          message: errorMsg,
+          duration: 5000,
+        });
+        return null;
+      }
+
       setIsLoading(true);
       setError(null);
       setSuccess(null);
@@ -66,13 +89,11 @@ export const useInviteAcceptor = (): UseInviteAcceptorReturn => {
 
         setSuccess(result);
 
-        {
-          showToast({
-            type: "success",
-            message: "Account activated successfully! Redirecting to login...",
-            duration: 5000,
-          });
-        }
+        showToast({
+          type: "success",
+          message: "Account activated successfully! Redirecting to login...",
+          duration: 5000,
+        });
 
         return result;
       } catch (err) {

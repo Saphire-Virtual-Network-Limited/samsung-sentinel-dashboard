@@ -5,51 +5,82 @@ import { FormField, PasswordField } from "@/components/reususables";
 import { z } from "zod";
 import { useEffect, useState } from "react";
 
-import { GeneralSans_Meduim, GeneralSans_SemiBold, cn, useField, showToast, useAuth } from "@/lib";
+import {
+  GeneralSans_Meduim,
+  GeneralSans_SemiBold,
+  cn,
+  useField,
+  showToast,
+  useAuth,
+} from "@/lib";
 import { Card, CardBody, CardHeader } from "@heroui/react";
 const EmailSchema = z.string().email("Please enter a valid email address");
 
-const PasswordSchema = z.string().min(8, "Password must be at least 8 characters");
+const PasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters");
 
 export default function LoginView() {
-	const { value: email, error: emailError, handleChange: handleEmailChange } = useField("", EmailSchema);
-	const { value: password, error: passwordError, handleChange: handlePasswordChange } = useField("", PasswordSchema);
+  const {
+    value: email,
+    error: emailError,
+    handleChange: handleEmailChange,
+  } = useField("", EmailSchema);
+  const {
+    value: password,
+    error: passwordError,
+    handleChange: handlePasswordChange,
+  } = useField("", PasswordSchema);
 
-	const [isLoading, setIsLoading] = useState(false);
-	const [isDisabled, setIsDisabled] = useState(true);
-	const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
+  const { login } = useAuth();
 
-	useEffect(() => {
-		// Update disabled state when email or password changes
-		setIsDisabled(!email?.trim() || !password?.trim());
-	}, [email, password]);
+  useEffect(() => {
+    // Update disabled state when email or password changes
+    setIsDisabled(!email?.trim() || !password?.trim());
+  }, [email, password]);
 
-	const handleLogin = async () => {
-		setIsLoading(true);
-		setIsDisabled(true);
+  const handleLogin = async () => {
+    setIsLoading(true);
+    setIsDisabled(true);
 
-		try {
-			// Call the login method from the context
-			await login(email, password);
-		} catch (error) {
-			console.error("Login failed", error);
-			showToast({ type: "error", message: "Login failed. Please try again.", duration: 8000 });
-		} finally {
-			setIsLoading(false);
-			setIsDisabled(false);
-		}
-	};
+    try {
+      // Call the login method from the context
+      await login(email, password);
+    } catch (error) {
+      console.error("Login failed", error);
+      showToast({
+        type: "error",
+        message: "Login failed. Please try again.",
+        duration: 8000,
+      });
+    } finally {
+      setIsLoading(false);
+      setIsDisabled(false);
+    }
+  };
 
-	return (
-		<Card className={cn("p-5")}>
-			<CardHeader className="flex flex-col gap-2 text-center mb-5">
-				<h1 className={cn("text-2xl", GeneralSans_SemiBold.className)}>Welcome back</h1>
-				<p className="text-xs text-muted-foreground">Enter your details to access dashboard</p>
-			</CardHeader>
-			<CardBody>
-				<form>
-					<div className="grid gap-6">
-						{/*<div className="flex flex-col gap-4">
+  return (
+    <Card className={cn("p-5")}>
+      <CardHeader className="flex flex-col gap-2 text-center mb-5">
+        <h1 className={cn("text-2xl", GeneralSans_SemiBold.className)}>
+          Welcome back
+        </h1>
+        <p className="text-xs text-muted-foreground">
+          Enter your details to access dashboard
+        </p>
+      </CardHeader>
+      <CardBody>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            console.log("Form submitted with value:", email);
+            handleLogin();
+          }}
+        >
+          <div className="grid gap-6">
+            {/*<div className="flex flex-col gap-4">
 								<Button
 									variant="outline"
 									className="w-full">
@@ -80,45 +111,49 @@ export default function LoginView() {
 							<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
 								<span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
 							</div>*/}
-						<div className="grid gap-6">
-							<div className="grid gap-2">
-								<FormField
-									label="Enter your email"
-									reqValue="*"
-									htmlFor="username"
-									type="text"
-									id="username"
-									variant="bordered"
-									isInvalid={!!emailError}
-									errorMessage={emailError || ""}
-									size="sm"
-									placeholder="Input your email"
-									onChange={handleEmailChange}
-									required
-								/>
-							</div>
-							<div className="grid gap-2">
-								<PasswordField
-									PasswordText="Password"
-									placheolderText="Enter your password"
-									handlePasswordChange={handlePasswordChange}
-									showForgotPassword={true}
-									forgotPasswordLink="/auth/forget-password"
-									passwordError={passwordError}
-								/>
-							</div>
-							<Button
-								className={cn("w-full p-6 mb-0 bg-primary text-white font-medium text-base", GeneralSans_Meduim.className)}
-								size="md"
-								radius="lg"
-								isDisabled={isDisabled}
-								isLoading={isLoading}
-								onPress={handleLogin}
-								type="submit">
-								Access Dashboard
-							</Button>
-						</div>
-						{/*<div className="text-center text-sm">
+            <div className="grid gap-6">
+              <div className="grid gap-2">
+                <FormField
+                  label="Enter your email"
+                  reqValue="*"
+                  htmlFor="username"
+                  type="text"
+                  id="username"
+                  variant="bordered"
+                  isInvalid={!!emailError}
+                  errorMessage={emailError || ""}
+                  size="sm"
+                  placeholder="Input your email"
+                  onChange={handleEmailChange}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <PasswordField
+                  PasswordText="Password"
+                  placheolderText="Enter your password"
+                  handlePasswordChange={handlePasswordChange}
+                  showForgotPassword={true}
+                  forgotPasswordLink="/auth/forget-password"
+                  passwordError={passwordError}
+                />
+              </div>
+              <Button
+                className={cn(
+                  "w-full p-6 mb-0 bg-primary text-white font-medium text-base",
+                  GeneralSans_Meduim.className
+                )}
+                size="md"
+                radius="lg"
+                isDisabled={isDisabled}
+                isLoading={isLoading}
+                onPress={handleLogin}
+                type="submit"
+              >
+                Access Dashboard
+              </Button>
+            </div>
+            {/*<div className="text-center text-sm">
 							Don&apos;t have an account?{" "}
 							<a
 								href="#"
@@ -126,9 +161,9 @@ export default function LoginView() {
 								Sign up
 							</a>
 						</div>*/}
-					</div>
-				</form>
-			</CardBody>
-		</Card>
-	);
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  );
 }
