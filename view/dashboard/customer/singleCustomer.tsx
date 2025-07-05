@@ -4,7 +4,13 @@ import React, { useEffect, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getAllCustomerRecord, showToast, updateCustomerLastPoint, updateCustomerVirtualWalletBalance, useAuth, lockDevice, unlockDevice, releaseDevice, sendReminderMessage, sendDueReminderMessage, sendOverdueReminderMessage } from "@/lib";
+import { getAllCustomerRecord, 
+  showToast, updateCustomerLastPoint, 
+  updateCustomerVirtualWalletBalance, 
+  useAuth, lockDevice, unlockDevice, 
+  releaseDevice, sendReminderMessage, 
+  sendDueReminderMessage, sendOverdueReminderMessage, changeLoanStatus } from "@/lib";
+import { hasPermission } from "@/lib/permissions";
 import { PaymentReceipt } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
@@ -21,6 +27,8 @@ export default function CollectionSingleCustomerPage() {
 
   const { userResponse } = useAuth();
   const userEmail = userResponse?.data?.email || "";
+
+
   const params = useParams();
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
@@ -38,11 +46,10 @@ export default function CollectionSingleCustomerPage() {
   } | null>(null);
 
 
-
   const { isOpen: isUpdateWallet, onOpen: onUpdateWallet, onClose: onUpdateWalletClose } = useDisclosure();
   const { isOpen: isUpdateLastPoint, onOpen: onUpdateLastPoint, onClose: onUpdateLastPointClose } = useDisclosure();
-  const { isOpen: isLockDevice, onOpen: onLockDevice, onClose: onLockDeviceClose } = useDisclosure();
   const { isOpen: isDeviceAction, onOpen: onDeviceAction, onClose: onDeviceActionClose } = useDisclosure();
+  const { isOpen: isUpdateLoanStatus, onOpen: onUpdateLoanStatus, onClose: onUpdateLoanStatusClose } = useDisclosure();
 
 
   useEffect(() => {
@@ -301,6 +308,63 @@ export default function CollectionSingleCustomerPage() {
     
     onDeviceAction();
   };
+
+// update loan status
+const handleUpdateLoanStatus = async () => {
+  console.log("handleUpdateLoanStatus called with selectedAction:", selectedAction);
+  console.log("customer.LoanRecord?.[0]?.loanRecordId:", customer.LoanRecord?.[0]?.loanRecordId);
+  
+  if (!selectedAction) {
+    showToast({
+      type: "error",
+      message: "Please select a valid loan status",
+      duration: 5000
+    });
+    return;
+  }
+
+  if (!customer.LoanRecord?.[0]?.loanRecordId) {
+    showToast({
+      type: "error",
+      message: "No loan record found for this customer",
+      duration: 5000
+    });
+    return;
+  }
+
+  setIsButtonLoading(true);
+  try {
+    const response = await changeLoanStatus(customer.LoanRecord[0].loanRecordId, selectedAction);
+    console.log("API Response:", response);
+    showToast({type: "success", 
+      message: "Loan status updated successfully",
+      duration: 5000
+    });
+    
+    // Refresh customer data to show updated status
+    const updatedResponse = await getAllCustomerRecord();
+    const updatedCustomerData = updatedResponse.data.find(
+      (c: CustomerRecord) => c.customerId === params.id
+    );
+    if (updatedCustomerData) {
+      setCustomer(updatedCustomerData);
+    }
+    
+    onUpdateLoanStatusClose();
+    setSelectedAction("");
+    setSelectedCustomer(null);
+  } catch (error: any) {
+    console.log("Error updating loan status:", error);
+    showToast({
+      type: "error",
+      message: error.message || "Failed to update loan status",
+      duration: 5000
+    });
+  } finally {
+    setIsButtonLoading(false);
+  }
+}
+
 
   return (
     <div className="min-h-screen bg-default-50">
@@ -896,7 +960,7 @@ export default function CollectionSingleCustomerPage() {
             
 
             {/* Device Activity Actions*/}
-            {(role === 'dev' || role === 'collection-admin' || role === 'sub-admin') && (
+            {hasPermission(role, "canTriggerDeviceActions", userEmail) && (
               <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
                 <div className="p-3 border-b border-default-200">
                   <h3 className="text-lg font-semibold text-default-900">
@@ -1115,7 +1179,7 @@ export default function CollectionSingleCustomerPage() {
                     </div>
                   </div>
 
-                  {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+                  {hasPermission(role, "canUpdateLastPoint", userEmail) ? (
 
                           <div className="bg-default-50 rounded-lg p-4">
 
@@ -1129,6 +1193,24 @@ export default function CollectionSingleCustomerPage() {
                           </button>
 
                           </div>
+
+                          ) : null}
+
+                          {hasPermission(role, "canUpdateLoanStatus", userEmail) ? (
+
+                            <div className="bg-default-50 rounded-lg p-4">
+
+                            <button
+                              className="bg-primary text-white px-4 py-2 rounded-md"
+                              onClick={() => {
+                              onUpdateLoanStatus();
+                              setSelectedCustomer(customer);
+                              setSelectedAction(""); // Clear previous selection
+                              }}>
+                              Update Loan Status
+                            </button>
+
+                            </div>
 
                           ) : null}
                 </div>
@@ -1584,7 +1666,7 @@ export default function CollectionSingleCustomerPage() {
                     </div>
                   </div>
 
-                  {(role === "dev" || (role === "sub-admin" && userEmail === "timilehin@sapphirevirtual.com")) ? (
+                  {hasPermission(role, "canUpdateWalletBalance", userEmail) ? (
 
                    <div className="bg-default-50 rounded-lg p-4">
 
@@ -2091,6 +2173,7 @@ export default function CollectionSingleCustomerPage() {
             </div>
 
             {/* Overdue Repayment */}
+            {hasPermission(role, "canViewOverDuePayments", userEmail) && (
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
               <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">
@@ -2201,8 +2284,10 @@ export default function CollectionSingleCustomerPage() {
                 </table>
               </div>
             </div>
+            )}
 
             {/* Device Activity Log */}
+            {hasPermission(role, "canViewDeviceActivityLog", userEmail) && (
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
               <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">
@@ -2276,8 +2361,10 @@ export default function CollectionSingleCustomerPage() {
                 </table>
               </div>
             </div>
+            )}
 
             {/* COMMUNICATION LOG */}
+            {hasPermission(role, "canViewCommunicationLog", userEmail) && (
             <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
               <div className="p-3 border-b border-default-200">
                 <h3 className="text-lg font-semibold text-default-900">
@@ -2361,6 +2448,7 @@ export default function CollectionSingleCustomerPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -2532,6 +2620,62 @@ export default function CollectionSingleCustomerPage() {
           )}
         </ModalContent>
       </Modal>
+
+      <Modal
+				isOpen={isUpdateLoanStatus}
+				onClose={onUpdateLoanStatusClose}
+				size="lg">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Update Loan Status</ModalHeader>
+							<ModalBody>
+								<p className="text-md text-default-500">
+									Are you sure you want to update this customer's loan status?  This action cannot be undone.
+								</p>
+
+                <SelectField
+                  label="Loan Status"
+                  htmlFor="loanStatus"
+                  id="loanStatus"
+                  placeholder="Select Loan Status"
+                  options={[
+                    { label: "ENROLLED", value: "ENROLLED" },
+                    { label: "APPROVED", value: "APPROVED" },
+                    { label: "REJECTED", value: "REJECTED" },
+                    { label: "FULFILLED", value: "FULFILLED" },
+                    { label: "OPEN", value: "OPEN" },
+                    { label: "CLOSED", value: "CLOSED" },
+                    { label: "OVERDUE", value: "OVERDUE" },
+                    { label: "DEFAULTED", value: "DEFAULTED" },
+                  ]}
+                                     onChange={(e) => setSelectedAction(e as string)}
+                  size="sm"
+                />
+
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => selectedCustomer && handleUpdateLoanStatus()}  
+									isLoading={isButtonLoading}>
+									Confirm
+								</Button>
+								<Button
+									color="danger"
+									variant="light"
+									onPress={() => {
+										onUpdateLoanStatusClose();
+										setSelectedCustomer(null);
+									}}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
     </div>
   );
 }

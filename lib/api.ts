@@ -674,3 +674,67 @@ export async function sendDueReminderMessage(customerId: string, imei: string) {
 export async function sendOverdueReminderMessage(customerId: string, imei: string) {
   return apiCall("/admin/customer/send-overdue-reminder", "POST", { customerId, imei });
 }
+
+// ============================================================================
+// Change loan status  | Approved, Rejected, Defaulted, Due, Overdue
+// ============================================================================
+
+export async function changeLoanStatus(loanRecordId: string, status: string) {
+  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status }); 
+}
+
+// Create store
+export interface createStore {
+  storeName: string;
+  city: string;
+  state: string;
+  region: string;
+  address: string;
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+  bankCode: string;
+  phoneNumber: string;
+  storeEmail: string;
+  longitude: number;
+  latitude: number;
+  clusterId: number;
+  partner: string;
+  storeOpen: string;
+  storeClose: string;
+}
+
+export async function createStore(createStore: createStore) {
+  return apiCall("/admin/stores", "POST", createStore);
+}
+
+// update store details
+export interface updateStore {
+  storeId: string;
+  storeName: string;
+  city: string;
+  state: string;
+  region: string;
+  address: string;
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+  bankCode: string;
+  phoneNumber: string;
+  storeEmail: string;
+  longitude: number;
+  latitude: number;
+  clusterId: number;
+  partner: string;
+  storeOpen: string;
+  storeClose: string;
+}
+
+export async function updateStore(updateStore: updateStore) {
+  return apiCall(`/admin/stores/${updateStore.storeId}`, "PUT", updateStore);
+}
+
+
+
+
+

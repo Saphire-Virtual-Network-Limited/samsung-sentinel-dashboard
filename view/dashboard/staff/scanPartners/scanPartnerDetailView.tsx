@@ -163,6 +163,14 @@ const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
     return statusColorMap[status] || "default";
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent card click when clicking on buttons or dropdown
+    if ((e.target as HTMLElement).closest('button, [role="button"]')) {
+      return;
+    }
+    router.push(`/access/${role}/staff/agents/${agent.mbeId}`);
+  };
+
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer">
       <CardHeader className="pb-2">
