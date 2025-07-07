@@ -568,7 +568,7 @@ export default function ScanPartnerSinglePage() {
               <div className="flex items-center gap-3">
                 <Avatar
                   src={scanPartner.profile_picture || "/placeholder.svg"}
-                  alt={`${scanPartner.firstName} ${scanPartner.lastName}`}
+                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
                   className="w-12 h-12 cursor-pointer border-2 border-default-200"
                   onClick={onOpen}
                   color={statusColorMap[scanPartner.accountStatus]}
@@ -581,12 +581,12 @@ export default function ScanPartnerSinglePage() {
                 >
                   <ModalContent>
                     <ModalHeader className="flex flex-col gap-1">
-                      {scanPartner.firstName} {scanPartner.lastName}
+                      {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
                     </ModalHeader>
                     <ModalBody className="p-0">
                       <Image
                         src={scanPartner.profile_picture || "/placeholder.svg"}
-                        alt={`${scanPartner.firstName} ${scanPartner.lastName} - Full preview`}
+                        alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName}) - Full preview`}
                         className="w-full h-auto rounded-b-lg"
                       />
                     </ModalBody>
@@ -594,7 +594,7 @@ export default function ScanPartnerSinglePage() {
                 </Modal>
                 <div>
                   <h1 className="text-xl font-bold text-default-900">
-                    {scanPartner.firstName} {scanPartner.lastName}
+                    {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
                   </h1>
                   <p className="text-sm text-default-500">
                     {scanPartner.role?.replace("_", " ")}
@@ -685,12 +685,12 @@ export default function ScanPartnerSinglePage() {
               <div className="flex items-center gap-3">
                 <Avatar
                   src={scanPartner?.profile_picture || "/placeholder.svg"}
-                  alt={`${scanPartner?.firstName} ${scanPartner?.lastName}`}
+                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
                   className="w-12 h-12"
                 />
                 <div>
                   <p className="font-medium">
-                    {scanPartner?.firstName} {scanPartner?.lastName}
+                    {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
                   </p>
                   <p className="text-small text-default-500">
                     {scanPartner?.email}
@@ -758,6 +758,10 @@ export default function ScanPartnerSinglePage() {
                   label="User ID"
                   value={scanPartner.userId}
                   copyable
+                />
+                <InfoField
+                  label="Company Name"
+                  value={`${scanPartner.companyName}`.trim()}
                 />
                 <InfoField
                   label="Full Name"

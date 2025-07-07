@@ -12,6 +12,7 @@ export interface ScanPartnerRecord {
   userId: string;
   firstName: string;
   lastName: string;
+  companyName: string;
   email: string;
   dob?: any;
   gender?: any;

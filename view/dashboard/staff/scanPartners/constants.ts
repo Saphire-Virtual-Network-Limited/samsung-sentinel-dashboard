@@ -26,6 +26,7 @@ export const statusColorMap: Record<string, ChipProps["color"]> = {
 
 // Column definitions for scan partners
 export const columns: ColumnDef[] = [
+  { name: "Company Name", uid: "companyName", sortable: true },
   { name: "Full Name", uid: "fullName", sortable: true },
   { name: "Email", uid: "email", sortable: true },
   { name: "Phone", uid: "telephoneNumber", sortable: true },

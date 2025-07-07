@@ -39,7 +39,8 @@ export default function ScanPartnerPage() {
   const [filterValue, setFilterValue] = useState("");
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "fullName",
+    column: "companyName",
+
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
@@ -219,6 +220,18 @@ export default function ScanPartnerPage() {
       );
     }
 
+    if (key === "companyName") {
+      return (
+        <div
+          className="capitalize cursor-pointer  hover:underline"
+          onClick={() =>
+            router.push(`/access/${role}/staff/scan-partners/${row.userId}`)
+          }
+        >
+          {row?.companyName}
+        </div>
+      );
+    }
     if (key === "fullName") {
       return (
         <div
@@ -274,7 +287,9 @@ export default function ScanPartnerPage() {
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={10} />
       ) : (
-        <GenericTable<ScanPartnerRecord & { fullName: string }>
+        <GenericTable<
+          ScanPartnerRecord & { fullName: string; companyName: string }
+        >
           columns={columns}
           data={sorted}
           allCount={filtered.length}
