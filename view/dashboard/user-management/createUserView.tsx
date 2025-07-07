@@ -158,7 +158,7 @@ export default function CreateUserPage() {
               />
 
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                {/**  <Button
+                <Button
                   type="button"
                   variant="ghost"
                   onPress={handleReset}
@@ -166,7 +166,7 @@ export default function CreateUserPage() {
                   disabled={isLoading}
                 >
                   Reset Form
-                </Button> */}
+                </Button>
                 <Button
                   type="submit"
                   className="flex-1"

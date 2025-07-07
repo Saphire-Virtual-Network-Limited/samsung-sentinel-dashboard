@@ -163,6 +163,7 @@ export default function InvitePage() {
                 >
                   {isLoading ? "Activating Account..." : "Activate Account"}
                 </Button>
+                {/** 
                 <Button
                   type="button"
                   variant="ghost"
@@ -172,6 +173,7 @@ export default function InvitePage() {
                 >
                   Reset Form
                 </Button>
+                */}
               </div>
             </form>
           </CardBody>
