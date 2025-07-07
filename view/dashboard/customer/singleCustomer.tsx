@@ -4,22 +4,34 @@ import React, { useEffect, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
-import { getAllCustomerRecord, 
-  showToast, updateCustomerLastPoint, 
-  updateCustomerVirtualWalletBalance, 
-  useAuth, lockDevice, unlockDevice, 
-  releaseDevice, sendReminderMessage, 
-  sendDueReminderMessage, sendOverdueReminderMessage, changeLoanStatus } from "@/lib";
+import {
+  getAllCustomerRecord,
+  showToast,
+  updateCustomerLastPoint,
+  updateCustomerVirtualWalletBalance,
+  useAuth,
+  lockDevice,
+  unlockDevice,
+  releaseDevice,
+  sendReminderMessage,
+  sendDueReminderMessage,
+  sendOverdueReminderMessage,
+  changeLoanStatus,
+} from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import { PaymentReceipt } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
-import {  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
-
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/react";
 
 export default function CollectionSingleCustomerPage() {
-
-
   const router = useRouter();
   const pathname = usePathname();
   // Get the role from the URL path (e.g., /access/dev/customers -> dev)
@@ -28,12 +40,12 @@ export default function CollectionSingleCustomerPage() {
   const { userResponse } = useAuth();
   const userEmail = userResponse?.data?.email || "";
 
-
   const params = useParams();
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<CustomerRecord | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [lastPoint, setLastPoint] = useState<string>("");
@@ -45,12 +57,26 @@ export default function CollectionSingleCustomerPage() {
     imei: string;
   } | null>(null);
 
-
-  const { isOpen: isUpdateWallet, onOpen: onUpdateWallet, onClose: onUpdateWalletClose } = useDisclosure();
-  const { isOpen: isUpdateLastPoint, onOpen: onUpdateLastPoint, onClose: onUpdateLastPointClose } = useDisclosure();
-  const { isOpen: isDeviceAction, onOpen: onDeviceAction, onClose: onDeviceActionClose } = useDisclosure();
-  const { isOpen: isUpdateLoanStatus, onOpen: onUpdateLoanStatus, onClose: onUpdateLoanStatusClose } = useDisclosure();
-
+  const {
+    isOpen: isUpdateWallet,
+    onOpen: onUpdateWallet,
+    onClose: onUpdateWalletClose,
+  } = useDisclosure();
+  const {
+    isOpen: isUpdateLastPoint,
+    onOpen: onUpdateLastPoint,
+    onClose: onUpdateLastPointClose,
+  } = useDisclosure();
+  const {
+    isOpen: isDeviceAction,
+    onOpen: onDeviceAction,
+    onClose: onDeviceActionClose,
+  } = useDisclosure();
+  const {
+    isOpen: isUpdateLoanStatus,
+    onOpen: onUpdateLoanStatus,
+    onClose: onUpdateLoanStatusClose,
+  } = useDisclosure();
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -125,18 +151,22 @@ export default function CollectionSingleCustomerPage() {
       showToast({
         type: "error",
         message: "Please enter a valid amount",
-        duration: 5000
+        duration: 5000,
       });
       return;
     }
 
     setIsButtonLoading(true);
     try {
-      const response = await updateCustomerVirtualWalletBalance(customer.customerId, Number(amount));
+      const response = await updateCustomerVirtualWalletBalance(
+        customer.customerId,
+        Number(amount)
+      );
       console.log(response);
-      showToast({type: "success", 
+      showToast({
+        type: "success",
         message: "Wallet balance updated successfully",
-        duration: 5000
+        duration: 5000,
       });
       onUpdateWalletClose();
       setAmount("");
@@ -146,30 +176,34 @@ export default function CollectionSingleCustomerPage() {
       showToast({
         type: "error",
         message: error.message || "Failed to update wallet balance",
-        duration: 5000
+        duration: 5000,
       });
     } finally {
       setIsButtonLoading(false);
     }
-  }
+  };
 
   const handleUpdateLastPoint = async () => {
     if (!lastPoint) {
       showToast({
         type: "error",
         message: "Please select a last point",
-        duration: 5000
+        duration: 5000,
       });
       return;
     }
 
     setIsButtonLoading(true);
     try {
-      const response = await updateCustomerLastPoint(customer.customerId, lastPoint);
+      const response = await updateCustomerLastPoint(
+        customer.customerId,
+        lastPoint
+      );
       console.log(response);
-      showToast({type: "success", 
+      showToast({
+        type: "success",
         message: "Last point updated successfully",
-        duration: 5000
+        duration: 5000,
       });
       onUpdateLastPointClose();
       setLastPoint("");
@@ -177,14 +211,14 @@ export default function CollectionSingleCustomerPage() {
     } catch (error: any) {
       console.log(error);
       showToast({
-        type: "error",  
+        type: "error",
         message: error.message || "Failed to update last point",
-        duration: 5000
+        duration: 5000,
       });
     } finally {
       setIsButtonLoading(false);
     }
-  }
+  };
 
   // Device action configuration
   const deviceActions = [
@@ -192,38 +226,38 @@ export default function CollectionSingleCustomerPage() {
       label: "Send Reminder Message",
       value: "send_reminder_message",
       description: "Send a general reminder message to the customer",
-      color: "primary"
+      color: "primary",
     },
     {
-      label: "Send Due Reminder Message", 
+      label: "Send Due Reminder Message",
       value: "send_due_reminder_message",
       description: "Send a reminder message for due payments",
-      color: "warning"
+      color: "warning",
     },
     {
       label: "Send Overdue Reminder Message",
-      value: "send_overdue_reminder_message", 
+      value: "send_overdue_reminder_message",
       description: "Send a reminder message for overdue payments",
-      color: "danger"
+      color: "danger",
     },
     {
       label: "Lock Device",
       value: "lock_device",
       description: "Lock the customer's device remotely",
-      color: "danger"
+      color: "danger",
     },
     {
-      label: "Unlock Device", 
+      label: "Unlock Device",
       value: "unlock_device",
       description: "Unlock the customer's device remotely",
-      color: "success"
+      color: "success",
     },
     {
       label: "Release Device",
       value: "release_device",
       description: "Release the device from the customer's account",
-      color: "warning"
-    }
+      color: "warning",
+    },
   ];
 
   // Unified device action handler
@@ -232,7 +266,7 @@ export default function CollectionSingleCustomerPage() {
       showToast({
         type: "error",
         message: "No device found",
-        duration: 5000
+        duration: 5000,
       });
       return;
     }
@@ -252,7 +286,10 @@ export default function CollectionSingleCustomerPage() {
           successMessage = "Due reminder message sent successfully";
           break;
         case "send_overdue_reminder_message":
-          response = await sendOverdueReminderMessage(customer.customerId, imei);
+          response = await sendOverdueReminderMessage(
+            customer.customerId,
+            imei
+          );
           successMessage = "Overdue reminder message sent successfully";
           break;
         case "lock_device":
@@ -275,7 +312,7 @@ export default function CollectionSingleCustomerPage() {
       showToast({
         type: "success",
         message: successMessage,
-        duration: 5000
+        duration: 5000,
       });
       onDeviceActionClose();
       setSelectedAction("");
@@ -284,8 +321,8 @@ export default function CollectionSingleCustomerPage() {
       console.log(error);
       showToast({
         type: "error",
-        message: error.message || `Failed to ${action.replace(/_/g, ' ')}`,
-        duration: 5000
+        message: error.message || `Failed to ${action.replace(/_/g, " ")}`,
+        duration: 5000,
       });
     } finally {
       setIsButtonLoading(false);
@@ -294,77 +331,86 @@ export default function CollectionSingleCustomerPage() {
 
   // Handle action selection and modal opening
   const handleActionSelection = (actionValue: string) => {
-    const action = deviceActions.find(a => a.value === actionValue);
+    const action = deviceActions.find((a) => a.value === actionValue);
     if (!action) return;
 
     const imei = customer.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || "N/A";
-    
+
     setDeviceActionData({
       action: action.value,
       label: action.label,
       description: action.description,
-      imei: imei
+      imei: imei,
     });
-    
+
     onDeviceAction();
   };
 
-// update loan status
-const handleUpdateLoanStatus = async () => {
-  console.log("handleUpdateLoanStatus called with selectedAction:", selectedAction);
-  console.log("customer.LoanRecord?.[0]?.loanRecordId:", customer.LoanRecord?.[0]?.loanRecordId);
-  
-  if (!selectedAction) {
-    showToast({
-      type: "error",
-      message: "Please select a valid loan status",
-      duration: 5000
-    });
-    return;
-  }
-
-  if (!customer.LoanRecord?.[0]?.loanRecordId) {
-    showToast({
-      type: "error",
-      message: "No loan record found for this customer",
-      duration: 5000
-    });
-    return;
-  }
-
-  setIsButtonLoading(true);
-  try {
-    const response = await changeLoanStatus(customer.LoanRecord[0].loanRecordId, selectedAction);
-    console.log("API Response:", response);
-    showToast({type: "success", 
-      message: "Loan status updated successfully",
-      duration: 5000
-    });
-    
-    // Refresh customer data to show updated status
-    const updatedResponse = await getAllCustomerRecord();
-    const updatedCustomerData = updatedResponse.data.find(
-      (c: CustomerRecord) => c.customerId === params.id
+  // update loan status
+  const handleUpdateLoanStatus = async () => {
+    console.log(
+      "handleUpdateLoanStatus called with selectedAction:",
+      selectedAction
     );
-    if (updatedCustomerData) {
-      setCustomer(updatedCustomerData);
-    }
-    
-    onUpdateLoanStatusClose();
-    setSelectedAction("");
-    setSelectedCustomer(null);
-  } catch (error: any) {
-    console.log("Error updating loan status:", error);
-    showToast({
-      type: "error",
-      message: error.message || "Failed to update loan status",
-      duration: 5000
-    });
-  } finally {
-    setIsButtonLoading(false);
-  }
-}
+    console.log(
+      "customer.LoanRecord?.[0]?.loanRecordId:",
+      customer.LoanRecord?.[0]?.loanRecordId
+    );
 
+    if (!selectedAction) {
+      showToast({
+        type: "error",
+        message: "Please select a valid loan status",
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (!customer.LoanRecord?.[0]?.loanRecordId) {
+      showToast({
+        type: "error",
+        message: "No loan record found for this customer",
+        duration: 5000,
+      });
+      return;
+    }
+
+    setIsButtonLoading(true);
+    try {
+      const response = await changeLoanStatus(
+        customer.LoanRecord[0].loanRecordId,
+        selectedAction
+      );
+      console.log("API Response:", response);
+      showToast({
+        type: "success",
+        message: "Loan status updated successfully",
+        duration: 5000,
+      });
+
+      // Refresh customer data to show updated status
+      const updatedResponse = await getAllCustomerRecord();
+      const updatedCustomerData = updatedResponse.data.find(
+        (c: CustomerRecord) => c.customerId === params.id
+      );
+      if (updatedCustomerData) {
+        setCustomer(updatedCustomerData);
+      }
+
+      onUpdateLoanStatusClose();
+      setSelectedAction("");
+      setSelectedCustomer(null);
+    } catch (error: any) {
+      console.log("Error updating loan status:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to update loan status",
+        duration: 5000,
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-default-50">
@@ -955,9 +1001,7 @@ const handleUpdateLoanStatus = async () => {
               </div>
             </div>
 
-
             {/* locking and unlocking device*/}
-            
 
             {/* Device Activity Actions*/}
             {hasPermission(role, "canTriggerDeviceActions", userEmail) && (
@@ -975,9 +1019,9 @@ const handleUpdateLoanStatus = async () => {
                     placeholder="Select Action"
                     size="sm"
                     defaultSelectedKeys={selectedAction ? [selectedAction] : []}
-                    options={deviceActions.map(action => ({
+                    options={deviceActions.map((action) => ({
                       label: action.label,
-                      value: action.value
+                      value: action.value,
                     }))}
                     onChange={(e) => setSelectedAction(e as string)}
                   />
@@ -1165,7 +1209,6 @@ const handleUpdateLoanStatus = async () => {
                     </div>
                   </div>
 
-                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">
                       Loan Updated At
@@ -1180,39 +1223,33 @@ const handleUpdateLoanStatus = async () => {
                   </div>
 
                   {hasPermission(role, "canUpdateLastPoint", userEmail) ? (
+                    <div className="bg-default-50 rounded-lg p-4">
+                      <button
+                        className="bg-primary text-white px-4 py-2 rounded-md"
+                        onClick={() => {
+                          onUpdateLastPoint();
+                          setSelectedCustomer(customer);
+                        }}
+                      >
+                        Update Last Point
+                      </button>
+                    </div>
+                  ) : null}
 
-                          <div className="bg-default-50 rounded-lg p-4">
-
-                          <button
-                            className="bg-primary text-white px-4 py-2 rounded-md"
-                            onClick={() => {
-                            onUpdateLastPoint();
-                            setSelectedCustomer(customer);
-                            }}>
-                            Update Last Point
-                          </button>
-
-                          </div>
-
-                          ) : null}
-
-                          {hasPermission(role, "canUpdateLoanStatus", userEmail) ? (
-
-                            <div className="bg-default-50 rounded-lg p-4">
-
-                            <button
-                              className="bg-primary text-white px-4 py-2 rounded-md"
-                              onClick={() => {
-                              onUpdateLoanStatus();
-                              setSelectedCustomer(customer);
-                              setSelectedAction(""); // Clear previous selection
-                              }}>
-                              Update Loan Status
-                            </button>
-
-                            </div>
-
-                          ) : null}
+                  {hasPermission(role, "canUpdateLoanStatus", userEmail) ? (
+                    <div className="bg-default-50 rounded-lg p-4">
+                      <button
+                        className="bg-primary text-white px-4 py-2 rounded-md"
+                        onClick={() => {
+                          onUpdateLoanStatus();
+                          setSelectedCustomer(customer);
+                          setSelectedAction(""); // Clear previous selection
+                        }}
+                      >
+                        Update Loan Status
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
                   <div className="bg-default-50 rounded-lg p-4">
@@ -1667,20 +1704,17 @@ const handleUpdateLoanStatus = async () => {
                   </div>
 
                   {hasPermission(role, "canUpdateWalletBalance", userEmail) ? (
-
-                   <div className="bg-default-50 rounded-lg p-4">
-
-                    <button
-                     className="bg-primary text-white px-4 py-2 rounded-md"
-                     onClick={() => {
-                      onUpdateWallet();
-                      setSelectedCustomer(customer);
-                     }}>
-                      Update Wallet Balance
-                    </button>
-                    
-                  </div>
-
+                    <div className="bg-default-50 rounded-lg p-4">
+                      <button
+                        className="bg-primary text-white px-4 py-2 rounded-md"
+                        onClick={() => {
+                          onUpdateWallet();
+                          setSelectedCustomer(customer);
+                        }}
+                      >
+                        Update Wallet Balance
+                      </button>
+                    </div>
                   ) : null}
                 </div>
               </div>
@@ -2174,87 +2208,166 @@ const handleUpdateLoanStatus = async () => {
 
             {/* Overdue Repayment */}
             {hasPermission(role, "canViewOverDuePayments", userEmail) && (
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">
-                  Overdue Repayment
-                </h3>
-              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="p-3 border-b border-default-200">
+                  <h3 className="text-lg font-semibold text-default-900">
+                    Overdue Repayment
+                  </h3>
+                </div>
 
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-default-200">
-                  <thead className="bg-default-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        S/N
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Amount
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Reason
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Date
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Next Retry
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-default-200">
-                    {/* Sample row - Replace with actual data mapping */}
-                    <tr>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        1
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        ₦50
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        Testing
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        2025-06-24
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-                        2025-06-24
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                        <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm">
-                          Retry Debit
-                        </button>
-                        <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                    {/* No records state */}
-                    {(!customer?.LoanRecord ||
-                      customer.LoanRecord.length === 0) && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-default-200">
+                    <thead className="bg-default-50">
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center">
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          S/N
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Amount
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Reason
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Date
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Next Retry
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-default-200">
+                      {/* Sample row - Replace with actual data mapping */}
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                          1
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                          ₦50
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                          Testing
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                          2025-06-24
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
+                          2025-06-24
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                          <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm">
+                            Retry Debit
+                          </button>
+                          <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                      {/* No records state */}
+                      {(!customer?.LoanRecord ||
+                        customer.LoanRecord.length === 0) && (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center">
+                            <div className="flex flex-col items-center justify-center text-default-500">
+                              <svg
+                                className="w-12 h-12 mb-4 text-default-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
+                              <p className="text-sm font-medium">
+                                No overdue repayments
+                              </p>
+                              <p className="text-xs mt-1">
+                                There are no overdue repayments to display at
+                                this time.
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Device Activity Log */}
+            {hasPermission(role, "canViewDeviceActivityLog", userEmail) && (
+              <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                <div className="p-3 border-b border-default-200">
+                  <h3 className="text-lg font-semibold text-default-900">
+                    Device Activity Log
+                  </h3>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-default-200">
+                    <thead className="bg-default-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          S/N
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Action
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Type
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Updated By
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-default-200">
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center justify-center text-default-500">
                             <svg
                               className="w-12 h-12 mb-4 text-default-300"
@@ -2270,251 +2383,174 @@ const handleUpdateLoanStatus = async () => {
                               />
                             </svg>
                             <p className="text-sm font-medium">
-                              No overdue repayments
+                              No device activity logs available
                             </p>
                             <p className="text-xs mt-1">
-                              There are no overdue repayments to display at this
-                              time.
+                              There are no activities to display at this time.
                             </p>
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-            )}
-
-            {/* Device Activity Log */}
-            {hasPermission(role, "canViewDeviceActivityLog", userEmail) && (
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">
-                  Device Activity Log
-                </h3>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-default-200">
-                  <thead className="bg-default-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        S/N
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Action
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Type
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Updated By
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Date
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-default-200">
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center justify-center text-default-500">
-                          <svg
-                            className="w-12 h-12 mb-4 text-default-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <p className="text-sm font-medium">
-                            No device activity logs available
-                          </p>
-                          <p className="text-xs mt-1">
-                            There are no activities to display at this time.
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
             )}
 
             {/* COMMUNICATION LOG */}
             {hasPermission(role, "canViewCommunicationLog", userEmail) && (
-            <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-              <div className="p-3 border-b border-default-200">
-                <h3 className="text-lg font-semibold text-default-900">
-                  Communication LOG
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-default-200">
-                  <thead className="bg-default-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        S/N
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Message
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                      >
-                        Time
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-default-200">
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center justify-center text-default-500">
-                          <svg
-                            className="w-12 h-12 mb-4 text-default-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                            />
-                          </svg>
-                          <p className="text-sm font-medium">
-                            No communication logs available
-                          </p>
-                          <p className="text-xs mt-1">
-                            There are no messages to display at this time.
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Post Communication Log */}
               <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-                <div className="p-4">
-                  <FormField
-                    label="Post Communication"
-                    htmlFor="message"
-                    type="text"
-                    id="message"
-                    placeholder="Enter Communication Message"
-                    value={""}
-                    size="sm"
-                  />
-                  <Button
-                    className="mt-4"
-                    size="sm"
-                    color="primary"
-                    variant="solid"
-                  >
-                    Post
-                  </Button>
+                <div className="p-3 border-b border-default-200">
+                  <h3 className="text-lg font-semibold text-default-900">
+                    Communication LOG
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-default-200">
+                    <thead className="bg-default-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          S/N
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Message
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+                        >
+                          Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-default-200">
+                      <tr>
+                        <td colSpan={3} className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center text-default-500">
+                            <svg
+                              className="w-12 h-12 mb-4 text-default-300"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                              />
+                            </svg>
+                            <p className="text-sm font-medium">
+                              No communication logs available
+                            </p>
+                            <p className="text-xs mt-1">
+                              There are no messages to display at this time.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Post Communication Log */}
+                <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+                  <div className="p-4">
+                    <FormField
+                      label="Post Communication"
+                      htmlFor="message"
+                      type="text"
+                      id="message"
+                      placeholder="Enter Communication Message"
+                      value={""}
+                      size="sm"
+                    />
+                    <Button
+                      className="mt-4"
+                      size="sm"
+                      color="primary"
+                      variant="solid"
+                    >
+                      Post
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
             )}
           </div>
         </div>
       </div>
 
-      <Modal
-				isOpen={isUpdateWallet}
-				onClose={onUpdateWalletClose}
-				size="lg">
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Update Wallet Balance</ModalHeader>
-							<ModalBody>
-								<p className="text-md text-default-500">
-									Are you sure you want to update this customer's wallet balance?  This action cannot be undone.
-								</p>
+      <Modal isOpen={isUpdateWallet} onClose={onUpdateWalletClose} size="lg">
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>Update Wallet Balance</ModalHeader>
+              <ModalBody>
+                <p className="text-md text-default-500">
+                  Are you sure you want to update this customer&apos;s wallet
+                  balance? This action cannot be undone.
+                </p>
 
                 <FormField
-                    label="Amount"
-                    htmlFor="amount"
-                    type="number"
-                    id="amount"
-                    placeholder="Enter Amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e as string)}  
-                    size="sm"
-                  />
-								
-							</ModalBody>
-							<ModalFooter className="flex gap-2">
-								<Button
-									color="success"
-									variant="solid"
-									onPress={() => selectedCustomer && handleUpdateWalletBalance()}  
-									isLoading={isButtonLoading}>
-									Confirm
-								</Button>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={() => {
-										onUpdateWalletClose();
-										setSelectedCustomer(null);
-										setAmount("");
-									}}>
-									Cancel
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-
+                  label="Amount"
+                  htmlFor="amount"
+                  type="number"
+                  id="amount"
+                  placeholder="Enter Amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e as string)}
+                  size="sm"
+                />
+              </ModalBody>
+              <ModalFooter className="flex gap-2">
+                <Button
+                  color="success"
+                  variant="solid"
+                  onPress={() =>
+                    selectedCustomer && handleUpdateWalletBalance()
+                  }
+                  isLoading={isButtonLoading}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => {
+                    onUpdateWalletClose();
+                    setSelectedCustomer(null);
+                    setAmount("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
       <Modal
-				isOpen={isUpdateLastPoint}
-				onClose={onUpdateLastPointClose}
-				size="lg">
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Update Last Point</ModalHeader>
-							<ModalBody>
-								<p className="text-md text-default-500">
-									Are you sure you want to update this customer's last point?  This action cannot be undone.
-								</p>
+        isOpen={isUpdateLastPoint}
+        onClose={onUpdateLastPointClose}
+        size="lg"
+      >
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>Update Last Point</ModalHeader>
+              <ModalBody>
+                <p className="text-md text-default-500">
+                  Are you sure you want to update this customer&apos;s last
+                  point? This action cannot be undone.
+                </p>
 
                 <SelectField
                   label="Last Point"
@@ -2523,50 +2559,63 @@ const handleUpdateLoanStatus = async () => {
                   placeholder="Select Last Point"
                   options={[
                     { label: "BVN Credit Check", value: "BVN Credit Check" },
-                    { label: "Loan Eligibility Check", value: "Loan Eligibility Check" },
+                    {
+                      label: "Loan Eligibility Check",
+                      value: "Loan Eligibility Check",
+                    },
                     { label: "Card Tokenization", value: "Card Tokenization" },
                     { label: "KYC Submission", value: "KYC Submission" },
                     { label: "Mandate Creation", value: "Mandate Creation" },
-                    { label: "Loan Data Submission", value: "Loan Data Submission" },
+                    {
+                      label: "Loan Data Submission",
+                      value: "Loan Data Submission",
+                    },
                     { label: "Down Payment", value: "Down Payment" },
-                    { label: "Virtual Account Creation", value: "Virtual Account Creation" },
+                    {
+                      label: "Virtual Account Creation",
+                      value: "Virtual Account Creation",
+                    },
                     { label: "Mandate Approved", value: "Mandate Approved" },
-                    { label: "Device Enrollment Started", value: "Device Enrollment Started" },
-                    { label: "Device Enrollment Completed", value: "Device Enrollment Completed" }
+                    {
+                      label: "Device Enrollment Started",
+                      value: "Device Enrollment Started",
+                    },
+                    {
+                      label: "Device Enrollment Completed",
+                      value: "Device Enrollment Completed",
+                    },
                   ]}
-                                     onChange={(e) => setLastPoint(e as string)}
+                  onChange={(e) => setLastPoint(e as string)}
                   size="sm"
                 />
-
-							</ModalBody>
-							<ModalFooter className="flex gap-2">
-								<Button
-									color="success"
-									variant="solid"
-									onPress={() => selectedCustomer && handleUpdateLastPoint()}  
-									isLoading={isButtonLoading}>
-									Confirm
-								</Button>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={() => {
-										onUpdateLastPointClose();
-										setSelectedCustomer(null);
-									}}>
-									Cancel
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+              </ModalBody>
+              <ModalFooter className="flex gap-2">
+                <Button
+                  color="success"
+                  variant="solid"
+                  onPress={() => selectedCustomer && handleUpdateLastPoint()}
+                  isLoading={isButtonLoading}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => {
+                    onUpdateLastPointClose();
+                    setSelectedCustomer(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
       {/* Dynamic Device Action Modal */}
-      <Modal
-        isOpen={isDeviceAction}
-        onClose={onDeviceActionClose}
-        size="lg">
+      <Modal isOpen={isDeviceAction} onClose={onDeviceActionClose} size="lg">
         <ModalContent>
           {() => (
             <>
@@ -2576,9 +2625,11 @@ const handleUpdateLoanStatus = async () => {
                   <p className="text-md text-default-500">
                     {deviceActionData?.description}
                   </p>
-                  
+
                   <div className="bg-default-50 rounded-lg p-4 space-y-2">
-                    <p className="text-sm font-medium text-default-700">Customer Details:</p>
+                    <p className="text-sm font-medium text-default-700">
+                      Customer Details:
+                    </p>
                     <p className="text-sm text-default-600">
                       Name: {customer?.firstName} {customer?.lastName}
                     </p>
@@ -2601,8 +2652,15 @@ const handleUpdateLoanStatus = async () => {
                 <Button
                   color="success"
                   variant="solid"
-                  onPress={() => deviceActionData && handleDeviceAction(deviceActionData.action, deviceActionData.imei)}
-                  isLoading={isButtonLoading}>
+                  onPress={() =>
+                    deviceActionData &&
+                    handleDeviceAction(
+                      deviceActionData.action,
+                      deviceActionData.imei
+                    )
+                  }
+                  isLoading={isButtonLoading}
+                >
                   Confirm
                 </Button>
                 <Button
@@ -2612,7 +2670,8 @@ const handleUpdateLoanStatus = async () => {
                     onDeviceActionClose();
                     setSelectedAction("");
                     setDeviceActionData(null);
-                  }}>
+                  }}
+                >
                   Cancel
                 </Button>
               </ModalFooter>
@@ -2622,17 +2681,19 @@ const handleUpdateLoanStatus = async () => {
       </Modal>
 
       <Modal
-				isOpen={isUpdateLoanStatus}
-				onClose={onUpdateLoanStatusClose}
-				size="lg">
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Update Loan Status</ModalHeader>
-							<ModalBody>
-								<p className="text-md text-default-500">
-									Are you sure you want to update this customer's loan status?  This action cannot be undone.
-								</p>
+        isOpen={isUpdateLoanStatus}
+        onClose={onUpdateLoanStatusClose}
+        size="lg"
+      >
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>Update Loan Status</ModalHeader>
+              <ModalBody>
+                <p className="text-md text-default-500">
+                  Are you sure you want to update this customer&apos;s loan
+                  status? This action cannot be undone.
+                </p>
 
                 <SelectField
                   label="Loan Status"
@@ -2649,33 +2710,34 @@ const handleUpdateLoanStatus = async () => {
                     { label: "OVERDUE", value: "OVERDUE" },
                     { label: "DEFAULTED", value: "DEFAULTED" },
                   ]}
-                                     onChange={(e) => setSelectedAction(e as string)}
+                  onChange={(e) => setSelectedAction(e as string)}
                   size="sm"
                 />
-
-							</ModalBody>
-							<ModalFooter className="flex gap-2">
-								<Button
-									color="success"
-									variant="solid"
-									onPress={() => selectedCustomer && handleUpdateLoanStatus()}  
-									isLoading={isButtonLoading}>
-									Confirm
-								</Button>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={() => {
-										onUpdateLoanStatusClose();
-										setSelectedCustomer(null);
-									}}>
-									Cancel
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+              </ModalBody>
+              <ModalFooter className="flex gap-2">
+                <Button
+                  color="success"
+                  variant="solid"
+                  onPress={() => selectedCustomer && handleUpdateLoanStatus()}
+                  isLoading={isButtonLoading}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => {
+                    onUpdateLoanStatusClose();
+                    setSelectedCustomer(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

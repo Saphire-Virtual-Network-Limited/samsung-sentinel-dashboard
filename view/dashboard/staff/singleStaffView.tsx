@@ -9,6 +9,7 @@ import {
   updateAgentAddressStatus,
 } from "@/lib";
 import { useAuth } from "@/lib";
+import { getUserRole } from "@/lib";
 
 import {
   Avatar,
@@ -462,8 +463,12 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
 // Main Component
 export default function AgentSinglePage() {
   const params = useParams();
-  const router = useRouter();
   const { userResponse } = useAuth();
+
+  const role = getUserRole(String(userResponse?.data?.role));
+
+  const router = useRouter();
+
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
   );
@@ -484,24 +489,19 @@ export default function AgentSinglePage() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    "sales-agent-records",
-    () =>
-      fetchAgent((params.id as string)),
-    {
-      onError: (error) => {
-        console.error("Error fetching agent:", error);
-        showToast({
-          type: "error",
-          message: error.message || "Failed to fetch agent data",
-          duration: 5000,
-        });
-      },
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 30000,
-    }
-  );
+  } = useSWR("sales-agent-records", () => fetchAgent(params.id as string), {
+    onError: (error) => {
+      console.error("Error fetching agent:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to fetch agent data",
+        duration: 5000,
+      });
+    },
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 30000,
+  });
 
   // Use SWR for agent devices
   const {
@@ -728,14 +728,15 @@ export default function AgentSinglePage() {
             <div className="flex md:hidden items-center gap-2">
               <Dropdown>
                 <DropdownTrigger>
-                  <Button
-                    variant="flat"
-                    size="sm"
-                    isIconOnly
-                    isDisabled={isDeleting}
+                  <div
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-default-600 bg-default-100 hover:bg-default-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      pointerEvents: isDeleting ? "none" : "auto",
+                      opacity: isDeleting ? 0.5 : 1,
+                    }}
                   >
                     <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Agent actions">
                   <DropdownItem
@@ -849,6 +850,29 @@ export default function AgentSinglePage() {
             >
               <div className="grid gap-4">
                 <InfoField label="Agent ID" value={agent.mbeId} copyable />
+                {agent?.userId && (
+                  <InfoField
+                    endComponent={
+                      <Button
+                        variant="flat"
+                        color="primary"
+                        size="sm"
+                        onPress={() => {
+                          router.push(
+                            `/access/${role}/staff/scan-partners/${agent.userId}`
+                          );
+                        }}
+                        className="font-medium"
+                      >
+                        View Details
+                      </Button>
+                    }
+                    label="SCAN Partner ID"
+                    value={agent.userId}
+                    copyable
+                  />
+                )}
+
                 <InfoField
                   label="Full Name"
                   value={`${agent.firstname} ${agent.lastname}`.trim()}

@@ -1,31 +1,31 @@
 /**
  * Role-based Permissions System
- * 
+ *
  * This system uses a "default deny" approach where all permissions default to false,
  * and you only need to specify the permissions you want to GRANT to each role.
- * 
+ *
  * USAGE EXAMPLES:
- * 
+ *
  * 1. Check if a user has a permission:
  *    hasPermission('sub-admin', 'canUpdateWalletBalance') // returns true
  *    hasPermission('admin', 'canUpdateWalletBalance') // returns false
- * 
+ *
  * 2. Get all permissions for a role:
  *    getPermissions('dev') // returns all permissions with their values
- * 
+ *
  * 3. Debug permissions for a role:
  *    debugRolePermissions('sub-admin') // logs all permissions to console
- * 
+ *
  * 4. Add a new permission to a role:
  *    // Just add it to the rolePermissions object below
  *    "finance": {
  *      canViewOverDuePayments: true, // This grants the permission
  *    }
- * 
+ *
  * 5. Add a new permission type:
  *    // Add it to the PermissionConfig interface and getDefaultPermissions function
  *    // Then add it to getAvailablePermissions array
- * 
+ *
  * BENEFITS:
  * - Much cleaner and more readable
  * - Less error-prone (no need to remember to set everything to false)
@@ -42,16 +42,17 @@ export interface PermissionConfig {
   canDeleteCustomers: boolean;
   canViewOverDuePayments: boolean;
   canViewDeviceActivityLog: boolean;
-  canViewCommunicationLog: boolean; 
+  canViewCommunicationLog: boolean;
+  suspendDashboardUser: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
-//   canViewSensitiveData: boolean;
-//   canManageCustomers: boolean;
-//   canManageLoans: boolean;
-//   canManageDevices: boolean;
-//   canViewReports: boolean;
-//   canManageStaff: boolean;
-//   canManageStores: boolean;
+  //   canViewSensitiveData: boolean;
+  //   canManageCustomers: boolean;
+  //   canManageLoans: boolean;
+  //   canManageDevices: boolean;
+  //   canViewReports: boolean;
+  //   canManageStaff: boolean;
+  //   canManageStores: boolean;
 }
 
 // Define which roles have access to which features
@@ -67,7 +68,6 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     // canViewOverDuePayments: true,
     // canViewDeviceActivityLog: true,
     // canViewCommunicationLog: true,
-
     // Admin has no special permissions by default
     // All permissions default to false
   },
@@ -80,6 +80,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
+    suspendDashboardUser: true,
   },
   "collection-admin": {
     canTriggerDeviceActions: true,
@@ -163,7 +164,6 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
   },
-  
 };
 
 /**
@@ -179,6 +179,7 @@ function getDefaultPermissions(): PermissionConfig {
     canViewOverDuePayments: false,
     canViewDeviceActivityLog: false,
     canViewCommunicationLog: false,
+    suspendDashboardUser: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -190,13 +191,16 @@ function getDefaultPermissions(): PermissionConfig {
  * @param userEmail - The user's email (optional, for special overrides)
  * @returns PermissionConfig object
  */
-export function getPermissions(role: string, userEmail?: string): PermissionConfig {
+export function getPermissions(
+  role: string,
+  userEmail?: string
+): PermissionConfig {
   // Start with default permissions (all false)
   const defaultPermissions = getDefaultPermissions();
-  
+
   // Get base permissions for the role (only granted permissions)
   const roleGrantedPermissions = rolePermissions[role] || {};
-  
+
   // Merge default permissions with role permissions
   const basePermissions = {
     ...defaultPermissions,
@@ -244,14 +248,14 @@ export function getAvailableRoles(): string[] {
  */
 export function getAvailablePermissions(): (keyof PermissionConfig)[] {
   return [
-    'canUpdateWalletBalance',
-    'canUpdateLastPoint',
-    'canUpdateLoanStatus',
-    'canTriggerDeviceActions',
-    'canDeleteCustomers',
-    'canViewOverDuePayments',
-    'canViewDeviceActivityLog',
-    'canViewCommunicationLog',
+    "canUpdateWalletBalance",
+    "canUpdateLastPoint",
+    "canUpdateLoanStatus",
+    "canTriggerDeviceActions",
+    "canDeleteCustomers",
+    "canViewOverDuePayments",
+    "canViewDeviceActivityLog",
+    "canViewCommunicationLog",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',
@@ -285,8 +289,10 @@ export function roleExists(role: string): boolean {
  * @param permission - The permission to check
  * @returns Array of role names that have this permission
  */
-export function getRolesWithPermission(permission: keyof PermissionConfig): string[] {
-  return getAvailableRoles().filter(role => hasPermission(role, permission));
+export function getRolesWithPermission(
+  permission: keyof PermissionConfig
+): string[] {
+  return getAvailableRoles().filter((role) => hasPermission(role, permission));
 }
 
 /**
@@ -297,11 +303,11 @@ export function getRolesWithPermission(permission: keyof PermissionConfig): stri
 export function debugRolePermissions(role: string, userEmail?: string): void {
   const permissions = getPermissions(role, userEmail);
   console.log(`Permissions for role "${role}":`, permissions);
-  
+
   const grantedPermissions = Object.entries(permissions)
     .filter(([_, value]) => value === true)
     .map(([key, _]) => key);
-    
+
   console.log(`Granted permissions:`, grantedPermissions);
 }
 
@@ -311,26 +317,26 @@ export function debugRolePermissions(role: string, userEmail?: string): void {
  */
 // export function testPermissionSystem(): void {
 //   console.log("=== Testing Permission System ===");
-  
+
 //   // Test default deny
 //   console.log("1. Testing default deny:");
 //   console.log("admin canUpdateWalletBalance:", hasPermission('admin', 'canUpdateWalletBalance')); // should be false
 //   console.log("finance canDeleteCustomers:", hasPermission('finance', 'canDeleteCustomers')); // should be false
-  
+
 //   // Test granted permissions
 //   console.log("\n2. Testing granted permissions:");
 //   console.log("sub-admin canUpdateWalletBalance:", hasPermission('sub-admin', 'canUpdateWalletBalance')); // should be true
 //   console.log("dev canDeleteCustomers:", hasPermission('dev', 'canDeleteCustomers')); // should be true
-  
+
 //   // Test user overrides
 //   console.log("\n3. Testing user overrides:");
-//   console.log("timilehin@sapphirevirtual.com (admin) canUpdateWalletBalance:", 
+//   console.log("timilehin@sapphirevirtual.com (admin) canUpdateWalletBalance:",
 //     hasPermission('admin', 'canUpdateWalletBalance', 'timilehin@sapphirevirtual.com')); // should be true
-  
+
 //   // Test collection-admin specific permission
 //   console.log("\n4. Testing collection-admin:");
 //   console.log("collection-admin canTriggerDeviceActions:", hasPermission('collection-admin', 'canTriggerDeviceActions')); // should be true
 //   console.log("collection-admin canUpdateWalletBalance:", hasPermission('collection-admin', 'canUpdateWalletBalance')); // should be false
-  
+
 //   console.log("\n=== Permission System Test Complete ===");
-// } 
+// }

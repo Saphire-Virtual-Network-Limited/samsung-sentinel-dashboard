@@ -67,6 +67,7 @@ export interface AgentRecord {
   MbeGuarantor: MbeGuarantor[];
   storesNew?: mainStoreNew;
   customersCount: number;
+  userId?: string;
 }
 
 export interface Meta {

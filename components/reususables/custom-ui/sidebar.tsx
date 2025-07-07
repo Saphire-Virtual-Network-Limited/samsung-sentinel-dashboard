@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Store,
   Package2Icon,
+  Users2,
   Phone,
   Code,
   CreditCard,
@@ -147,15 +148,9 @@ export function AppSidebar() {
   const scanParterItems: MenuItem[] = [
     {
       icon: IoBusiness,
-      title: "Staff",
-      url: "/access/scan-partner/staff",
-      id: "scan-partner-staff",
-      subItems: [
-        {
-          title: "Profile",
-          url: `/access/scan-partner/profile`,
-        },
-      ],
+      title: "Profile",
+      url: "/access/scan-partner/profile",
+      id: "scan-partner-profile",
     },
   ];
 
@@ -210,7 +205,7 @@ export function AppSidebar() {
       id: "admin-staff",
       subItems: [
         {
-          title: "Sales Agent",
+          title: "Mobiflex Sales Agent",
           url: "/access/admin/staff/agents",
         },
         {
@@ -262,6 +257,16 @@ export function AppSidebar() {
         { title: "Tracker", url: "/access/admin/reports/tracker" },
       ],
     },
+    {
+      icon: Users2,
+      title: "Users",
+      id: "admin-users",
+      subItems: [
+        //     { title: "Manage", url: "/access/admin/users/mange" },
+        { title: "Create", url: "/access/admin/users/create" },
+      ],
+    },
+
     {
       icon: Package2Icon,
       title: "Inventory",
@@ -445,7 +450,7 @@ export function AppSidebar() {
       id: "sub-admin-staff",
       subItems: [
         {
-          title: "Sales Agent",
+          title: "Mobiflex Sales Agent",
           url: "/access/sub-admin/staff/agents",
         },
         {
@@ -496,6 +501,16 @@ export function AppSidebar() {
         { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
       ],
     },
+    {
+      icon: Users2,
+      title: "Users",
+      id: "admin-users",
+      subItems: [
+        { title: "Manage", url: "/access/sub-admin/users/mange" },
+        { title: "Create", url: "/access/sub-admin/users/create" },
+      ],
+    },
+
     {
       icon: Package2Icon,
       title: "Inventory",

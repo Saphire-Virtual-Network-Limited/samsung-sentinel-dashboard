@@ -184,8 +184,31 @@ export async function suspendUser({
   adminId: string;
   status: string;
 }) {
-  return apiCall("/admin/suspend", "POST");
+  return apiCall("/admin/suspend", "POST", { adminId, status });
 }
+
+export interface AcceptInviteData {
+  password: string;
+  adminid: string;
+  confirmPassword: string;
+}
+
+export async function acceptAdminInvite(data: AcceptInviteData) {
+  return apiCall("/admin/invite/accept", "POST", data);
+}
+
+export interface InviteAdminData {
+  firstName: string;
+  lastName: string;
+  role: string;
+  email: string;
+  telephoneNumber: string;
+}
+
+export async function inviteAdmin(data: InviteAdminData) {
+  return apiCall("/admin/invite", "POST", data);
+}
+
 //** Devices */
 
 export async function getAllDevicesData(startDate?: string, endDate?: string) {

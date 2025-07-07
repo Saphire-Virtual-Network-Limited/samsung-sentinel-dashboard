@@ -1,54 +1,67 @@
 "use client";
 
 import {
+  capitalize,
   getScanPartnerByUserId,
+  getUserRole,
   showToast,
   suspendUser as suspendScanPartner,
-  capitalize,
   useAuth,
 } from "@/lib";
+import { hasPermission } from "@/lib/permissions";
 
 import {
   Avatar,
   Button,
-  Chip,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  useDisclosure,
-  Image,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Divider,
   Card,
   CardBody,
   CardHeader,
+  Chip,
+  Divider,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Image,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  useDisclosure,
 } from "@heroui/react";
 
 import {
   ArrowLeft,
-  User,
-  Users,
-  Trash2,
-  MoreVertical,
-  ExternalLink,
-  Calendar,
-  Phone,
-  Hash,
-  UserCheck,
   Building,
+  Calendar,
+  ExternalLink,
+  Hash,
+  MoreVertical,
+  Phone,
+  Trash2,
+  User,
+  UserCheck,
+  Users,
 } from "lucide-react";
 
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
-import type { ScanPartnerRecord } from "./types";
-import { statusColorMap } from "./constants";
 import useSWR from "swr";
+import { statusColorMap } from "./constants";
+import type { ScanPartnerRecord } from "./types";
+
+import {
+  ButtonGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "@heroui/react";
+import { Grid3X3, List } from "lucide-react";
 
 // Agent interface for the Mbe array
 interface AgentRecord {
@@ -100,20 +113,25 @@ const InfoCard = ({
   children,
   className = "",
   icon,
+  headerContent,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
+  headerContent?: React.ReactNode;
 }) => {
   return (
     <div
       className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
     >
       <div className="p-4 border-b border-default-200">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          </div>
+          {headerContent}
         </div>
       </div>
       <div className="p-6">{children}</div>
@@ -172,101 +190,249 @@ const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
   };
 
   return (
-    <div onClick={handleCardClick}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
-              <Avatar
-                src={agent.imageUrl || "/placeholder.svg"}
-                alt={`${agent.firstname} ${agent.lastname}`}
-                className="w-10 h-10"
-                color={getStatusColor(agent.accountStatus)}
-              />
-              <div>
-                <h4 className="font-semibold text-default-900 capitalize">
-                  {agent.firstname} {agent.lastname}
-                </h4>
-                <p className="text-sm text-default-500">{agent.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Chip
-                color={getStatusColor(agent.accountStatus)}
-                variant="flat"
-                size="sm"
-              >
-                {capitalize(agent.accountStatus)}
-              </Chip>
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button isIconOnly size="sm" variant="light">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu>
-                  <DropdownItem
-                    key="view"
-                    startContent={<ExternalLink className="w-4 h-4" />}
-                    onPress={() =>
-                      router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
-                    }
-                  >
-                    View Details
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={agent.imageUrl || "/placeholder.svg"}
+              alt={`${agent.firstname} ${agent.lastname}`}
+              className="w-10 h-10"
+              color={getStatusColor(agent.accountStatus)}
+            />
+            <div>
+              <h4 className="font-semibold text-default-900 capitalize">
+                {agent.firstname} {agent.lastname}
+              </h4>
+              <p className="text-sm text-default-500">{agent.email}</p>
             </div>
           </div>
-        </CardHeader>
-        <CardBody className="pt-0">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-default-400" />
-              <span className="text-default-600">ID:</span>
-              <span className="font-mono text-xs">{agent.mbeId}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-default-400" />
-              <span className="text-default-600">{agent.phone}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-default-400" />
-              <span className="text-default-600">Role:</span>
-              <span className="capitalize">{agent.role.toLowerCase()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-default-400" />
-              <span className="text-default-600">Joined:</span>
-              <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <div className="mt-3 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  agent.isActive ? "bg-success" : "bg-danger"
-                }`}
-              ></div>
-              <span className="text-sm text-default-600">
-                {agent.isActive ? "Active" : "Inactive"}
-              </span>
-            </div>
-            <Button
-              size="sm"
+          <div className="flex items-center gap-2">
+            <Chip
+              color={getStatusColor(agent.accountStatus)}
               variant="flat"
-              color="primary"
-              startContent={<ExternalLink className="w-4 h-4" />}
-              onPress={() =>
-                router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
-              }
+              size="sm"
             >
-              View Details
-            </Button>
+              {capitalize(agent.accountStatus)}
+            </Chip>
+            <Dropdown>
+              <DropdownTrigger>
+                <div
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
+                  role="button"
+                  tabIndex={0}
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </div>
+              </DropdownTrigger>
+              <DropdownMenu>
+                <DropdownItem
+                  key="view"
+                  startContent={<ExternalLink className="w-4 h-4" />}
+                  onPress={() =>
+                    router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+                  }
+                >
+                  View Details
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
-        </CardBody>
-      </Card>
-    </div>
+        </div>
+      </CardHeader>
+      <CardBody className="pt-0">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Hash className="w-4 h-4 text-default-400" />
+            <span className="text-default-600">ID:</span>
+            <span className="font-mono text-xs">{agent.mbeId}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-default-400" />
+            <span className="text-default-600">{agent.phone}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-default-400" />
+            <span className="text-default-600">Role:</span>
+            <span className="capitalize">{agent?.role?.toLowerCase()}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-default-400" />
+            <span className="text-default-600">Joined:</span>
+            <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <div className="mt-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                agent.isActive ? "bg-success" : "bg-danger"
+              }`}
+            ></div>
+            <span className="text-sm text-default-600">
+              {agent.isActive ? "Active" : "Inactive"}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="flat"
+            color="primary"
+            startContent={<ExternalLink className="w-4 h-4" />}
+            onPress={() =>
+              router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+            }
+          >
+            View Details
+          </Button>
+        </div>
+      </CardBody>
+    </Card>
+  );
+};
+
+const AgentTable = ({
+  agents,
+  role,
+}: {
+  agents: AgentRecord[];
+  role: string;
+}) => {
+  const router = useRouter();
+
+  const getStatusColor = (status: string) => {
+    return statusColorMap[status] || "default";
+  };
+
+  const renderCell = (agent: AgentRecord, columnKey: string) => {
+    switch (columnKey) {
+      case "name":
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={agent.imageUrl || "/placeholder.svg"}
+              alt={`${agent.firstname} ${agent.lastname}`}
+              className="w-8 h-8"
+              color={getStatusColor(agent.accountStatus)}
+            />
+            <div>
+              <p className="font-semibold text-default-900 capitalize">
+                {agent.firstname} {agent.lastname}
+              </p>
+              <p className="text-sm text-default-500">{agent.email}</p>
+            </div>
+          </div>
+        );
+      case "mbeId":
+        return (
+          <div className="font-mono text-xs text-default-600">
+            {agent.mbeId}
+          </div>
+        );
+      case "phone":
+        return <div className="text-sm text-default-600">{agent.phone}</div>;
+      case "role":
+        return (
+          <div className="text-sm capitalize text-default-600">
+            {agent?.role?.toLowerCase()}
+          </div>
+        );
+      case "accountStatus":
+        return (
+          <Chip
+            color={getStatusColor(agent.accountStatus)}
+            variant="flat"
+            size="sm"
+          >
+            {capitalize(agent.accountStatus)}
+          </Chip>
+        );
+      case "isActive":
+        return (
+          <Chip
+            color={agent.isActive ? "success" : "danger"}
+            variant="flat"
+            size="sm"
+          >
+            {agent.isActive ? "Active" : "Inactive"}
+          </Chip>
+        );
+      case "createdAt":
+        return (
+          <div className="text-sm text-default-600">
+            {new Date(agent.createdAt).toLocaleDateString()}
+          </div>
+        );
+      case "actions":
+        return (
+          <div className="flex justify-end">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button isIconOnly size="sm" variant="light">
+                  <MoreVertical className="w-4 h-4 text-default-400" />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu>
+                <DropdownItem
+                  key="view"
+                  startContent={<ExternalLink className="w-4 h-4" />}
+                  onPress={() =>
+                    router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+                  }
+                >
+                  View Details
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Table
+      aria-label="Agents table"
+      className="min-w-full"
+      removeWrapper
+      classNames={{
+        th: "bg-default-100 text-default-700 font-semibold",
+        td: "py-3",
+      }}
+    >
+      <TableHeader>
+        <TableColumn key="name">Name</TableColumn>
+        <TableColumn key="mbeId">Agent ID</TableColumn>
+        <TableColumn key="phone">Phone</TableColumn>
+        <TableColumn key="role">Role</TableColumn>
+        <TableColumn key="accountStatus">Status</TableColumn>
+        <TableColumn key="isActive">Active</TableColumn>
+        <TableColumn key="createdAt">Joined</TableColumn>
+        <TableColumn key="actions">Actions</TableColumn>
+      </TableHeader>
+      <TableBody>
+        {agents.map((agent) => (
+          <TableRow
+            key={agent.mbeId}
+            className="hover:bg-default-50 cursor-pointer"
+            onClick={() =>
+              router.push(`/access/${role}/staff/agents/${agent.mbeId}`)
+            }
+          >
+            <TableCell>{renderCell(agent, "name")}</TableCell>
+            <TableCell>{renderCell(agent, "mbeId")}</TableCell>
+            <TableCell>{renderCell(agent, "phone")}</TableCell>
+            <TableCell>{renderCell(agent, "role")}</TableCell>
+            <TableCell>{renderCell(agent, "accountStatus")}</TableCell>
+            <TableCell>{renderCell(agent, "isActive")}</TableCell>
+            <TableCell>{renderCell(agent, "createdAt")}</TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
+              {renderCell(agent, "actions")}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 
@@ -307,6 +473,7 @@ export default function ScanPartnerSinglePage() {
   const params = useParams();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewType, setViewType] = useState<"cards" | "table">("table");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isSuspendOpen,
@@ -319,17 +486,12 @@ export default function ScanPartnerSinglePage() {
   // Use SWR for data fetching
 
   const { userResponse } = useAuth();
-  const getUserRole = (userRole: string) => {
-    const role = userRole.toLowerCase();
-    if (role === "admin") return "sub-admin";
-    if (role === "super-admin") return "admin";
-    return role;
-  };
 
   const role = getUserRole(String(userResponse?.data?.role));
   const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
   const userId = userResponse?.data?.userId;
 
+  const canSuspendUser = hasPermission(role, "suspendDashboardUser");
   const {
     data: scanPartner,
     error,
@@ -370,11 +532,14 @@ export default function ScanPartnerSinglePage() {
         });
         router.back();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting scan partner:", error);
       showToast({
         type: "error",
-        message: "Failed to suspend scan partner",
+        message:
+          error?.statusType == "UNAUTHORIZED"
+            ? "Failed to suspend scan partner"
+            : error?.message,
         duration: 5000,
       });
     } finally {
@@ -441,16 +606,18 @@ export default function ScanPartnerSinglePage() {
 
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                color="danger"
-                variant="light"
-                size="sm"
-                startContent={<Trash2 className="w-4 h-4" />}
-                onPress={onSuspendOpen}
-                isDisabled={isDeleting}
-              >
-                Suspend
-              </Button>
+              {canSuspendUser && (
+                <Button
+                  color="danger"
+                  variant="light"
+                  size="sm"
+                  startContent={<Trash2 className="w-4 h-4" />}
+                  onPress={onSuspendOpen}
+                  isDisabled={isDeleting}
+                >
+                  Suspend
+                </Button>
+              )}
               <Divider orientation="vertical" className="h-6" />
               <Button
                 variant="flat"
@@ -467,14 +634,13 @@ export default function ScanPartnerSinglePage() {
             <div className="flex md:hidden items-center gap-2">
               <Dropdown>
                 <DropdownTrigger>
-                  <Button
-                    variant="flat"
-                    size="sm"
-                    isIconOnly
-                    isDisabled={isDeleting}
+                  <div
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
+                    role="button"
+                    tabIndex={0}
                   >
                     <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Scan partner actions">
                   <DropdownItem
@@ -670,6 +836,26 @@ export default function ScanPartnerSinglePage() {
             <InfoCard
               title="Associated Agents"
               icon={<Users className="w-5 h-5 text-default-600" />}
+              headerContent={
+                agents.length > 0 && (
+                  <ButtonGroup size="sm" variant="flat">
+                    <Button
+                      color={viewType === "cards" ? "primary" : "default"}
+                      onPress={() => setViewType("cards")}
+                      startContent={<Grid3X3 className="w-4 h-4" />}
+                    >
+                      Cards
+                    </Button>
+                    <Button
+                      color={viewType === "table" ? "primary" : "default"}
+                      onPress={() => setViewType("table")}
+                      startContent={<List className="w-4 h-4" />}
+                    >
+                      Table
+                    </Button>
+                  </ButtonGroup>
+                )
+              }
             >
               {agents.length > 0 ? (
                 <div className="space-y-4">
@@ -681,11 +867,22 @@ export default function ScanPartnerSinglePage() {
                       {agents.length} Agent{agents.length !== 1 ? "s" : ""}
                     </Chip>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    {agents.map((agent) => (
-                      <AgentCard key={agent.mbeId} agent={agent} role={role} />
-                    ))}
-                  </div>
+
+                  {viewType === "cards" ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {agents.map((agent) => (
+                        <AgentCard
+                          key={agent.mbeId}
+                          agent={agent}
+                          role={role}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <AgentTable agents={agents} role={role} />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <EmptyState
