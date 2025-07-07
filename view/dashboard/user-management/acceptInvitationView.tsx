@@ -1,11 +1,10 @@
 "use client";
 
 import { PasswordField } from "@/components/reususables";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useInviteAcceptor } from "@/hooks/user-mangement/use-invite-acceptor";
 import { useInviteForm } from "@/hooks/user-mangement/use-invite-form";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Card, CardBody, CardHeader, Button } from "@heroui/react";
 import { ArrowRight, CheckCircle, UserCheck } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
@@ -166,8 +165,8 @@ export default function InvitePage() {
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleReset}
+                  variant="ghost"
+                  onPress={handleReset}
                   className="w-full bg-transparent"
                   disabled={isLoading}
                 >

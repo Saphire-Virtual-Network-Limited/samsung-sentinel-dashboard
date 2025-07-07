@@ -2,8 +2,7 @@
 
 import type React from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardBody } from "@heroui/react";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardBody, Button } from "@heroui/react";
 import { Separator } from "@/components/ui/separator";
 import { FormField } from "@/components/reususables";
 import { SelectField } from "@/components/reususables/form";
@@ -159,15 +158,15 @@ export default function CreateUserPage() {
               />
 
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button
+                {/**  <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleReset}
+                  variant="ghost"
+                  onPress={handleReset}
                   className="flex-1 bg-transparent"
                   disabled={isLoading}
                 >
                   Reset Form
-                </Button>
+                </Button> */}
                 <Button
                   type="submit"
                   className="flex-1"
