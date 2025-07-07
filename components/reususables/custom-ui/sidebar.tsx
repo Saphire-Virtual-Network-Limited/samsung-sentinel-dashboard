@@ -205,7 +205,7 @@ export function AppSidebar() {
       id: "admin-staff",
       subItems: [
         {
-          title: "Sales Agent",
+          title: "Mobiflex Sales Agent",
           url: "/access/admin/staff/agents",
         },
         {
@@ -450,7 +450,7 @@ export function AppSidebar() {
       id: "sub-admin-staff",
       subItems: [
         {
-          title: "Sales Agent",
+          title: "Mobiflex Sales Agent",
           url: "/access/sub-admin/staff/agents",
         },
         {
