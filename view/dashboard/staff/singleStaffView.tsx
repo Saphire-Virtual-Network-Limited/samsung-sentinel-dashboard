@@ -9,6 +9,7 @@ import {
   updateAgentAddressStatus,
 } from "@/lib";
 import { useAuth } from "@/lib";
+import { getUserRole } from "@/lib";
 
 import {
   Avatar,
@@ -463,13 +464,7 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
 export default function AgentSinglePage() {
   const params = useParams();
   const { userResponse } = useAuth();
-  const getUserRole = (userRole: string) => {
-    const role = userRole.toLowerCase().replace(/_/g, "-");
-    if (role === "admin") return "sub-admin";
-    if (role === "super-admin") return "admin";
 
-    return role;
-  };
   const role = getUserRole(String(userResponse?.data?.role));
 
   const router = useRouter();

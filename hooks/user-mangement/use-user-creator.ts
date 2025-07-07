@@ -50,7 +50,7 @@ export const useUserCreator = (): UseUserCreatorReturn => {
         const result = await inviteAdmin(userData);
         setSuccess(result);
 
-        if (result.success) {
+        if (result) {
           showToast({
             type: "success",
             message: `User created successfully! Invitation sent to ${userData.email}`,

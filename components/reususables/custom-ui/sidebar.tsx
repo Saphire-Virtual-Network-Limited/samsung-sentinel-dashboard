@@ -148,15 +148,9 @@ export function AppSidebar() {
   const scanParterItems: MenuItem[] = [
     {
       icon: IoBusiness,
-      title: "Staff",
-      url: "/access/scan-partner/staff",
-      id: "scan-partner-staff",
-      subItems: [
-        {
-          title: "Profile",
-          url: `/access/scan-partner/profile`,
-        },
-      ],
+      title: "Profile",
+      url: "/access/scan-partner/profile",
+      id: "scan-partner-profile",
     },
   ];
 
@@ -268,7 +262,7 @@ export function AppSidebar() {
       title: "Users",
       id: "admin-users",
       subItems: [
-        { title: "Manage", url: "/access/admin/users/mange" },
+        //     { title: "Manage", url: "/access/admin/users/mange" },
         { title: "Create", url: "/access/admin/users/create" },
       ],
     },

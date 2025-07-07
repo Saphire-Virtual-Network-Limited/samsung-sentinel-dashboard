@@ -1,8 +1,8 @@
 import React from "react";
-import { NewHomeView } from "@/view";
+import NewScanPartnerHomeView from "@/view/dashboard/staff/scanPartners/NewScanPartnerHomeView";
 
 const page = () => {
-	return <NewHomeView />;
+  return <NewScanPartnerHomeView />;
 };
 
 export default page;
