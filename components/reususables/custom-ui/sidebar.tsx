@@ -737,6 +737,27 @@ export function AppSidebar() {
         { title: "Tracker", url: "/access/finance/reports/tracker" },
       ],
     },
+    {
+      icon: IoBusiness,
+      title: "Staff",
+      url: "/access/finance/staff",
+      id: "finance-staff",
+      subItems: [
+        {
+          title: "Mobiflex Sales Agent",
+          url: "/access/finance/staff/agents",
+        },
+        {
+          title: "MBE",
+          url: "/access/finance/staff/mbe",
+        },
+        {
+          title: "SCAN Partners",
+          url: "/access/finance/staff/scan-partners",
+        },
+          
+      ],
+    },
     
   ];
 
