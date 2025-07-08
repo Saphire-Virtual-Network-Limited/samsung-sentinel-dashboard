@@ -719,22 +719,22 @@ export function AppSidebar() {
         {
           title: "Sales",
           subItems: [
-            { title: "Overview", url: "/access/sales/reports/sales/overview" },
-            { title: "MBE Report", url: "/access/sales/reports/sales/mbe" },
+            { title: "Overview", url: "/access/finance/reports/sales/overview" },
+            { title: "MBE Report", url: "/access/finance/reports/sales/mbe" },
             {
               title: "Samsung Report",
-              url: "/access/sales/reports/sales/samsung",
+              url: "/access/finance/reports/sales/samsung",
             },
             {
               title: "Xiaomi Report",
-              url: "/access/sales/reports/sales/xiaomi",
+              url: "/access/finance/reports/sales/xiaomi",
             },
-            { title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
-            { title: "Sentinel", url: "/access/sales/reports/sales/sentinel" },
+            { title: "Oppo Report", url: "/access/finance/reports/sales/oppo" },
+            { title: "Sentinel", url: "/access/finance/reports/sales/sentinel" },
           ],
         },
-        { title: "Drop-offs", url: "/access/sales/reports/drop-offs" },
-        { title: "Tracker", url: "/access/sales/reports/tracker" },
+        { title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
+        { title: "Tracker", url: "/access/finance/reports/tracker" },
       ],
     },
     
