@@ -641,8 +641,9 @@ export async function updateCustomerVirtualWalletBalance(
 
 export async function createCustomerVirtualWallet(customerId: string) {
   return apiCall(
-    `/admin/customers/create-customer-wallet/${customerId}`,
-    "POST"
+    `/admin/customers/create-customer-wallet`,
+    "POST",
+    { customerId }
   );
 }
 
@@ -734,6 +735,105 @@ export async function updateStore(updateStore: updateStore) {
   return apiCall(`/admin/stores/${updateStore.storeId}`, "PUT", updateStore);
 }
 
+export async function deleteStore(storeId: string) {
+  return apiCall(`/admin/stores/${storeId}/archive`, "PATCH"); 
+}
+
+// Create Device
+
+export interface createDevice {
+  deviceBrand: string;
+  deviceModel: string;
+  price: number;
+  currency: string;
+  deviceImage?: File; // File object for FormData
+  deviceModelNumber: string;
+  back_camera?: string;
+  battery?: string;
+  color?: string;
+  data_storage?: string;
+  display?: string;
+  front_camera?: string;
+  memory?: string;
+  network?: string;
+  os?: string;
+  other_features?: string;
+  proccessor_cpu?: string;
+  sap: number;
+  screen_size: string;
+  sentinel_cover: string;
+  sld: number;
+  deviceType: string;
+  case_colors?: string;
+  windows_version: string;
+  isActive: boolean;  
+}
+
+export async function createDevice(createDevice: createDevice) {
+  const formData = new FormData();
+  
+  // Add file if it exists
+  if (createDevice.deviceImage) {
+    formData.append('deviceImage', createDevice.deviceImage);
+  }
+  
+  // Add all other fields
+  Object.keys(createDevice).forEach(key => {
+    if (key !== 'deviceImage' && createDevice[key as keyof createDevice] !== undefined) {
+      formData.append(key, String(createDevice[key as keyof createDevice]));
+    }
+  });
+  
+  return apiCall("/admin/device/create", "POST", formData);
+}
+
+// Update Device
+
+export interface updateDevice {
+  deviceBrand: string;
+  deviceModel: string;
+  price: number;
+  currency: string;
+  deviceImage?: File; // File object for FormData
+  deviceModelNumber: string;
+  back_camera: string;
+  battery: string;
+  color: string;
+  data_storage: string;
+  display: string;
+  front_camera: string;
+  memory: string;
+  network: string;
+  os: string;
+  other_features: string;
+  processor_cpu: string;
+  sentinel_cover: string;
+  sap: number;
+  screen_size: string;
+  sld: number;
+  deviceType: string;
+  case_colors: string;
+  windows_version: string;
+  isActive: boolean;  
+}
+
+export async function updateDevice(deviceId: string, updateDevice: updateDevice) {
+  const formData = new FormData();
+  
+  // Add file if it exists
+  if (updateDevice.deviceImage) {
+    formData.append('deviceImage', updateDevice.deviceImage);
+  }
+  
+  // Add all other fields
+  Object.keys(updateDevice).forEach(key => {
+    if (key !== 'deviceImage' && updateDevice[key as keyof updateDevice] !== undefined) {
+      formData.append(key, String(updateDevice[key as keyof updateDevice]));
+    }
+  });
+  
+  return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
+}
 
 
 

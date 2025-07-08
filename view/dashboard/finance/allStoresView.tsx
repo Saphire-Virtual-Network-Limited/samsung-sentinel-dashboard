@@ -3,13 +3,13 @@
 import React, { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores, showToast, syncStores } from "@/lib";
+import { getAllStores, showToast, syncStores, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "storeName", sortable: true },
@@ -58,9 +58,14 @@ type StoreRecord = {
 };
 
 export default function AllStoresView() {
+
+	const pathname = usePathname();
+	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
+	const role = pathname.split("/")[2];
+
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | null>(null);
+	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<StoreRecord | null>(null);
 
 	const router = useRouter();
@@ -124,8 +129,8 @@ export default function AllStoresView() {
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
@@ -197,10 +202,16 @@ export default function AllStoresView() {
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view", row: StoreRecord) => {
+	const openModal = (mode: "view" | "edit", row: StoreRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
-		onOpen();
+		if (mode === "edit") {
+			// Open edit page in new tab with store data
+			const editUrl = `/access/${role}/stores/edit/${row.storeId}`;
+			window.open(editUrl, '_blank');
+		} else {
+			onOpen();
+		}
 	};
 
 	// Render each cell, including actions dropdown:
@@ -222,6 +233,11 @@ export default function AllStoresView() {
 								key={`${row.storeId}-view`}
 								onPress={() => openModal("view", row)}>
 								View
+							</DropdownItem>
+							<DropdownItem
+								key={`${row.storeId}-edit`}
+								onPress={() => openModal("edit", row)}>	
+								Edit
 							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
@@ -273,7 +289,8 @@ export default function AllStoresView() {
 					createButton={{
 						text: "Create Store",
 						onClick: () => {
-							router.push("/access/admin/stores/create");
+							const createUrl = `/access/${role}/stores/create`;
+							window.open(createUrl, '_blank');
 						}
 					}}
 					additionalButtons={[		
@@ -288,22 +305,8 @@ export default function AllStoresView() {
 				/>
 			)}
 
-<div className="mb-4 flex justify-center md:justify-start mt-4 gap-4 items-center">
-			<Button
-				color="primary"
-				variant="solid"
-				className="w-fit sm:w-auto"
-				onPress={() => {
-					syncStoresFn();
-				}}
-				isLoading={isSyncing}
-			>
-				Sync Stores
-			</Button>
-			<p className="text-sm text-default-500">
-			Sync Stores will update the stores list with the latest data from the 1.9 dashboard.
-		</p>
-		</div>
+
+		
 		
 			
 
@@ -315,7 +318,7 @@ export default function AllStoresView() {
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>User Details</ModalHeader>
+							<ModalHeader>Store Details</ModalHeader>
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">

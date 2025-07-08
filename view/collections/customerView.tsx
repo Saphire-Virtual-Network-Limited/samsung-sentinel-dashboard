@@ -542,7 +542,7 @@ export default function CollectionCustomerPage() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
-					defaultDateRange={{ days: 2 }}
+					defaultDateRange={{ days: 1 }}
 				/>
 			)}
 		</>

@@ -9,6 +9,7 @@ import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
+import { usePathname } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "deviceName", sortable: true },
@@ -56,9 +57,14 @@ type DeviceRecord = {
 };
 
 export default function AllDevicesView() {
+
+
+	const pathname = usePathname();
+	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
+	const role = pathname.split("/")[2]; 
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | null>(null);
+	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<DeviceRecord | null>(null);
 
 
@@ -181,10 +187,16 @@ export default function AllDevicesView() {
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view", row: DeviceRecord) => {
+	const openModal = (mode: "view" | "edit", row: DeviceRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
-		onOpen();
+		if (mode === "edit") {
+			// Open edit page in new tab with store data
+			const editUrl = `/access/${role}/inventorydevices/edit/${row.newDeviceId}`;
+			window.open(editUrl, '_blank');
+		} else {
+			onOpen();
+		}
 	};
 
 	// Render each cell, including actions dropdown:
@@ -206,6 +218,11 @@ export default function AllDevicesView() {
 								key={`${row.newDeviceId}-view`}
 								onPress={() => openModal("view", row)}>
 								View
+							</DropdownItem>
+							<DropdownItem
+								key={`${row.newDeviceId}-edit`}
+								onPress={() => openModal("edit", row)}>	
+								Edit
 							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
@@ -254,6 +271,14 @@ export default function AllDevicesView() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
+					createButton={{
+						text: "Create",
+						onClick: () => {
+							const createUrl = `/access/${role}/inventory/devices/create`;
+							window.open(createUrl, '_blank');
+						}
+					}}
+
 				/>
 			)}
 			
