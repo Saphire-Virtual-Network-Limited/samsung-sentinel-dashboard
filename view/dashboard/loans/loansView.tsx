@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
@@ -181,7 +182,7 @@ export default function LoansView() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>
@@ -204,7 +205,19 @@ export default function LoansView() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => 
+				c.fullName.toLowerCase().includes(f) || 
+				c.firstName.toLowerCase().includes(f) ||
+				c.lastName.toLowerCase().includes(f) ||
+				c.email.toLowerCase().includes(f) ||
+				c.bvn.toLowerCase().includes(f) ||
+				c.loanRecordId.toLowerCase().includes(f) ||
+				c.bvnPhoneNumber.toLowerCase().includes(f) ||
+				c.mainPhoneNumber.toLowerCase().includes(f) ||
+				c.mbeId.toLowerCase().includes(f) ||
+				c.channel.toLowerCase().includes(f) ||
+				c.regBy.toLowerCase().includes(f)
+			);
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
@@ -310,6 +323,9 @@ export default function LoansView() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
+		{isLoading ? (
+			<TableSkeleton columns={columns.length} rows={10} />
+		) : (
 			<GenericTable<LoanRecord>
 				columns={columns}
 				data={sorted}
@@ -337,7 +353,9 @@ export default function LoansView() {
 				onDateFilterChange={handleDateFilter}
 				initialStartDate={startDate}
 				initialEndDate={endDate}
+				defaultDateRange={{ days: 2 }}
 			/>
+		)}
 			
 
 			<Modal

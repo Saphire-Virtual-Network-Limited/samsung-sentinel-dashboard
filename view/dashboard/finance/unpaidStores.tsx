@@ -3,41 +3,57 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getUnpaidStores, updateStoreStatus } from "@/lib";
+import {  showToast,  getUnpaidStores, updateStoreStatus } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
-import { SelectField } from "@/components/reususables/form";
-import { type } from "os";
+import { SelectField } from "@/components/reususables";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Phone No.", uid: "PhoneNo", sortable: true },
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Store Name", uid: "fullName", sortable: true },
+	{ name: "Bank Name", uid: "bankName", sortable: true },
+	{ name: "Account Number", uid: "accountNumber", sortable: true },
+	{ name: "Account Name", uid: "accountName", sortable: true },
+	{ name: "Payment Channel", uid: "payChannel", sortable: true },
 	{ name: "Amount", uid: "Amount", sortable: true },
 	{ name: "Status", uid: "Status", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
 const statusOptions = [
   { name: "Unpaid", uid: "unpaid" },
 { name: "Paid", uid: "paid" },
+{ name: "Pending", uid: "pending" },
+{ name: "Failed", uid: "failed" },
+
+
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
 	unpaid: "warning",
 	paid: "success",
+	pending: "primary",
+	failed: "danger",
 }; 
 
 type StoreOnLoan = {
   storeOnLoanId: string;
   storeId: string;
   loanRecordId: string;
+  tnxId: string | null;
+  sessionId: string | null;
+  reference: string | null;
+  payChannel: string | null;
   amount: number;
   status: string;
   createdAt: string;
   updatedAt: string;
   channel: string;
+  bankUsed: string;
   store: {
       storeOldId: number;
       storeName: string;
@@ -187,20 +203,31 @@ export default function UnpaidStoresView() {
 		}
 	);
 
-  console.log(raw);
+	const { mutate } = useSWR(
+		startDate && endDate ? ["unpaid-stores", startDate, endDate] : "unpaid-stores"
+	);
 
 	const customers = useMemo(
 		() =>
 			raw.map((r: StoreOnLoan) => ({
 				...r,
 				id: r.storeId,
-				fullName: r.store.storeName || '',
-				PhoneNo: r.store.phoneNumber || '',
-				Amount: r.amount?.toLocaleString() || '0',
-				Status: r.status || '',
+				customerId: r.loanRecord?.customer?.customerId || "N/A",
+				bankName: r.store.bankName || "N/A",
+				accountNumber: r.store.accountNumber || "N/A",
+				accountName: r.store.accountName || "N/A",
+				fullName: r.store.storeName || "N/A",
+				PhoneNo: r.store.phoneNumber || "N/A",
+				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
+				payChannel: r.payChannel || r.bankUsed || "N/A",
+				Status: r.status || "N/A",
+				createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A',
 			})),
 		[raw]
 	);
+
+	// const [banks, setBanks] = useState([])
+	const [selectedBank, setSelectedBank] = useState<string>("");
 
 
   const handleUpdateStoreStatus = async (row: StoreOnLoan) => {
@@ -209,6 +236,7 @@ export default function UnpaidStoresView() {
     const storeDetails = {
       storeOnLoanId: row.storeOnLoanId,
       status: "PAID",
+	  bankUsed: selectedBank,
     }
 
     console.log('Updating store with details:', storeDetails);
@@ -220,6 +248,7 @@ export default function UnpaidStoresView() {
         showToast({ type: "success", message: "Store status updated successfully", duration: 3000, position: "top-right" });
         onApprovedClose();
         onClose();
+        mutate();
       } else {
         console.error('Update failed with response:', res);
         showToast({ type: "error", message: res.message || "Failed to update store status", duration: 8000, position: "top-right" });
@@ -241,11 +270,15 @@ export default function UnpaidStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
+				const customerId = (c.loanRecord?.customer?.customerId || '').toLowerCase();
+				const storeId = (c.storeId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   phone.includes(f) || 
 					   amount.includes(f) || 
-					   status.includes(f);
+					   status.includes(f) ||
+					   customerId.includes(f) ||
+					   storeId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
@@ -272,7 +305,7 @@ export default function UnpaidStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreOnLoan[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("Unpaid Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
@@ -320,61 +353,62 @@ export default function UnpaidStoresView() {
 			return (
 				<Chip
 					key={`${row.storeId}-status`}
-					className="capitalize"
-					color="warning"
+					className="capitalize cursor-pointer"
+					color={statusColorMap[row.Status?.toLowerCase() as keyof typeof statusColorMap] || "default"}
 					size="sm"
-					variant="flat">
+					variant="flat"
+					onClick={() => openModal("view", row)}>
 					{row.Status}
 				</Chip>
 			);
 		}
 
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <div key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;
 	};
-
-
-
-
 
 	return (
 		<>
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
-			<GenericTable<StoreOnLoan>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-			/>
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<StoreOnLoan>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+				/>
+			)}
 			
 
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1200px] max-h-[650px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>
@@ -384,7 +418,17 @@ export default function UnpaidStoresView() {
 									<div className="space-y-6">
 										{/* Store Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
+											<div className="flex items-center justify-between">
 											<h3 className="text-lg font-semibold mb-3">Store Information</h3>
+
+											<p className={`font-medium ${
+												selectedItem.status === 'PAID' ? 'bg-green-500' : 
+												selectedItem.status === 'PENDING' ? 'bg-yellow-500' :
+												selectedItem.status === 'FAILED' ? 'bg-red-500' :
+												'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
+												{selectedItem.status || 'N/A'}
+											</p>
+											</div>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
 													<p className="text-sm text-default-500">Store ID</p>
@@ -442,25 +486,56 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">Store Hours</p>
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
-                        <div className="flex items-center justify-between col-span-2">
-                        <div>
-													<p className="text-sm text-default-500">Paid Status</p>
-													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>
-														{selectedItem.status || 'N/A'}
-													</p>
+                        						<div>
+
+													<div className="flex items-center justify-between col-span-2 mt-4">
+
+												<div>
+													<p className="text-sm text-default-500 my-2">Manual Payment</p>
+													<SelectField
+														label="Which Bank was used to make payment to this store?"
+														htmlFor="bank"
+														id="bank"
+														placeholder="Select Bank"
+														isInvalid={false}
+														errorMessage=""
+														onChange={(value) => setSelectedBank(value as string)}
+														options={[
+														{ label: "Access Bank", value: "access bank" },
+														{ label: "First Bank", value: "first bank" },
+														{ label: "GTBank", value: "gtbank" },
+														{ label: "FCMB", value: "fcmb" },
+														{ label: "UBA", value: "uba" },
+														{ label: "Zenith Bank", value: "zenith bank" },
+														{ label: "Fidelity Bank", value: "fidelity bank" },
+														{ label: "Union Bank", value: "union bank" },
+														{ label: "Sterling Bank", value: "sterling bank" },
+														{ label: "Wema Bank", value: "wema bank" },
+														{ label: "Stanbic IBTC", value: "stanbic ibtc" },
+														{ label: "VFD Microfinance Bank", value: "vfd microfinance bank" },
+														{ label: "GIRO", value: "GIRO" },
+														{ label: "Paystack", value: "Paystack" }
+
+														]}
+													/>
 												</div>
-                        <div>
-                          {selectedItem.status !== 'PAID' && (
-                            <Button
-                                color="success"
-                                variant="solid"
-                                onPress={() => onApproved()}  
-                                isLoading={isButtonLoading}>
-                                Mark as Paid
-                            </Button>
-                          )}
-                        </div>
-                        </div>
+
+												<div>
+													{selectedItem.status !== 'PAID' && (
+														<Button
+															color="success"
+															variant="solid"
+															onPress={() => onApproved()}  
+															isLoading={isButtonLoading}>
+															Mark as Paid
+														</Button>
+													)}
+												</div>
+                        					</div>
+												</div>
+											
+
+
 											</div>
 										</div>
 
@@ -479,6 +554,10 @@ export default function UnpaidStoresView() {
 												<div>
 													<p className="text-sm text-default-500">Loan Amount</p>
 													<p className="font-medium">₦{selectedItem.loanRecord.loanAmount?.toLocaleString() || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Store Price</p>
+													<p className="font-medium">₦{selectedItem.loanRecord.devicePrice?.toLocaleString() || 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Down Payment</p>

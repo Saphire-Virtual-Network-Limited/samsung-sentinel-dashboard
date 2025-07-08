@@ -3,16 +3,21 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getPaidStores } from "@/lib";
+import { capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getPaidStores, updateStoreStatus } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { SelectField } from "@/components/reususables/form";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
-	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Phone No.", uid: "PhoneNo", sortable: true },
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Store Name", uid: "fullName", sortable: true },
+	{ name: "Bank Name", uid: "bankName", sortable: true },
+	{ name: "Account Number", uid: "accountNumber", sortable: true },
+	{ name: "Account Name", uid: "accountName", sortable: true },
+	{ name: "Payment Channel", uid: "payChannel", sortable: true },
 	{ name: "Amount", uid: "Amount", sortable: true },
 	{ name: "Status", uid: "Status", sortable: true },
 	{ name: "Actions", uid: "actions" },
@@ -32,11 +37,16 @@ type StoreOnLoan = {
   storeOnLoanId: string;
   storeId: string;
   loanRecordId: string;
+  tnxId: string | null;
+  sessionId: string | null;
+  reference: string | null;
+  payChannel: string | null;
   amount: number;
   status: string;
   createdAt: string;
   updatedAt: string;
   channel: string;
+  bankUsed: string;
   store: {
       storeOldId: number;
       storeName: string;
@@ -191,10 +201,15 @@ export default function PaidStoresView() {
 			raw.map((r: StoreOnLoan) => ({
 				...r,
 				id: r.storeId,
-				fullName: r.store.storeName || '',
-				PhoneNo: r.store.phoneNumber || '',
-				Amount: r.amount?.toLocaleString() || '0',
-				Status: r.status || '',
+				customerId: r.loanRecord?.customer?.customerId || "N/A",
+				bankName: r.store.bankName || "N/A",
+				accountNumber: r.store.accountNumber || "N/A",
+				accountName: r.store.accountName || "N/A",
+				fullName: r.store.storeName || "N/A",
+				PhoneNo: r.store.phoneNumber || "N/A",
+				payChannel: r.payChannel || r.bankUsed || "N/A",
+				Amount: `₦${r.amount?.toLocaleString() || '0'}`,
+				Status: r.status || "N/A",
 			})),
 		[raw]
 	);
@@ -208,11 +223,15 @@ export default function PaidStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const amount = (c.Amount || '').toLowerCase();
 				const status = (c.Status || '').toLowerCase();
+				const storeId = (c.storeId || '').toLowerCase();
+				const customerId = (c.loanRecord?.customer?.customerId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   phone.includes(f) || 
 					   amount.includes(f) || 
-					   status.includes(f);
+					   status.includes(f) ||
+					   storeId.includes(f) ||
+					   customerId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
@@ -239,11 +258,11 @@ export default function PaidStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreOnLoan[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("Paid Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "unpaidStores_Records.xlsx");
+		saveAs(new Blob([buf]), "paidStores_Records.xlsx");
 	};
 
 	// When action clicked:
@@ -257,7 +276,7 @@ export default function PaidStoresView() {
 	const renderCell = (row: StoreOnLoan, key: string) => {
 		if (key === "actions") {
 			return (
-				<div className="flex justify-end" key={`${row.storeId}-actions`}>
+				<div className="flex justify-end" key={`${row.storeId}-actions-container`}>
 					<Dropdown>
 						<DropdownTrigger>
 							<Button
@@ -269,7 +288,7 @@ export default function PaidStoresView() {
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Actions">
 							<DropdownItem
-								key={`${row.storeId}-view`}
+								key={`${row.storeId}-view-action`}
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
@@ -280,64 +299,69 @@ export default function PaidStoresView() {
 		}
 		
 		if (key === "fullName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;	
+			return <p key={`${row.storeId}-name-cell`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;	
 		}
 
 		if (key === "Status") {
 			return (
 				<Chip
-					key={`${row.storeId}-status`}
-					className="capitalize"
+					key={`${row.storeId}-status-chip`}
+					className="capitalize cursor-pointer"
 					color={statusColorMap[row.Status?.toLowerCase() || ''] || "warning"}
 					size="sm"
-					variant="flat">
+					variant="flat"
+					onClick={() => openModal("view", row)}>
 					{row.Status}
 				</Chip>
 			);
 		}
 
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+		return <p key={`${row.storeId}-${key}-cell`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
-
+    
 	return (
 		<>
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
-			<GenericTable<StoreOnLoan>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-			/>
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<StoreOnLoan>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+				/>
+			)}
 			
 
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1200px] max-h-[650px] overflow-y-auto">
 				<ModalContent>
 					{() => (
 						<>
@@ -401,10 +425,12 @@ export default function PaidStoresView() {
 													<p className="text-sm text-default-500">Store Hours</p>
 													<p className="font-medium">{`${selectedItem.store.storeOpen || '00:00'} - ${selectedItem.store.storeClose || '00:00'}`}</p>
 												</div>
-                        <div>
+                        						<div>
 													<p className="text-sm text-default-500">Paid Status</p>
 													<p className={`font-medium ${selectedItem.status === 'PAID' ? 'bg-green-500' : 'bg-red-500'} text-white p-2 px-5 rounded-md w-fit`}>{`${selectedItem.status || 'N/A'}`}</p>
 												</div>
+												<div className="flex items-center justify-between col-span-2 mt-4">
+                        					</div>
 											</div>
 										</div>
 
@@ -423,6 +449,10 @@ export default function PaidStoresView() {
 												<div>
 													<p className="text-sm text-default-500">Loan Amount</p>
 													<p className="font-medium">₦{selectedItem.loanRecord.loanAmount?.toLocaleString() || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Store Price</p>
+													<p className="font-medium">₦{selectedItem.loanRecord.devicePrice?.toLocaleString() || 'N/A'}</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Down Payment</p>

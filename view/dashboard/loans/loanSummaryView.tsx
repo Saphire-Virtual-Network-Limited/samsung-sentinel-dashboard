@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { LoansView, EnrolledView, ApprovedView, DefaultedView } from "@/view/dashboard";
+import { LoansView, EnrolledView, ApprovedView, DefaultedView, UtilizationView, DueLoansView } from "@/view/dashboard";
 
 
 import React from "react";
@@ -36,13 +36,24 @@ const LoanSummaryView = () => {
                         className="lg:p-4 text-base">
                         <ApprovedView />
                     </Tab>
+					<Tab
+                        key="Due Loans"
+                        title="Due Loans"
+                        className="lg:p-4 text-base">
+                        <DueLoansView />
+                    </Tab>
                     <Tab
                         key="Defaulted"
                         title="Defaulted"
                         className="lg:p-4 text-base">
                         <DefaultedView />
                     </Tab>
-
+					<Tab
+						key="Utilization"
+						title="Utilization"
+						className="lg:p-4 text-base">
+						<UtilizationView />
+					</Tab>
 			</Tabs>
 		</div>
 	);

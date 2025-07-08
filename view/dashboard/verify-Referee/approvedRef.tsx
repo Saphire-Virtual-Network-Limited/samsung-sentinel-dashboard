@@ -12,22 +12,21 @@ import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { SelectField } from "@/components/reususables/form";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "Referee 1", uid: "referee1" },
-	{ name: "Referee 2", uid: "referee2" },
-	{ name: "Created At", uid: "createdAt" },	
-	{ name: "Updated At", uid: "updatedAt" },
+	{ name: "Approved Ref No.", uid: "phoneApproved" },
+	{ name: "Status", uid: "generalStatus" },
 	{ name: "Actions", uid: "actions"},
 ];
 
 const statusOptions = [
-	{ name: "Pending", uid: "pending" },
-	{ name: "Approved", uid: "approved" },
-	{ name: "Rejected", uid: "rejected" },
+	{ name: "PENDING", uid: "pending" },
+	{ name: "APPROVED", uid: "approved" },
+	{ name: "REJECTED", uid: "rejected" },
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
@@ -64,8 +63,10 @@ type ApprovedRefereeRecord = {
 		streetAddress: string;
 		nearestBusStop: string;
 		localGovernment: string;
+		generalStatus: string;
 		state: string;
 		town: string;
+		phoneApproved: string;
 		occupation: string;
 		businessName: string;
 		applicantBusinessAddress: string;
@@ -176,12 +177,11 @@ export default function ApprovedRefereesPage() {
 				...r,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				email: r.email,
-				referee1: `${r.CustomerKYC?.[0]?.phone2Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone2 || 'N/A'}`,
-				referee2: `${r.CustomerKYC?.[0]?.phone3Status || 'N/A'} - ${r.CustomerKYC?.[0]?.phone3 || 'N/A'}`,
+				generalStatus: r.CustomerKYC?.[0]?.generalStatus || 'pending',
+				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || 'pending'],
+				phoneApproved: r.CustomerKYC?.[0]?.phoneApproved || 'N/A',
 				age: calculateAge(r.dob),
 				mainPhoneNumber: r.mainPhoneNumber,
-				createdAt: r.CustomerKYC?.[0]?.createdAt ? new Date(r.CustomerKYC?.[0]?.createdAt).toLocaleString() : 'N/A',
-				updatedAt: r.CustomerKYC?.[0]?.updatedAt ? new Date(r.CustomerKYC?.[0]?.updatedAt).toLocaleString() : 'N/A',
 			})),
 		[raw]
 	);
@@ -191,9 +191,19 @@ export default function ApprovedRefereesPage() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.email.toLowerCase().includes(f) ||
-				c.customerId.toLowerCase().includes(f)
+				(c.firstName || '').toLowerCase().includes(f) || 
+				(c.lastName || '').toLowerCase().includes(f) ||
+				(c.email || '').toLowerCase().includes(f) ||
+				(c.customerId || '').toLowerCase().includes(f) ||
+				(c.bvnPhoneNumber || '').includes(f) ||
+				(c.mainPhoneNumber || '').includes(f) ||
+				(c.bvn || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone2 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone3 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone4 || '').includes(f) ||
+				(c.CustomerKYC?.[0]?.phone5 || '').includes(f) ||
+				(c.LoanRecord?.[0]?.loanRecordId || '').includes(f) ||
+				(c.LoanRecord?.[0]?.storeId || '').includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
@@ -358,6 +368,9 @@ export default function ApprovedRefereesPage() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
+		{isLoading ? (
+			<TableSkeleton columns={columns.length} rows={10} />
+		) : (
 			<GenericTable<ApprovedRefereeRecord>
 				columns={columns}
 				data={sorted}
@@ -386,6 +399,7 @@ export default function ApprovedRefereesPage() {
 				initialStartDate={startDate}
 				initialEndDate={endDate}
 			/>
+		)}
 			
 
 			<Modal

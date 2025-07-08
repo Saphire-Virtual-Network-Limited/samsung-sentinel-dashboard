@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores } from "@/lib";
+import { getAllStores, showToast, syncStores, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
+import { usePathname, useRouter } from "next/navigation";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "storeName", sortable: true },
@@ -56,11 +58,17 @@ type StoreRecord = {
 };
 
 export default function AllStoresView() {
+
+	const pathname = usePathname();
+	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
+	const role = pathname.split("/")[2];
+
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | null>(null);
+	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<StoreRecord | null>(null);
 
+	const router = useRouter();
 
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -83,6 +91,25 @@ export default function AllStoresView() {
 		setEndDate(end);
 	};
 
+
+
+	const [isSyncing, setIsSyncing] = useState(false);
+
+// Fetch sync stores from 1.9 dashboard
+ const syncStoresFn = async () => {
+	setIsSyncing(true);
+	try {
+		const response = await syncStores();
+		showToast({ type: "success",message: "Stores synced successfully",duration: 3000 });
+		mutate(["stores-records"]);
+	} catch (error: any) {
+		console.error("Error syncing stores:", error);
+		showToast({ type: "error",message: error.message ||"Error syncing stores",duration: 3000 });
+	} finally {
+		setIsSyncing(false);
+	}
+ }
+
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
 		["stores-records"],
@@ -102,8 +129,8 @@ export default function AllStoresView() {
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
@@ -133,12 +160,14 @@ export default function AllStoresView() {
 				const phone = (c.PhoneNo || '').toLowerCase();
 				const state = (c.State || '').toLowerCase();
 				const partner = (c.Partner || '').toLowerCase();
+				const storeId = (c.storeId || '').toLowerCase();
 				
 				return fullName.includes(f) || 
 					   email.includes(f) || 
 					   phone.includes(f) || 
 					   state.includes(f) || 
-					   partner.includes(f);
+					   partner.includes(f) ||
+					   storeId.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
@@ -165,18 +194,24 @@ export default function AllStoresView() {
 	// Export all filtered
 	const exportFn = async (data: StoreRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Stores");
+		const ws = wb.addWorksheet("All Stores");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Stores_Records.xlsx");
+		saveAs(new Blob([buf]), "allStores_Records.xlsx");
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view", row: StoreRecord) => {
+	const openModal = (mode: "view" | "edit", row: StoreRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
-		onOpen();
+		if (mode === "edit") {
+			// Open edit page in new tab with store data
+			const editUrl = `/access/${role}/stores/edit/${row.storeId}`;
+			window.open(editUrl, '_blank');
+		} else {
+			onOpen();
+		}
 	};
 
 	// Render each cell, including actions dropdown:
@@ -199,51 +234,80 @@ export default function AllStoresView() {
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
+							<DropdownItem
+								key={`${row.storeId}-edit`}
+								onPress={() => openModal("edit", row)}>	
+								Edit
+							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 				</div>
 			);
 		}
 		
-		if (key === "fullName") {
-			return <p key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.storeName || ''}</p>;	
+		if (key === "storeName") {
+			return <div key={`${row.storeId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;	
 		}
-		return <p key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+
+		return <div key={`${row.storeId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</div>;
 	};
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
+		
 			
-			<GenericTable<StoreRecord>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-			/>
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<StoreRecord>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+					createButton={{
+						text: "Create Store",
+						onClick: () => {
+							const createUrl = `/access/${role}/stores/create`;
+							window.open(createUrl, '_blank');
+						}
+					}}
+					additionalButtons={[		
+						{
+							text: "Sync Stores",
+							onClick: () => {
+								syncStoresFn();
+							},
+							isLoading: isSyncing
+						}
+					]}
+				/>
+			)}
+
+
+		
+		
 			
 
 			<Modal
@@ -254,7 +318,7 @@ export default function AllStoresView() {
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>User Details</ModalHeader>
+							<ModalHeader>Store Details</ModalHeader>
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">

@@ -1,8 +1,8 @@
 import React from "react";
-import { HomeView } from "@/view";
+import { NewHomeView } from "@/view";
 
 const page = () => {
-	return <HomeView />;
+	return <NewHomeView />;
 };
 
 export default page;

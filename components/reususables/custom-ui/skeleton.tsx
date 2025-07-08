@@ -11,14 +11,14 @@ const SkeletonLoader = () => {
 						{Array.from({ length: 6 }).map((_, i) => (
 							<div
 								key={i}
-								className="h-4 w-40 bg-gray-800 rounded animate-pulse"
+								className="h-2 w-32 bg-gray-800 rounded animate-pulse"
 							/>
 						))}
 					</div>
 				</div>
-				<div className="space-y-4">
-					<div className="h-4 w-32 bg-gray-700 rounded animate-pulse" /> {/* Settings */}
-					<div className="h-4 w-24 bg-gray-700 rounded animate-pulse" /> {/* Logout */}
+				<div className="space-y-2">
+					<div className="h-2 w-32 bg-gray-700 rounded animate-pulse" /> {/* Settings */}
+					<div className="h-2 w-24 bg-gray-700 rounded animate-pulse" /> {/* Logout */}
 				</div>
 			</aside>
 

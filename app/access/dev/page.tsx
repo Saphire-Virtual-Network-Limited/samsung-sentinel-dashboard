@@ -1,8 +1,8 @@
 import React from "react";
-import { HomeView } from "@/view/dashboard";
+import { NewHomeView } from "@/view/dashboard";
 const page = () => {
 	return <div>
-		<HomeView />
+		<NewHomeView />
 	</div>;
 };
 

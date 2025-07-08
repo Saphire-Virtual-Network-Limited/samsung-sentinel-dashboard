@@ -1,15 +1,14 @@
-"use client";
-
 import React from "react";
 import SingleRefereeView from "@/view/dashboard/verify-Referee/singleRefView";
 
 interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams?: { [key: string]: string | string[] | undefined };
+
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default function ApprovedRefereePage({ params }: PageProps) {
-  return <SingleRefereeView id={params.id} />;
+export default async function RejectedRefereePage({ params }: PageProps) {
+  const resolvedParams = await params;
+  return <SingleRefereeView id={resolvedParams.id} />;
 }
+

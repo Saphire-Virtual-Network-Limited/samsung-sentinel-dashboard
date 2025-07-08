@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Customer ID", uid: "customerId", sortable: true },
@@ -182,7 +183,7 @@ export default function EnrolledView() {
 		}
 	);
 
-	console.log(raw);
+	// console.log(raw);
 
 	const customers = useMemo(
 		() =>
@@ -204,7 +205,39 @@ export default function EnrolledView() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => c.fullName.toLowerCase().includes(f) || c.email.toLowerCase().includes(f));
+			list = list.filter((c) => {
+				try {
+					// Safely check each field with proper null checks
+					const fullName = (c.fullName || '').toLowerCase();
+					const firstName = (c.firstName || '').toLowerCase();
+					const lastName = (c.lastName || '').toLowerCase();
+					const email = (c.email || '').toLowerCase();
+					const bvn = (c.bvn || '').toLowerCase();
+					const customerId = (c.customerId || '').toLowerCase();
+					const phone = (c.mainPhoneNumber || '').toLowerCase();
+					const deviceName = (c.deviceName || '').toLowerCase();
+					const deviceModel = (c.deviceModelNumber || '').toLowerCase();
+					const deviceRam = (c.deviceRam || '').toLowerCase();
+					const loanRecordId = (c.loanRecordId || '').toLowerCase();
+					const storeId = (c.storeId || '').toLowerCase();
+
+					return fullName.includes(f) || 
+						   firstName.includes(f) ||
+						   lastName.includes(f) ||	
+						   email.includes(f) || 
+						   bvn.includes(f) || 
+						   customerId.includes(f) || 
+						   phone.includes(f) || 
+						   deviceName.includes(f) || 
+						   deviceModel.includes(f) || 
+							deviceRam.includes(f) ||
+						   loanRecordId.includes(f) ||
+						   storeId.includes(f);
+				} catch (error) {
+					console.error('Error in filter:', error);
+					return false;
+				}
+			});
 		}
 		if (statusFilter.size > 0) {
 			list = list.filter((c) => statusFilter.has(c.status || ''));
@@ -310,34 +343,39 @@ export default function EnrolledView() {
 		<div className="mb-4 flex justify-center md:justify-end">
 		</div>
 			
-			<GenericTable<LoanRecord>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-			/>
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<LoanRecord>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+					defaultDateRange={{ days: 2 }}
+				/>
+			)}
 			
 
 			<Modal
