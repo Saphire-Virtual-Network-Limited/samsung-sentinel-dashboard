@@ -711,6 +711,33 @@ export function AppSidebar() {
       url: "/access/finance/customers",
       id: "finance-customers",
     },
+    {
+      icon: ChartBar,
+      title: "Reports",
+      id: "sales-reports",
+      subItems: [
+        {
+          title: "Sales",
+          subItems: [
+            { title: "Overview", url: "/access/sales/reports/sales/overview" },
+            { title: "MBE Report", url: "/access/sales/reports/sales/mbe" },
+            {
+              title: "Samsung Report",
+              url: "/access/sales/reports/sales/samsung",
+            },
+            {
+              title: "Xiaomi Report",
+              url: "/access/sales/reports/sales/xiaomi",
+            },
+            { title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
+            { title: "Sentinel", url: "/access/sales/reports/sales/sentinel" },
+          ],
+        },
+        { title: "Drop-offs", url: "/access/sales/reports/drop-offs" },
+        { title: "Tracker", url: "/access/sales/reports/tracker" },
+      ],
+    },
+    
   ];
 
   const supportItems: MenuItem[] = [

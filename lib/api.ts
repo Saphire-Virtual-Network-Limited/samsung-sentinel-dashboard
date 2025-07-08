@@ -241,6 +241,11 @@ export async function getAllCustomerRecord(
   return apiCall(`/admin/customers/record${query}`, "GET");
 }
 
+//get customer record by id
+export async function getCustomerRecordById(customerId: string) {
+  return apiCall(`/admin/customers/view/${customerId}`, "GET");
+}
+
 // New optimized customer record functions
 export interface CustomerRecordParams {
   page?: number;

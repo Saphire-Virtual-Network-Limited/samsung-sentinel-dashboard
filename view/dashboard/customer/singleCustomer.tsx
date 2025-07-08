@@ -6,6 +6,7 @@ import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft, ChevronDown, ChevronUp, User, CreditCard, Store, Users, Smartphone, MapPin, Clock } from "lucide-react";
 import {
   getAllCustomerRecord,
+  getCustomerRecordById,
   showToast,
   updateCustomerLastPoint,
   updateCustomerVirtualWalletBalance,

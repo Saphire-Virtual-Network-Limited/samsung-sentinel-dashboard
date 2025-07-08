@@ -192,7 +192,7 @@ export default function AllDevicesView() {
 		setSelectedItem(row);
 		if (mode === "edit") {
 			// Open edit page in new tab with store data
-			const editUrl = `/access/${role}/inventorydevices/edit/${row.newDeviceId}`;
+			const editUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
 			window.open(editUrl, '_blank');
 		} else {
 			onOpen();
