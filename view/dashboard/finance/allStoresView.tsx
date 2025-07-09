@@ -21,6 +21,30 @@ const columns: ColumnDef[] = [
 	{ name: "Actions", uid: "actions"},
 ];
 
+const columns2: ColumnDef[] = [
+	{ name: "Store ID", uid: "storeId", sortable: true },
+	{ name: "Store Name", uid: "storeName", sortable: true },
+	{ name: "Partner", uid: "partner", sortable: true },
+	{ name: "State", uid: "state", sortable: true },	
+	{ name: "City", uid: "city", sortable: true },
+	{ name: "Region", uid: "region", sortable: true },
+	{ name: "Address", uid: "address", sortable: true },
+	{ name: "Phone Number", uid: "phoneNumber", sortable: true },
+	{ name: "Email", uid: "storeEmail", sortable: true },
+	{ name: "Account Number", uid: "accountNumber", sortable: true },
+	{ name: "Account Name", uid: "accountName", sortable: true },
+	{ name: "Bank Name", uid: "bankName", sortable: true },
+	{ name: "Bank Code", uid: "bankCode", sortable: true },
+	{ name: "Store Hours", uid: "storeOpen", sortable: true },
+	{ name: "Store Close", uid: "storeClose", sortable: true },
+	{ name: "Longitude", uid: "longitude", sortable: true },
+	{ name: "Latitude", uid: "latitude", sortable: true },
+	{ name: "Cluster ID", uid: "clusterId", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true },
+	{ name: "Updated At", uid: "updatedAt", sortable: true },
+	{ name: "Actions", uid: "actions"},
+];
+
 const statusOptions = [
 	{ name: "Pending", uid: "pending" },
 	{ name: "Paid", uid: "paid" },
@@ -137,7 +161,7 @@ export default function AllStoresView() {
 		}
 	);
 
-	const customers = useMemo(
+	const stores = useMemo(
 		() =>
 			raw.map((r: StoreRecord) => ({
 				...r,
@@ -146,12 +170,25 @@ export default function AllStoresView() {
 				PhoneNo: r.phoneNumber || '',
 				State: r.state || '',
 				Partner: r.partner || '',
+				StoreID: r.storeId || '',
+				StoreName: r.storeName || '',
+				AccountNumber: r.accountNumber || '',
+				AccountName: r.accountName || '',
+				BankName: r.bankName || '',
+				BankCode: r.bankCode || '',
+				StoreHours: r.storeOpen || '',
+				StoreClose: r.storeClose || '',
+				Longitude: r.longitude || '',
+				Latitude: r.latitude || '',
+				ClusterID: r.clusterId || '',
+				CreatedAt: r.createdAt || '',
+				UpdatedAt: r.updatedAt || '',
 			})),
 		[raw]
 	);
 
 	const filtered = useMemo(() => {
-		let list = [...customers];
+		let list = [...stores];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
@@ -174,7 +211,7 @@ export default function AllStoresView() {
 			list = list.filter((c) => statusFilter.has(c.status || ''));	
 		}
 		return list;
-	}, [customers, filterValue, statusFilter]);
+	}, [stores, filterValue, statusFilter]);
 
 	const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
 	const paged = useMemo(() => {
@@ -195,7 +232,7 @@ export default function AllStoresView() {
 	const exportFn = async (data: StoreRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("All Stores");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		ws.columns = columns2.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "allStores_Records.xlsx");
