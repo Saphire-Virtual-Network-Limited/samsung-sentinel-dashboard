@@ -656,15 +656,15 @@ export async function createCustomerVirtualWallet(customerId: string) {
 // DEVICE lOCKING AND UNLOCKING
 // ============================================================================
 
-export async function lockDevice(imei?: string, transactionId?: string) {
-  return apiCall(`/admin/locks/activate/single`, "POST", {imei, transactionId});
+export async function lockDevice(imei?: string) {
+  return apiCall(`/admin/locks/activate/single`, "POST", {imei});
 }
 
-export async function unlockDevice(imei?: string, transactionId?: string) {
-  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", {imei, transactionId});
+export async function unlockDevice(imei?: string) {
+  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", {imei});
 }
 
-export async function releaseDevice(imei: string) {
+export async function releaseDevice(imei?: string) {
   return apiCall("/admin/device/release", "POST", { imei });
 }
 

@@ -44,6 +44,9 @@ export interface PermissionConfig {
   canViewDeviceActivityLog: boolean;
   canViewCommunicationLog: boolean;
   suspendDashboardUser: boolean;
+  canCreate: boolean; 
+  canSync: boolean;
+  canEdit: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -81,6 +84,9 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
     suspendDashboardUser: true,
+    canCreate: true,
+    canSync: true,
+    canEdit: true,
   },
   "collection-admin": {
     canTriggerDeviceActions: true,
@@ -153,6 +159,9 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
+    canCreate: true,
+    canSync: true,
+    canEdit: true,
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
@@ -163,6 +172,9 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
+    canCreate: true,
+    canSync: true,
+    canEdit: true,
   },
 };
 
@@ -180,6 +192,9 @@ function getDefaultPermissions(): PermissionConfig {
     canViewDeviceActivityLog: false,
     canViewCommunicationLog: false,
     suspendDashboardUser: false,
+    canCreate: false,
+    canSync: false,
+    canEdit: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -256,6 +271,9 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "canViewOverDuePayments",
     "canViewDeviceActivityLog",
     "canViewCommunicationLog",
+    "canCreate",
+    "canSync",
+    "canEdit",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',
