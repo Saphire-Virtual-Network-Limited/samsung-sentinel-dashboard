@@ -368,7 +368,6 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                         size="sm"
                         hideSymbol
                         hideCopyButton={false}  // show only the copy icon
-                        
                       />
                     </div>
                   </div>
