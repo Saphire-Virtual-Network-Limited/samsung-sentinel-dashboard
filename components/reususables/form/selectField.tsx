@@ -14,6 +14,7 @@ interface SelectFieldProps {
   reqValue?: string;
   onChange: (value: string | string[]) => void;
   required?: boolean;
+  disabled?: boolean; // Added disabled prop
   selectionMode?: "single" | "multiple";
   options: { label: string; value: string }[];
   size?: "sm" | "md" | "lg";
@@ -31,6 +32,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   reqValue,
   onChange,
   required,
+  disabled = false, // Default to false
   options,
   selectionMode = "single",
   size = "lg",
@@ -52,7 +54,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
           htmlFor={htmlFor}
           className={cn(
             "mb-2 text-sm text-black",
-            GeneralSans_Meduim.className
+            GeneralSans_Meduim.className,
+            disabled && "opacity-50" // Dim label when disabled
           )}
         >
           {label} <sup className="text-danger">{reqValue}</sup>
@@ -61,10 +64,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
       <Select
         selectionMode={selectionMode}
         id={id}
-        aria-label={label || placeholder} // Ensure there's always an accessible label
+        aria-label={label || placeholder}
         aria-invalid={isInvalid ? "true" : "false"}
         aria-describedby={isInvalid ? `${id}-error` : undefined}
         required={required}
+        disabled={disabled} // Added disabled prop to Select
         placeholder={placeholder}
         onSelectionChange={handleChange}
         defaultSelectedKeys={defaultSelectedKeys}
@@ -72,10 +76,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
         size={size}
         variant="bordered"
         classNames={{
-          base: "border-primary  w-80",
+          base: "border-primary w-80",
           trigger: [
             "data-[focus=true]:border-primary ",
             "active:border-primary",
+            disabled && "opacity-50 cursor-not-allowed", // Style when disabled
           ],
           value: "truncate whitespace-inherit",
           innerWrapper: "truncate whitespace-inherit",
