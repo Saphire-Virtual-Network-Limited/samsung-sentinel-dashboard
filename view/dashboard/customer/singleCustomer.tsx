@@ -14,9 +14,6 @@ import {
   lockDevice,
   unlockDevice,
   releaseDevice,
-  sendReminderMessage,
-  sendDueReminderMessage,
-  sendOverdueReminderMessage,
   changeLoanStatus,
   createCustomerVirtualWallet,
 } from "@/lib";
@@ -380,24 +377,6 @@ export default function CollectionSingleCustomerPage() {
   // Device action configuration
   const deviceActions = [
     {
-      label: "Send Reminder Message",
-      value: "send_reminder_message",
-      description: "Send a general reminder message to the customer",
-      color: "primary",
-    },
-    {
-      label: "Send Due Reminder Message",
-      value: "send_due_reminder_message",
-      description: "Send a reminder message for due payments",
-      color: "warning",
-    },
-    {
-      label: "Send Overdue Reminder Message",
-      value: "send_overdue_reminder_message",
-      description: "Send a reminder message for overdue payments",
-      color: "danger",
-    },
-    {
       label: "Lock Device",
       value: "lock_device",
       description: "Lock the customer's device remotely",
@@ -434,21 +413,6 @@ export default function CollectionSingleCustomerPage() {
       let successMessage = "";
 
       switch (action) {
-        case "send_reminder_message":
-          response = await sendReminderMessage(customer.customerId, imei);
-          successMessage = "Reminder message sent successfully";
-          break;
-        case "send_due_reminder_message":
-          response = await sendDueReminderMessage(customer.customerId, imei);
-          successMessage = "Due reminder message sent successfully";
-          break;
-        case "send_overdue_reminder_message":
-          response = await sendOverdueReminderMessage(
-            customer.customerId,
-            imei
-          );
-          successMessage = "Overdue reminder message sent successfully";
-          break;
         case "lock_device":
           response = await lockDevice(imei);
           successMessage = "Device locked successfully";

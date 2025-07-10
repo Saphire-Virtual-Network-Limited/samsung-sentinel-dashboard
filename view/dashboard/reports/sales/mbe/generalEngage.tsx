@@ -460,7 +460,7 @@ export default function GeneralEngageMbe() {
 				duration: r.LoanRecord?.[0]?.duration || 'N/A',
 				loanTenure: r.LoanRecord?.[0]?.duration || 'N/A',
 				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-				amountRemaining: r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord[0]?.duration ? `₦${(r.LoanRecord[0].monthlyRepayment * r.LoanRecord[0].duration).toLocaleString()}` : 'N/A',
+				amountRemaining: r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord[0]?.duration ? `${(r.LoanRecord[0].monthlyRepayment * r.LoanRecord[0].duration).toLocaleString()}` : 'N/A',
 				createdAt: r.LoanRecord?.[0]?.createdAt ? new Date(r.LoanRecord[0].createdAt).toLocaleDateString() : 'N/A',
 				nextPayDate: r.LoanRecord?.[0]?.createdAt ? new Date(new Date(r.LoanRecord[0].createdAt).setMonth(new Date(r.LoanRecord[0].createdAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
 				nextPayAmount: r.LoanRecord?.[0]?.monthlyRepayment ? `${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
