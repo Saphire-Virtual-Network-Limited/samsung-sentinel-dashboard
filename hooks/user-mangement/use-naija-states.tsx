@@ -26,9 +26,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
     console.log("🔍 Loading states...");
     try {
       const allStates = NaijaStates.states();
-      console.log("📊 Raw states data:", allStates);
-      console.log("📊 Type of states data:", typeof allStates);
-      console.log("📊 Is array?", Array.isArray(allStates));
 
       // Ensure allStates is an array before mapping
       if (!Array.isArray(allStates)) {
@@ -39,9 +36,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
         label: state,
         value: state,
       }));
-
-      console.log("✅ Formatted states:", formattedStates.length);
-      console.log("✅ Sample states:", formattedStates.slice(0, 5));
 
       return formattedStates;
     } catch (error) {
@@ -65,8 +59,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
 
   // Get LGAs for a specific state and format them for select options
   const getLgas = (state: string): LGAOption[] => {
-    console.log("🔍 getLgas called with state:", state);
-
     try {
       if (!state) {
         console.log("❌ No state provided, returning empty array");
@@ -84,7 +76,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
       } else if (lgaData && typeof lgaData === "object" && "lgas" in lgaData) {
         // If it's an object with lgas property (current version behavior)
         lgaList = (lgaData as { lgas: string[] }).lgas;
-        console.log("📊 Extracted LGAs from object:", lgaList);
       } else {
         console.warn(
           `❌ LGA data for ${state} is neither array nor object with lgas property:`,
@@ -99,22 +90,13 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
         return [];
       }
 
-      console.log("📊 LGA array length:", lgaList.length);
-      console.log("📊 First few LGA items:", lgaList.slice(0, 5));
-
       // Filter out any null/undefined values and ensure they're strings
       const validLgas = lgaList.filter((lga) => lga && typeof lga === "string");
-
-      console.log("✅ Valid LGAs after filtering:", validLgas.length);
-      console.log("✅ First few valid LGAs:", validLgas.slice(0, 5));
 
       const formattedLgas = validLgas.map((lga: string) => ({
         label: lga,
         value: lga,
       }));
-
-      console.log("🎯 Final formatted LGAs:", formattedLgas.length);
-      console.log("🎯 Sample formatted LGAs:", formattedLgas.slice(0, 3));
 
       return formattedLgas;
     } catch (error) {
@@ -133,8 +115,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
     console.log("🔍 getAllStatesAndLgas called");
     try {
       const allData = NaijaStates.all();
-      console.log("📊 All states and LGAs data:", allData);
-      console.log("📊 Type of all data:", typeof allData);
       return allData;
     } catch (error) {
       console.error("❌ Error loading all states and LGAs:", error);
@@ -147,8 +127,6 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
     console.log("🔍 getStateData called with state:", state);
     try {
       const allData = NaijaStates.all();
-      console.log("📊 All data for state lookup:", allData);
-      console.log("📊 Type of all data:", typeof allData);
 
       if (!Array.isArray(allData)) {
         console.warn("❌ All data is not an array:", allData);
@@ -156,7 +134,7 @@ export const useNaijaStates = (): UseNaijaStatesReturn => {
       }
 
       const stateData = allData.find((item: any) => item.state === state);
-      console.log("🎯 Found state data:", stateData);
+
       return stateData;
     } catch (error) {
       console.error(`❌ Error loading data for ${state}:`, error);
