@@ -7,6 +7,7 @@ import {
   CreateUserFormErrors,
   CreateUserFormField,
 } from "@/view/dashboard/user-management/user";
+
 interface UseCreateUserFormReturn {
   formData: CreateUserFormData;
   errors: CreateUserFormErrors;
@@ -46,6 +47,30 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
       (value: string): boolean => value.length > 0,
       "Please select a role"
     ),
+    // Optional fields - only validate if they have values
+    companyName: createSchema(
+      (value: string): boolean =>
+        value.trim().length === 0 || value.trim().length >= 2,
+      "Company name must be at least 2 characters"
+    ),
+    companyAddress: createSchema(
+      (value: string): boolean =>
+        value.trim().length === 0 || value.trim().length >= 5,
+      "Company address must be at least 5 characters"
+    ),
+    companyState: createSchema(
+      (value: string): boolean => true, // Always valid since it's optional
+      ""
+    ),
+    companyCity: createSchema(
+      (value: string): boolean =>
+        value.trim().length === 0 || value.trim().length >= 2,
+      "City must be at least 2 characters"
+    ),
+    companyLGA: createSchema(
+      (value: string): boolean => true, // Always valid since it's optional
+      ""
+    ),
   };
 
   const [formData, setFormData] = useState<CreateUserFormData>({
@@ -54,13 +79,18 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
     email: "",
     telephoneNumber: "",
     role: "",
+    companyName: "",
+    companyAddress: "",
+    companyState: "",
+    companyCity: "",
+    companyLGA: "",
   });
 
   const [errors, setErrors] = useState<CreateUserFormErrors>({});
 
   const updateField = useCallback(
     (field: CreateUserFormField, value: string): void => {
-      setFormData((prev: any) => ({ ...prev, [field]: value }));
+      setFormData((prev) => ({ ...prev, [field]: value }));
       validateField(field, value);
     },
     []
@@ -73,16 +103,16 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
         if (!schema) return true;
 
         schema.parse(value);
-        setErrors((prev: any) => ({ ...prev, [field]: null }));
+        setErrors((prev) => ({ ...prev, [field]: null }));
         return true;
       } catch (error) {
         if (error instanceof z.ZodError) {
-          setErrors((prev: any) => ({
+          setErrors((prev) => ({
             ...prev,
             [field]: error.errors[0]?.message || "Invalid value",
           }));
         } else {
-          setErrors((prev: any) => ({
+          setErrors((prev) => ({
             ...prev,
             [field]: "Validation error",
           }));
@@ -94,7 +124,8 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
   );
 
   const validateForm = useCallback((): boolean => {
-    const fieldsToValidate: CreateUserFormField[] = [
+    // Required fields
+    const requiredFields: CreateUserFormField[] = [
       "firstName",
       "lastName",
       "email",
@@ -102,11 +133,30 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
       "role",
     ];
 
-    const results = fieldsToValidate.map((field) =>
-      validateField(field, formData[field])
+    // Optional fields - only validate if they have values
+    const optionalFields: CreateUserFormField[] = [
+      "companyName",
+      "companyAddress",
+      "companyState",
+      "companyCity",
+      "companyLGA",
+    ];
+
+    // Validate required fields
+    const requiredResults = requiredFields.map((field) =>
+      validateField(field, formData[field] || "")
     );
 
-    return results.every(Boolean);
+    // Validate optional fields only if they have values
+    const optionalResults = optionalFields.map((field) => {
+      const value = formData[field];
+      if (value && value.trim().length > 0) {
+        return validateField(field, value);
+      }
+      return true; // Skip validation for empty optional fields
+    });
+
+    return [...requiredResults, ...optionalResults].every(Boolean);
   }, [formData, validateField]);
 
   const resetForm = useCallback((): void => {
@@ -116,13 +166,37 @@ export const useCreateUserForm = (): UseCreateUserFormReturn => {
       email: "",
       telephoneNumber: "",
       role: "",
+      companyName: "",
+      companyAddress: "",
+      companyState: "",
+      companyCity: "",
+      companyLGA: "",
     });
     setErrors({});
   }, []);
 
   const isValid = useCallback(
     (field: CreateUserFormField): boolean => {
-      return !errors[field] && Boolean(formData[field]);
+      // For required fields, check both no errors and has value
+      const requiredFields = [
+        "firstName",
+        "lastName",
+        "email",
+        "telephoneNumber",
+        "role",
+      ];
+
+      if (requiredFields.includes(field)) {
+        return !errors[field] && Boolean(formData[field]);
+      }
+
+      // For optional fields, only check for errors if field has value
+      const fieldValue = formData[field];
+      if (!fieldValue || fieldValue.trim().length === 0) {
+        return true; // Empty optional field is valid
+      }
+
+      return !errors[field];
     },
     [errors, formData]
   );
