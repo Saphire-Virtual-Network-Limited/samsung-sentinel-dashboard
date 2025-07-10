@@ -3,13 +3,14 @@
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllDevices } from "@/lib";
+import { getAllDevices, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { usePathname } from "next/navigation";
+import { hasPermission } from "@/lib/permissions";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "deviceName", sortable: true },
@@ -62,6 +63,8 @@ export default function AllDevicesView() {
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
 	const role = pathname.split("/")[2]; 
+	const { userResponse } = useAuth(); // get the user email
+	const userEmail = userResponse?.data?.email || "";
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
@@ -219,11 +222,13 @@ export default function AllDevicesView() {
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
-							<DropdownItem
-								key={`${row.newDeviceId}-edit`}
-								onPress={() => openModal("edit", row)}>	
-								Edit
-							</DropdownItem>
+							{hasPermission(role, "canEdit", userEmail) ? (	
+								<DropdownItem
+									key={`${row.newDeviceId}-edit`}
+									onPress={() => openModal("edit", row)}>	
+									Edit
+								</DropdownItem>
+							) : null}
 						</DropdownMenu>
 					</Dropdown>
 				</div>

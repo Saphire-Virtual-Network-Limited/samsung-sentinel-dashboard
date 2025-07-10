@@ -5,7 +5,15 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Input,
 import { ChevronDownIcon, DownloadIcon, PlusIcon, SearchIcon } from "lucide-react";
 import DateFilter from "./dateFilter";
 import { showToast } from "@/lib";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { hasPermission } from "@/lib/permissions";
+import { useAuth } from "@/lib";
+
+const pathname = usePathname();
+// Get the role from the URL path (e.g., /access/dev/customers -> dev)
+const role = pathname.split("/")[2];
+const { userResponse } = useAuth(); // get the user email
+const userEmail = userResponse?.data?.email || "";
 
 
 export interface ColumnDef {
@@ -100,20 +108,22 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 					onClear={() => onFilterChange("")}
 					onValueChange={onFilterChange}
 				/>
+					{hasPermission(role, "canCreate", userEmail) ? (
 
-				<div className="flex gap-2">
-					{createButton && (
-						<Button 
-							color="primary"
-							variant="flat"
-							className="px-8"
-							endContent={<PlusIcon className="w-3" />}
-							onPress={createButton.onClick}
-							isLoading={createButton.isLoading}
-						>
-							{createButton.text}
-						</Button>
-					)}
+					<div className="flex gap-2">
+						
+						{createButton && (
+							<Button 
+								color="primary"
+								variant="flat"
+								className="px-8"
+								endContent={<PlusIcon className="w-3" />}
+								onPress={createButton.onClick}
+								isLoading={createButton.isLoading}
+							>
+								{createButton.text}
+							</Button>
+						)}
 
 					{additionalButtons?.map((button, index) => (
 						<Button
@@ -128,6 +138,10 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 						</Button>
 					))}
 				</div>
+				) : null}
+
+
+					
 
 				{onDateFilterChange && (
 					<DateFilter
