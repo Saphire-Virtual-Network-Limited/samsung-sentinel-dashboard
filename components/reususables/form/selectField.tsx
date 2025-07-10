@@ -20,6 +20,7 @@ interface SelectFieldProps {
   size?: "sm" | "md" | "lg";
   defaultSelectedKeys?: string[];
   classNames?: React.ComponentProps<typeof Select>["classNames"];
+  className?: React.ComponentProps<typeof Select>["className"];
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -38,6 +39,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   size = "lg",
   defaultSelectedKeys,
   classNames,
+  className,
 }) => {
   const handleChange = (keys: Selection) => {
     const value =
@@ -55,7 +57,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
           className={cn(
             "mb-2 text-sm text-black",
             GeneralSans_Meduim.className,
-            disabled && "opacity-50" // Dim label when disabled
+            disabled && "opacity-50", // Dim label when disabled
+            className
           )}
         >
           {label} <sup className="text-danger">{reqValue}</sup>

@@ -1,16 +1,18 @@
 "use client";
 
-import type React from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardBody, Button } from "@heroui/react";
-import { Separator } from "@/components/ui/separator";
 import { FormField } from "@/components/reususables";
 import { SelectField } from "@/components/reususables/form";
-import { useCreateUserForm } from "@/hooks/user-mangement/use-create-user-form";
+import { Separator } from "@/components/ui/separator";
 import { useAgentData } from "@/hooks/user-mangement/use-agent-data";
-import { useUserCreator } from "@/hooks/user-mangement/use-user-creator";
+import { useCreateUserForm } from "@/hooks/user-mangement/use-create-user-form";
 import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
+import { useUserCreator } from "@/hooks/user-mangement/use-user-creator";
+import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { AlertCircle, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type React from "react";
+
+import { GeneralSans_Meduim, cn } from "@/lib";
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -51,8 +53,21 @@ export default function CreateUserPage() {
 
   // Get LGAs for selected state
   const selectedStateLgas = formData.companyState
-    ? getLgas(formData.companyState).map((lga) => ({ label: lga, value: lga }))
+    ? getLgas(formData.companyState)
     : [];
+
+  // Handle state change
+  const handleStateChange = (value: string | string[]) => {
+    const selectedState = Array.isArray(value) ? value[0] : value;
+    handleFieldChange("companyState", selectedState);
+
+    // Clear LGA when state changes
+    if (formData.companyLGA) {
+      handleFieldChange("companyLGA", "");
+    }
+
+    // Note: City remains as free text input since the package doesn't provide cities
+  };
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -158,6 +173,7 @@ export default function CreateUserPage() {
                   id="role"
                   placeholder="Select agent role"
                   options={agentTypes}
+                  classNames={{ base: "w-full min-w-0" }}
                   onChange={(value) =>
                     handleFieldChange(
                       "role",
@@ -205,26 +221,16 @@ export default function CreateUserPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <SelectField
+                    size="lg"
                     label="State"
                     htmlFor="companyState"
                     id="companyState"
                     placeholder="Select state"
                     options={states}
-                    onChange={(value) => {
-                      const selectedState = Array.isArray(value)
-                        ? value[0]
-                        : value;
-                      handleFieldChange("companyState", selectedState);
-                      // Clear city and LGA when state changes
-                      if (formData.companyCity) {
-                        handleFieldChange("companyCity", "");
-                      }
-                      if (formData.companyLGA) {
-                        handleFieldChange("companyLGA", "");
-                      }
-                    }}
+                    onChange={handleStateChange}
                     isInvalid={!!errors.companyState}
                     errorMessage={errors.companyState || undefined}
+                    classNames={{ base: "w-full min-w-0" }}
                   />
 
                   <FormField
@@ -243,10 +249,12 @@ export default function CreateUserPage() {
                   />
 
                   <SelectField
+                    size="lg"
                     label="Local Government Area"
                     htmlFor="companyLGA"
                     id="companyLGA"
                     placeholder="Select LGA"
+                    classNames={{ base: "w-full min-w-0" }}
                     options={selectedStateLgas}
                     onChange={(value) =>
                       handleFieldChange(
@@ -266,14 +274,20 @@ export default function CreateUserPage() {
                   type="button"
                   variant="ghost"
                   onPress={handleReset}
-                  className="flex-1 bg-transparent"
+                  className={cn(
+                    "w-1/2 p-6 mb-0 bg-transparent font-medium text-base",
+                    GeneralSans_Meduim.className
+                  )}
                   disabled={isLoading}
                 >
                   Reset Form
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1"
+                  className={cn(
+                    "w-1/2 p-6 mb-0 bg-primary text-white font-medium text-base",
+                    GeneralSans_Meduim.className
+                  )}
                   disabled={
                     isLoading ||
                     !isValid("firstName") ||
