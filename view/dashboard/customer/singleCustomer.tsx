@@ -900,6 +900,7 @@ export default function CollectionSingleCustomerPage() {
                   <InfoField label="Insurance Price" value={`₦${customer.LoanRecord?.[0]?.insurancePrice?.toLocaleString() || "N/A"}`} />
                   <InfoField label="MBS Eligible Amount" value={`₦${customer.LoanRecord?.[0]?.mbsEligibleAmount?.toLocaleString() || "N/A"}`} />
                   <InfoField label="Pay Frequency" value={customer.LoanRecord?.[0]?.payFrequency || "N/A"} />
+                  <InfoField label="Total Repayment" value={`₦${((customer.LoanRecord?.[0]?.monthlyRepayment ?? 0) * (customer.LoanRecord?.[0]?.duration ?? 0))?.toLocaleString() || "N/A"}`} />
                   <InfoField label="Device Name" value={customer.LoanRecord?.[0]?.deviceName || "N/A"} />
                   <InfoField label="Device Price" value={`₦${customer.LoanRecord?.[0]?.devicePrice?.toLocaleString() || "N/A"}`} />
                   <InfoField label="Device price with insurance" value={`₦${customer.LoanRecord?.[0]?.deviceAmount?.toLocaleString() || "N/A"}`} />
