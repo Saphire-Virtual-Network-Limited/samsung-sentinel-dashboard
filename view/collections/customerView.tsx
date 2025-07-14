@@ -485,6 +485,13 @@ export default function CollectionCustomerPage() {
 								onPress={() => router.push(`/access/${role}/customers/${row.customerId}`)}>
 								View
 							</DropdownItem>
+							<DropdownItem
+								key="viewInNewTab"
+								onPress={() => window.open(`/access/${role}/customers/${row.customerId}`, "_blank")}
+								className="cursor-pointer"
+							>
+								View in new tab
+							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 				</div>
