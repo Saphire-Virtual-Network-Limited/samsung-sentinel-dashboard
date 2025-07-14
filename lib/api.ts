@@ -241,6 +241,16 @@ export async function getAllCustomerRecord(
   return apiCall(`/admin/customers/record${query}`, "GET");
 }
 
+//get all customer BASIC record
+export async function getAllCustomerBasicRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/basic${query}`, "GET");
+}
+
 //get customer record by id
 export async function getCustomerRecordById(customerId: string) {
   return apiCall(`/admin/customers/view/${customerId}`, "GET");
