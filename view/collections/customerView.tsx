@@ -4,7 +4,8 @@ import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerRecord, capitalize, calculateAge } from "@/lib";
+import { getAllCustomerRecord, capitalize, calculateAge, getAllCustomerBasicRecord, showToast } from "@/lib";
+
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps } from "@heroui/react";
@@ -13,13 +14,8 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
+	{ name: "Customer ID", uid: "customerId", sortable: true },
 	{ name: "Full Name", uid: "fullName", sortable: true },
-	{ name: "Device Price", uid: "devicePrice", sortable: true },
-	{ name: "Down Payment", uid: "downPayment", sortable: true },
-	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
-	{ name: "Monthly Repay.", uid: "monthlyRepayment", sortable: true },
-	{ name: "Tenor", uid: "tenorInDays", sortable: true },
-	{ name: "IMEI", uid: "imei", sortable: true },
 	{ name: "Status", uid: "loanStatus", sortable: true },
 	{ name: "Created", uid: "createdAt", sortable: true },
 	
@@ -356,7 +352,7 @@ export default function CollectionCustomerPage() {
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
 		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
-		() => getAllCustomerRecord(startDate, endDate)
+		() => getAllCustomerBasicRecord(startDate, endDate)
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
 					setHasNoRecords(true);
@@ -365,8 +361,9 @@ export default function CollectionCustomerPage() {
 				setHasNoRecords(false);
 				return r.data;
 			})
-			.catch((error) => {
+			.catch((error: any) => {
 				console.error("Error fetching customer records:", error);
+				showToast({ type: "error", message: error.message, duration: 8000 });
 				setHasNoRecords(true);
 				return [];
 			}),
@@ -386,22 +383,15 @@ export default function CollectionCustomerPage() {
 		() =>
 			raw.map((r: CustomerRecord) => ({
 				...r,
-				// customerId: r.customer?.customerId || 'N/A',
+				customerId: r.customerId,
 				fullName: r.firstName && r.lastName ? `${capitalize(r.firstName)} ${capitalize(r.lastName)}` : 'N/A',
-				bvn: r.bvn || 'N/A',
-				dob: r.dob || 'N/A',
-				// age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
-				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',		
-				tenorInDays: r.LoanRecord?.[0]?.duration ? `${r.LoanRecord?.[0]?.duration * 30} days` : 'N/A',
+				
+				createdAt: new Date(r.createdAt).toLocaleDateString('en-GB'),
+				
 				status: r.LoanRecord?.[0]?.loanStatus || 'N/A',
-				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord?.[0]?.loanAmount.toLocaleString()}` : 'N/A',
-				downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord?.[0]?.downPayment.toLocaleString()}` : 'N/A',
-				devicePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord?.[0]?.devicePrice.toLocaleString()}` : 'N/A',
-				loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A',
-				imei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
-				deviceName: r.LoanRecord?.[0]?.device?.deviceName || 'N/A',
-				createdAt: r.LoanRecord?.[0]?.createdAt ? new Date(r.LoanRecord?.[0]?.createdAt).toLocaleDateString() : 'N/A',
-				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord?.[0]?.monthlyRepayment.toLocaleString()}` : 'N/A',
+				
+				
+				
 				
 			})),
 		[raw]
@@ -549,7 +539,7 @@ export default function CollectionCustomerPage() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
-					defaultDateRange={{ days: 1 }}
+					defaultDateRange={{ days: 30 }}
 				/>
 			)}
 		</>

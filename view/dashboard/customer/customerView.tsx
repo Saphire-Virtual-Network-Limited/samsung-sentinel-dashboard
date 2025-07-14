@@ -102,7 +102,7 @@ export default function CustomerPage() {
         fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
         age: calculateAge(r.dob),
         bvnPhoneNumber: r.bvnPhoneNumber,
-        createdAt: r.createdAt,
+        createdAt: new Date(r.createdAt).toLocaleDateString('en-GB'),
 
       })),
     [raw]
@@ -292,7 +292,7 @@ export default function CustomerPage() {
           onDateFilterChange={handleDateFilter}
           initialStartDate={startDate}
           initialEndDate={endDate}
-          defaultDateRange={{ days: 1 }}
+          defaultDateRange={{ days: 30 }}
         />
       )}
 
