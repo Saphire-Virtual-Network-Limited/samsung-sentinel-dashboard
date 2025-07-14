@@ -10,6 +10,7 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDesc
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { usePathname, useRouter } from "next/navigation";
+import { hasPermission } from "@/lib/permissions";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "storeName", sortable: true },
@@ -86,6 +87,8 @@ export default function AllStoresView() {
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
 	const role = pathname.split("/")[2];
+	const { userResponse } = useAuth(); // get the user email
+	const userEmail = userResponse?.data?.email || "";
 
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -271,11 +274,13 @@ export default function AllStoresView() {
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
+							{hasPermission(role, "canEdit", userEmail) ? (
 							<DropdownItem
 								key={`${row.storeId}-edit`}
 								onPress={() => openModal("edit", row)}>	
 								Edit
 							</DropdownItem>
+							) : null}
 						</DropdownMenu>
 					</Dropdown>
 				</div>
