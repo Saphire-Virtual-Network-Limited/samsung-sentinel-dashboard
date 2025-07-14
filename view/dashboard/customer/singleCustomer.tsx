@@ -166,6 +166,8 @@ export default function CollectionSingleCustomerPage() {
   const params = useParams();
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
+  
+
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerRecord | null>(null);
@@ -215,17 +217,14 @@ export default function CollectionSingleCustomerPage() {
       }
 
       try {
-        const response = await getAllCustomerRecord();
-        const customerData = response.data.find(
-          (c: CustomerRecord) => c.customerId === params.id
-        );
-
-        if (customerData) {
-          setCustomer(customerData);
+        const response = await getCustomerRecordById(params.id as string);
+        
+        if (response && response.data) {
+          setCustomer(response.data);
         } else {
           showToast({
             type: "error",
-              message: "Customer not found",
+            message: "Customer not found",
             duration: 5000,
           });
         }
@@ -233,7 +232,7 @@ export default function CollectionSingleCustomerPage() {
         console.error("Error fetching customer:", error);
         showToast({
           type: "error",
-          message: "Failed to fetch customer data",
+          message: error.message || "Failed to fetch customer data",
           duration: 5000,
         });
       } finally {
@@ -503,7 +502,6 @@ export default function CollectionSingleCustomerPage() {
         customer.LoanRecord[0].loanRecordId,
         selectedAction
       );
-      console.log("API Response:", response);
       showToast({
         type: "success",
         message: "Loan status updated successfully",
@@ -511,12 +509,11 @@ export default function CollectionSingleCustomerPage() {
       });
 
       // Refresh customer data to show updated status
-      const updatedResponse = await getAllCustomerRecord();
-      const updatedCustomerData = updatedResponse.data.find(
-        (c: CustomerRecord) => c.customerId === params.id
-      );
-      if (updatedCustomerData) {
-        setCustomer(updatedCustomerData);
+      const updatedResponse = await getCustomerRecordById(params.id as string);
+      if (updatedResponse && updatedResponse.data) {
+        setCustomer(updatedResponse.data);
+      } else if (updatedResponse) {
+        setCustomer(updatedResponse);
       }
 
       onUpdateLoanStatusClose();
