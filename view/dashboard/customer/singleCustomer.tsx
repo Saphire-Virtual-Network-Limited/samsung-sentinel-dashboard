@@ -5,7 +5,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft, ChevronDown, ChevronUp, User, CreditCard, Store, Users, Smartphone, MapPin, Clock } from "lucide-react";
 import {
-  getAllCustomerRecord,
+ 
   getCustomerRecordById,
   showToast,
   updateCustomerLastPoint,
@@ -507,12 +507,9 @@ export default function CollectionSingleCustomerPage() {
       });
 
       // Refresh customer data to show updated status
-      const updatedResponse = await getAllCustomerRecord();
-      const updatedCustomerData = updatedResponse.data.find(
-        (c: CustomerRecord) => c.customerId === params.id
-      );
-      if (updatedCustomerData) {
-        setCustomer(updatedCustomerData);
+      const updatedResponse = await getCustomerRecordById(params.id as string);
+      if (updatedResponse) {
+        setCustomer(updatedResponse);
       }
 
       onUpdateLoanStatusClose();
