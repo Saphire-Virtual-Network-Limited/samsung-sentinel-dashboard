@@ -214,25 +214,22 @@ export default function CollectionSingleCustomerPage() {
       }
 
       try {
-        const response = await getAllCustomerRecord();
-        const customerData = response.data.find(
-          (c: CustomerRecord) => c.customerId === params.id
-        );
+        const response = await getCustomerRecordById(params.id as string);
 
-        if (customerData) {
-          setCustomer(customerData);
+        if (response) {
+          setCustomer(response);
         } else {
           showToast({
             type: "error",
-            message: "Customer not found",
+            message: response.message || "Customer not found",
             duration: 5000,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching customer:", error);
         showToast({
           type: "error",
-          message: "Failed to fetch customer data",
+          message: error.message || "Failed to fetch customer data",
           duration: 5000,
         });
       } finally {
