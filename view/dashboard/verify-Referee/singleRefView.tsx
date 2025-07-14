@@ -393,9 +393,9 @@ export default function SingleRefereeView({ id, role = 'verify' }: SingleReferee
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">Inputted Date of Birth</div>
-                    <div className="font-medium text-default-900">
+                    {/* <div className="font-medium text-default-900">
                       {customer.inputtedDob ? new Date(customer.inputtedDob).toISOString().split('T')[0] : 'N/A'}
-                    </div>
+                    </div> */}
                   </div>
                   <div>
                     <div className="text-sm text-default-500 mb-1">BVN Phone</div>
