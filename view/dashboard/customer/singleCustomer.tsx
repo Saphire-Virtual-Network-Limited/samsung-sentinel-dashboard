@@ -7,6 +7,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, User, CreditCard, Store, Users, Smar
 import {
  
   getCustomerRecordById,
+  getAllCustomerRecord,
   showToast,
   updateCustomerLastPoint,
   updateCustomerVirtualWalletBalance,
@@ -214,14 +215,17 @@ export default function CollectionSingleCustomerPage() {
       }
 
       try {
-        const response = await getCustomerRecordById(params.id as string);
+        const response = await getAllCustomerRecord();
+        const customerData = response.data.find(
+          (c: CustomerRecord) => c.customerId === params.id
+        );
 
-        if (response) {
-          setCustomer(response);
+        if (customerData) {
+          setCustomer(customerData);
         } else {
           showToast({
             type: "error",
-            message: response.message || "Customer not found",
+              message: "Customer not found",
             duration: 5000,
           });
         }
@@ -229,7 +233,7 @@ export default function CollectionSingleCustomerPage() {
         console.error("Error fetching customer:", error);
         showToast({
           type: "error",
-          message: error.message || "Failed to fetch customer data",
+          message: "Failed to fetch customer data",
           duration: 5000,
         });
       } finally {
@@ -507,9 +511,12 @@ export default function CollectionSingleCustomerPage() {
       });
 
       // Refresh customer data to show updated status
-      const updatedResponse = await getCustomerRecordById(params.id as string);
-      if (updatedResponse) {
-        setCustomer(updatedResponse);
+      const updatedResponse = await getAllCustomerRecord();
+      const updatedCustomerData = updatedResponse.data.find(
+        (c: CustomerRecord) => c.customerId === params.id
+      );
+      if (updatedCustomerData) {
+        setCustomer(updatedCustomerData);
       }
 
       onUpdateLoanStatusClose();
