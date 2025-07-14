@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerRecord, capitalize, calculateAge, deleteCustomer, showToast, useAuth } from "@/lib";
+import { getAllCustomerBasicRecord, capitalize, calculateAge, deleteCustomer, showToast, useAuth } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -67,7 +67,7 @@ export default function CustomerPage() {
       ? ["customer-records", startDate, endDate]
       : "customer-records",
     () =>
-      getAllCustomerRecord(startDate, endDate)
+      getAllCustomerBasicRecord(startDate, endDate)
         .then((r) => {
           if (!r.data || r.data.length === 0) {
             setHasNoRecords(true);
@@ -76,8 +76,9 @@ export default function CustomerPage() {
           setHasNoRecords(false);
           return r.data;
         })
-        .catch((error) => {
+        .catch((error: any) => {
           console.error("Error fetching customer records:", error);
+          showToast({ type: "error", message: error.message, duration: 8000 });
           setHasNoRecords(true);
           return [];
         }),
@@ -97,16 +98,12 @@ export default function CustomerPage() {
     () =>
       raw.map((r: CustomerRecord) => ({
         ...r,
+        customerId: r.customerId,
         fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-
         age: calculateAge(r.dob),
-        state: r.CustomerKYC?.[0]?.state || "N/A",
-        city: r.CustomerKYC?.[0]?.town || "N/A",
         bvnPhoneNumber: r.bvnPhoneNumber,
-        loanAmount: r.LoanRecord?.[0]?.loanAmount
-          ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}`
-          : "N/A",
-        region: r.CustomerKYC?.[0]?.localGovernment || "N/A",
+        createdAt: r.createdAt,
+
       })),
     [raw]
   );
