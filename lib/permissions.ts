@@ -181,6 +181,11 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canSync: true,
     canEdit: true,
   },
+  "olayinka@sapphirevirtual.com": {
+    canCreate: true,
+    // canSync: true,
+    canEdit: true,
+  },
 };
 
 /**

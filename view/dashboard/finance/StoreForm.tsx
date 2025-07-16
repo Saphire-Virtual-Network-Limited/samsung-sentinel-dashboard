@@ -1,7 +1,8 @@
 "use client";
 
-import { createSchema, createStore, updateStore, showToast } from '@/lib'  
+import { createSchema, createStore, updateStore, showToast, getAllVfdBanks } from '@/lib'  
 import { FormField } from '@/components/reususables/' 
+import AutoCompleteField from '@/components/reususables/form/AutoCompleteField';
 import React, { useState, useEffect } from 'react'
 import { Button } from '@heroui/react';
 import { useParams, useRouter } from 'next/navigation';
@@ -125,7 +126,10 @@ const StoreForm = () => {
     const [isloading, setIsLoading] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const [storeData, setStoreData] = useState<StoreRecord | null>(null);
-
+    const [bankList, setBankList] = useState<{ label: string; value: string; slug: string }[]>([]);
+    const [loadingBanks, setLoadingBanks] = useState(true);
+    const [selectedBankCode, setSelectedBankCode] = useState<string | null>(null);
+    const [selectedBankName, setSelectedBankName] = useState<string | null>(null);
     // Form state
     const [storeName, setStoreName] = useState("");
     const [city, setCity] = useState("");
@@ -262,6 +266,33 @@ const StoreForm = () => {
         validateField(value, storeCloseSchema, setStoreCloseError);
     };
 
+
+    	// Fetch the bank list when the component mounts
+	useEffect(() => {
+		const fetchBanks = async () => {
+			setLoadingBanks(true);
+			const bankData = await getAllVfdBanks();
+			if (bankData?.statusCode === 200) {
+				const formattedOptions = bankData.data.data.bank.map((bank: { id: number; code: number; name: string;  }) => ({
+					label: bank.name,
+					value: bank.code,
+					slug: bank.id,
+				}));
+				setBankList(formattedOptions);
+				setLoadingBanks(false);
+			}
+		};
+		fetchBanks();
+	}, []);
+
+    const handleBankSelection = (bankCode: string) => {
+		setSelectedBankCode(bankCode);
+		setSelectedBankName(bankList.find((bank) => bank.value === bankCode)?.label || '');  
+		// Auto-fill the bank code field when a bank is selected
+		setBankCode(bankCode);
+		setBankCodeError(""); // Clear any existing error
+	};
+
     // Fetch store data if in edit mode
     useEffect(() => {
         if (isEditMode && storeId) {
@@ -281,7 +312,7 @@ const StoreForm = () => {
                         setAddress(store.address || '');
                         setAccountNo(store.accountNumber || '');
                         setAccountName(store.accountName || '');
-                        setBankName(store.bankName || '');
+                        setBankName(selectedBankName || '');
                         setBankCode(store.bankCode || '');
                         setPhoneNumber(store.phoneNumber || '');
                         setStoreEmail(store.storeEmail || '');
@@ -326,8 +357,8 @@ const StoreForm = () => {
             address,
             accountNumber: accountNo,
             accountName,
-            bankName,
-            bankCode,
+            bankName: selectedBankName || '',
+            bankCode: selectedBankCode?.toString() || '',
             phoneNumber,
             storeEmail,
             longitude: parseFloat(longitude),
@@ -469,29 +500,35 @@ const StoreForm = () => {
                     id="accountName"
                     size="sm"
                 />
-                <FormField
-                    label="Bank Name"
-                    errorMessage={bankNameError}
-                    value={bankName}
-                    onChange={handleBankNameChange}
-                    placeholder="Enter bank name"
-                    type="text"
-                    required
-                    htmlFor="bankName"
-                    id="bankName"
-                    size="sm"
-                />
-                <FormField
+                <AutoCompleteField
+									label="Bank Name"
+									htmlFor="bank"
+									id="bank"
+									isInvalid={!!bankNameError}
+									errorMessage={bankNameError || ""}
+									placeholder={loadingBanks ? "Loading banks..." : bankList.length > 0 ? "Search/select bank" : "No bank available"}
+									value={bankCode}
+									onChange={(value) => handleBankSelection(value)}
+									options={bankList.map((bank) => ({
+										label: bank.label,
+										value: bank.value.toString(),
+										key: bank.slug.toString(),
+									}))}
+									isDisabled={loadingBanks || bankList.length === 0}
+								/>
+
+                    <FormField
                     label="Bank Code"
                     errorMessage={bankCodeError}
                     value={bankCode}
                     onChange={handleBankCodeChange}
-                    placeholder="Enter bank code"
+                    placeholder="Bank code will be auto-filled"
                     type="number"
                     required
                     htmlFor="bankCode"
                     id="bankCode"
                     size="sm"
+                    disabled={true}
                 />
                 <FormField
                     label="Phone Number"

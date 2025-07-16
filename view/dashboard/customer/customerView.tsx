@@ -24,8 +24,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Chip,
-  SortDescriptor,
-  ChipProps,
+  SortDescriptor
 } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
@@ -119,7 +118,11 @@ export default function CustomerPage() {
         fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
         age: calculateAge(r.dob),
         bvnPhoneNumber: r.bvnPhoneNumber,
-        createdAt: new Date(r.createdAt).toLocaleDateString("en-GB"),
+
+        createdAt: new Date(r.createdAt).toLocaleDateString('en-GB'),
+        channel: r.channel,
+
+
       })),
     [raw]
   );
