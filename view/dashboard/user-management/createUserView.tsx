@@ -7,14 +7,13 @@ import { useAgentData } from "@/hooks/user-mangement/use-agent-data";
 import { useCreateUserForm } from "@/hooks/user-mangement/use-create-user-form";
 import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
 import { useUserCreator } from "@/hooks/user-mangement/use-user-creator";
+import { getUserRole, useAuth } from "@/lib";
+import { hasPermission } from "@/lib/permissions";
 import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { AlertCircle, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { hasPermission } from "@/lib/permissions";
-import { useAuth } from "@/lib";
 import { useEffect } from "react";
-import { getUserRole } from "@/lib";
 
 import { GeneralSans_Meduim, cn } from "@/lib";
 

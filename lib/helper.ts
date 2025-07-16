@@ -66,7 +66,9 @@ export const calculateAge = (dob: string): number => {
   return age;
 };
 
-export const getUserRole = (userRole: string) => {
+export const getUserRole = (userRole: string | undefined) => {
+  if (!userRole) return "unknown-role";
+
   const role = userRole.toLowerCase().replace(/_/g, "-");
   if (role === "admin") return "sub-admin";
   if (role === "super-admin") return "admin";
