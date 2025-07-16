@@ -6,7 +6,14 @@ import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import { getAllCustomerBasicRecord, capitalize, calculateAge, deleteCustomer, showToast, useAuth } from "@/lib";
+import {
+  getAllCustomerBasicRecord,
+  capitalize,
+  calculateAge,
+  deleteCustomer,
+  showToast,
+  useAuth,
+} from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -23,8 +30,14 @@ import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { CustomerRecord } from "./types";
 import { statusOptions, columns, statusColorMap } from "./constants";
-import {  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
-
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/react";
 
 export default function CustomerPage() {
   const router = useRouter();
@@ -40,9 +53,13 @@ export default function CustomerPage() {
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [hasNoRecords, setHasNoRecords] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
-  const { isOpen: isCancelBill, onOpen: onCancelBill, onClose: onCancelBillClose } = useDisclosure();
-
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<CustomerRecord | null>(null);
+  const {
+    isOpen: isCancelBill,
+    onOpen: onCancelBill,
+    onClose: onCancelBillClose,
+  } = useDisclosure();
 
   // --- table state ---
   const [filterValue, setFilterValue] = useState("");
@@ -101,8 +118,10 @@ export default function CustomerPage() {
         fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
         age: calculateAge(r.dob),
         bvnPhoneNumber: r.bvnPhoneNumber,
+
         createdAt: new Date(r.createdAt).toLocaleDateString('en-GB'),
         channel: r.channel,
+
 
       })),
     [raw]
@@ -164,12 +183,15 @@ export default function CustomerPage() {
     saveAs(new Blob([buf]), "Customer_Records.xlsx");
   };
 
-
   const handleCancelBill = async (customerId: string) => {
     try {
       setIsButtonLoading(true);
       const response = await deleteCustomer(customerId);
-      showToast({ type: "success", message: "Bill cancelled successfully", duration: 3000 });
+      showToast({
+        type: "success",
+        message: "Bill cancelled successfully",
+        duration: 3000,
+      });
       console.log(response);
       onCancelBillClose();
     } catch (error: any) {
@@ -194,14 +216,21 @@ export default function CustomerPage() {
             <DropdownMenu>
               <DropdownItem
                 key="view"
-                onPress={() => router.push(`/access/${role}/customers/${row.customerId}`)}
+                onPress={() =>
+                  router.push(`/access/${role}/customers/${row.customerId}`)
+                }
                 className="cursor-pointer"
               >
                 View
               </DropdownItem>
               <DropdownItem
                 key="viewInNewTab"
-                onPress={() => window.open(`/access/${role}/customers/${row.customerId}`, "_blank")}
+                onPress={() =>
+                  window.open(
+                    `/access/${role}/customers/${row.customerId}`,
+                    "_blank"
+                  )
+                }
                 className="cursor-pointer"
               >
                 View in new tab
@@ -296,51 +325,57 @@ export default function CustomerPage() {
         />
       )}
 
-<Modal
-				isOpen={isCancelBill}
-				onClose={onCancelBillClose}
-				size="lg">
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Confirm Customer Bill Cancellation</ModalHeader>
-							<ModalBody>
-								<p className="text-md text-default-500">
-									Are you sure you want to cancel this customer's bill?  This action cannot be undone.
-								</p>
-
+      <Modal isOpen={isCancelBill} onClose={onCancelBillClose} size="lg">
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>Confirm Customer Bill Cancellation</ModalHeader>
+              <ModalBody>
+                <p className="text-md text-default-500">
+                  Are you sure you want to cancel this customer&apos;s bill?
+                  This action cannot be undone.
+                </p>
 
                 {selectedCustomer && (
                   <div className="mt-4">
-                    <p className="font-medium">Customer Name: {selectedCustomer.firstName} {selectedCustomer.lastName}</p>
-                    <p className="font-medium">BVN: {selectedCustomer.bvn}</p>  
-                    <p className="font-medium">Customer ID: {selectedCustomer.customerId}</p>
+                    <p className="font-medium">
+                      Customer Name: {selectedCustomer.firstName}{" "}
+                      {selectedCustomer.lastName}
+                    </p>
+                    <p className="font-medium">BVN: {selectedCustomer.bvn}</p>
+                    <p className="font-medium">
+                      Customer ID: {selectedCustomer.customerId}
+                    </p>
                   </div>
                 )}
-								
-							</ModalBody>
-							<ModalFooter className="flex gap-2">
-								<Button
-									color="success"
-									variant="solid"
-									onPress={() => selectedCustomer && handleCancelBill(selectedCustomer.customerId)}  
-									isLoading={isButtonLoading}>
-									Confirm
-								</Button>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={() => {
-										onCancelBillClose();
-										setSelectedCustomer(null);
-									}}>
-									Cancel
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+              </ModalBody>
+              <ModalFooter className="flex gap-2">
+                <Button
+                  color="success"
+                  variant="solid"
+                  onPress={() =>
+                    selectedCustomer &&
+                    handleCancelBill(selectedCustomer.customerId)
+                  }
+                  isLoading={isButtonLoading}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={() => {
+                    onCancelBillClose();
+                    setSelectedCustomer(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   );
 }
