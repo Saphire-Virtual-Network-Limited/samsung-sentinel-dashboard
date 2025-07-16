@@ -17,6 +17,7 @@ import DeviceDashAnalytic from "./deviceDashAnalytic";
 import ScreenReport from "./screenReport";
 import DailyDashCardCollection from "./collections/dailyDashCard";  
 import InceptionDashCardCollection from "./collections/inceptionDashCard";
+import CustomerSearch from "./CustomerSearch";
 
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeleton, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenReport, DailyDashCardCollection, InceptionDashCardCollection };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeleton, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenReport, DailyDashCardCollection, InceptionDashCardCollection, CustomerSearch };
