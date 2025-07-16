@@ -7,6 +7,7 @@ export const columns: ColumnDef[] = [
   { name: "Contact No.", uid: "bvnPhoneNumber" },
   { name: "Age", uid: "age", sortable: true },
   { name: "Created At", uid: "createdAt", sortable: true },
+  { name: "Channel", uid: "channel", sortable: true },
   { name: "Actions", uid: "actions" },
 ];
 
