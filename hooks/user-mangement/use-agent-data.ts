@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import type { AgentType } from "@/view/dashboard/user-management/user";
-
+import { useAuth } from "@/lib";
+import { useMemo } from "react";
 interface UseAgentDataReturn {
   agentTypes: AgentType[];
   agentError: Error | undefined;
@@ -32,12 +33,27 @@ export const fallbackAgentTypes: AgentType[] = [
 ];
 
 export const useAgentData = (): UseAgentDataReturn => {
+  const { userResponse } = useAuth();
+  const filteredFallbackData = useMemo(() => {
+    const userRole = userResponse?.data?.role;
+
+    if (userRole === "ADMIN") {
+      return fallbackAgentTypes.filter(
+        (type) => type.value !== "ADMIN" && type.value !== "SUPER_ADMIN"
+      );
+    } else if (userRole === "SUPER_ADMIN") {
+      return fallbackAgentTypes;
+    } else {
+      return [];
+    }
+  }, [userResponse?.data?.role]);
+
   const {
     data: agentTypes,
     error: agentError,
     isLoading,
   } = useSWR<AgentType[], Error>("/api/agent-types", {
-    fallbackData: fallbackAgentTypes,
+    fallbackData: filteredFallbackData,
     revalidateOnFocus: false,
     dedupingInterval: 300000, // 5 minutes
   });

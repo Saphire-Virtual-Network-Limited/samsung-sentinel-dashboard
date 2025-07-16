@@ -7,15 +7,20 @@ import { useAgentData } from "@/hooks/user-mangement/use-agent-data";
 import { useCreateUserForm } from "@/hooks/user-mangement/use-create-user-form";
 import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
 import { useUserCreator } from "@/hooks/user-mangement/use-user-creator";
+import { getUserRole, useAuth } from "@/lib";
+import { hasPermission } from "@/lib/permissions";
 import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { AlertCircle, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
+import { useEffect } from "react";
 
 import { GeneralSans_Meduim, cn } from "@/lib";
 
 export default function CreateUserPage() {
   const router = useRouter();
+  const { userResponse } = useAuth();
+  const role = getUserRole(userResponse?.data?.role);
   const { formData, errors, updateField, validateForm, resetForm, isValid } =
     useCreateUserForm();
 
@@ -65,9 +70,13 @@ export default function CreateUserPage() {
     if (formData.companyLGA) {
       handleFieldChange("companyLGA", "");
     }
-
-    // Note: City remains as free text input since the package doesn't provide cities
   };
+
+  useEffect(() => {
+    if (userResponse && !hasPermission(role, "createDashboardUser")) {
+      router.push("/404");
+    }
+  }, [userResponse, router, role]);
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -80,7 +89,7 @@ export default function CreateUserPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Create New Agent
+                  Create New User
                 </h1>
                 <p className="text-gray-600">
                   Add a new team member and send them an invitation
@@ -150,42 +159,42 @@ export default function CreateUserPage() {
                   errorMessage={errors.email || undefined}
                   required
                 />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    size="sm"
+                    label="Phone Number"
+                    htmlFor="telephoneNumber"
+                    id="telephoneNumber"
+                    type="tel"
+                    placeholder="Enter phone number"
+                    value={formData.telephoneNumber}
+                    onChange={(value) =>
+                      handleFieldChange("telephoneNumber", value)
+                    }
+                    isInvalid={!!errors.telephoneNumber}
+                    errorMessage={errors.telephoneNumber || undefined}
+                    required
+                  />
 
-                <FormField
-                  size="sm"
-                  label="Phone Number"
-                  htmlFor="telephoneNumber"
-                  id="telephoneNumber"
-                  type="tel"
-                  placeholder="Enter phone number"
-                  value={formData.telephoneNumber}
-                  onChange={(value) =>
-                    handleFieldChange("telephoneNumber", value)
-                  }
-                  isInvalid={!!errors.telephoneNumber}
-                  errorMessage={errors.telephoneNumber || undefined}
-                  required
-                />
-
-                <SelectField
-                  label="Agent Role"
-                  htmlFor="role"
-                  id="role"
-                  placeholder="Select agent role"
-                  options={agentTypes}
-                  classNames={{ base: "w-full min-w-0" }}
-                  onChange={(value) =>
-                    handleFieldChange(
-                      "role",
-                      Array.isArray(value) ? value[0] : value
-                    )
-                  }
-                  isInvalid={!!errors.role}
-                  errorMessage={errors.role || undefined}
-                  required
-                />
+                  <SelectField
+                    label="User Role"
+                    htmlFor="role"
+                    id="role"
+                    placeholder="Select agent role"
+                    options={agentTypes}
+                    classNames={{ base: "w-full min-w-0" }}
+                    onChange={(value) =>
+                      handleFieldChange(
+                        "role",
+                        Array.isArray(value) ? value[0] : value
+                      )
+                    }
+                    isInvalid={!!errors.role}
+                    errorMessage={errors.role || undefined}
+                    required
+                  />
+                </div>
               </div>
-
               {/* Company Information Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -297,7 +306,7 @@ export default function CreateUserPage() {
                     !isValid("role")
                   }
                 >
-                  {isLoading ? "Creating..." : "Create Agent"}
+                  {isLoading ? "Creating..." : "Create User"}
                 </Button>
               </div>
             </form>

@@ -44,9 +44,10 @@ export interface PermissionConfig {
   canViewDeviceActivityLog: boolean;
   canViewCommunicationLog: boolean;
   suspendDashboardUser: boolean;
-  canCreate: boolean; 
+  canCreate: boolean;
   canSync: boolean;
   canEdit: boolean;
+  createDashboardUser: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -71,6 +72,9 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     // canViewOverDuePayments: true,
     // canViewDeviceActivityLog: true,
     // canViewCommunicationLog: true,
+    createDashboardUser: true,
+    suspendDashboardUser: true,
+
     // Admin has no special permissions by default
     // All permissions default to false
   },
@@ -84,6 +88,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
     suspendDashboardUser: true,
+    createDashboardUser: true,
     canCreate: true,
     canSync: true,
     canEdit: true,
@@ -200,6 +205,7 @@ function getDefaultPermissions(): PermissionConfig {
     canCreate: false,
     canSync: false,
     canEdit: false,
+    createDashboardUser: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };

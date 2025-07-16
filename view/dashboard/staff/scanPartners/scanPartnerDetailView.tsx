@@ -491,7 +491,10 @@ export default function ScanPartnerSinglePage() {
   const isScanPartner = userResponse?.data?.role == "SCAN_PARTNER";
   const userId = userResponse?.data?.userId;
 
-  const canSuspendUser = hasPermission(role, "suspendDashboardUser");
+  const canSuspendUser = hasPermission(
+    userResponse?.data?.role,
+    "suspendDashboardUser"
+  );
   const {
     data: scanPartner,
     error,
