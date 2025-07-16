@@ -35,71 +35,71 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 };
 
 type UnapprovedRefereeRecord = {
-	customerId: string;
-	firstName: string; 
-	lastName: string;
-	email: string;
-	bvn: string;
-	dob: string;
-	dobMisMatch: boolean;
-	createdAt: string;
-	updatedAt: string;
-	customerLoanDiskId: string;
-	channel: string;
-	bvnPhoneNumber: string;
-	mainPhoneNumber: string;
-	mbeId: string | null;
-	monoCustomerConnectedCustomerId: string;
+	customerId?: string;
+	firstName?: string; 
+	lastName?: string;
+	email?: string;
+	bvn?: string;
+	dob?: string;
+	dobMisMatch?: boolean;
+	createdAt?: string;
+	updatedAt?: string;
+	customerLoanDiskId?: string;
+	channel?: string;
+	bvnPhoneNumber?: string;
+	mainPhoneNumber?: string;
+	mbeId?: string | null;
+	monoCustomerConnectedCustomerId?: string;
 	fullName?: string;
 	age?: number;
 	status?: string;
 	CustomerKYC?: Array<{
-		kycId: string;
-		customerId: string;
-		phone2: string;
-		phone3: string;
-		houseNumber: string;
-		streetAddress: string;
-		nearestBusStop: string;
-		localGovernment: string;
+		kycId?: string;
+		customerId?: string;
+		phone2?: string;
+		phone3?: string;
+		houseNumber?: string;
+		streetAddress?: string;
+		nearestBusStop?: string;
+		localGovernment?: string;
 		state: string;
-		town: string;
-		occupation: string;
-		businessName: string;
-		applicantBusinessAddress: string;
-		applicantAddress: string;
-		source: string;
-		createdAt: string;
-		updatedAt: string;
-		status2Comment: string | null;
-		status3Comment: string | null;
-		generalStatus: string;
-		channel: string;
-		phone2Status: string;
-		phone3Status: string;
+		town?: string;
+		occupation?: string;
+		businessName?: string;
+		applicantBusinessAddress?: string;
+		applicantAddress?: string;
+		source?: string;
+		createdAt?: string;
+		updatedAt?: string;
+		status2Comment?: string | null;
+		status3Comment?: string | null;
+		generalStatus?: string;
+		channel?: string;
+		phone2Status?: string;
+		phone3Status?: string;
 	}>;
 	LoanRecord?: Array<{
-		loanRecordId: string;
-		customerId: string;
-		loanDiskId: string;
-		lastPoint: string;
-		channel: string;
-		loanStatus: string;
-		createdAt: string;
-		updatedAt: string;
-		loanAmount: number;
-		deviceId: string;
-		downPayment: number;
-		insurancePackage: string;
-		insurancePrice: number;
-		mbsEligibleAmount: number;
-		payFrequency: string;
-		storeId: string;
-		devicePrice: number;
-		deviceAmount: number;
-		monthlyRepayment: number;
-		duration: number;
-		interestAmount: number;
+		loanRecordId?: string;
+		customerId?: string;
+		loanDiskId?: string;
+		lastPoint?: string;
+		channel?: string;
+		loanStatus?: string;
+		createdAt?: string;
+		updatedAt?: string;
+		loanAmount?: number;
+		deviceId?: string;
+		downPayment?: number;
+		insurancePackage?: string;
+		insurancePrice?: number;
+		mbsEligibleAmount?: number;
+		payFrequency?: string;
+		storeId?: string;
+		devicePrice?: number;
+		deviceAmount?: number;
+		monthlyRepayment?: number;
+		duration?: number;
+		interestAmount?: number;
 	}>;
 };
 
@@ -176,12 +176,12 @@ export default function UnapprovedRefereesPage() {
 		() =>
 			raw.map((r: UnapprovedRefereeRecord) => ({
 				...r,
-				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
+				fullName: `${capitalize(r.firstName || '')} ${capitalize(r.lastName || '')}`,
 				email: r.email,
 				generalStatus: r.CustomerKYC?.[0]?.generalStatus || 'pending',
 				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || 'pending'],
 				phone2: r.CustomerKYC?.[0]?.phone2 || 'N/A',
-				age: calculateAge(r.dob),
+				age: calculateAge(r.dob || ''),
 			})),
 		[raw]
 	);
@@ -240,7 +240,7 @@ export default function UnapprovedRefereesPage() {
 				: String(selectedItem?.CustomerKYC?.[0]?.phone3);
 
 			const verifyCustomerReferenceNumberDetails = {
-				customerId: selectedItem.customerId,
+				customerId: selectedItem.customerId || '',
 				phoneNumber,
 				phoneVerified: true,
 				comment: `Referee ${type === "referee1" ? "1" : "2"} has been verified`,
@@ -279,7 +279,7 @@ export default function UnapprovedRefereesPage() {
 				: String(selectedItem?.CustomerKYC?.[0]?.phone3);
 
 			const verifyCustomerReferenceNumberDetails = {
-				customerId: selectedItem.customerId,
+				customerId: selectedItem.customerId || '',
 				phoneNumber,
 				phoneVerified: false,
 				comment: reason,

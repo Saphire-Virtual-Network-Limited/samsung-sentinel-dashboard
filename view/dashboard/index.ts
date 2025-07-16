@@ -48,6 +48,9 @@ import NewSalesHomeView from "./sales/NewSalesHomeView";
 import MBEPage from "./staff/MBE/mbeView";
 import SingleMBEPage from "./staff/MBE/singleMBE";
 import DueLoansView from "./loans/dueLoansView";    
+import CreateStorePage from "./finance/createStore";
+import StoreForm from "./finance/StoreForm";
+import DeviceForm from "./devices/deviceForm";
 
 export {
   MBEPage,
@@ -100,5 +103,8 @@ export {
   CollectionSamsungView,
   CollectionXiaomiView,
   DueLoansView,
+  CreateStorePage,
+  StoreForm,
+  DeviceForm
 
 };

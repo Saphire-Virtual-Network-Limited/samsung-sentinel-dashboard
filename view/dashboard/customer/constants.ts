@@ -2,14 +2,11 @@ import { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
 import { ChipProps } from "@heroui/react";
 
 export const columns: ColumnDef[] = [
+  { name: "Customer ID", uid: "customerId", sortable: true },
   { name: "Name", uid: "fullName", sortable: true },
   { name: "Contact No.", uid: "bvnPhoneNumber" },
   { name: "Age", uid: "age", sortable: true },
-  { name: "State", uid: "state", sortable: true },
-  { name: "City", uid: "city", sortable: true },
-  { name: "Region", uid: "region", sortable: true },
-  { name: "Loan Amount", uid: "loanAmount", sortable: true },
-
+  { name: "Created At", uid: "createdAt", sortable: true },
   { name: "Actions", uid: "actions" },
 ];
 

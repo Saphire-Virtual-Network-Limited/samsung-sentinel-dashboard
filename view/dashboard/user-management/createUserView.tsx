@@ -150,134 +150,124 @@ export default function CreateUserPage() {
                   errorMessage={errors.email || undefined}
                   required
                 />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    size="sm"
-                    label="Phone Number"
-                    htmlFor="telephoneNumber"
-                    id="telephoneNumber"
-                    type="tel"
-                    placeholder="Enter phone number"
-                    value={formData.telephoneNumber}
-                    onChange={(value) =>
-                      handleFieldChange("telephoneNumber", value)
-                    }
-                    isInvalid={!!errors.telephoneNumber}
-                    errorMessage={errors.telephoneNumber || undefined}
-                    required
-                  />
 
-                  <SelectField
-                    label="Agent Role"
-                    htmlFor="role"
-                    id="role"
-                    placeholder="Select agent role"
-                    options={agentTypes}
-                    classNames={{ base: "w-full min-w-0" }}
-                    onChange={(value) =>
-                      handleFieldChange(
-                        "role",
-                        Array.isArray(value) ? value[0] : value
-                      )
-                    }
-                    isInvalid={!!errors.role}
-                    errorMessage={errors.role || undefined}
-                    required
-                  />
-                </div>
+                <FormField
+                  size="sm"
+                  label="Phone Number"
+                  htmlFor="telephoneNumber"
+                  id="telephoneNumber"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={formData.telephoneNumber}
+                  onChange={(value) =>
+                    handleFieldChange("telephoneNumber", value)
+                  }
+                  isInvalid={!!errors.telephoneNumber}
+                  errorMessage={errors.telephoneNumber || undefined}
+                  required
+                />
+
+                <SelectField
+                  label="Agent Role"
+                  htmlFor="role"
+                  id="role"
+                  placeholder="Select agent role"
+                  options={agentTypes}
+                  classNames={{ base: "w-full min-w-0" }}
+                  onChange={(value) =>
+                    handleFieldChange(
+                      "role",
+                      Array.isArray(value) ? value[0] : value
+                    )
+                  }
+                  isInvalid={!!errors.role}
+                  errorMessage={errors.role || undefined}
+                  required
+                />
               </div>
 
               {/* Company Information Section */}
-              {formData?.role == "SCAN_PARTNER" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Company Information
-                  </h3>
-                  <FormField
-                    size="sm"
-                    type="text"
-                    label="Company Name"
-                    htmlFor="companyName"
-                    id="companyName"
-                    placeholder="Enter company name"
-                    value={formData.companyName || ""}
-                    onChange={(value) =>
-                      handleFieldChange("companyName", value)
-                    }
-                    isInvalid={!!errors.companyName}
-                    errorMessage={errors.companyName || undefined}
-                    required={formData?.role == "SCAN_PARTNER"}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Company Information (Optional)
+                </h3>
+                <FormField
+                  size="sm"
+                  type="text"
+                  label="Company Name"
+                  htmlFor="companyName"
+                  id="companyName"
+                  placeholder="Enter company name"
+                  value={formData.companyName || ""}
+                  onChange={(value) => handleFieldChange("companyName", value)}
+                  isInvalid={!!errors.companyName}
+                  errorMessage={errors.companyName || undefined}
+                />
+
+                <FormField
+                  size="sm"
+                  type="text"
+                  label="Company Address"
+                  htmlFor="companyAddress"
+                  id="companyAddress"
+                  placeholder="Enter company address"
+                  value={formData.companyAddress || ""}
+                  onChange={(value) =>
+                    handleFieldChange("companyAddress", value)
+                  }
+                  isInvalid={!!errors.companyAddress}
+                  errorMessage={errors.companyAddress || undefined}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <SelectField
+                    size="lg"
+                    label="State"
+                    htmlFor="companyState"
+                    id="companyState"
+                    placeholder="Select state"
+                    options={states}
+                    onChange={handleStateChange}
+                    isInvalid={!!errors.companyState}
+                    errorMessage={errors.companyState || undefined}
+                    classNames={{ base: "w-full min-w-0" }}
                   />
 
                   <FormField
                     size="sm"
                     type="text"
-                    label="Company Address"
-                    htmlFor="companyAddress"
-                    id="companyAddress"
-                    placeholder="Enter company address"
-                    value={formData.companyAddress || ""}
+                    label="City"
+                    htmlFor="companyCity"
+                    id="companyCity"
+                    placeholder="Enter city"
+                    value={formData.companyCity || ""}
                     onChange={(value) =>
-                      handleFieldChange("companyAddress", value)
+                      handleFieldChange("companyCity", value)
                     }
-                    isInvalid={!!errors.companyAddress}
-                    errorMessage={errors.companyAddress || undefined}
-                    required={formData?.role == "SCAN_PARTNER"}
+                    isInvalid={!!errors.companyCity}
+                    errorMessage={errors.companyCity || undefined}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <SelectField
-                      size="lg"
-                      label="State"
-                      htmlFor="companyState"
-                      id="companyState"
-                      placeholder="Select state"
-                      options={states}
-                      onChange={handleStateChange}
-                      isInvalid={!!errors.companyState}
-                      errorMessage={errors.companyState || undefined}
-                      classNames={{ base: "w-full min-w-0" }}
-                      required={formData?.role == "SCAN_PARTNER"}
-                    />
-
-                    <FormField
-                      size="sm"
-                      type="text"
-                      label="City"
-                      htmlFor="companyCity"
-                      id="companyCity"
-                      placeholder="Enter city"
-                      value={formData.companyCity || ""}
-                      onChange={(value) =>
-                        handleFieldChange("companyCity", value)
-                      }
-                      isInvalid={!!errors.companyCity}
-                      errorMessage={errors.companyCity || undefined}
-                      required={formData?.role == "SCAN_PARTNER"}
-                    />
-
-                    <SelectField
-                      size="lg"
-                      label="Local Government Area"
-                      htmlFor="companyLGA"
-                      id="companyLGA"
-                      placeholder="Select LGA"
-                      classNames={{ base: "w-full min-w-0" }}
-                      options={selectedStateLgas}
-                      onChange={(value) =>
-                        handleFieldChange(
-                          "companyLGA",
-                          Array.isArray(value) ? value[0] : value
-                        )
-                      }
-                      isInvalid={!!errors.companyLGA}
-                      errorMessage={errors.companyLGA || undefined}
-                      disabled={!formData.companyState}
-                      required={formData?.role == "SCAN_PARTNER"}
-                    />
-                  </div>
+                  <SelectField
+                    size="lg"
+                    label="Local Government Area"
+                    htmlFor="companyLGA"
+                    id="companyLGA"
+                    placeholder="Select LGA"
+                    classNames={{ base: "w-full min-w-0" }}
+                    options={selectedStateLgas}
+                    onChange={(value) =>
+                      handleFieldChange(
+                        "companyLGA",
+                        Array.isArray(value) ? value[0] : value
+                      )
+                    }
+                    isInvalid={!!errors.companyLGA}
+                    errorMessage={errors.companyLGA || undefined}
+                    disabled={!formData.companyState}
+                  />
                 </div>
-              )}
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button

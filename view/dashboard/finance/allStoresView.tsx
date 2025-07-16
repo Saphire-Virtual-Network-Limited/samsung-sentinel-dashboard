@@ -3,13 +3,14 @@
 import React, { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores, showToast, syncStores } from "@/lib";
+import { getAllStores, showToast, syncStores, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { hasPermission } from "@/lib/permissions";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "storeName", sortable: true },
@@ -18,6 +19,30 @@ const columns: ColumnDef[] = [
 	{ name: "State", uid: "state", sortable: true },
 	{ name: "Region", uid: "region", sortable: true },
 	{ name: "City", uid: "city", sortable: true },
+	{ name: "Actions", uid: "actions"},
+];
+
+const columns2: ColumnDef[] = [
+	{ name: "Store ID", uid: "storeId", sortable: true },
+	{ name: "Store Name", uid: "storeName", sortable: true },
+	{ name: "Partner", uid: "partner", sortable: true },
+	{ name: "State", uid: "state", sortable: true },	
+	{ name: "City", uid: "city", sortable: true },
+	{ name: "Region", uid: "region", sortable: true },
+	{ name: "Address", uid: "address", sortable: true },
+	{ name: "Phone Number", uid: "phoneNumber", sortable: true },
+	{ name: "Email", uid: "storeEmail", sortable: true },
+	{ name: "Account Number", uid: "accountNumber", sortable: true },
+	{ name: "Account Name", uid: "accountName", sortable: true },
+	{ name: "Bank Name", uid: "bankName", sortable: true },
+	{ name: "Bank Code", uid: "bankCode", sortable: true },
+	{ name: "Store Hours", uid: "storeOpen", sortable: true },
+	{ name: "Store Close", uid: "storeClose", sortable: true },
+	{ name: "Longitude", uid: "longitude", sortable: true },
+	{ name: "Latitude", uid: "latitude", sortable: true },
+	{ name: "Cluster ID", uid: "clusterId", sortable: true },
+	{ name: "Created At", uid: "createdAt", sortable: true },
+	{ name: "Updated At", uid: "updatedAt", sortable: true },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -58,9 +83,16 @@ type StoreRecord = {
 };
 
 export default function AllStoresView() {
+
+	const pathname = usePathname();
+	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
+	const role = pathname.split("/")[2];
+	const { userResponse } = useAuth(); // get the user email
+	const userEmail = userResponse?.data?.email || "";
+
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | null>(null);
+	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<StoreRecord | null>(null);
 
 	const router = useRouter();
@@ -124,15 +156,15 @@ export default function AllStoresView() {
 			}),
 		{
 			revalidateOnFocus: true,
-			dedupingInterval: 60000,
-			refreshInterval: 60000,
+			dedupingInterval: 0,
+			refreshInterval: 0,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
 			revalidateIfStale: true
 		}
 	);
 
-	const customers = useMemo(
+	const stores = useMemo(
 		() =>
 			raw.map((r: StoreRecord) => ({
 				...r,
@@ -141,12 +173,25 @@ export default function AllStoresView() {
 				PhoneNo: r.phoneNumber || '',
 				State: r.state || '',
 				Partner: r.partner || '',
+				StoreID: r.storeId || '',
+				StoreName: r.storeName || '',
+				AccountNumber: r.accountNumber || '',
+				AccountName: r.accountName || '',
+				BankName: r.bankName || '',
+				BankCode: r.bankCode || '',
+				StoreHours: r.storeOpen || '',
+				StoreClose: r.storeClose || '',
+				Longitude: r.longitude || '',
+				Latitude: r.latitude || '',
+				ClusterID: r.clusterId || '',
+				CreatedAt: r.createdAt || '',
+				UpdatedAt: r.updatedAt || '',
 			})),
 		[raw]
 	);
 
 	const filtered = useMemo(() => {
-		let list = [...customers];
+		let list = [...stores];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
@@ -169,7 +214,7 @@ export default function AllStoresView() {
 			list = list.filter((c) => statusFilter.has(c.status || ''));	
 		}
 		return list;
-	}, [customers, filterValue, statusFilter]);
+	}, [stores, filterValue, statusFilter]);
 
 	const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
 	const paged = useMemo(() => {
@@ -190,17 +235,23 @@ export default function AllStoresView() {
 	const exportFn = async (data: StoreRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("All Stores");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		ws.columns = columns2.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow({ ...r }));	
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "allStores_Records.xlsx");
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view", row: StoreRecord) => {
+	const openModal = (mode: "view" | "edit", row: StoreRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
-		onOpen();
+		if (mode === "edit") {
+			// Open edit page in new tab with store data
+			const editUrl = `/access/${role}/stores/edit/${row.storeId}`;
+			window.open(editUrl, '_blank');
+		} else {
+			onOpen();
+		}
 	};
 
 	// Render each cell, including actions dropdown:
@@ -223,6 +274,13 @@ export default function AllStoresView() {
 								onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
+							{hasPermission(role, "canEdit", userEmail) ? (
+							<DropdownItem
+								key={`${row.storeId}-edit`}
+								onPress={() => openModal("edit", row)}>	
+								Edit
+							</DropdownItem>
+							) : null}
 						</DropdownMenu>
 					</Dropdown>
 				</div>
@@ -273,7 +331,8 @@ export default function AllStoresView() {
 					createButton={{
 						text: "Create Store",
 						onClick: () => {
-							router.push("/access/admin/stores/create");
+							const createUrl = `/access/${role}/stores/create`;
+							window.open(createUrl, '_blank');
 						}
 					}}
 					additionalButtons={[		
@@ -288,22 +347,8 @@ export default function AllStoresView() {
 				/>
 			)}
 
-<div className="mb-4 flex justify-center md:justify-start mt-4 gap-4 items-center">
-			<Button
-				color="primary"
-				variant="solid"
-				className="w-fit sm:w-auto"
-				onPress={() => {
-					syncStoresFn();
-				}}
-				isLoading={isSyncing}
-			>
-				Sync Stores
-			</Button>
-			<p className="text-sm text-default-500">
-			Sync Stores will update the stores list with the latest data from the 1.9 dashboard.
-		</p>
-		</div>
+
+		
 		
 			
 
@@ -315,7 +360,7 @@ export default function AllStoresView() {
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>User Details</ModalHeader>
+							<ModalHeader>Store Details</ModalHeader>
 							<ModalBody>
 								{selectedItem && (
 									<div className="space-y-4">

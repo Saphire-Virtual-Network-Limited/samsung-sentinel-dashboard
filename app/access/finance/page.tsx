@@ -1,9 +1,10 @@
 import React from "react";
-import {  StoreSummaryPage } from "@/view";
+import { NewHomeView } from "@/view";
 
 const page = () => {
-	return 	<StoreSummaryPage />;
+	return <NewHomeView />;
 };
 
 export default page;
+
 

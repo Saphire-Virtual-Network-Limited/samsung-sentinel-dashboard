@@ -166,7 +166,10 @@ export async function getAllDefaultedRecord(
   return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
-export async function getAllDueLoanRecord(fromDate?: string, toDate?: string) {
+export async function getAllDueLoanRecord(
+  fromDate?: string,
+  toDate?: string
+) {
   const query =
     fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
   return apiCall(`/admin/loan/due${query}`, "GET");
@@ -236,6 +239,21 @@ export async function getAllCustomerRecord(
   const query =
     startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
   return apiCall(`/admin/customers/record${query}`, "GET");
+}
+
+//get all customer BASIC record
+export async function getAllCustomerBasicRecord(
+  startDate?: string,
+  endDate?: string
+) {
+  const query =
+    startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+  return apiCall(`/admin/customers/basic${query}`, "GET");
+}
+
+//get customer record by id
+export async function getCustomerRecordById(customerId: string) {
+  return apiCall(`/admin/customers/view/${customerId}`, "GET");
 }
 
 // New optimized customer record functions
@@ -638,8 +656,9 @@ export async function updateCustomerVirtualWalletBalance(
 
 export async function createCustomerVirtualWallet(customerId: string) {
   return apiCall(
-    `/admin/customers/create-customer-wallet/${customerId}`,
-    "POST"
+    `/admin/customers/create-customer-wallet`,
+    "POST",
+    { customerId }
   );
 }
 
@@ -647,46 +666,28 @@ export async function createCustomerVirtualWallet(customerId: string) {
 // DEVICE lOCKING AND UNLOCKING
 // ============================================================================
 
-export async function lockDevice(imei: string) {
-  return apiCall(`/admin/device-locks/lock-v34`, "POST", { imei });
+
+export async function lockDevice(imei?: string) {
+  return apiCall(`/admin/locks/activate/single`, "POST", { imei });
 }
 
-export async function unlockDevice(imei: string) {
-  return apiCall(`/admin/device-locks/unlock`, "POST", { imei });
+export async function unlockDevice(imei?: string) {
+  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei });
 }
 
-export async function releaseDevice(imei: string) {
+
+export async function releaseDevice(imei?: string) {
   return apiCall("/admin/device/release", "POST", { imei });
 }
 
-// ** Reminder Messages **
-export async function sendReminderMessage(customerId: string, imei: string) {
-  return apiCall("/admin/customer/send-reminder", "POST", { customerId, imei });
-}
 
-export async function sendDueReminderMessage(customerId: string, imei: string) {
-  return apiCall("/admin/customer/send-due-reminder", "POST", {
-    customerId,
-    imei,
-  });
-}
-
-export async function sendOverdueReminderMessage(
-  customerId: string,
-  imei: string
-) {
-  return apiCall("/admin/customer/send-overdue-reminder", "POST", {
-    customerId,
-    imei,
-  });
-}
 
 // ============================================================================
 // Change loan status  | Approved, Rejected, Defaulted, Due, Overdue
 // ============================================================================
 
 export async function changeLoanStatus(loanRecordId: string, status: string) {
-  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status });
+  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status }); 
 }
 
 // Create store
@@ -739,3 +740,107 @@ export interface updateStore {
 export async function updateStore(updateStore: updateStore) {
   return apiCall(`/admin/stores/${updateStore.storeId}`, "PUT", updateStore);
 }
+
+export async function deleteStore(storeId: string) {
+  return apiCall(`/admin/stores/${storeId}/archive`, "PATCH"); 
+}
+
+// Create Device
+
+export interface createDevice {
+  deviceBrand: string;
+  deviceModel: string;
+  price: number;
+  currency: string;
+  deviceImage?: File; // File object for FormData
+  deviceModelNumber: string;
+  back_camera?: string;
+  battery?: string;
+  color?: string;
+  data_storage?: string;
+  display?: string;
+  front_camera?: string;
+  memory?: string;
+  network?: string;
+  os?: string;
+  other_features?: string;
+  proccessor_cpu?: string;
+  sap: number;
+  screen_size: string;
+  sentinel_cover: string;
+  sld: number;
+  deviceType: string;
+  case_colors?: string;
+  windows_version: string;
+  isActive: boolean;  
+}
+
+export async function createDevice(createDevice: createDevice) {
+  const formData = new FormData();
+  
+  // Add file if it exists
+  if (createDevice.deviceImage) {
+    formData.append('deviceImage', createDevice.deviceImage);
+  }
+  
+  // Add all other fields
+  Object.keys(createDevice).forEach(key => {
+    if (key !== 'deviceImage' && createDevice[key as keyof createDevice] !== undefined) {
+      formData.append(key, String(createDevice[key as keyof createDevice]));
+    }
+  });
+  
+  return apiCall("/admin/device/create", "POST", formData);
+}
+
+// Update Device
+
+export interface updateDevice {
+  deviceBrand: string;
+  deviceModel: string;
+  price: number;
+  currency: string;
+  deviceImage?: File; // File object for FormData
+  deviceModelNumber: string;
+  back_camera: string;
+  battery: string;
+  color: string;
+  data_storage: string;
+  display: string;
+  front_camera: string;
+  memory: string;
+  network: string;
+  os: string;
+  other_features: string;
+  processor_cpu: string;
+  sentinel_cover: string;
+  sap: number;
+  screen_size: string;
+  sld: number;
+  deviceType: string;
+  case_colors: string;
+  windows_version: string;
+  isActive: boolean;  
+}
+
+export async function updateDevice(deviceId: string, updateDevice: updateDevice) {
+  const formData = new FormData();
+  
+  // Add file if it exists
+  if (updateDevice.deviceImage) {
+    formData.append('deviceImage', updateDevice.deviceImage);
+  }
+  
+  // Add all other fields
+  Object.keys(updateDevice).forEach(key => {
+    if (key !== 'deviceImage' && updateDevice[key as keyof updateDevice] !== undefined) {
+      formData.append(key, String(updateDevice[key as keyof updateDevice]));
+    }
+  });
+  
+  return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
+}
+
+
+
+
