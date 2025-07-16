@@ -108,10 +108,12 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 					onClear={() => onFilterChange("")}
 					onValueChange={onFilterChange}
 				/>
-					{hasPermission(role, "canCreate", userEmail) ? (
 
 					<div className="flex gap-2">
-						
+
+{hasPermission(role, "canCreate", userEmail) ? (
+
+						<div>
 						{createButton && (
 							<Button 
 								color="primary"
@@ -125,6 +127,12 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 							</Button>
 						)}
 
+						</div>
+					) : null}
+
+					{hasPermission(role, "canSync", userEmail) ? (
+						
+					<div>
 					{additionalButtons?.map((button, index) => (
 						<Button
 							key={index}
@@ -137,8 +145,9 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 							{button.text}
 						</Button>
 					))}
-				</div>
+					</div>
 				) : null}
+				</div>
 
 
 					

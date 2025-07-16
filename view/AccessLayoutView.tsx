@@ -144,6 +144,7 @@ export default function AccessLayoutView({
         <header className="sticky z-50 top-0 flex h-16 shrink-0 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 border-b bg-white transition-all duration-300 ease-in-out">
           {/* Left side */}
           <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+      
             <SidebarTrigger className="-ml-1 text-primary hover:bg-gray-100 rounded-md p-1 transition-all duration-200 ease-in-out" />
             <Separator orientation="vertical" className="h-4 hidden sm:block" />
             {!isDisabled && (
@@ -169,7 +170,10 @@ export default function AccessLayoutView({
                 />
               </div>
             )}
-          </div>
+            </div>
+            <div>
+              
+            </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2 sm:gap-3">
