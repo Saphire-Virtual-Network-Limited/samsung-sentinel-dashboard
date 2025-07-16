@@ -841,6 +841,11 @@ export async function updateDevice(deviceId: string, updateDevice: updateDevice)
   return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
 }
 
+//fetch all vfd banks
+export async function getAllVfdBanks() {
+  return apiCall("/payments/bank-list", "GET");
+}
+
 
 
 
