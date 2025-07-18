@@ -799,7 +799,7 @@ export default function AgentSinglePage() {
   const canUpdateAddressStatus = hasPermission(role, "updateAddressStatus");
   const canViewAgentPerformanceData = hasPermission(
     role,
-    "viewAgentPerformaceData"
+    "viewAgentPerformanceData"
   );
   const router = useRouter();
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
