@@ -166,10 +166,7 @@ export async function getAllDefaultedRecord(
   return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
-export async function getAllDueLoanRecord(
-  fromDate?: string,
-  toDate?: string
-) {
+export async function getAllDueLoanRecord(fromDate?: string, toDate?: string) {
   const query =
     fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
   return apiCall(`/admin/loan/due${query}`, "GET");
@@ -607,6 +604,76 @@ export async function getScanPartnerByUserId(
   );
 }
 
+export type SortOrder = "asc" | "desc";
+
+export interface AgentLoanCommissionParams {
+  startDate?: string;
+  endDate?: string;
+  minCommission?: number;
+  maxCommission?: number;
+  sortBy?: "date" | "commission" | "mbeCommission" | "partnerCommission";
+  sortOrder?: SortOrder;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getAgentLoansAndCommissions(
+  userId: string,
+  params: AgentLoanCommissionParams = {}
+) {
+  const queryParams = new URLSearchParams();
+
+  if (params.startDate) queryParams.append("startDate", params.startDate);
+  if (params.endDate) queryParams.append("endDate", params.endDate);
+  if (params.minCommission)
+    queryParams.append("minCommission", params.minCommission.toString());
+  if (params.maxCommission)
+    queryParams.append("maxCommission", params.maxCommission.toString());
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+  if (params.limit) queryParams.append("limit", params.limit.toString());
+  if (params.offset) queryParams.append("offset", params.offset.toString());
+
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+  const endpoint = `/admin/mbe/agents-loans/${userId}${query}`;
+  return apiCall(endpoint, "GET");
+}
+
+export async function getAgentLoansAndCommissionsByScanPartner(
+  scanPartnerId: string,
+  mbeId: string,
+  params: AgentLoanCommissionParams = {}
+) {
+  const queryParams = new URLSearchParams();
+
+  if (params.startDate) queryParams.append("startDate", params.startDate);
+  if (params.endDate) queryParams.append("endDate", params.endDate);
+  if (params.minCommission)
+    queryParams.append("minCommission", params.minCommission.toString());
+  if (params.maxCommission)
+    queryParams.append("maxCommission", params.maxCommission.toString());
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+  if (params.limit) queryParams.append("limit", params.limit.toString());
+  if (params.offset) queryParams.append("offset", params.offset.toString());
+
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+  const endpoint = `/admin/mbe/agent-loans/${scanPartnerId}/${mbeId}${query}`;
+  return apiCall(endpoint, "GET");
+}
+
+export async function getCommissionAnalytics(
+  scanPartnerId: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  mbeId?: string
+) {
+  const queryParams = new URLSearchParams();
+  if (period) queryParams.append("period", period);
+  if (mbeId) queryParams.append("mbeId", mbeId);
+
+  const endpoint = `/admin/mbe/commission-analytics/${scanPartnerId}?${queryParams.toString()}`;
+  return apiCall(endpoint, "GET");
+}
 // ============================================================================
 // GET MBE DETAILS WITH
 // ============================================================================
@@ -655,17 +722,14 @@ export async function updateCustomerVirtualWalletBalance(
 // Create customer virtual wallet
 
 export async function createCustomerVirtualWallet(customerId: string) {
-  return apiCall(
-    `/admin/customers/create-customer-wallet`,
-    "POST",
-    { customerId }
-  );
+  return apiCall(`/admin/customers/create-customer-wallet`, "POST", {
+    customerId,
+  });
 }
 
 // ============================================================================
 // DEVICE lOCKING AND UNLOCKING
 // ============================================================================
-
 
 export async function lockDevice(imei?: string) {
   return apiCall(`/admin/locks/activate/single`, "POST", { imei });
@@ -675,19 +739,16 @@ export async function unlockDevice(imei?: string) {
   return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei });
 }
 
-
 export async function releaseDevice(imei?: string) {
   return apiCall("/admin/device/release", "POST", { imei });
 }
-
-
 
 // ============================================================================
 // Change loan status  | Approved, Rejected, Defaulted, Due, Overdue
 // ============================================================================
 
 export async function changeLoanStatus(loanRecordId: string, status: string) {
-  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status }); 
+  return apiCall(`/admin/loan/status/${loanRecordId}`, "PUT", { status });
 }
 
 // Create store
@@ -742,7 +803,7 @@ export async function updateStore(updateStore: updateStore) {
 }
 
 export async function deleteStore(storeId: string) {
-  return apiCall(`/admin/stores/${storeId}/archive`, "PATCH"); 
+  return apiCall(`/admin/stores/${storeId}/archive`, "PATCH");
 }
 
 // Create Device
@@ -772,24 +833,27 @@ export interface createDevice {
   deviceType: string;
   case_colors?: string;
   windows_version: string;
-  isActive: boolean;  
+  isActive: boolean;
 }
 
 export async function createDevice(createDevice: createDevice) {
   const formData = new FormData();
-  
+
   // Add file if it exists
   if (createDevice.deviceImage) {
-    formData.append('deviceImage', createDevice.deviceImage);
+    formData.append("deviceImage", createDevice.deviceImage);
   }
-  
+
   // Add all other fields
-  Object.keys(createDevice).forEach(key => {
-    if (key !== 'deviceImage' && createDevice[key as keyof createDevice] !== undefined) {
+  Object.keys(createDevice).forEach((key) => {
+    if (
+      key !== "deviceImage" &&
+      createDevice[key as keyof createDevice] !== undefined
+    ) {
       formData.append(key, String(createDevice[key as keyof createDevice]));
     }
   });
-  
+
   return apiCall("/admin/device/create", "POST", formData);
 }
 
@@ -820,24 +884,30 @@ export interface updateDevice {
   deviceType: string;
   case_colors: string;
   windows_version: string;
-  isActive: boolean;  
+  isActive: boolean;
 }
 
-export async function updateDevice(deviceId: string, updateDevice: updateDevice) {
+export async function updateDevice(
+  deviceId: string,
+  updateDevice: updateDevice
+) {
   const formData = new FormData();
-  
+
   // Add file if it exists
   if (updateDevice.deviceImage) {
-    formData.append('deviceImage', updateDevice.deviceImage);
+    formData.append("deviceImage", updateDevice.deviceImage);
   }
-  
+
   // Add all other fields
-  Object.keys(updateDevice).forEach(key => {
-    if (key !== 'deviceImage' && updateDevice[key as keyof updateDevice] !== undefined) {
+  Object.keys(updateDevice).forEach((key) => {
+    if (
+      key !== "deviceImage" &&
+      updateDevice[key as keyof updateDevice] !== undefined
+    ) {
       formData.append(key, String(updateDevice[key as keyof updateDevice]));
     }
   });
-  
+
   return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
 }
 
@@ -845,6 +915,7 @@ export async function updateDevice(deviceId: string, updateDevice: updateDevice)
 export async function getAllVfdBanks() {
   return apiCall("/payments/bank-list", "GET");
 }
+
 
 //update device imei number
 export async function updateDeviceImeiNumber(deviceOnLoanId: string, imei: string) {
@@ -880,8 +951,4 @@ export async function getMBEWithCustomerForRelay(mbe_old_id: string) {
 export async function assignCustomersToMBE(customerId: string, mbeId: string) {
   return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
 }
-
-
-
-
 
