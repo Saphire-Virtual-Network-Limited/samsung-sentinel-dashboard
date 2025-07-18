@@ -48,6 +48,10 @@ export interface PermissionConfig {
   canSync: boolean;
   canEdit: boolean;
   createDashboardUser: boolean;
+  updateGuarantorStatus: boolean;
+  updateAddressStatus: boolean;
+  viewLoanDetails: boolean;
+  viewCommissionDetails: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -74,6 +78,10 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     // canViewCommunicationLog: true,
     createDashboardUser: true,
     suspendDashboardUser: true,
+    updateGuarantorStatus: true,
+    updateAddressStatus: true,
+    viewLoanDetails: true,
+    viewCommissionDetails: true,
 
     // Admin has no special permissions by default
     // All permissions default to false
@@ -92,6 +100,10 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
+    updateGuarantorStatus: true,
+    updateAddressStatus: true,
+    viewLoanDetails: true,
+    viewCommissionDetails: true,
   },
   "collection-admin": {
     canTriggerDeviceActions: true,
@@ -167,6 +179,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
+    createDashboardUser: true,
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
@@ -206,6 +219,10 @@ function getDefaultPermissions(): PermissionConfig {
     canSync: false,
     canEdit: false,
     createDashboardUser: false,
+    updateGuarantorStatus: false,
+    updateAddressStatus: false,
+    viewLoanDetails: false,
+    viewCommissionDetails: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -285,6 +302,10 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "canCreate",
     "canSync",
     "canEdit",
+    "updateGuarantorStatus",
+    "updateAddressStatus",
+    "viewLoanDetails",
+    "viewCommissionDetails",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',

@@ -10,7 +10,7 @@ import {
 } from "@/lib";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
-
+import { hasPermission } from "@/lib/permissions";
 import {
   Avatar,
   Button,
@@ -466,7 +466,8 @@ export default function AgentSinglePage() {
   const { userResponse } = useAuth();
 
   const role = getUserRole(String(userResponse?.data?.role));
-
+  const canUpdateGuarantorStatus = hasPermission(role, "updateGuarantorStatus");
+  const canUpdateAddressStatus = hasPermission(role, "updateAddressStatus");
   const router = useRouter();
 
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
@@ -1232,43 +1233,45 @@ export default function AgentSinglePage() {
                     label="Full Address"
                     value={kyc.fullAddress}
                     endComponent={
-                      <div className="flex items-center gap-2">
-                        <AddressStatusChip
-                          status={kyc.addressStatus || "PENDING"}
-                        />
-                        <Dropdown>
-                          <DropdownTrigger>
-                            <Button
-                              variant="flat"
-                              size="sm"
-                              endContent={<ChevronDown className="w-4 h-4" />}
-                              isDisabled={isUpdatingAddress === kyc.kycId}
-                              isLoading={isUpdatingAddress === kyc.kycId}
-                            >
-                              Update Status
-                            </Button>
-                          </DropdownTrigger>
-                          <DropdownMenu
-                            aria-label="Address status actions"
-                            onAction={(key) =>
-                              handleAddressStatusUpdate(
-                                kyc.kycId,
-                                key as string
-                              )
-                            }
-                          >
-                            {addressStatusOptions.map((option) => (
-                              <DropdownItem
-                                key={option.key}
-                                className={`text-${option.color}`}
-                                color={option.color as any}
+                      canUpdateAddressStatus && (
+                        <div className="flex items-center gap-2">
+                          <AddressStatusChip
+                            status={kyc.addressStatus || "PENDING"}
+                          />
+                          <Dropdown>
+                            <DropdownTrigger>
+                              <Button
+                                variant="flat"
+                                size="sm"
+                                endContent={<ChevronDown className="w-4 h-4" />}
+                                isDisabled={isUpdatingAddress === kyc.kycId}
+                                isLoading={isUpdatingAddress === kyc.kycId}
                               >
-                                {option.label}
-                              </DropdownItem>
-                            ))}
-                          </DropdownMenu>
-                        </Dropdown>
-                      </div>
+                                Update Status
+                              </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                              aria-label="Address status actions"
+                              onAction={(key) =>
+                                handleAddressStatusUpdate(
+                                  kyc.kycId,
+                                  key as string
+                                )
+                              }
+                            >
+                              {addressStatusOptions.map((option) => (
+                                <DropdownItem
+                                  key={option.key}
+                                  className={`text-${option.color}`}
+                                  color={option.color as any}
+                                >
+                                  {option.label}
+                                </DropdownItem>
+                              ))}
+                            </DropdownMenu>
+                          </Dropdown>
+                        </div>
+                      )
                     }
                   />
                 </div>
@@ -1375,100 +1378,105 @@ export default function AgentSinglePage() {
                 defaultExpanded={true}
               >
                 <div className="space-y-6">
-                  {agent.MbeGuarantor.map((guarantor, index) => (
-                    <div
-                      key={guarantor.guarantorid}
-                      className="bg-default-50 rounded-lg p-4"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-default-900">
-                          Guarantor {index + 1}
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <GuarantorStatusChip
-                            status={guarantor.guarantorStatus}
-                          />
-                          <Dropdown>
-                            <DropdownTrigger>
-                              <Button
-                                variant="flat"
-                                size="sm"
-                                endContent={<ChevronDown className="w-4 h-4" />}
-                                isDisabled={
-                                  isUpdatingGuarantor === guarantor.guarantorid
-                                }
-                                isLoading={
-                                  isUpdatingGuarantor === guarantor.guarantorid
+                  {canUpdateGuarantorStatus &&
+                    agent.MbeGuarantor.map((guarantor, index) => (
+                      <div
+                        key={guarantor.guarantorid}
+                        className="bg-default-50 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-semibold text-default-900">
+                            Guarantor {index + 1}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <GuarantorStatusChip
+                              status={guarantor.guarantorStatus}
+                            />
+                            <Dropdown>
+                              <DropdownTrigger>
+                                <Button
+                                  variant="flat"
+                                  size="sm"
+                                  endContent={
+                                    <ChevronDown className="w-4 h-4" />
+                                  }
+                                  isDisabled={
+                                    isUpdatingGuarantor ===
+                                    guarantor.guarantorid
+                                  }
+                                  isLoading={
+                                    isUpdatingGuarantor ===
+                                    guarantor.guarantorid
+                                  }
+                                >
+                                  Update Status
+                                </Button>
+                              </DropdownTrigger>
+                              <DropdownMenu
+                                aria-label="Guarantor status actions"
+                                onAction={(key) =>
+                                  handleGuarantorStatusUpdate(
+                                    guarantor.guarantorid,
+                                    key as string
+                                  )
                                 }
                               >
-                                Update Status
-                              </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                              aria-label="Guarantor status actions"
-                              onAction={(key) =>
-                                handleGuarantorStatusUpdate(
-                                  guarantor.guarantorid,
-                                  key as string
-                                )
-                              }
-                            >
-                              {guarantorStatusOptions.map((option) => (
-                                <DropdownItem
-                                  key={option.key}
-                                  className={`text-${option.color}`}
-                                  color={option.color as any}
-                                >
-                                  {option.label}
-                                </DropdownItem>
-                              ))}
-                            </DropdownMenu>
-                          </Dropdown>
+                                {guarantorStatusOptions.map((option) => (
+                                  <DropdownItem
+                                    key={option.key}
+                                    className={`text-${option.color}`}
+                                    color={option.color as any}
+                                  >
+                                    {option.label}
+                                  </DropdownItem>
+                                ))}
+                              </DropdownMenu>
+                            </Dropdown>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InfoField
+                            label="Guarantor ID"
+                            value={guarantor.guarantorid}
+                            copyable
+                          />
+                          <InfoField
+                            label="Name"
+                            value={guarantor.guarantorName}
+                          />
+                          <InfoField
+                            label="Phone"
+                            value={guarantor.guarantorPhone}
+                          />
+                          <InfoField
+                            label="Relationship"
+                            value={guarantor.guarantorRelationship}
+                          />
+                          <InfoField
+                            label="Created At"
+                            value={
+                              guarantor.createdAt
+                                ? new Date(guarantor.createdAt).toLocaleString()
+                                : null
+                            }
+                          />
+                          <InfoField
+                            label="Updated At"
+                            value={
+                              guarantor.updatedAt
+                                ? new Date(guarantor.updatedAt).toLocaleString()
+                                : null
+                            }
+                          />
+                        </div>
+                        <div className="mt-4">
+                          <InfoField
+                            label="Address"
+                            value={guarantor.guarantorAddress}
+                          />
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InfoField
-                          label="Guarantor ID"
-                          value={guarantor.guarantorid}
-                          copyable
-                        />
-                        <InfoField
-                          label="Name"
-                          value={guarantor.guarantorName}
-                        />
-                        <InfoField
-                          label="Phone"
-                          value={guarantor.guarantorPhone}
-                        />
-                        <InfoField
-                          label="Relationship"
-                          value={guarantor.guarantorRelationship}
-                        />
-                        <InfoField
-                          label="Created At"
-                          value={
-                            guarantor.createdAt
-                              ? new Date(guarantor.createdAt).toLocaleString()
-                              : null
-                          }
-                        />
-                        <InfoField
-                          label="Updated At"
-                          value={
-                            guarantor.updatedAt
-                              ? new Date(guarantor.updatedAt).toLocaleString()
-                              : null
-                          }
-                        />
-                      </div>
-                      <div className="mt-4">
-                        <InfoField
-                          label="Address"
-                          value={guarantor.guarantorAddress}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </InfoCard>
             ) : (
