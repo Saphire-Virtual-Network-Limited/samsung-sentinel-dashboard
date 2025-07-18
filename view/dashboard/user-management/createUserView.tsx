@@ -197,7 +197,10 @@ export default function CreateUserPage() {
                     id="role"
                     placeholder="Select agent role"
                     options={agentTypes}
-                    classNames={{ base: "w-full min-w-0" }}
+                    classNames={{
+                      base: "w-full min-w-0",
+                      listboxWrapper: "scrollbar-default sidebar-scroll ",
+                    }}
                     onChange={(value) =>
                       handleFieldChange(
                         "role",
