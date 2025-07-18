@@ -267,18 +267,21 @@ const InfoCard = ({
             {icon}
             <h3 className="text-lg font-semibold text-default-900">{title}</h3>
           </div>
-          <Button
-            variant="light"
-            size="sm"
-            isIconOnly
-            className="text-default-500"
-          >
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            {headerContent}
+            <Button
+              variant="light"
+              size="sm"
+              isIconOnly
+              className="text-default-500"
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       <div
