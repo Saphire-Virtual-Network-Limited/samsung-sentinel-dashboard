@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Home,
   Users,
@@ -22,6 +21,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
+import { getUserRole } from "@/lib";
 import {
   Sidebar,
   SidebarContent,
@@ -39,6 +39,7 @@ import { useState } from "react";
 import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
 import { useSelectedProduct } from "@/hooks/useSelectedProduct";
+import { hasPermission } from "@/lib/permissions";
 
 console.log("Selected Product:", getSelectedProduct());
 // Define types for menu items
@@ -80,7 +81,12 @@ export function AppSidebar() {
   };
 
   const apiDocsUrl = process.env.NEXT_PUBLIC_API_DOCS_URL;
-
+  const accessRole = getUserRole(userResponse?.data?.role);
+  const canVerifyMobiflex = hasPermission(
+    accessRole,
+    "verifyMobiflex",
+    userResponse?.data?.email
+  );
   const conditionalSentinelItems: MenuItem[] =
     //    selectedProduct === "Sentinel"
     //     ?
@@ -659,6 +665,15 @@ export function AppSidebar() {
     },
   ];
 
+  const adminVerificationItems: MenuItem[] = [
+    {
+      icon: IoBusiness,
+          title: "Mobiflex Sales Agent",
+          url: "/access/verify/staff/agents",
+      id: "verify-staff-mobiflex",
+    
+    },
+  ];
   const verificationItems: MenuItem[] = [
     {
       title: "Dashboard",
@@ -684,6 +699,7 @@ export function AppSidebar() {
       url: "/access/verify/referees/rejected-referees",
       id: "rejected-referees",
     },
+    ...(canVerifyMobiflex ? adminVerificationItems : []),
   ];
 
   const financeItems: MenuItem[] = [
@@ -719,7 +735,10 @@ export function AppSidebar() {
         {
           title: "Sales",
           subItems: [
-            { title: "Overview", url: "/access/finance/reports/sales/overview" },
+            {
+              title: "Overview",
+              url: "/access/finance/reports/sales/overview",
+            },
             { title: "MBE Report", url: "/access/finance/reports/sales/mbe" },
             {
               title: "Samsung Report",
@@ -730,7 +749,10 @@ export function AppSidebar() {
               url: "/access/finance/reports/sales/xiaomi",
             },
             { title: "Oppo Report", url: "/access/finance/reports/sales/oppo" },
-            { title: "Sentinel", url: "/access/finance/reports/sales/sentinel" },
+            {
+              title: "Sentinel",
+              url: "/access/finance/reports/sales/sentinel",
+            },
           ],
         },
         { title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
@@ -755,10 +777,8 @@ export function AppSidebar() {
           title: "SCAN Partners",
           url: "/access/finance/staff/scan-partners",
         },
-          
       ],
     },
-    
   ];
 
   const supportItems: MenuItem[] = [

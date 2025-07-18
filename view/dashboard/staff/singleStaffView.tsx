@@ -797,6 +797,10 @@ export default function AgentSinglePage() {
   const role = getUserRole(String(userResponse?.data?.role));
   const canUpdateGuarantorStatus = hasPermission(role, "updateGuarantorStatus");
   const canUpdateAddressStatus = hasPermission(role, "updateAddressStatus");
+  const canViewAgentPerformanceData = hasPermission(
+    role,
+    "viewAgentPerformaceData"
+  );
   const router = useRouter();
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
@@ -1172,68 +1176,70 @@ export default function AgentSinglePage() {
       </div>
 
       {/* Performance Statistics Cards */}
-      <div className="px-4 py-6 bg-default-50">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <CreditCard className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-default-500">Total Loans</p>
-                <p className="text-2xl font-bold text-default-900">
-                  {processedPerformanceData.loans.length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-success-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-default-500">Total Loan Amount</p>
-                <p className="text-2xl font-bold text-default-900">
-                  ₦
-                  {processedPerformanceData.loans
-                    .reduce(
-                      (sum: any, loan: any) => sum + (loan.loanAmount || 0),
-                      0
-                    )
-                    .toLocaleString()}
-                </p>
+      {canViewAgentPerformanceData && (
+        <div className="px-4 py-6 bg-default-50">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-primary-100 rounded-lg">
+                  <CreditCard className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Loans</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    {processedPerformanceData.loans.length}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-warning-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-default-500">Total Commissions</p>
-                <p className="text-2xl font-bold text-default-900">
-                  ₦{(summary?.totalCommission || 0).toLocaleString()}
-                </p>
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-success-100 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Loan Amount</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦
+                    {processedPerformanceData.loans
+                      .reduce(
+                        (sum: any, loan: any) => sum + (loan.loanAmount || 0),
+                        0
+                      )
+                      .toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-secondary-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-secondary" />
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-warning-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Commissions</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦{(summary?.totalCommission || 0).toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-default-500">Avg Commission</p>
-                <p className="text-2xl font-bold text-default-900">
-                  ₦{(summary?.avgCommission || 0).toLocaleString()}
-                </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-secondary-100 rounded-lg">
+                  <Calendar className="w-6 h-6 text-secondary" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Avg Commission</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦{(summary?.avgCommission || 0).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -1409,170 +1415,173 @@ export default function AgentSinglePage() {
           {/* Right Column - Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Performance Data */}
-            <InfoCard
-              title="Performance Data"
-              icon={<TrendingUp className="w-5 h-5 text-default-600" />}
-              collapsible={true}
-              defaultExpanded={false}
-              headerContent={
-                <ButtonGroup size="sm" variant="flat">
-                  <Button
-                    color={
-                      performanceViewType === "loans" ? "primary" : "default"
-                    }
-                    onPress={() => setPerformanceViewType("loans")}
-                    startContent={<CreditCard className="w-4 h-4" />}
-                  >
-                    Loans ({processedPerformanceData.loans.length})
-                  </Button>
-                  <Button
-                    color={
-                      performanceViewType === "commissions"
-                        ? "primary"
-                        : "default"
-                    }
-                    onPress={() => setPerformanceViewType("commissions")}
-                    startContent={<DollarSign className="w-4 h-4" />}
-                  >
-                    Commissions ({processedPerformanceData.commissions.length})
-                  </Button>
-                </ButtonGroup>
-              }
-            >
-              {performanceLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
-              ) : (
-                <>
-                  {/* Loans View */}
-                  {performanceViewType === "loans" && (
-                    <>
-                      {filteredLoans.length > 0 ? (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <p className="text-sm text-default-600">
-                              Loan records for this agent
-                            </p>
-                            <Chip size="sm" variant="flat" color="primary">
-                              {filteredLoans.length} Loan
-                              {filteredLoans.length !== 1 ? "s" : ""}
-                            </Chip>
+            {canViewAgentPerformanceData && (
+              <InfoCard
+                title="Performance Data"
+                icon={<TrendingUp className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={false}
+                headerContent={
+                  <ButtonGroup size="sm" variant="flat">
+                    <Button
+                      color={
+                        performanceViewType === "loans" ? "primary" : "default"
+                      }
+                      onPress={() => setPerformanceViewType("loans")}
+                      startContent={<CreditCard className="w-4 h-4" />}
+                    >
+                      Loans ({processedPerformanceData.loans.length})
+                    </Button>
+                    <Button
+                      color={
+                        performanceViewType === "commissions"
+                          ? "primary"
+                          : "default"
+                      }
+                      onPress={() => setPerformanceViewType("commissions")}
+                      startContent={<DollarSign className="w-4 h-4" />}
+                    >
+                      Commissions ({processedPerformanceData.commissions.length}
+                      )
+                    </Button>
+                  </ButtonGroup>
+                }
+              >
+                {performanceLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Loans View */}
+                    {performanceViewType === "loans" && (
+                      <>
+                        {filteredLoans.length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-sm text-default-600">
+                                Loan records for this agent
+                              </p>
+                              <Chip size="sm" variant="flat" color="primary">
+                                {filteredLoans.length} Loan
+                                {filteredLoans.length !== 1 ? "s" : ""}
+                              </Chip>
+                            </div>
+                            <GenericTable<LoanRecord | any>
+                              columns={loanColumns}
+                              data={filteredLoans}
+                              allCount={filteredLoans.length}
+                              exportData={filteredLoans}
+                              isLoading={performanceLoading}
+                              filterValue={loanFilterValue}
+                              onFilterChange={(value) => {
+                                setLoanFilterValue(value);
+                                setLoanPage(1);
+                              }}
+                              statusOptions={loanStatusOptions}
+                              statusFilter={loanStatusFilter}
+                              onStatusChange={setLoanStatusFilter}
+                              statusColorMap={loanStatusColorMap}
+                              showStatus={true}
+                              sortDescriptor={{
+                                column: "createdAt",
+                                direction: "descending",
+                              }}
+                              onSortChange={() => {}}
+                              page={loanPage}
+                              pages={Math.ceil(filteredLoans.length / 10) || 1}
+                              onPageChange={setLoanPage}
+                              exportFn={
+                                role == "scan-partner "
+                                  ? exportLoans
+                                  : (data) => {
+                                      console.log("exported");
+                                    }
+                              }
+                              renderCell={(loan, key) =>
+                                renderLoanCell(loan, key, router, role)
+                              }
+                              hasNoRecords={filteredLoans.length === 0}
+                            />
                           </div>
-                          <GenericTable<LoanRecord | any>
-                            columns={loanColumns}
-                            data={filteredLoans}
-                            allCount={filteredLoans.length}
-                            exportData={filteredLoans}
-                            isLoading={performanceLoading}
-                            filterValue={loanFilterValue}
-                            onFilterChange={(value) => {
-                              setLoanFilterValue(value);
-                              setLoanPage(1);
-                            }}
-                            statusOptions={loanStatusOptions}
-                            statusFilter={loanStatusFilter}
-                            onStatusChange={setLoanStatusFilter}
-                            statusColorMap={loanStatusColorMap}
-                            showStatus={true}
-                            sortDescriptor={{
-                              column: "createdAt",
-                              direction: "descending",
-                            }}
-                            onSortChange={() => {}}
-                            page={loanPage}
-                            pages={Math.ceil(filteredLoans.length / 10) || 1}
-                            onPageChange={setLoanPage}
-                            exportFn={
-                              role == "scan-partner "
-                                ? exportLoans
-                                : (data) => {
-                                    console.log("exported");
-                                  }
+                        ) : (
+                          <EmptyState
+                            title="No Loans Found"
+                            description="This agent has no loan records."
+                            icon={
+                              <CreditCard className="w-6 h-6 text-default-400" />
                             }
-                            renderCell={(loan, key) =>
-                              renderLoanCell(loan, key, router, role)
-                            }
-                            hasNoRecords={filteredLoans.length === 0}
                           />
-                        </div>
-                      ) : (
-                        <EmptyState
-                          title="No Loans Found"
-                          description="This agent has no loan records."
-                          icon={
-                            <CreditCard className="w-6 h-6 text-default-400" />
-                          }
-                        />
-                      )}
-                    </>
-                  )}
+                        )}
+                      </>
+                    )}
 
-                  {/* Commissions View */}
-                  {performanceViewType === "commissions" && (
-                    <>
-                      {filteredCommissions.length > 0 ? (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <p className="text-sm text-default-600">
-                              Commission records for this agent
-                            </p>
-                            <Chip size="sm" variant="flat" color="primary">
-                              {filteredCommissions.length} Commission
-                              {filteredCommissions.length !== 1 ? "s" : ""}
-                            </Chip>
+                    {/* Commissions View */}
+                    {performanceViewType === "commissions" && (
+                      <>
+                        {filteredCommissions.length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-sm text-default-600">
+                                Commission records for this agent
+                              </p>
+                              <Chip size="sm" variant="flat" color="primary">
+                                {filteredCommissions.length} Commission
+                                {filteredCommissions.length !== 1 ? "s" : ""}
+                              </Chip>
+                            </div>
+                            <GenericTable<CommissionRecord | any>
+                              columns={commissionColumns}
+                              data={filteredCommissions}
+                              allCount={filteredCommissions.length}
+                              exportData={filteredCommissions}
+                              isLoading={performanceLoading}
+                              filterValue={commissionFilterValue}
+                              onFilterChange={(value) => {
+                                setCommissionFilterValue(value);
+                                setCommissionPage(1);
+                              }}
+                              statusOptions={[]}
+                              statusFilter={new Set()}
+                              onStatusChange={() => {}}
+                              statusColorMap={{}}
+                              showStatus={false}
+                              sortDescriptor={{
+                                column: "date_created",
+                                direction: "descending",
+                              }}
+                              onSortChange={() => {}}
+                              page={commissionPage}
+                              pages={
+                                Math.ceil(filteredCommissions.length / 10) || 1
+                              }
+                              onPageChange={setCommissionPage}
+                              exportFn={
+                                role == "scan-partner "
+                                  ? exportCommissions
+                                  : (data) => {
+                                      console.log("exported");
+                                    }
+                              }
+                              renderCell={renderCommissionCell}
+                              hasNoRecords={filteredCommissions.length === 0}
+                            />
                           </div>
-                          <GenericTable<CommissionRecord | any>
-                            columns={commissionColumns}
-                            data={filteredCommissions}
-                            allCount={filteredCommissions.length}
-                            exportData={filteredCommissions}
-                            isLoading={performanceLoading}
-                            filterValue={commissionFilterValue}
-                            onFilterChange={(value) => {
-                              setCommissionFilterValue(value);
-                              setCommissionPage(1);
-                            }}
-                            statusOptions={[]}
-                            statusFilter={new Set()}
-                            onStatusChange={() => {}}
-                            statusColorMap={{}}
-                            showStatus={false}
-                            sortDescriptor={{
-                              column: "date_created",
-                              direction: "descending",
-                            }}
-                            onSortChange={() => {}}
-                            page={commissionPage}
-                            pages={
-                              Math.ceil(filteredCommissions.length / 10) || 1
+                        ) : (
+                          <EmptyState
+                            title="No Commissions Found"
+                            description="This agent has no commission records."
+                            icon={
+                              <DollarSign className="w-6 h-6 text-default-400" />
                             }
-                            onPageChange={setCommissionPage}
-                            exportFn={
-                              role == "scan-partner "
-                                ? exportCommissions
-                                : (data) => {
-                                    console.log("exported");
-                                  }
-                            }
-                            renderCell={renderCommissionCell}
-                            hasNoRecords={filteredCommissions.length === 0}
                           />
-                        </div>
-                      ) : (
-                        <EmptyState
-                          title="No Commissions Found"
-                          description="This agent has no commission records."
-                          icon={
-                            <DollarSign className="w-6 h-6 text-default-400" />
-                          }
-                        />
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-            </InfoCard>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </InfoCard>
+            )}
 
             {/* Agent Devices */}
             <InfoCard

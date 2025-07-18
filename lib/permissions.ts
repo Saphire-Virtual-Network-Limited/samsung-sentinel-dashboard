@@ -52,6 +52,8 @@ export interface PermissionConfig {
   updateAddressStatus: boolean;
   viewLoanDetails: boolean;
   viewCommissionDetails: boolean;
+  verifyMobiflex: boolean;
+  viewAgentPerformaceData:boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -82,6 +84,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     updateAddressStatus: true,
     viewLoanDetails: true,
     viewCommissionDetails: true,
+    viewAgentPerformaceData:true,
 
     // Admin has no special permissions by default
     // All permissions default to false
@@ -104,6 +107,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     updateAddressStatus: true,
     viewLoanDetails: true,
     viewCommissionDetails: true,
+    viewAgentPerformaceData:true,
   },
   "collection-admin": {
     canTriggerDeviceActions: true,
@@ -153,6 +157,10 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     // Verify has no special permissions
     // All permissions default to false
   },
+  "verification-officer": {
+    updateGuarantorStatus: true,
+    updateAddressStatus: true,
+  },
 };
 
 // Special user overrides (for specific users who need additional permissions)
@@ -166,6 +174,10 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
+  },
+  "babatunde@sapphirevirtual.com": {
+    verifyMobiflex: true,
+    
   },
   "topeyemi33@gmail.com": {
     canUpdateWalletBalance: true,
@@ -218,11 +230,13 @@ function getDefaultPermissions(): PermissionConfig {
     canCreate: false,
     canSync: false,
     canEdit: false,
+    verifyMobiflex: false,
     createDashboardUser: false,
     updateGuarantorStatus: false,
     updateAddressStatus: false,
     viewLoanDetails: false,
     viewCommissionDetails: false,
+    canViewAgentPerformanceData:false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -306,6 +320,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "updateAddressStatus",
     "viewLoanDetails",
     "viewCommissionDetails",
+    "verifyMobiflex",
+    "viewAgentPerformaceData",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',
