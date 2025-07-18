@@ -5,7 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar, SelectField } from "@/components/reususables";
+import { AppSidebar, GlobalSearch, SelectField } from "@/components/reususables";
 import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -172,11 +172,11 @@ export default function AccessLayoutView({
             )}
             </div>
             <div>
-              
             </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <GlobalSearch />
             <Button
               variant="secondary"
               size="icon"
