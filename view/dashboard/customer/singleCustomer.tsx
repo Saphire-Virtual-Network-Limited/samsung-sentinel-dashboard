@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
-import { ArrowLeft, ChevronDown, ChevronUp, User, CreditCard, Store, Users, Smartphone, MapPin, Clock } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, User, CreditCard, Store, Users, Smartphone, MapPin, Clock, Search } from "lucide-react";
 import {
  
   getCustomerRecordById,
-  getAllCustomerRecord,
   showToast,
   updateCustomerLastPoint,
   updateCustomerVirtualWalletBalance,
@@ -19,7 +18,7 @@ import {
   createCustomerVirtualWallet,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
-import { PaymentReceipt } from "@/components/reususables/custom-ui";
+import { PaymentReceipt, CustomerSearch } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
 import {
@@ -208,6 +207,14 @@ export default function CollectionSingleCustomerPage() {
     onOpen: onCreateWallet,
     onClose: onCreateWalletClose,
   } = useDisclosure();
+
+  const {
+    isOpen: isSearch,
+    onOpen: onSearch,
+    onClose: onSearchClose,
+  } = useDisclosure();
+
+
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -531,13 +538,15 @@ export default function CollectionSingleCustomerPage() {
     }
   };
 
+
+
   return (
     <div className="min-h-screen bg-default-50">
       {/* Header Section */}
       <div className="bg-white border-b border-default-200">
         <div className=" py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
               <div>
                 <h1 className="text-lg font-bold text-default-900">
                   {customer.firstName} {customer.lastName}
@@ -546,21 +555,27 @@ export default function CollectionSingleCustomerPage() {
               <Chip
                 color={customer.dobMisMatch ? "danger" : "success"}
                 variant="flat"
-                className="font-medium"
+                className="font-medium w-fit"
               >
                 {customer.dobMisMatch === false
                   ? "DOB Verified"
                   : "DOB Mismatch"}
               </Chip>
             </div>
+            <div className="flex items-center gap-2">
             <Button
               variant="flat"
               color="primary"
-              startContent={<ArrowLeft />}
-              onPress={() => router.back()}
+              startContent={<Search className="w-4 h-4" />}
+              onPress={() => onSearch()}
+              className="mr-2"
             >
-              Go Back
+              Search
             </Button>
+
+            
+
+            </div>
           </div>
         </div>
       </div>
@@ -2376,6 +2391,31 @@ export default function CollectionSingleCustomerPage() {
           )}
         </ModalContent>
       </Modal>
+
+      <Modal
+				isOpen={isSearch}
+				onClose={onSearchClose}
+				size="2xl"
+				className="m-4 max-w-[800px] max-h-[850px] overflow-y-auto">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Search Customer</ModalHeader>
+							<ModalBody>
+								<CustomerSearch onClose={onSearchClose} />
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="danger"
+									variant="light"
+									onPress={onSearchClose}>
+									Close
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
     </div>
   );
 }
