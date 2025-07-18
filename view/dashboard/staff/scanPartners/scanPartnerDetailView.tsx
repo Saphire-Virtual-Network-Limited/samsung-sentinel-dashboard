@@ -824,6 +824,14 @@ export default function ScanPartnerSinglePage() {
 
   // Export functions
   const exportLoans = async (data: LoanRecord[]) => {
+    if (isScanPartner) {
+      showToast({
+        type: "error",
+        message: "Scan partners cannot export loan data",
+        duration: 3000,
+      });
+      return;
+    }
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Agent Loans");
 
@@ -855,6 +863,14 @@ export default function ScanPartnerSinglePage() {
   };
 
   const exportCommissions = async (data: CommissionRecord[]) => {
+    if (isScanPartner) {
+      showToast({
+        type: "error",
+        message: "Scan partners cannot export loan data",
+        duration: 3000,
+      });
+      return;
+    }
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Agent Commissions");
 
