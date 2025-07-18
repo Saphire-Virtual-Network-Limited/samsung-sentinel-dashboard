@@ -7,16 +7,17 @@ import { useAgentData } from "@/hooks/user-mangement/use-agent-data";
 import { useCreateUserForm } from "@/hooks/user-mangement/use-create-user-form";
 import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
 import { useUserCreator } from "@/hooks/user-mangement/use-user-creator";
-import { getUserRole, useAuth } from "@/lib";
-import { hasPermission } from "@/lib/permissions";
 import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { AlertCircle, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
+import { hasPermission } from "@/lib/permissions";
+import { useAuth } from "@/lib";
 import { useEffect } from "react";
+import { getUserRole } from "@/lib";
+import {useRef} from "react";
 
 import { GeneralSans_Meduim, cn } from "@/lib";
-
 export default function CreateUserPage() {
   const router = useRouter();
   const { userResponse } = useAuth();
@@ -28,6 +29,8 @@ export default function CreateUserPage() {
   const { createUser, isLoading, reset } = useUserCreator();
   const { states, getLgas } = useNaijaStates();
 
+  const fieldRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   const handleFieldChange = (field: keyof typeof formData, value: string) => {
     updateField(field, value);
   };
@@ -35,12 +38,23 @@ export default function CreateUserPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      const firstInvalidField = Object.keys(errors).find(
+        (key) => errors[key]
+      );
+      if (firstInvalidField && fieldRefs.current[firstInvalidField]) {
+        fieldRefs.current[firstInvalidField]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        fieldRefs.current[firstInvalidField]?.focus();
+      }
+      return;
+    }
 
     try {
       const result = await createUser(formData);
       if (result?.success) {
-        // Reset form after successful creation
         setTimeout(() => {
           resetForm();
           reset();
@@ -56,17 +70,14 @@ export default function CreateUserPage() {
     reset();
   };
 
-  // Get LGAs for selected state
   const selectedStateLgas = formData.companyState
     ? getLgas(formData.companyState)
     : [];
 
-  // Handle state change
   const handleStateChange = (value: string | string[]) => {
     const selectedState = Array.isArray(value) ? value[0] : value;
     handleFieldChange("companyState", selectedState);
 
-    // Clear LGA when state changes
     if (formData.companyLGA) {
       handleFieldChange("companyLGA", "");
     }
@@ -111,13 +122,13 @@ export default function CreateUserPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
+                    ref={(el) => (fieldRefs.current.firstName = el)}
                     size="sm"
                     type="text"
                     label="First Name"
@@ -132,6 +143,7 @@ export default function CreateUserPage() {
                   />
 
                   <FormField
+                    ref={(el) => (fieldRefs.current.lastName = el)}
                     size="sm"
                     type="text"
                     label="Last Name"
@@ -147,6 +159,7 @@ export default function CreateUserPage() {
                 </div>
 
                 <FormField
+                  ref={(el) => (fieldRefs.current.email = el)}
                   size="sm"
                   label="Email Address"
                   htmlFor="email"
@@ -161,6 +174,7 @@ export default function CreateUserPage() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
+                    ref={(el) => (fieldRefs.current.telephoneNumber = el)}
                     size="sm"
                     label="Phone Number"
                     htmlFor="telephoneNumber"
@@ -177,6 +191,7 @@ export default function CreateUserPage() {
                   />
 
                   <SelectField
+                    ref={(el) => (fieldRefs.current.role = el)}
                     label="User Role"
                     htmlFor="role"
                     id="role"
@@ -195,89 +210,102 @@ export default function CreateUserPage() {
                   />
                 </div>
               </div>
-              {/* Company Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Company Information (Optional)
-                </h3>
-                <FormField
-                  size="sm"
-                  type="text"
-                  label="Company Name"
-                  htmlFor="companyName"
-                  id="companyName"
-                  placeholder="Enter company name"
-                  value={formData.companyName || ""}
-                  onChange={(value) => handleFieldChange("companyName", value)}
-                  isInvalid={!!errors.companyName}
-                  errorMessage={errors.companyName || undefined}
-                />
-
-                <FormField
-                  size="sm"
-                  type="text"
-                  label="Company Address"
-                  htmlFor="companyAddress"
-                  id="companyAddress"
-                  placeholder="Enter company address"
-                  value={formData.companyAddress || ""}
-                  onChange={(value) =>
-                    handleFieldChange("companyAddress", value)
-                  }
-                  isInvalid={!!errors.companyAddress}
-                  errorMessage={errors.companyAddress || undefined}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <SelectField
-                    size="lg"
-                    label="State"
-                    htmlFor="companyState"
-                    id="companyState"
-                    placeholder="Select state"
-                    options={states}
-                    onChange={handleStateChange}
-                    isInvalid={!!errors.companyState}
-                    errorMessage={errors.companyState || undefined}
-                    classNames={{ base: "w-full min-w-0" }}
+              {formData.role == "SCAN_PARTNER" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Company Information
+                  </h3>
+                  <FormField
+                    ref={(el) => (fieldRefs.current.companyName = el)}
+                    size="sm"
+                    type="text"
+                    label="Company Name"
+                    htmlFor="companyName"
+                    id="companyName"
+                    placeholder="Enter company name"
+                    value={formData.companyName || ""}
+                    onChange={(value) =>
+                      handleFieldChange("companyName", value)
+                    }
+                    isInvalid={!!errors.companyName}
+                    errorMessage={errors.companyName || undefined}
+                    required={formData.role == "SCAN_PARTNER"}
                   />
 
                   <FormField
+                    ref={(el) => (fieldRefs.current.companyAddress = el)}
                     size="sm"
                     type="text"
-                    label="City"
-                    htmlFor="companyCity"
-                    id="companyCity"
-                    placeholder="Enter city"
-                    value={formData.companyCity || ""}
+                    label="Company Address"
+                    htmlFor="companyAddress"
+                    id="companyAddress"
+                    placeholder="Enter company address"
+                    value={formData.companyAddress || ""}
                     onChange={(value) =>
-                      handleFieldChange("companyCity", value)
+                      handleFieldChange("companyAddress", value)
                     }
-                    isInvalid={!!errors.companyCity}
-                    errorMessage={errors.companyCity || undefined}
+                    isInvalid={!!errors.companyAddress}
+                    errorMessage={errors.companyAddress || undefined}
+                    required={formData.role == "SCAN_PARTNER"}
                   />
 
-                  <SelectField
-                    size="lg"
-                    label="Local Government Area"
-                    htmlFor="companyLGA"
-                    id="companyLGA"
-                    placeholder="Select LGA"
-                    classNames={{ base: "w-full min-w-0" }}
-                    options={selectedStateLgas}
-                    onChange={(value) =>
-                      handleFieldChange(
-                        "companyLGA",
-                        Array.isArray(value) ? value[0] : value
-                      )
-                    }
-                    isInvalid={!!errors.companyLGA}
-                    errorMessage={errors.companyLGA || undefined}
-                    disabled={!formData.companyState}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <SelectField
+                      ref={(el) => (fieldRefs.current.companyState = el)}
+                      size="lg"
+                      label="State"
+                      htmlFor="companyState"
+                      id="companyState"
+                      placeholder="Select state"
+                      options={states}
+                      onChange={handleStateChange}
+                      isInvalid={!!errors.companyState}
+                      errorMessage={errors.companyState || undefined}
+                      classNames={{ base: "w-full min-w-0" }}
+                      required={formData.role == "SCAN_PARTNER"}
+                       errorMessage={errors.companyState || undefined}
+                    />
+
+                    <FormField
+                      ref={(el) => (fieldRefs.current.companyCity = el)}
+                      size="sm"
+                      type="text"
+                      label="City"
+                      htmlFor="companyCity"
+                      id="companyCity"
+                      placeholder="Enter city"
+                      value={formData.companyCity || ""}
+                      onChange={(value) =>
+                        handleFieldChange("companyCity", value)
+                      }
+                      isInvalid={!!errors.companyCity}
+                      errorMessage={errors.companyCity || undefined}
+                      required={formData.role == "SCAN_PARTNER"}
+                    />
+
+                    <SelectField
+                      ref={(el) => (fieldRefs.current.companyLGA = el)}
+                      size="lg"
+                      label="Local Government Area"
+                      htmlFor="companyLGA"
+                      id="companyLGA"
+                      placeholder="Select LGA"
+                      classNames={{ base: "w-full min-w-0" }}
+                      options={selectedStateLgas}
+                      onChange={(value) =>
+                        handleFieldChange(
+                          "companyLGA",
+                          Array.isArray(value) ? value[0] : value
+                        )
+                      }
+                      isInvalid={!!errors.companyLGA}
+                      errorMessage={errors.companyLGA || undefined}
+                      disabled={!formData.companyState}
+                      required={formData.role == "SCAN_PARTNER"}
+                    />
+                  </div>
                 </div>
-              </div>
-
+              )}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button
                   type="button"
@@ -297,14 +325,7 @@ export default function CreateUserPage() {
                     "w-1/2 p-6 mb-0 bg-primary text-white font-medium text-base",
                     GeneralSans_Meduim.className
                   )}
-                  disabled={
-                    isLoading ||
-                    !isValid("firstName") ||
-                    !isValid("lastName") ||
-                    !isValid("email") ||
-                    !isValid("telephoneNumber") ||
-                    !isValid("role")
-                  }
+                  disabled={isLoading}
                 >
                   {isLoading ? "Creating..." : "Create User"}
                 </Button>

@@ -38,9 +38,7 @@ export const useAgentData = (): UseAgentDataReturn => {
     const userRole = userResponse?.data?.role;
 
     if (userRole === "ADMIN") {
-      return fallbackAgentTypes.filter(
-        (type) => type.value !== "ADMIN" && type.value !== "SUPER_ADMIN"
-      );
+      return fallbackAgentTypes.filter((type) => type.value !== "SUPER_ADMIN");
     } else if (userRole === "SUPER_ADMIN") {
       return fallbackAgentTypes;
     } else {
