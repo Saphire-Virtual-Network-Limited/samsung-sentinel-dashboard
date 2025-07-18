@@ -846,6 +846,42 @@ export async function getAllVfdBanks() {
   return apiCall("/payments/bank-list", "GET");
 }
 
+//update device imei number
+export async function updateDeviceImeiNumber(deviceOnLoanId: string, imei: string) {
+  return apiCall(`/admin/device/imei/${deviceOnLoanId}`, "PUT", {imei}); 
+}
+
+//search customer across all channels
+export async function searchGlobalCustomer(search: string) {
+  return apiCall(`/admin/customers/search?search=${search}`, "GET"); 
+}
+
+// //endpoint to update imei number
+// export async function updateImeiNumber(imei: string, customerId: string) {
+//   return apiCall(`/admin/customers/update-imei?imei=${imei}&customerId=${customerId}`, "PUT"); 
+// }
+
+//update admin password
+export async function updateAdminPassword(password: string, confirmPassword: string) {
+  return apiCall(`/admin/update-password`, "POST", { password, confirmPassword }); 
+}
+
+//update admin password  for only dev
+export async function updateAdminPasswordForDev(adminId: string, password: string, confirmPassword: string) {
+  return apiCall(`/admin/dev/update-password`, "POST", { adminId, password, confirmPassword }); 
+}
+
+//Get mbe with customer which is use to submit transaction to relay
+export async function getMBEWithCustomerForRelay(mbe_old_id: string) {
+  return apiCall(`/admin/customers/mbes-with-customers?mbe_old_id=${mbe_old_id}`, "GET"); 
+}
+
+// assign customer to mbe
+export async function assignCustomersToMBE(customerId: string, mbeId: string) {
+  return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
+}
+
+
 
 
 

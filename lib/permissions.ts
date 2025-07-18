@@ -48,6 +48,8 @@ export interface PermissionConfig {
   canSync: boolean;
   canEdit: boolean;
   createDashboardUser: boolean;
+  canUpdateDeviceImei: boolean;
+  canAssignAgent: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -92,7 +94,9 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
-  },
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
+    },
   "collection-admin": {
     canTriggerDeviceActions: true,
   },
@@ -112,7 +116,9 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
-  },
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
+    },
   finance: {
     // Finance has no special permissions
     // All permissions default to false
@@ -154,6 +160,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
   },
   "topeyemi33@gmail.com": {
     canUpdateWalletBalance: true,
@@ -167,6 +175,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
@@ -180,11 +190,31 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
+  },
+  "seyi@sapphirevirtual.com": {
+    canUpdateWalletBalance: true,
+    canUpdateLastPoint: true,
+    canUpdateLoanStatus: true,
+    canTriggerDeviceActions: true,
+    canDeleteCustomers: true,
+    canViewOverDuePayments: true,
+    canViewCommunicationLog: true,
+    canViewDeviceActivityLog: true,
+    canCreate: true,
+    canSync: true,
+    canEdit: true,
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
   },
   "olayinka@sapphirevirtual.com": {
     canCreate: true,
     // canSync: true,
     canEdit: true,
+    canAssignAgent: true,
+
+
   },
 };
 
@@ -206,6 +236,8 @@ function getDefaultPermissions(): PermissionConfig {
     canSync: false,
     canEdit: false,
     createDashboardUser: false,
+    canUpdateDeviceImei: false,
+    canAssignAgent: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -285,6 +317,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "canCreate",
     "canSync",
     "canEdit",
+    "canUpdateDeviceImei",
+    "canAssignAgent",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',

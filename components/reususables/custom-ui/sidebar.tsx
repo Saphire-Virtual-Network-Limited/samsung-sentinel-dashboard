@@ -786,6 +786,12 @@ export function AppSidebar() {
       url: "/access/support/loans",
       id: "support-loans",
     },
+    {
+      icon: Users,
+      title: "MobiflexAgents",
+      url: "/access/support/agents",
+      id: "support-agents",
+    },
   ];
 
   const collectionAdminItems: MenuItem[] = [
