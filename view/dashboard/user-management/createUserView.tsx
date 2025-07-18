@@ -15,7 +15,7 @@ import { hasPermission } from "@/lib/permissions";
 import { useAuth } from "@/lib";
 import { useEffect } from "react";
 import { getUserRole } from "@/lib";
-import {useRef} from "react";
+import { useRef } from "react";
 
 import { GeneralSans_Meduim, cn } from "@/lib";
 export default function CreateUserPage() {
@@ -29,9 +29,14 @@ export default function CreateUserPage() {
   const { createUser, isLoading, reset } = useUserCreator();
   const { states, getLgas } = useNaijaStates();
 
-  const fieldRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const fieldRefs = useRef<
+    Record<string, HTMLInputElement | HTMLSelectElement | null>
+  >({});
 
-  const handleFieldChange = (field: keyof typeof formData, value: string) => {
+  const handleFieldChange = (
+    field: keyof typeof formData,
+    value: string
+  ): void => {
     updateField(field, value);
   };
 
@@ -40,7 +45,7 @@ export default function CreateUserPage() {
 
     if (!validateForm()) {
       const firstInvalidField = Object.keys(errors).find(
-        (key) => errors[key]
+        (key) => errors[key as keyof typeof errors]
       );
       if (firstInvalidField && fieldRefs.current[firstInvalidField]) {
         fieldRefs.current[firstInvalidField]?.scrollIntoView({
@@ -128,7 +133,6 @@ export default function CreateUserPage() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    ref={(el) => (fieldRefs.current.firstName = el)}
                     size="sm"
                     type="text"
                     label="First Name"
@@ -143,7 +147,6 @@ export default function CreateUserPage() {
                   />
 
                   <FormField
-                    ref={(el) => (fieldRefs.current.lastName = el)}
                     size="sm"
                     type="text"
                     label="Last Name"
@@ -159,7 +162,6 @@ export default function CreateUserPage() {
                 </div>
 
                 <FormField
-                  ref={(el) => (fieldRefs.current.email = el)}
                   size="sm"
                   label="Email Address"
                   htmlFor="email"
@@ -174,7 +176,6 @@ export default function CreateUserPage() {
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    ref={(el) => (fieldRefs.current.telephoneNumber = el)}
                     size="sm"
                     label="Phone Number"
                     htmlFor="telephoneNumber"
@@ -191,7 +192,6 @@ export default function CreateUserPage() {
                   />
 
                   <SelectField
-                    ref={(el) => (fieldRefs.current.role = el)}
                     label="User Role"
                     htmlFor="role"
                     id="role"
@@ -216,7 +216,6 @@ export default function CreateUserPage() {
                     Company Information
                   </h3>
                   <FormField
-                    ref={(el) => (fieldRefs.current.companyName = el)}
                     size="sm"
                     type="text"
                     label="Company Name"
@@ -233,7 +232,6 @@ export default function CreateUserPage() {
                   />
 
                   <FormField
-                    ref={(el) => (fieldRefs.current.companyAddress = el)}
                     size="sm"
                     type="text"
                     label="Company Address"
@@ -251,7 +249,6 @@ export default function CreateUserPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <SelectField
-                      ref={(el) => (fieldRefs.current.companyState = el)}
                       size="lg"
                       label="State"
                       htmlFor="companyState"
@@ -263,11 +260,9 @@ export default function CreateUserPage() {
                       errorMessage={errors.companyState || undefined}
                       classNames={{ base: "w-full min-w-0" }}
                       required={formData.role == "SCAN_PARTNER"}
-                       errorMessage={errors.companyState || undefined}
                     />
 
                     <FormField
-                      ref={(el) => (fieldRefs.current.companyCity = el)}
                       size="sm"
                       type="text"
                       label="City"
@@ -284,7 +279,6 @@ export default function CreateUserPage() {
                     />
 
                     <SelectField
-                      ref={(el) => (fieldRefs.current.companyLGA = el)}
                       size="lg"
                       label="Local Government Area"
                       htmlFor="companyLGA"
