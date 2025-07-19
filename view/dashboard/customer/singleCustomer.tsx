@@ -16,6 +16,9 @@ import {
   releaseDevice,
   changeLoanStatus,
   createCustomerVirtualWallet,
+  updateDeviceImeiNumber,
+  assignCustomersToMBE,
+  getMBEWithCustomerForRelay
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import { PaymentReceipt, CustomerSearch } from "@/components/reususables/custom-ui";
@@ -29,6 +32,12 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@heroui/react";
+import { createSchema, useField } from "@/lib";
+
+const ImeiSchema = createSchema((value: string) => /^\d{15}$/.test(value), "IMEI must be a 15 digit number");
+const AgentSchema = createSchema((value: string) => /^[a-zA-Z0-9]+$/.test(value), "Agent must contain only numbers and letters");
+
+
 
 // Utility Components
 const InfoCard = ({
@@ -165,6 +174,10 @@ export default function CollectionSingleCustomerPage() {
   const params = useParams();
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
+
+    const { value: imei, error: imeiError, handleChange: handleImeiChange } = useField("", ImeiSchema);
+    const { value: agent, error: agentError, handleChange: handleAgentChange } = useField("", AgentSchema);
+
   
 
   const [isLoading, setIsLoading] = useState(true);
@@ -214,6 +227,23 @@ export default function CollectionSingleCustomerPage() {
     onClose: onSearchClose,
   } = useDisclosure();
 
+  const {
+    isOpen: isUpdateImei,
+    onOpen: onUpdateImei,
+    onClose: onUpdateImeiClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isAssignAgent,
+    onOpen: onAssignAgent,
+    onClose: onAssignAgentClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isSubmitToRelay,
+    onOpen: onSubmitToRelay,
+    onClose: onSubmitToRelayClose,
+  } = useDisclosure();
 
 
   useEffect(() => {
@@ -306,6 +336,8 @@ export default function CollectionSingleCustomerPage() {
       onUpdateWalletClose();
       setAmount("");
       setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       console.log(error);
       showToast({
@@ -332,6 +364,8 @@ export default function CollectionSingleCustomerPage() {
       });
       onCreateWalletClose();
       setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       console.log(error);
       showToast({
@@ -369,6 +403,8 @@ export default function CollectionSingleCustomerPage() {
       onUpdateLastPointClose();
       setLastPoint("");
       setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       console.log(error);
       showToast({
@@ -380,6 +416,125 @@ export default function CollectionSingleCustomerPage() {
       setIsButtonLoading(false);
     }
   };
+
+  const handleUpdateImei = async () => {
+    if (!imei) {
+      showToast({
+        type: "error",
+        message: "Please enter a valid imei",
+        duration: 5000,
+      });
+      return;
+    }
+
+    setIsButtonLoading(true);
+    try {
+      const deviceOnLoanId = customer?.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.deviceOnLoanId;
+      
+      if (!deviceOnLoanId) {
+        throw new Error("Device ID not found");
+      }
+
+      const response = await updateDeviceImeiNumber(deviceOnLoanId, imei);
+      console.log(response);
+      showToast({
+        type: "success", 
+        message: "IMEI updated successfully",
+        duration: 5000,
+      });
+      onUpdateImeiClose();
+      handleImeiChange("");
+      setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to update IMEI",
+        duration: 5000,
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
+
+  const handleAssignCustomerToMbe = async () => {
+    console.log("handleAssignCustomerToMbe called with agent:", agent);
+
+    if (!agent) {
+      showToast({
+        type: "error",
+        message: "Please enter a valid agent",
+        duration: 5000,
+      });
+      return;
+    }
+    setIsButtonLoading(true);
+    try {
+      const response = await assignCustomersToMBE(customer.customerId, agent);      
+      console.log(response);
+      showToast({
+        type: "success", 
+        message: "Agent assigned to customer successfully", 
+        duration: 5000,
+      });
+      onAssignAgentClose();
+      handleAgentChange("");
+      setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to assign Agent to customer",
+        duration: 5000,
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
+
+  const handleSubmitCustomerToRelay= async () => {
+    console.log("handleSubmitCustomerToRelay called with agent:", agent);
+
+    if (!agent) {
+      showToast({
+        type: "error",
+        message: "Please enter a valid agent",
+        duration: 5000,
+      });
+      return;
+    }
+    
+    setIsButtonLoading(true);
+    try {
+
+      const response = await getMBEWithCustomerForRelay(agent);      
+      console.log(response);
+      showToast({
+        type: "success", 
+        message: "Customer submitted to relay successfully", 
+        duration: 5000,
+      });
+      onSubmitToRelayClose();
+      handleAgentChange("");
+      setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
+    } catch (error: any) {
+      console.log(error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to submit customer to relay",
+        duration: 5000,
+      });
+    } finally {
+      setIsButtonLoading(false);
+    }
+  };
+
 
   // Device action configuration
   const deviceActions = [
@@ -445,6 +600,8 @@ export default function CollectionSingleCustomerPage() {
       onDeviceActionClose();
       setSelectedAction("");
       setDeviceActionData(null);
+      // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       console.log(error);
       showToast({
@@ -515,17 +672,11 @@ export default function CollectionSingleCustomerPage() {
         duration: 5000,
       });
 
-      // Refresh customer data to show updated status
-      const updatedResponse = await getCustomerRecordById(params.id as string);
-      if (updatedResponse && updatedResponse.data) {
-        setCustomer(updatedResponse.data);
-      } else if (updatedResponse) {
-        setCustomer(updatedResponse);
-      }
-
       onUpdateLoanStatusClose();
       setSelectedAction("");
       setSelectedCustomer(null);
+      // Refresh the page
+      window.location.reload();
     } catch (error: any) {
       console.log("Error updating loan status:", error);
       showToast({
@@ -704,6 +855,30 @@ export default function CollectionSingleCustomerPage() {
                   <InfoField label="Updated At" value={customer.regBy?.updatedAt ? new Date(customer.regBy.updatedAt).toLocaleString() : "N/A"} />
                   <InfoField label="MBE ID" value={customer.regBy?.mbeId} />
                   <InfoField label="MBE Old ID" value={customer.regBy?.mbe_old_id} />
+                  {hasPermission(role, "canAssignAgent", userEmail) && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                      color="primary"
+                      variant="solid"
+                      onPress={() => {
+                        setSelectedCustomer(customer);
+                        onAssignAgent();
+                      }}
+                    >
+                      Assign Agent
+                    </Button>
+                    <Button
+                      color="primary"
+                      variant="solid"
+                      onPress={() => {
+                        setSelectedCustomer(customer);
+                        onSubmitToRelay();
+                      }}
+                    >
+                      submit to relay
+                    </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Stores Table */}
@@ -1269,6 +1444,22 @@ export default function CollectionSingleCustomerPage() {
                                       ).toLocaleString()
                                     : "N/A"}
                                 </div>
+                              </div>
+                              <div>
+                                {hasPermission(role, "canUpdateDeviceImei", userEmail) ? (
+                                  <div className="font-medium text-default-900">
+                                    <Button
+                                      color="primary"
+                                      variant="solid"
+                                      onPress={() => {
+                                        onUpdateImei();
+                                        setSelectedCustomer(customer);
+                                      }}
+                                    >
+                                      Update IMEI
+                                    </Button>
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
                           </div>
@@ -2380,7 +2571,7 @@ export default function CollectionSingleCustomerPage() {
                   color="danger"
                   variant="light"
                   onPress={() => {
-                    onUpdateLoanStatusClose();
+                    onCreateWalletClose();
                     setSelectedCustomer(null);
                   }}
                 >
@@ -2416,6 +2607,161 @@ export default function CollectionSingleCustomerPage() {
 					)}
 				</ModalContent>
 			</Modal>
+
+<Modal
+isOpen={isUpdateImei}
+onClose={onUpdateImeiClose}
+size="lg"
+>
+<ModalContent>
+  {() => (
+    <>
+      <ModalHeader>Update IMEI</ModalHeader>
+      <ModalBody>
+        <p className="text-md text-default-500">
+          Are you sure you want to update this customer&apos;s IMEI? This action cannot be undone.
+        </p>
+
+       <FormField
+       label="IMEI"
+       htmlFor="imei"
+       id="imei"
+       type="text"
+       placeholder="Enter new IMEI"
+       onChange={handleImeiChange}     
+       size="sm"
+       />
+      </ModalBody>
+      <ModalFooter className="flex gap-2">
+        <Button
+          color="success"
+          variant="solid"
+          onPress={() => selectedCustomer && handleUpdateImei()}
+          isLoading={isButtonLoading}
+        >
+          Confirm
+        </Button>
+        <Button
+          color="danger"
+          variant="light"
+          onPress={() => {
+            onUpdateImeiClose();
+            setSelectedCustomer(null);
+          }}
+        >
+          Cancel
+        </Button>
+      </ModalFooter>
+    </>
+  )}
+</ModalContent>
+</Modal>
+
+<Modal
+isOpen={isAssignAgent}
+onClose={onAssignAgentClose}
+size="lg"
+>
+<ModalContent>
+  {() => (
+    <>
+      <ModalHeader>Assign Agent</ModalHeader>
+      <ModalBody>
+        <p className="text-md text-default-500">
+          Are you sure you want to assign this customer&apos;s to an agent? This action cannot be undone.
+        </p>
+
+       <FormField
+       label="Agent"
+       htmlFor="agent"
+       id="agent"
+       type="text"
+       placeholder="Enter Agent"
+       value={agent}
+       onChange={handleAgentChange}     
+       size="sm"
+       />
+       {agentError && (
+         <p className="text-danger-500 text-sm mt-1">{agentError}</p>
+       )}
+      </ModalBody>
+      <ModalFooter className="flex gap-2">
+        <Button
+          color="success"
+          variant="solid"
+          onPress={() => selectedCustomer && handleAssignCustomerToMbe()}
+          isLoading={isButtonLoading}
+        >
+          Confirm
+        </Button>
+        <Button
+          color="danger"
+          variant="light"
+          onPress={() => {
+            onAssignAgentClose();
+            setSelectedCustomer(null);
+          }}
+        >
+          Cancel
+        </Button>
+      </ModalFooter>
+    </>
+  )}
+</ModalContent>
+</Modal>
+
+<Modal
+isOpen={isSubmitToRelay}
+onClose={onSubmitToRelayClose}
+size="lg"
+>
+<ModalContent>
+  {() => (
+    <>
+      <ModalHeader>Submit to Relay</ModalHeader>
+      <ModalBody>
+        <p className="text-md text-default-500">
+          Are you sure you want to submit this customer&apos;s to relay? This action cannot be undone.
+        </p>
+
+       <FormField
+       label="Agent"
+       htmlFor="agent"
+       id="agent"
+       type="text"
+       placeholder="Enter Relay"
+       value={agent}
+       onChange={handleAgentChange}     
+       size="sm"
+       />
+       {agentError && (
+         <p className="text-danger-500 text-sm mt-1">{agentError}</p>
+       )}
+      </ModalBody>
+      <ModalFooter className="flex gap-2">
+        <Button
+          color="success"
+          variant="solid"
+          onPress={() => selectedCustomer && handleSubmitCustomerToRelay()}
+          isLoading={isButtonLoading}
+        >
+          Confirm
+        </Button>
+        <Button
+          color="danger"
+          variant="light"
+          onPress={() => {
+            onSubmitToRelayClose();
+            setSelectedCustomer(null);
+          }}
+        >
+          Cancel
+        </Button>
+      </ModalFooter>
+    </>
+  )}
+</ModalContent>
+</Modal>
     </div>
   );
 }
