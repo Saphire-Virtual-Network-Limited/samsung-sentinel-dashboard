@@ -241,7 +241,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
   // },
   "olayinka@sapphirevirtual.com": {
     canCreate: true,
-    canEdit: true,
+    // canEdit: true,
     canAssignAgent: true,
   },
   "richard@sapphirevirtual.com": {
