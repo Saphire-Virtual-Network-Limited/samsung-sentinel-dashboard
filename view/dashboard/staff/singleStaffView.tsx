@@ -1,5 +1,4 @@
 "use client";
-
 import {
   showToast,
   updateAgentGuarantorStatus,
@@ -7,6 +6,7 @@ import {
   getAgentDevice,
   getAgentRecordByMbeId,
   updateAgentAddressStatus,
+  getAgentLoansAndCommissionsByScanPartner, // Add this import
 } from "@/lib";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
@@ -28,8 +28,8 @@ import {
   DropdownMenu,
   DropdownItem,
   Divider,
+  ButtonGroup,
 } from "@heroui/react";
-
 import {
   ArrowLeft,
   CreditCard,
@@ -43,13 +43,75 @@ import {
   Trash2,
   MoreVertical,
   Smartphone,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  UserIcon,
 } from "lucide-react";
-
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { AccountStatus, AgentRecord } from "./types";
 import useSWR from "swr";
+import GenericTable, {
+  type ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+// Add the new interfaces for loan and commission data
+interface LoanRecord {
+  loanRecordId: string;
+  customerId: string;
+  loanDiskId: string | null;
+  lastPoint: string;
+  channel: string;
+  loanStatus: string;
+  createdAt: string;
+  updatedAt: string;
+  loanAmount: number;
+  deviceId: string | null;
+  downPayment: number;
+  insurancePackage: string | null;
+  insurancePrice: number;
+  mbsEligibleAmount: number;
+  payFrequency: string | null;
+  storeId: string | null;
+  devicePrice: number;
+  deviceAmount: number;
+  monthlyRepayment: number;
+  duration: number | null;
+  interestAmount: number;
+  deviceName: string | null;
+  mbeId: string;
+  solarPackageId: string | null;
+}
+
+interface CommissionRecord {
+  commissionId: string;
+  mbeId: string;
+  deviceOnLoanId: string;
+  commission: number;
+  mbeCommission: number;
+  partnerCommission: number;
+  splitPercent: number;
+  date_created: string;
+  updated_at: string;
+}
+
+interface CommissionSummary {
+  totalCommission: number;
+  totalMbeCommission: number;
+  totalPartnerCommission: number;
+  commissionCount: number;
+  avgCommission: number;
+  avgMbeCommission: number;
+  avgPartnerCommission: number;
+  maxCommission: number;
+  minCommission: number;
+  latestCommissionDate: string | null;
+  earliestCommissionDate: string | null;
+}
 
 // Types for device data
 interface DeviceItem {
@@ -72,6 +134,57 @@ interface DeviceResponse {
   responseTime: string;
   channel: string;
 }
+
+// Column definitions for loans table
+const loanColumns: ColumnDef[] = [
+  { name: "Loan ID", uid: "loanRecordId", sortable: true },
+  { name: "Customer ID", uid: "customerId", sortable: true },
+  { name: "Device Name", uid: "deviceName", sortable: true },
+  { name: "Loan Amount", uid: "loanAmount", sortable: true },
+  { name: "Device Price", uid: "devicePrice", sortable: true },
+  { name: "Down Payment", uid: "downPayment", sortable: true },
+  { name: "Monthly Payment", uid: "monthlyRepayment", sortable: true },
+  { name: "Duration", uid: "duration", sortable: true },
+  { name: "Status", uid: "loanStatus", sortable: true },
+  { name: "Created", uid: "createdAt", sortable: true },
+  { name: "Actions", uid: "actions" },
+];
+
+// Column definitions for commissions table
+const commissionColumns: ColumnDef[] = [
+  { name: "Commission ID", uid: "commissionId", sortable: true },
+  { name: "Device Loan ID", uid: "deviceOnLoanId", sortable: true },
+  { name: "Total Commission", uid: "commission", sortable: true },
+  { name: "Agent Commission", uid: "mbeCommission", sortable: true },
+  { name: "Partner Commission", uid: "partnerCommission", sortable: true },
+  { name: "Split %", uid: "splitPercent", sortable: true },
+  { name: "Date Created", uid: "date_created", sortable: true },
+  { name: "Actions", uid: "actions" },
+];
+
+// Loan status color mapping
+const loanStatusColorMap: Record<string, any> = {
+  ACTIVE: "success",
+  PENDING: "warning",
+  COMPLETED: "primary",
+  DEFAULTED: "danger",
+  CANCELLED: "default",
+  ENROLLED: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+};
+
+// Loan status options
+const loanStatusOptions = [
+  { name: "Active", uid: "ACTIVE" },
+  { name: "Pending", uid: "PENDING" },
+  { name: "Completed", uid: "COMPLETED" },
+  { name: "Defaulted", uid: "DEFAULTED" },
+  { name: "Cancelled", uid: "CANCELLED" },
+  { name: "Enrolled", uid: "ENROLLED" },
+  { name: "Approved", uid: "APPROVED" },
+  { name: "Rejected", uid: "REJECTED" },
+];
 
 // Utility Components
 const LoadingSpinner = () => (
@@ -108,6 +221,7 @@ const InfoCard = ({
   icon,
   collapsible = false,
   defaultExpanded = true,
+  headerContent,
 }: {
   title: string;
   children: React.ReactNode;
@@ -115,6 +229,7 @@ const InfoCard = ({
   icon?: React.ReactNode;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  headerContent?: React.ReactNode;
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -124,9 +239,14 @@ const InfoCard = ({
         className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
       >
         <div className="p-4 border-b border-default-200">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {icon}
+              <h3 className="text-lg font-semibold text-default-900">
+                {title}
+              </h3>
+            </div>
+            {headerContent}
           </div>
         </div>
         <div className="p-6">{children}</div>
@@ -147,18 +267,21 @@ const InfoCard = ({
             {icon}
             <h3 className="text-lg font-semibold text-default-900">{title}</h3>
           </div>
-          <Button
-            variant="light"
-            size="sm"
-            isIconOnly
-            className="text-default-500"
-          >
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            {headerContent}
+            <Button
+              variant="light"
+              size="sm"
+              isIconOnly
+              className="text-default-500"
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       <div
@@ -225,6 +348,7 @@ const EmptyState = ({
 
 const DeviceCard = ({ device }: { device: DeviceItem }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
   const isExpiringSoon =
     device.expiryDate &&
     new Date(device.expiryDate) <=
@@ -278,7 +402,6 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
           {isExpanded ? <span>Hide</span> : <span>View More</span>}
         </Button>
       </div>
-
       <div className="space-y-1">
         <div className="text-xs text-default-500">Serial Numbers:</div>
         {isExpanded ? (
@@ -321,7 +444,6 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
           </div>
         )}
       </div>
-
       {(isExpanded || device.expiryDate) && (
         <div className="flex items-center justify-between text-xs text-default-500 mt-2 pt-2 border-t border-default-200">
           <span>
@@ -460,16 +582,229 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
   }
 };
 
+// Fetcher function for agent performance data
+const fetchAgentPerformanceData = async (
+  scanPartnerId: string,
+  mbeId: string
+) => {
+  if (!scanPartnerId || !mbeId) {
+    throw new Error("Scan Partner ID and Agent ID are required");
+  }
+  try {
+    const response = await getAgentLoansAndCommissionsByScanPartner(
+      scanPartnerId,
+      mbeId
+    );
+    return response?.data;
+  } catch (error) {
+    console.error("Error fetching agent performance data:", error);
+    return null;
+  }
+};
+
+// Export functions
+const exportLoans = async (data: LoanRecord[]) => {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Agent Loans");
+
+  ws.columns = loanColumns
+    .filter((c) => c.uid !== "actions")
+    .map((c) => ({
+      header: c.name,
+      key: c.uid,
+      width: 20,
+    }));
+
+  data.forEach((loan) =>
+    ws.addRow({
+      ...loan,
+      loanAmount: `₦${loan.loanAmount?.toLocaleString() || 0}`,
+      devicePrice: `₦${loan.devicePrice?.toLocaleString() || 0}`,
+      downPayment: `₦${loan.downPayment?.toLocaleString() || 0}`,
+      monthlyRepayment: `₦${loan.monthlyRepayment?.toLocaleString() || 0}`,
+      interestAmount: `₦${loan.interestAmount?.toLocaleString() || 0}`,
+      createdAt: new Date(loan.createdAt).toLocaleDateString(),
+      updatedAt: new Date(loan.updatedAt).toLocaleDateString(),
+    })
+  );
+
+  const buf = await wb.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), "Agent_Loans.xlsx");
+};
+
+const exportCommissions = async (data: CommissionRecord[]) => {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Agent Commissions");
+
+  ws.columns = commissionColumns
+    .filter((c) => c.uid !== "actions")
+    .map((c) => ({
+      header: c.name,
+      key: c.uid,
+      width: 20,
+    }));
+
+  data.forEach((commission) =>
+    ws.addRow({
+      ...commission,
+      commission: `₦${commission.commission?.toLocaleString() || 0}`,
+      mbeCommission: `₦${commission.mbeCommission?.toLocaleString() || 0}`,
+      partnerCommission: `₦${
+        commission.partnerCommission?.toLocaleString() || 0
+      }`,
+      splitPercent: `${commission.splitPercent || 0}%`,
+      date_created: new Date(commission.date_created).toLocaleDateString(),
+      updated_at: new Date(commission.updated_at).toLocaleDateString(),
+    })
+  );
+
+  const buf = await wb.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), "Agent_Commissions.xlsx");
+};
+
+// Render cell functions
+const renderLoanCell = (
+  loan: LoanRecord,
+  key: string,
+  router: any,
+  role: string
+) => {
+  switch (key) {
+    case "loanRecordId":
+      return <div className="font-mono text-xs">{loan.loanRecordId}</div>;
+    case "customerId":
+      return <div className="font-mono text-xs">{loan.customerId}</div>;
+    case "deviceName":
+      return <div className="text-sm">{loan.deviceName || "N/A"}</div>;
+    case "loanAmount":
+      return (
+        <div className="font-medium">
+          ₦{loan.loanAmount?.toLocaleString() || 0}
+        </div>
+      );
+    case "devicePrice":
+      return (
+        <div className="font-medium">
+          ₦{loan.devicePrice?.toLocaleString() || 0}
+        </div>
+      );
+    case "downPayment":
+      return (
+        <div className="font-medium">
+          ₦{loan.downPayment?.toLocaleString() || 0}
+        </div>
+      );
+    case "monthlyRepayment":
+      return (
+        <div className="font-medium">
+          ₦{loan.monthlyRepayment?.toLocaleString() || 0}
+        </div>
+      );
+    case "duration":
+      return (
+        <div className="text-sm">
+          {loan.duration ? `${loan.duration} months` : "N/A"}
+        </div>
+      );
+    case "loanStatus":
+      return (
+        <Chip
+          color={loanStatusColorMap[loan.loanStatus] || "default"}
+          variant="flat"
+          size="sm"
+        >
+          {loan.loanStatus || ""}
+        </Chip>
+      );
+    case "createdAt":
+      return (
+        <div className="text-sm">
+          {new Date(loan.createdAt).toLocaleDateString()}
+        </div>
+      );
+    case "actions":
+      return (
+        <div className="flex justify-end">
+          {role != "scan-partner" && (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button isIconOnly size="sm" variant="light">
+                  <MoreVertical className="w-4 h-4 text-default-400" />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu aria-label="Loan actions">
+                <DropdownItem
+                  key="view-customer"
+                  startContent={<UserIcon className="w-4 h-4" />}
+                  onPress={() =>
+                    router.push(`/access/${role}/customers/${loan.customerId}`)
+                  }
+                >
+                  View Customer
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          )}
+        </div>
+      );
+    default:
+      return <div className="text-sm">{(loan as any)[key] || "N/A"}</div>;
+  }
+};
+
+const renderCommissionCell = (commission: CommissionRecord, key: string) => {
+  switch (key) {
+    case "commissionId":
+      return <div className="font-mono text-xs">{commission.commissionId}</div>;
+    case "deviceOnLoanId":
+      return (
+        <div className="font-mono text-xs">{commission.deviceOnLoanId}</div>
+      );
+    case "commission":
+      return (
+        <div className="font-medium">
+          ₦{commission.commission?.toLocaleString() || 0}
+        </div>
+      );
+    case "mbeCommission":
+      return (
+        <div className="font-medium">
+          ₦{commission.mbeCommission?.toLocaleString() || 0}
+        </div>
+      );
+    case "partnerCommission":
+      return (
+        <div className="font-medium">
+          ₦{commission.partnerCommission?.toLocaleString() || 0}
+        </div>
+      );
+    case "splitPercent":
+      return <div className="text-sm">{commission.splitPercent || 0}%</div>;
+    case "date_created":
+      return (
+        <div className="text-sm">
+          {new Date(commission.date_created).toLocaleDateString()}
+        </div>
+      );
+    case "actions":
+      return <div className="flex justify-end"></div>;
+    default:
+      return <div className="text-sm">{(commission as any)[key] || "N/A"}</div>;
+  }
+};
+
 // Main Component
 export default function AgentSinglePage() {
   const params = useParams();
   const { userResponse } = useAuth();
-
   const role = getUserRole(String(userResponse?.data?.role));
   const canUpdateGuarantorStatus = hasPermission(role, "updateGuarantorStatus");
   const canUpdateAddressStatus = hasPermission(role, "updateAddressStatus");
+  const canViewAgentPerformanceData = hasPermission(
+    role,
+    "viewAgentPerformanceData"
+  );
   const router = useRouter();
-
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
   );
@@ -477,12 +812,25 @@ export default function AgentSinglePage() {
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [performanceViewType, setPerformanceViewType] = useState<
+    "loans" | "commissions"
+  >("loans");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
+
+  // Filter states for performance data
+  const [loanFilterValue, setLoanFilterValue] = useState("");
+  const [loanStatusFilter, setLoanStatusFilter] = useState<Set<string>>(
+    new Set()
+  );
+  const [loanPage, setLoanPage] = useState(1);
+  const [commissionFilterValue, setCommissionFilterValue] = useState("");
+  const [commissionPage, setCommissionPage] = useState(1);
+
   // Use SWR for data fetching
   const userId = userResponse?.data?.userId;
   const {
@@ -519,12 +867,82 @@ export default function AgentSinglePage() {
     }
   );
 
+  // Use SWR for agent performance data
+  const {
+    data: performanceData,
+    error: performanceError,
+    isLoading: performanceLoading,
+  } = useSWR(
+    agent && agent.userId ? `agent-performance-${agent.mbeId}` : null,
+    () => fetchAgentPerformanceData(String(agent!.userId), agent!.mbeId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000,
+    }
+  );
+
+  // Process performance data
+  const processedPerformanceData = useMemo(() => {
+    if (!performanceData?.agent) {
+      return {
+        loans: [],
+        commissions: [],
+        summary: null,
+      };
+    }
+
+    const agentData = performanceData.agent; // Get the specific agent's data
+    return {
+      loans: agentData.LoanRecord || [],
+      commissions: agentData.Commission || [],
+      summary: agentData.commissionSummary || null,
+    };
+  }, [performanceData]);
+
+  // Filter loans and commissions
+  const filteredLoans = useMemo(() => {
+    let filtered = [...processedPerformanceData.loans];
+
+    if (loanFilterValue) {
+      const searchTerm = loanFilterValue.toLowerCase();
+      filtered = filtered.filter(
+        (loan) =>
+          loan.loanRecordId.toLowerCase().includes(searchTerm) ||
+          loan.customerId.toLowerCase().includes(searchTerm) ||
+          loan.deviceName?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (loanStatusFilter.size > 0) {
+      filtered = filtered.filter((loan) =>
+        loanStatusFilter.has(loan.loanStatus)
+      );
+    }
+
+    return filtered;
+  }, [processedPerformanceData.loans, loanFilterValue, loanStatusFilter]);
+
+  const filteredCommissions = useMemo(() => {
+    let filtered = [...processedPerformanceData.commissions];
+
+    if (commissionFilterValue) {
+      const searchTerm = commissionFilterValue.toLowerCase();
+      filtered = filtered.filter(
+        (commission) =>
+          commission.commissionId.toLowerCase().includes(searchTerm) ||
+          commission.deviceOnLoanId.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return filtered;
+  }, [processedPerformanceData.commissions, commissionFilterValue]);
+
   const handleGuarantorStatusUpdate = async (
     guarantorId: string,
     newStatus: string
   ) => {
     if (!agent) return;
-
     setIsUpdatingGuarantor(guarantorId);
     try {
       const result = await mockUpdateGuarantorStatus(
@@ -566,7 +984,6 @@ export default function AgentSinglePage() {
     newStatus: string
   ) => {
     if (!agent) return;
-
     setIsUpdatingAddress(kycId);
     try {
       const result = await mockUpdateAddressStatus(
@@ -582,7 +999,6 @@ export default function AgentSinglePage() {
               addressStatus: newStatus as AccountStatus,
             }
           : agent.MbeKyc;
-
         await mutate({ ...agent, MbeKyc: updatedKyc! }, { revalidate: false });
         showToast({
           type: "success",
@@ -605,7 +1021,6 @@ export default function AgentSinglePage() {
 
   const handleDeleteAgent = async () => {
     if (!agent) return;
-
     setIsDeleting(true);
     try {
       const result = await mockDeleteAgent(agent.mbeId);
@@ -641,6 +1056,7 @@ export default function AgentSinglePage() {
   const kyc = agent.MbeKyc;
   const accountDetails = agent.MbeAccountDetails;
   const mainStore = agent.storesNew;
+  const summary = processedPerformanceData.summary;
 
   const guarantorStatusOptions = [
     { key: "APPROVED", label: "Approved", color: "success" },
@@ -700,7 +1116,6 @@ export default function AgentSinglePage() {
               </div>
               <StatusChip status={agent.accountStatus} />
             </div>
-
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center gap-3">
               <Button
@@ -724,7 +1139,6 @@ export default function AgentSinglePage() {
                 Go Back
               </Button>
             </div>
-
             {/* Action Buttons - Mobile */}
             <div className="flex md:hidden items-center gap-2">
               <Dropdown>
@@ -763,6 +1177,72 @@ export default function AgentSinglePage() {
           </div>
         </div>
       </div>
+
+      {/* Performance Statistics Cards */}
+      {canViewAgentPerformanceData && (
+        <div className="px-4 py-6 bg-default-50">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-primary-100 rounded-lg">
+                  <CreditCard className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Loans</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    {processedPerformanceData.loans.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-success-100 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Loan Amount</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦
+                    {processedPerformanceData.loans
+                      .reduce(
+                        (sum: any, loan: any) => sum + (loan.loanAmount || 0),
+                        0
+                      )
+                      .toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-warning-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Total Commissions</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦{(summary?.totalCommission || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-default-200 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-secondary-100 rounded-lg">
+                  <Calendar className="w-6 h-6 text-secondary" />
+                </div>
+                <div>
+                  <p className="text-sm text-default-500">Avg Commission</p>
+                  <p className="text-2xl font-bold text-default-900">
+                    ₦{(summary?.avgCommission || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -873,7 +1353,6 @@ export default function AgentSinglePage() {
                     copyable
                   />
                 )}
-
                 <InfoField
                   label="Full Name"
                   value={`${agent.firstname} ${agent.lastname}`.trim()}
@@ -921,7 +1400,7 @@ export default function AgentSinglePage() {
               title="Statistics"
               icon={<Users className="w-5 h-5 text-default-600" />}
               collapsible={true}
-              defaultExpanded={true}
+              defaultExpanded={false}
             >
               <div className="grid gap-4">
                 <InfoField
@@ -938,12 +1417,181 @@ export default function AgentSinglePage() {
 
           {/* Right Column - Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Performance Data */}
+            {canViewAgentPerformanceData && (
+              <InfoCard
+                title="Performance Data"
+                icon={<TrendingUp className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={false}
+                headerContent={
+                  <ButtonGroup size="sm" variant="flat">
+                    <Button
+                      color={
+                        performanceViewType === "loans" ? "primary" : "default"
+                      }
+                      onPress={() => setPerformanceViewType("loans")}
+                      startContent={<CreditCard className="w-4 h-4" />}
+                    >
+                      Loans ({processedPerformanceData.loans.length})
+                    </Button>
+                    <Button
+                      color={
+                        performanceViewType === "commissions"
+                          ? "primary"
+                          : "default"
+                      }
+                      onPress={() => setPerformanceViewType("commissions")}
+                      startContent={<DollarSign className="w-4 h-4" />}
+                    >
+                      Commissions ({processedPerformanceData.commissions.length}
+                      )
+                    </Button>
+                  </ButtonGroup>
+                }
+              >
+                {performanceLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Loans View */}
+                    {performanceViewType === "loans" && (
+                      <>
+                        {filteredLoans.length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-sm text-default-600">
+                                Loan records for this agent
+                              </p>
+                              <Chip size="sm" variant="flat" color="primary">
+                                {filteredLoans.length} Loan
+                                {filteredLoans.length !== 1 ? "s" : ""}
+                              </Chip>
+                            </div>
+                            <GenericTable<LoanRecord | any>
+                              columns={loanColumns}
+                              data={filteredLoans}
+                              allCount={filteredLoans.length}
+                              exportData={filteredLoans}
+                              isLoading={performanceLoading}
+                              filterValue={loanFilterValue}
+                              onFilterChange={(value) => {
+                                setLoanFilterValue(value);
+                                setLoanPage(1);
+                              }}
+                              statusOptions={loanStatusOptions}
+                              statusFilter={loanStatusFilter}
+                              onStatusChange={setLoanStatusFilter}
+                              statusColorMap={loanStatusColorMap}
+                              showStatus={true}
+                              sortDescriptor={{
+                                column: "createdAt",
+                                direction: "descending",
+                              }}
+                              onSortChange={() => {}}
+                              page={loanPage}
+                              pages={Math.ceil(filteredLoans.length / 10) || 1}
+                              onPageChange={setLoanPage}
+                              exportFn={
+                                role == "scan-partner "
+                                  ? exportLoans
+                                  : (data) => {
+                                      console.log("exported");
+                                    }
+                              }
+                              renderCell={(loan, key) =>
+                                renderLoanCell(loan, key, router, role)
+                              }
+                              hasNoRecords={filteredLoans.length === 0}
+                            />
+                          </div>
+                        ) : (
+                          <EmptyState
+                            title="No Loans Found"
+                            description="This agent has no loan records."
+                            icon={
+                              <CreditCard className="w-6 h-6 text-default-400" />
+                            }
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {/* Commissions View */}
+                    {performanceViewType === "commissions" && (
+                      <>
+                        {filteredCommissions.length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-sm text-default-600">
+                                Commission records for this agent
+                              </p>
+                              <Chip size="sm" variant="flat" color="primary">
+                                {filteredCommissions.length} Commission
+                                {filteredCommissions.length !== 1 ? "s" : ""}
+                              </Chip>
+                            </div>
+                            <GenericTable<CommissionRecord | any>
+                              columns={commissionColumns}
+                              data={filteredCommissions}
+                              allCount={filteredCommissions.length}
+                              exportData={filteredCommissions}
+                              isLoading={performanceLoading}
+                              filterValue={commissionFilterValue}
+                              onFilterChange={(value) => {
+                                setCommissionFilterValue(value);
+                                setCommissionPage(1);
+                              }}
+                              statusOptions={[]}
+                              statusFilter={new Set()}
+                              onStatusChange={() => {}}
+                              statusColorMap={{}}
+                              showStatus={false}
+                              sortDescriptor={{
+                                column: "date_created",
+                                direction: "descending",
+                              }}
+                              onSortChange={() => {}}
+                              page={commissionPage}
+                              pages={
+                                Math.ceil(filteredCommissions.length / 10) || 1
+                              }
+                              onPageChange={setCommissionPage}
+                              exportFn={
+                                role == "scan-partner "
+                                  ? exportCommissions
+                                  : (data) => {
+                                      console.log("exported");
+                                    }
+                              }
+                              renderCell={renderCommissionCell}
+                              hasNoRecords={filteredCommissions.length === 0}
+                            />
+                          </div>
+                        ) : (
+                          <EmptyState
+                            title="No Commissions Found"
+                            description="This agent has no commission records."
+                            icon={
+                              <DollarSign className="w-6 h-6 text-default-400" />
+                            }
+                          />
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </InfoCard>
+            )}
+
             {/* Agent Devices */}
             <InfoCard
               title="Agent Devices"
               icon={<Smartphone className="w-5 h-5 text-default-600" />}
               collapsible={true}
-              defaultExpanded={true}
+              defaultExpanded={false}
             >
               {devicesLoading ? (
                 <div className="flex items-center justify-center py-8">
@@ -990,7 +1638,7 @@ export default function AgentSinglePage() {
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -1023,7 +1671,6 @@ export default function AgentSinglePage() {
                       {mainStore.storeNew.isArchived ? "Archived" : "Active"}
                     </Chip>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Store ID"
@@ -1056,14 +1703,12 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.region}
                     />
                   </div>
-
                   <div className="grid grid-cols-1 gap-4">
                     <InfoField
                       label="Address"
                       value={mainStore.storeNew.address}
                     />
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoField
                       label="Phone Number"
@@ -1074,7 +1719,6 @@ export default function AgentSinglePage() {
                       value={mainStore.storeNew.storeEmail}
                     />
                   </div>
-
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
@@ -1100,7 +1744,6 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
-
                   <div className="bg-default-50 rounded-lg p-4">
                     <h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
@@ -1117,7 +1760,6 @@ export default function AgentSinglePage() {
                       />
                     </div>
                   </div>
-
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h5 className="font-semibold text-default-900 flex items-center gap-2">
@@ -1179,7 +1821,7 @@ export default function AgentSinglePage() {
                 title="Assigned Store"
                 icon={<Store className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <EmptyState
                   title="No Store Assigned"
@@ -1195,7 +1837,7 @@ export default function AgentSinglePage() {
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField label="KYC ID" value={kyc.kycId} copyable />
@@ -1227,7 +1869,6 @@ export default function AgentSinglePage() {
                     }
                   />
                 </div>
-
                 <div className="mt-4">
                   <InfoField
                     label="Full Address"
@@ -1281,7 +1922,7 @@ export default function AgentSinglePage() {
                 title="KYC Information"
                 icon={<User className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <EmptyState
                   title="No KYC Information"
@@ -1297,7 +1938,7 @@ export default function AgentSinglePage() {
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InfoField
@@ -1359,7 +2000,7 @@ export default function AgentSinglePage() {
                 title="Bank Account Details"
                 icon={<CreditCard className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <EmptyState
                   title="No Bank Account Details"
@@ -1375,7 +2016,7 @@ export default function AgentSinglePage() {
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <div className="space-y-6">
                   {canUpdateGuarantorStatus &&
@@ -1484,7 +2125,7 @@ export default function AgentSinglePage() {
                 title="Guarantors Information"
                 icon={<Users className="w-5 h-5 text-default-600" />}
                 collapsible={true}
-                defaultExpanded={true}
+                defaultExpanded={false}
               >
                 <EmptyState
                   title="No Guarantors"
