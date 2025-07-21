@@ -366,6 +366,11 @@ export async function getAllReferees(startDate?: string, endDate?: string) {
   return apiCall(`/admin/customers/all-kyc${query}`, "GET");
 }
 
+export async function getSingleReferee(customerId: string) {
+  return apiCall(`/admin/customers/kyc/${customerId}`, "GET");
+}
+
+
 export async function getUnapprovedReferees(
   startDate?: string,
   endDate?: string
@@ -735,8 +740,8 @@ export async function lockDevice(imei?: string) {
   return apiCall(`/admin/locks/activate/single`, "POST", { imei });
 }
 
-export async function unlockDevice(imei?: string) {
-  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei });
+export async function unlockDevice(imei?: string, dueDate?: string, dueTime?: string) {
+  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei, dueDate, dueTime });
 }
 
 export async function releaseDevice(imei?: string) {
@@ -927,11 +932,6 @@ export async function searchGlobalCustomer(search: string) {
   return apiCall(`/admin/customers/search?search=${search}`, "GET"); 
 }
 
-// //endpoint to update imei number
-// export async function updateImeiNumber(imei: string, customerId: string) {
-//   return apiCall(`/admin/customers/update-imei?imei=${imei}&customerId=${customerId}`, "PUT"); 
-// }
-
 //update admin password
 export async function updateAdminPassword(password: string, confirmPassword: string) {
   return apiCall(`/admin/update-password`, "POST", { password, confirmPassword }); 
@@ -949,6 +949,10 @@ export async function getMBEWithCustomerForRelay(mbe_old_id: string) {
 
 // assign customer to mbe
 export async function assignCustomersToMBE(customerId: string, mbeId: string) {
+  return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
+}
+
+export async function postCommunicationLog(customerId: string, mbeId: string) {
   return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
 }
 
