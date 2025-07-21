@@ -18,7 +18,8 @@ import {
   createCustomerVirtualWallet,
   updateDeviceImeiNumber,
   assignCustomersToMBE,
-  getMBEWithCustomerForRelay
+  getMBEWithCustomerForRelay,
+  searchGlobalCustomer
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import { PaymentReceipt, CustomerSearch } from "@/components/reususables/custom-ui";
@@ -175,10 +176,11 @@ export default function CollectionSingleCustomerPage() {
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
 
-    const { value: imei, error: imeiError, handleChange: handleImeiChange } = useField("", ImeiSchema);
-    const { value: agent, error: agentError, handleChange: handleAgentChange } = useField("", AgentSchema);
+  const { value: imei, error: imeiError, handleChange: handleImeiChange } = useField("", ImeiSchema);
+  const { value: agent, error: agentError, handleChange: handleAgentChange } = useField("", AgentSchema);
 
-  
+  const [searchQuery, setSearchQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
 
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] =
@@ -535,6 +537,25 @@ export default function CollectionSingleCustomerPage() {
     }
   };
 
+  const handleGlobalSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return
+    setIsLoading(true)
+
+    try {
+      const response = await searchGlobalCustomer(searchQuery)
+      console.log(response)
+      setResults(response.data)
+      showToast({ type: "success", message: "Search results fetched successfully", duration: 5000 })
+      setSearchQuery(searchQuery)
+    } catch (error: any) {
+      console.error('Error searching customers:', error)
+      setResults([])
+      showToast({ type: "error", message: error.message || "Error searching customers", duration: 5000 })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
 
   // Device action configuration
   const deviceActions = [
@@ -718,7 +739,10 @@ export default function CollectionSingleCustomerPage() {
               variant="flat"
               color="primary"
               startContent={<Search className="w-4 h-4" />}
-              onPress={() => onSearch()}
+              onPress={() => {
+                setSelectedCustomer(customer);
+                onSearch();
+              }}
               className="mr-2"
             >
               Search
