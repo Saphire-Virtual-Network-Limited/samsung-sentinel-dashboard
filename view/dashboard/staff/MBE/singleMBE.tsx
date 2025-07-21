@@ -27,6 +27,8 @@ export default function SingleMBEPage() {
   });
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
+  // Date filter state
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
 
   // Use SWR like mbeView.tsx does
   const { data: raw, isLoading, error } = useSWR(
@@ -239,8 +241,41 @@ export default function SingleMBEPage() {
     originalCustomer: customer,
   })) : [];
 
+  // Debug: Log some sample createdAt values
+  if (customersData.length > 0) {
+    console.log("Sample createdAt values:", customersData.slice(0, 3).map(c => ({
+      name: c.customerName,
+      createdAt: c.createdAt,
+      type: typeof c.createdAt
+    })));
+  }
+
   // Filter customers
   let filtered = [...customersData];
+
+  // Date filter logic
+  if (dateRange.start && dateRange.end) {
+    console.log("Date filter active:", { start: dateRange.start, end: dateRange.end });
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+    // Set end time to end of day for inclusive filtering
+    end.setHours(23, 59, 59, 999);
+    
+    const beforeFilter = filtered.length;
+    filtered = filtered.filter((c) => {
+      if (!c.createdAt || c.createdAt === "N/A") return false;
+      
+      const created = new Date(c.createdAt);
+      console.log("Checking customer:", c.customerName, "createdAt:", c.createdAt, "parsed:", created);
+      
+      // Include if createdAt is between start and end (inclusive)
+      const isInRange = created >= start && created <= end;
+      console.log("Is in range:", isInRange);
+      return isInRange;
+    });
+    
+    console.log(`Date filter: ${beforeFilter} -> ${filtered.length} customers`);
+  }
   
   if (filterValue) {
     const f = filterValue.toLowerCase();
@@ -582,6 +617,13 @@ export default function SingleMBEPage() {
                     exportFn={exportFn}
                     renderCell={renderCell}
                     hasNoRecords={filtered.length === 0}
+                    onDateFilterChange={(start, end) => {
+                      console.log("Date filter changed:", { start, end });
+                      setDateRange({ start, end });
+                      setPage(1);
+                    }}
+                    initialStartDate={dateRange.start || undefined}
+                    initialEndDate={dateRange.end || undefined}
                   />
                 ) : (
                   <div className="text-center py-8 text-default-500">
