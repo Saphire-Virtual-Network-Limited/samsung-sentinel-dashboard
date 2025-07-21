@@ -56,6 +56,8 @@ export interface PermissionConfig {
   updateAddressStatus: boolean;
   viewLoanDetails: boolean;
   viewCommissionDetails: boolean;
+  verifyMobiflex: boolean;
+  viewAgentPerformanceData: boolean;
 
   // Example of how to add a new permission:
   // canManageReports: boolean;
@@ -87,6 +89,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     updateAddressStatus: true,
     viewLoanDetails: true,
     viewCommissionDetails: true,
+    viewAgentPerformanceData: true,
 
     // Admin has no special permissions by default
     // All permissions default to false
@@ -113,6 +116,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     updateAddressStatus: true,
     viewLoanDetails: true,
     viewCommissionDetails: true,
+    viewAgentPerformanceData: true,
   },
 
   "collection-admin": {
@@ -136,7 +140,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewCommunicationLog: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
-    },
+  },
   finance: {
     // Finance has no special permissions
     // All permissions default to false
@@ -165,6 +169,10 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     // Verify has no special permissions
     // All permissions default to false
   },
+  "verification-officer": {
+    updateGuarantorStatus: true,
+    updateAddressStatus: true,
+  },
 };
 
 // Special user overrides (for specific users who need additional permissions)
@@ -181,6 +189,10 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
   },
+  "babatunde@sapphirevirtual.com": {
+    verifyMobiflex: true,
+  },
+
   "topeyemi33@gmail.com": {
     canUpdateWalletBalance: true,
     canUpdateLastPoint: true,
@@ -254,6 +266,7 @@ function getDefaultPermissions(): PermissionConfig {
     canCreate: false,
     canSync: false,
     canEdit: false,
+    verifyMobiflex: false,
     createDashboardUser: false,
     canUpdateDeviceImei: false,
     canAssignAgent: false,
@@ -261,6 +274,8 @@ function getDefaultPermissions(): PermissionConfig {
     updateAddressStatus: false,
     viewLoanDetails: false,
     viewCommissionDetails: false,
+
+    viewAgentPerformanceData: false,
 
     // Example of how to add a new permission:
     // canManageReports: false,
@@ -349,6 +364,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "updateAddressStatus",
     "viewLoanDetails",
     "viewCommissionDetails",
+    "verifyMobiflex",
+    "viewAgentPerformanceData",
 
     // 'canViewSensitiveData',
     // 'canManageCustomers',
