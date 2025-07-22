@@ -19,6 +19,7 @@ import DailyDashCardCollection from "./collections/dailyDashCard";
 import InceptionDashCardCollection from "./collections/inceptionDashCard";
 import CustomerSearch from "./CustomerSearch";  
 import GlobalSearch from "./globalSearch";
+import CommunicationLog from "./communicationLog";
 
 
-export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeleton, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenReport, DailyDashCardCollection, InceptionDashCardCollection, CustomerSearch, GlobalSearch };
+export { Header, Footer, SkeletonLoader, AppSidebar, SidebarSkeleton, NoInternet, DashCard, DateFilter, DeviceCard, CardSkeleton, TableSkeleton, PaymentReceipt, DynamicQRCode, DailyDashCard, InceptionDashCard, DeviceDashAnalytic, ScreenReport, DailyDashCardCollection, InceptionDashCardCollection, CustomerSearch, GlobalSearch, CommunicationLog };
