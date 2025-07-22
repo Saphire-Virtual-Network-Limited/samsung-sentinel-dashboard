@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface User {
   id: string;
   role: string;
+  email?: string;
   // Add other user properties as needed
 }
 
@@ -12,13 +13,13 @@ export function useAuth() {
 
   useEffect(() => {
     // Get user data from localStorage or your auth system
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error("Error parsing user data:", error);
       }
     }
     setLoading(false);
@@ -26,12 +27,12 @@ export function useAuth() {
 
   const login = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   };
 
   return {
@@ -40,4 +41,4 @@ export function useAuth() {
     login,
     logout,
   };
-} 
+}

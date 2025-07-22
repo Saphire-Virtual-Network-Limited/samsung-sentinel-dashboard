@@ -267,10 +267,7 @@ export function AppSidebar() {
       icon: Users2,
       title: "Users",
       id: "admin-users",
-      subItems: [
-        //     { title: "Manage", url: "/access/admin/users/mange" },
-        { title: "Create", url: "/access/admin/users/create" },
-      ],
+      url: "/access/admin/users/",
     },
 
     {
@@ -511,10 +508,7 @@ export function AppSidebar() {
       icon: Users2,
       title: "Users",
       id: "admin-users",
-      subItems: [
-        { title: "Manage", url: "/access/sub-admin/users/mange" },
-        { title: "Create", url: "/access/sub-admin/users/create" },
-      ],
+      url: "/access/sub-admin/users/",
     },
 
     {
@@ -640,6 +634,12 @@ export function AppSidebar() {
       id: "developer-products",
     },
     {
+      icon: Users2,
+      title: "Users",
+      id: "admin-users",
+      url: "/access/admin/users/",
+    },
+    {
       icon: Store,
       title: "Stores",
       url: "/access/dev/stores",
@@ -668,10 +668,9 @@ export function AppSidebar() {
   const adminVerificationItems: MenuItem[] = [
     {
       icon: IoBusiness,
-          title: "Mobiflex Sales Agent",
-          url: "/access/verify/staff/agents",
+      title: "Mobiflex Sales Agent",
+      url: "/access/verify/staff/agents",
       id: "verify-staff-mobiflex",
-    
     },
   ];
   const verificationItems: MenuItem[] = [

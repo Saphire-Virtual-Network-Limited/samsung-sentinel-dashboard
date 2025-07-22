@@ -44,6 +44,7 @@ export interface PermissionConfig {
   canViewDeviceActivityLog: boolean;
   canViewCommunicationLog: boolean;
   suspendDashboardUser: boolean;
+  canChangeDashboardUserPassword: boolean;
   canCreate: boolean;
   canSync: boolean;
   canEdit: boolean;
@@ -138,6 +139,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
+    suspendDashboardUser: true,
+    canChangeDashboardUserPassword: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
   },
@@ -263,6 +266,7 @@ function getDefaultPermissions(): PermissionConfig {
     canViewDeviceActivityLog: false,
     canViewCommunicationLog: false,
     suspendDashboardUser: false,
+    canChangeDashboardUserPassword: false,
     canCreate: false,
     canSync: false,
     canEdit: false,
@@ -353,6 +357,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "canViewOverDuePayments",
     "canViewDeviceActivityLog",
     "canViewCommunicationLog",
+    "suspendDashboardUser",
+    "canChangeDashboardUserPassword",
     "canCreate",
     "canSync",
     "canEdit",

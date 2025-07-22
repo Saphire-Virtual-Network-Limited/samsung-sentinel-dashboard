@@ -205,6 +205,9 @@ export interface InviteAdminData {
 export async function inviteAdmin(data: InviteAdminData) {
   return apiCall("/admin/invite", "POST", data);
 }
+export async function getAllAdmins() {
+  return apiCall("/admin/admins", "GET");
+}
 
 //** Devices */
 
@@ -369,7 +372,6 @@ export async function getAllReferees(startDate?: string, endDate?: string) {
 export async function getSingleReferee(customerId: string) {
   return apiCall(`/admin/customers/kyc/${customerId}`, "GET");
 }
-
 
 export async function getUnapprovedReferees(
   startDate?: string,
@@ -740,8 +742,16 @@ export async function lockDevice(imei?: string) {
   return apiCall(`/admin/locks/activate/single`, "POST", { imei });
 }
 
-export async function unlockDevice(imei?: string, dueDate?: string, dueTime?: string) {
-  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei, dueDate, dueTime });
+export async function unlockDevice(
+  imei?: string,
+  dueDate?: string,
+  dueTime?: string
+) {
+  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", {
+    imei,
+    dueDate,
+    dueTime,
+  });
 }
 
 export async function releaseDevice(imei?: string) {
@@ -922,56 +932,97 @@ export async function getAllVfdBanks() {
 }
 
 //update device imei number
-export async function updateDeviceImeiNumber(deviceOnLoanId: string, imei: string) {
-  return apiCall(`/admin/device/imei/${deviceOnLoanId}`, "PUT", {imei}); 
+export async function updateDeviceImeiNumber(
+  deviceOnLoanId: string,
+  imei: string
+) {
+  return apiCall(`/admin/device/imei/${deviceOnLoanId}`, "PUT", { imei });
 }
 
 //search customer across all channels
 export async function searchGlobalCustomer(search: string) {
-  return apiCall(`/admin/customers/search?search=${search}`, "GET"); 
+  return apiCall(`/admin/customers/search?search=${search}`, "GET");
 }
 
+// //endpoint to update imei number
+// export async function updateImeiNumber(imei: string, customerId: string) {
+//   return apiCall(`/admin/customers/update-imei?imei=${imei}&customerId=${customerId}`, "PUT");
+// }
+
 //update admin password
-export async function updateAdminPassword(password: string, confirmPassword: string) {
-  return apiCall(`/admin/update-password`, "POST", { password, confirmPassword }); 
+export async function updateAdminPassword(
+  password: string,
+  confirmPassword: string
+) {
+  return apiCall(`/admin/update-password`, "POST", {
+    password,
+    confirmPassword,
+  });
 }
 
 //update admin password  for only dev
-export async function updateAdminPasswordForDev(adminId: string, password: string, confirmPassword: string) {
-  return apiCall(`/admin/dev/update-password`, "POST", { adminId, password, confirmPassword }); 
+export async function updateAdminPasswordForDev(
+  adminId: string,
+  password: string,
+  confirmPassword: string
+) {
+  return apiCall(`/admin/dev/update-password`, "POST", {
+    adminId,
+    password,
+    confirmPassword,
+  });
 }
 
 //Get mbe with customer which is use to submit transaction to relay
 export async function getMBEWithCustomerForRelay(mbe_old_id: string) {
-  return apiCall(`/admin/customers/mbes-with-customers?mbe_old_id=${mbe_old_id}`, "GET"); 
+  return apiCall(
+    `/admin/customers/mbes-with-customers?mbe_old_id=${mbe_old_id}`,
+    "GET"
+  );
 }
 
 // assign customer to mbe
 export async function assignCustomersToMBE(customerId: string, mbeId: string) {
-  return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
+  return apiCall(
+    `/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`,
+    "POST"
+  );
 }
 
 //commnunication log
 export async function postCommunicationLog(customerId: string, note: string) {
-  return apiCall(`/admin/communication-log/create`, "POST", {customerId, note}); 
+  return apiCall(`/admin/communication-log/create`, "POST", {
+    customerId,
+    note,
+  });
 }
 
 //get communication log by customer id
 export async function getCommunicationLogByCustomerId(customerId: string) {
-  return apiCall(`/admin/communication-log/getBycustomerid?customerId=${customerId}`, "GET"); 
+  return apiCall(
+    `/admin/communication-log/getBycustomerid?customerId=${customerId}`,
+    "GET"
+  );
 }
 
 //get all cummunication log in the system
 export async function getAllCommunicationLog() {
-  return apiCall(`/admin/communication-log/getAll`, "GET"); 
+  return apiCall(`/admin/communication-log/getAll`, "GET");
 }
 
 //update communication log by customer id
-export async function updateCommunication(id: string, customerId: string, note: string) {   
-  return apiCall(`/admin/communication-log/update/${id}`, "PUT", {customerId, note}); 
+export async function updateCommunication(
+  id: string,
+  customerId: string,
+  note: string
+) {
+  return apiCall(`/admin/communication-log/update/${id}`, "PUT", {
+    customerId,
+    note,
+  });
 }
 
 //delete communication log by customer id
 export async function deleteCommunicationLog(id: string) {
-  return apiCall(`/admin/communication-log/delete/${id}`, "DELETE"); 
+  return apiCall(`/admin/communication-log/delete/${id}`, "DELETE");
 }
