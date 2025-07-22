@@ -921,7 +921,6 @@ export async function getAllVfdBanks() {
   return apiCall("/payments/bank-list", "GET");
 }
 
-
 //update device imei number
 export async function updateDeviceImeiNumber(deviceOnLoanId: string, imei: string) {
   return apiCall(`/admin/device/imei/${deviceOnLoanId}`, "PUT", {imei}); 
@@ -952,7 +951,27 @@ export async function assignCustomersToMBE(customerId: string, mbeId: string) {
   return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
 }
 
-export async function postCommunicationLog(customerId: string, mbeId: string) {
-  return apiCall(`/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`, "POST"); 
+//commnunication log
+export async function postCommunicationLog(customerId: string, note: string) {
+  return apiCall(`/admin/communication-log/create`, "POST", {customerId, note}); 
 }
 
+//get communication log by customer id
+export async function getCommunicationLogByCustomerId(customerId: string) {
+  return apiCall(`/admin/communication-log/getBycustomerid?customerId=${customerId}`, "GET"); 
+}
+
+//get all cummunication log in the system
+export async function getAllCommunicationLog() {
+  return apiCall(`/admin/communication-log/getAll`, "GET"); 
+}
+
+//update communication log by customer id
+export async function updateCommunication(id: string, customerId: string, note: string) {   
+  return apiCall(`/admin/communication-log/update/${id}`, "PUT", {customerId, note}); 
+}
+
+//delete communication log by customer id
+export async function deleteCommunicationLog(id: string) {
+  return apiCall(`/admin/communication-log/delete/${id}`, "DELETE"); 
+}

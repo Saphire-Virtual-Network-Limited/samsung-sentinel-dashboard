@@ -22,7 +22,7 @@ import {
   searchGlobalCustomer
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
-import { PaymentReceipt, CustomerSearch } from "@/components/reususables/custom-ui";
+import { PaymentReceipt, CustomerSearch, CommunicationLog } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
 import {
@@ -2228,87 +2228,88 @@ export default function CollectionSingleCustomerPage() {
 
             {/* COMMUNICATION LOG */}
             {hasPermission(role, "canViewCommunicationLog", userEmail) && (
-              <InfoCard
-                title="Communication LOG"
-                icon={<Users className="w-5 h-5 text-default-600" />}
-                collapsible={true}
-                defaultExpanded={true}
-              >
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-default-200">
-                    <thead className="bg-default-50">
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          S/N
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          Message
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          Time
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-default-200">
-                      <tr>
-                        <td colSpan={3} className="px-6 py-12 text-center">
-                          <EmptyState
-                            title="No Communication Logs"
-                            description="There are no messages to display at this time."
-                            icon={
-                              <svg
-                                className="w-12 h-12 mb-4 text-default-300"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                />
-                              </svg>
-                            }
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <CommunicationLog />
+              // <InfoCard
+              //   title="Communication LOG"
+              //   icon={<Users className="w-5 h-5 text-default-600" />}
+              //   collapsible={true}
+              //   defaultExpanded={true}
+              // >
+              //   <div className="overflow-x-auto">
+              //     <table className="min-w-full divide-y divide-default-200">
+              //       <thead className="bg-default-50">
+              //         <tr>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             S/N
+              //           </th>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             Message
+              //           </th>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             Time
+              //           </th>
+              //         </tr>
+              //       </thead>
+              //       <tbody className="bg-white divide-y divide-default-200">
+              //         <tr>
+              //           <td colSpan={3} className="px-6 py-12 text-center">
+              //             <EmptyState
+              //               title="No Communication Logs"
+              //               description="There are no messages to display at this time."
+              //               icon={
+              //                 <svg
+              //                   className="w-12 h-12 mb-4 text-default-300"
+              //                   fill="none"
+              //                   stroke="currentColor"
+              //                   viewBox="0 0 24 24"
+              //                 >
+              //                   <path
+              //                     strokeLinecap="round"
+              //                     strokeLinejoin="round"
+              //                     strokeWidth={2}
+              //                     d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              //                   />
+              //                 </svg>
+              //               }
+              //             />
+              //           </td>
+              //         </tr>
+              //       </tbody>
+              //     </table>
+              //   </div>
 
-                {/* Post Communication Log */}
-                <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-                  <div className="p-4">
-                    <FormField
-                      label="Post Communication"
-                      htmlFor="message"
-                      type="text"
-                      id="message"
-                      placeholder="Enter Communication Message"
-                      value={""}
-                      size="sm"
-                    />
-                    <Button
-                      className="mt-4"
-                      size="sm"
-                      color="primary"
-                      variant="solid"
-                    >
-                      Post
-                    </Button>
-                  </div>
-                </div>
-              </InfoCard>
+              //   {/* Post Communication Log */}
+              //   <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+              //     <div className="p-4">
+              //       <FormField
+              //         label="Post Communication"
+              //         htmlFor="message"
+              //         type="text"
+              //         id="message"
+              //         placeholder="Enter Communication Message"
+              //         value={""}
+              //         size="sm"
+              //       />
+              //       <Button
+              //         className="mt-4"
+              //         size="sm"
+              //         color="primary"
+              //         variant="solid"
+              //       >
+              //         Post
+              //       </Button>
+              //     </div>
+              //   </div>
+              // </InfoCard>
             )}
           </div>
         </div>
