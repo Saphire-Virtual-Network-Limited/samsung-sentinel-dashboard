@@ -1,19 +1,15 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button, Chip, Snippet } from "@heroui/react";
 import { ArrowLeft } from "lucide-react";
 import {
-  getApprovedReferees,
-  getUnapprovedReferees,
-  getRejectedReferees,
   verifyCustomerReferenceNumber,
   showToast,
-  updateLinkStatus,
+  getSingleReferee,
 } from "@/lib";
 import { SelectField } from "@/components/reususables/form";
-import useSWR from "swr";
 
 type CustomerRecord = {
   customerId?: string;
@@ -124,69 +120,51 @@ export default function SingleRefereeView({
   role = "verify",
 }: SingleRefereeViewProps) {
   const router = useRouter();
+  const params = useParams();
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [reason, setReason] = useState("");
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [selectedPhone, setSelectedPhone] = useState<string[]>([]);
   const [isDisabled, setIsDisabled] = useState(false);
-
-  const {
-    data: response,
-    error,
-    isLoading,
-  } = useSWR(
-    id ? ["referee", id] : null,
-    async () => {
-      const [approved, unapproved, rejected] = await Promise.all([
-        getApprovedReferees(),
-        getUnapprovedReferees(),
-        getRejectedReferees(),
-      ]);
-
-      // Combine all results and find the customer
-      const allReferees = [
-        ...(approved?.data || []),
-        ...(unapproved?.data || []),
-        ...(rejected?.data || []),
-      ];
-
-      return { data: allReferees };
-    },
-    {
-      revalidateOnFocus: true,
-      dedupingInterval: 0,
-      refreshInterval: 0,
-      shouldRetryOnError: false,
-      keepPreviousData: true,
-      revalidateIfStale: true,
-    }
-  );
-
-  const customer = useMemo(() => {
-    if (!response?.data) return null;
-    return response.data.find((c: CustomerRecord) => c.customerId === id);
-  }, [response?.data, id]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [customer, setCustomer] = useState<CustomerRecord | null>(null);
 
   useEffect(() => {
-    if (error) {
-      showToast({
-        type: "error",
-        message: error.message || "Failed to fetch customer data",
-        duration: 3000,
-      });
-    }
-  }, [error]);
+    const fetchCustomer = async () => {
+      if (!params.id) {
+        setIsLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (response?.data && !customer) {
-      showToast({
-        type: "error",
-        message: "Customer not found",
-        duration: 3000,
-      });
-    }
-  }, [response?.data, customer]);
+      try {
+        const response = await getSingleReferee(params.id as string);
+        
+        if (response && response.data) {
+          setCustomer(response.data);
+        } else {
+          showToast({
+            type: "error",
+            message: "Customer not found",
+            duration: 5000,
+          });
+        }
+      } catch (error: any) {
+        console.error("Error fetching customer:", error);
+        showToast({
+          type: "error",
+          message: error.message || "Failed to fetch customer data",
+          duration: 5000,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCustomer();
+  }, [params.id]);
+
+
 
   // useEffect(() => {
   //   const handleLinkStatus = async () => {
@@ -209,6 +187,7 @@ export default function SingleRefereeView({
   // }, [customer?.customerId, role, router]);
 
   const handleBack = () => {
+    if (!customer?.customerId) return;
     router.push(
       `/access/${role}/referees/approved-referees/${customer.customerId}`
     );
@@ -242,9 +221,9 @@ export default function SingleRefereeView({
     return phoneOptions
       .filter((phone) => phone.value)
       .map((phone) => ({
-        ...phone,
         key: `phone-${phone.id}-${phone.value}`,
         label: `${phone.label} - ${phone.value}`, // Combine label and value in the display text
+        value: phone.value as string,
       }));
   }, [customer?.CustomerKYC]);
 
@@ -253,6 +232,8 @@ export default function SingleRefereeView({
   };
 
   const handleApproveReferee = async () => {
+    if (!customer?.customerId || !selectedPhone[0]) return;
+    
     setIsButtonLoading(true);
     try {
       const verifyCustomerReferenceNumberDetails = {
@@ -287,7 +268,7 @@ export default function SingleRefereeView({
   };
 
   const handleRejectReferee = async () => {
-    if (!customer) return;
+    if (!customer?.customerId || !selectedPhone[0]) return;
 
     setIsButtonLoading(true);
     try {

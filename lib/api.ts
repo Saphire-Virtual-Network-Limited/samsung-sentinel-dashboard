@@ -369,6 +369,10 @@ export async function getAllReferees(startDate?: string, endDate?: string) {
   return apiCall(`/admin/customers/all-kyc${query}`, "GET");
 }
 
+export async function getSingleReferee(customerId: string) {
+  return apiCall(`/admin/customers/kyc/${customerId}`, "GET");
+}
+
 export async function getUnapprovedReferees(
   startDate?: string,
   endDate?: string
@@ -594,6 +598,10 @@ export async function getAllScanPartners(
   return apiCall(`/admin/mbe/scan-partners${query}`, "GET", undefined, options);
 }
 
+export async function getScanPartnerAgents(options?: ApiCallOptions) {
+  return apiCall(`/admin/mbe/scan-partners/agents`, "GET", undefined, options);
+}
+
 export async function getScanPartnerByUserId(
   userId: string,
 
@@ -738,8 +746,16 @@ export async function lockDevice(imei?: string) {
   return apiCall(`/admin/locks/activate/single`, "POST", { imei });
 }
 
-export async function unlockDevice(imei?: string) {
-  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", { imei });
+export async function unlockDevice(
+  imei?: string,
+  dueDate?: string,
+  dueTime?: string
+) {
+  return apiCall(`/admin/locks/unlock/single-bulk`, "POST", {
+    imei,
+    dueDate,
+    dueTime,
+  });
 }
 
 export async function releaseDevice(imei?: string) {
@@ -975,4 +991,42 @@ export async function assignCustomersToMBE(customerId: string, mbeId: string) {
     `/admin/customers/assign-mbe?customerId=${customerId}&mbeId=${mbeId}`,
     "POST"
   );
+}
+
+//commnunication log
+export async function postCommunicationLog(customerId: string, note: string) {
+  return apiCall(`/admin/communication-log/create`, "POST", {
+    customerId,
+    note,
+  });
+}
+
+//get communication log by customer id
+export async function getCommunicationLogByCustomerId(customerId: string) {
+  return apiCall(
+    `/admin/communication-log/getBycustomerid?customerId=${customerId}`,
+    "GET"
+  );
+}
+
+//get all communication log in the system
+export async function getAllCommunicationLog() {
+  return apiCall(`/admin/communication-log/getAll`, "GET");
+}
+
+//update communication log by customer id
+export async function updateCommunication(
+  id: string,
+  customerId: string,
+  note: string
+) {
+  return apiCall(`/admin/communication-log/update/${id}`, "PUT", {
+    customerId,
+    note,
+  });
+}
+
+//delete communication log by customer id
+export async function deleteCommunicationLog(id: string) {
+  return apiCall(`/admin/communication-log/delete/${id}`, "DELETE");
 }

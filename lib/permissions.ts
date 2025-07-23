@@ -208,10 +208,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
-
     canUpdateDeviceImei: true,
     canAssignAgent: true,
-
     createDashboardUser: true,
   },
   "greatnessabolade@gmail.com": {
@@ -229,25 +227,27 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
   },
-  "seyi@sapphirevirtual.com": {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewCommunicationLog: true,
-    canViewDeviceActivityLog: true,
-    canCreate: true,
-    canSync: true,
-    canEdit: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-  },
+  // "seyi@sapphirevirtual.com": {
+  //   canUpdateWalletBalance: true,
+  //   canUpdateLastPoint: true,
+  //   canUpdateLoanStatus: true,
+  //   canTriggerDeviceActions: true,
+  //   canDeleteCustomers: true,
+  //   canViewOverDuePayments: true,
+  //   canViewCommunicationLog: true,
+  //   canViewDeviceActivityLog: true,
+  //   canCreate: true,
+  //   canSync: true,
+  //   canEdit: true,
+  //   canUpdateDeviceImei: true,
+  //   canAssignAgent: true,
+  // },
   "olayinka@sapphirevirtual.com": {
     canCreate: true,
-    // canSync: true,
-    canEdit: true,
+    // canEdit: true,
+    canAssignAgent: true,
+  },
+  "richard@sapphirevirtual.com": {
     canAssignAgent: true,
   },
 };
@@ -272,10 +272,8 @@ function getDefaultPermissions(): PermissionConfig {
     canEdit: false,
     verifyMobiflex: false,
     createDashboardUser: false,
-
     canUpdateDeviceImei: false,
     canAssignAgent: false,
-
     updateGuarantorStatus: false,
     updateAddressStatus: false,
     viewLoanDetails: false,

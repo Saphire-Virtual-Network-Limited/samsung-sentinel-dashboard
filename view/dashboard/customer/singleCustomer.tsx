@@ -18,10 +18,11 @@ import {
   createCustomerVirtualWallet,
   updateDeviceImeiNumber,
   assignCustomersToMBE,
-  getMBEWithCustomerForRelay
+  getMBEWithCustomerForRelay,
+  searchGlobalCustomer
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
-import { PaymentReceipt, CustomerSearch } from "@/components/reususables/custom-ui";
+import { PaymentReceipt, CustomerSearch, CommunicationLog } from "@/components/reususables/custom-ui";
 import { FormField, SelectField } from "@/components/reususables";
 import { CustomerRecord } from "./types";
 import {
@@ -175,10 +176,11 @@ export default function CollectionSingleCustomerPage() {
 
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
 
-    const { value: imei, error: imeiError, handleChange: handleImeiChange } = useField("", ImeiSchema);
-    const { value: agent, error: agentError, handleChange: handleAgentChange } = useField("", AgentSchema);
+  const { value: imei, error: imeiError, handleChange: handleImeiChange } = useField("", ImeiSchema);
+  const { value: agent, error: agentError, handleChange: handleAgentChange } = useField("", AgentSchema);
 
-  
+  const [searchQuery, setSearchQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
 
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] =
@@ -193,6 +195,8 @@ export default function CollectionSingleCustomerPage() {
     description: string;
     imei: string;
   } | null>(null);
+  const [dueDate, setDueDate] = useState<string>("");
+  const [dueTime, setDueTime] = useState<string>("");
 
   const {
     isOpen: isUpdateWallet,
@@ -535,6 +539,25 @@ export default function CollectionSingleCustomerPage() {
     }
   };
 
+  const handleGlobalSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return
+    setIsLoading(true)
+
+    try {
+      const response = await searchGlobalCustomer(searchQuery)
+      console.log(response)
+      setResults(response.data)
+      showToast({ type: "success", message: "Search results fetched successfully", duration: 5000 })
+      setSearchQuery(searchQuery)
+    } catch (error: any) {
+      console.error('Error searching customers:', error)
+      setResults([])
+      showToast({ type: "error", message: error.message || "Error searching customers", duration: 5000 })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
 
   // Device action configuration
   const deviceActions = [
@@ -563,7 +586,7 @@ export default function CollectionSingleCustomerPage() {
     if (!imei || imei === "N/A") {
       showToast({
         type: "error",
-        message: "No device found",
+        message: "No device imei found",
         duration: 5000,
       });
       return;
@@ -580,7 +603,7 @@ export default function CollectionSingleCustomerPage() {
           successMessage = "Device locked successfully";
           break;
         case "unlock_device":
-          response = await unlockDevice(imei);
+          response = await unlockDevice(imei, dueDate, dueTime);
           successMessage = "Device unlocked successfully";
           break;
         case "release_device":
@@ -600,6 +623,8 @@ export default function CollectionSingleCustomerPage() {
       onDeviceActionClose();
       setSelectedAction("");
       setDeviceActionData(null);
+      setDueDate("");
+      setDueTime("");
       // Refresh the page
       window.location.reload();
     } catch (error: any) {
@@ -718,7 +743,10 @@ export default function CollectionSingleCustomerPage() {
               variant="flat"
               color="primary"
               startContent={<Search className="w-4 h-4" />}
-              onPress={() => onSearch()}
+              onPress={() => {
+                setSelectedCustomer(customer);
+                onSearch();
+              }}
               className="mr-2"
             >
               Search
@@ -2204,87 +2232,88 @@ export default function CollectionSingleCustomerPage() {
 
             {/* COMMUNICATION LOG */}
             {hasPermission(role, "canViewCommunicationLog", userEmail) && (
-              <InfoCard
-                title="Communication LOG"
-                icon={<Users className="w-5 h-5 text-default-600" />}
-                collapsible={true}
-                defaultExpanded={true}
-              >
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-default-200">
-                    <thead className="bg-default-50">
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          S/N
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          Message
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-                        >
-                          Time
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-default-200">
-                      <tr>
-                        <td colSpan={3} className="px-6 py-12 text-center">
-                          <EmptyState
-                            title="No Communication Logs"
-                            description="There are no messages to display at this time."
-                            icon={
-                              <svg
-                                className="w-12 h-12 mb-4 text-default-300"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                />
-                              </svg>
-                            }
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <CommunicationLog />
+              // <InfoCard
+              //   title="Communication LOG"
+              //   icon={<Users className="w-5 h-5 text-default-600" />}
+              //   collapsible={true}
+              //   defaultExpanded={true}
+              // >
+              //   <div className="overflow-x-auto">
+              //     <table className="min-w-full divide-y divide-default-200">
+              //       <thead className="bg-default-50">
+              //         <tr>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             S/N
+              //           </th>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             Message
+              //           </th>
+              //           <th
+              //             scope="col"
+              //             className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
+              //           >
+              //             Time
+              //           </th>
+              //         </tr>
+              //       </thead>
+              //       <tbody className="bg-white divide-y divide-default-200">
+              //         <tr>
+              //           <td colSpan={3} className="px-6 py-12 text-center">
+              //             <EmptyState
+              //               title="No Communication Logs"
+              //               description="There are no messages to display at this time."
+              //               icon={
+              //                 <svg
+              //                   className="w-12 h-12 mb-4 text-default-300"
+              //                   fill="none"
+              //                   stroke="currentColor"
+              //                   viewBox="0 0 24 24"
+              //                 >
+              //                   <path
+              //                     strokeLinecap="round"
+              //                     strokeLinejoin="round"
+              //                     strokeWidth={2}
+              //                     d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              //                   />
+              //                 </svg>
+              //               }
+              //             />
+              //           </td>
+              //         </tr>
+              //       </tbody>
+              //     </table>
+              //   </div>
 
-                {/* Post Communication Log */}
-                <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
-                  <div className="p-4">
-                    <FormField
-                      label="Post Communication"
-                      htmlFor="message"
-                      type="text"
-                      id="message"
-                      placeholder="Enter Communication Message"
-                      value={""}
-                      size="sm"
-                    />
-                    <Button
-                      className="mt-4"
-                      size="sm"
-                      color="primary"
-                      variant="solid"
-                    >
-                      Post
-                    </Button>
-                  </div>
-                </div>
-              </InfoCard>
+              //   {/* Post Communication Log */}
+              //   <div className="bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden">
+              //     <div className="p-4">
+              //       <FormField
+              //         label="Post Communication"
+              //         htmlFor="message"
+              //         type="text"
+              //         id="message"
+              //         placeholder="Enter Communication Message"
+              //         value={""}
+              //         size="sm"
+              //       />
+              //       <Button
+              //         className="mt-4"
+              //         size="sm"
+              //         color="primary"
+              //         variant="solid"
+              //       >
+              //         Post
+              //       </Button>
+              //     </div>
+              //   </div>
+              // </InfoCard>
             )}
           </div>
         </div>
@@ -2449,19 +2478,65 @@ export default function CollectionSingleCustomerPage() {
                       ⚠️ Warning: This action cannot be undone.
                     </p>
                   </div>
+
+                  {/* Due Date and Time fields for unlock device action */}
+                  {deviceActionData?.action === "unlock_device" && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-default-700 mb-2">
+                            Due Date
+                          </label>
+                          <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-default-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-default-700 mb-2">
+                            Due Time
+                          </label>
+                          <input
+                            type="time"
+                            value={dueTime}
+                            onChange={(e) => setDueTime(e.target.value)}
+                            className="w-full px-3 py-2 border border-default-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-info-50 border border-info-200 rounded-lg p-3">
+                        <p className="text-sm text-info-700">
+                          📅 Please set the due date and time for when the device should be locked again.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ModalBody>
               <ModalFooter className="flex gap-2">
                 <Button
                   color="success"
                   variant="solid"
-                  onPress={() =>
+                  onPress={() => {
+                    if (deviceActionData?.action === "unlock_device" && (!dueDate || !dueTime)) {
+                      showToast({
+                        type: "error",
+                        message: "Please select both due date and due time",
+                        duration: 5000,
+                      });
+                      return;
+                    }
+                    
                     deviceActionData &&
                     handleDeviceAction(
                       deviceActionData.action,
                       deviceActionData.imei
-                    )
-                  }
+                    );
+                  }}
                   isLoading={isButtonLoading}
                 >
                   Confirm
@@ -2473,6 +2548,8 @@ export default function CollectionSingleCustomerPage() {
                     onDeviceActionClose();
                     setSelectedAction("");
                     setDeviceActionData(null);
+                    setDueDate("");
+                    setDueTime("");
                   }}
                 >
                   Cancel
