@@ -1173,27 +1173,29 @@ export default function ScanPartnerSinglePage() {
             </div>
             {/* Action Buttons - Mobile */}
             <div className="flex md:hidden items-center gap-2">
-              <Dropdown>
-                <DropdownTrigger>
-                  <div
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </div>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="Scan partner actions">
-                  <DropdownItem
-                    key="suspend"
-                    startContent={<Trash2 className="w-4 h-4" />}
-                    className="text-danger"
-                    onPress={onSuspendOpen}
-                  >
-                    Suspend Scan Partner
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+              {canSuspendUser && (
+                <Dropdown>
+                  <DropdownTrigger>
+                    <div
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-default-100 hover:bg-default-200 cursor-pointer transition-colors"
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </div>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Scan partner actions">
+                    <DropdownItem
+                      key="suspend"
+                      startContent={<Trash2 className="w-4 h-4" />}
+                      className="text-danger"
+                      onPress={onSuspendOpen}
+                    >
+                      Suspend Scan Partner
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              )}
               <Button
                 variant="flat"
                 color="primary"

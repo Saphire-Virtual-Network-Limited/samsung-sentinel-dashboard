@@ -598,6 +598,10 @@ export async function getAllScanPartners(
   return apiCall(`/admin/mbe/scan-partners${query}`, "GET", undefined, options);
 }
 
+export async function getScanPartnerAgents(options?: ApiCallOptions) {
+  return apiCall(`/admin/mbe/scan-partners/agents`, "GET", undefined, options);
+}
+
 export async function getScanPartnerByUserId(
   userId: string,
 
@@ -1005,7 +1009,7 @@ export async function getCommunicationLogByCustomerId(customerId: string) {
   );
 }
 
-//get all cummunication log in the system
+//get all communication log in the system
 export async function getAllCommunicationLog() {
   return apiCall(`/admin/communication-log/getAll`, "GET");
 }
