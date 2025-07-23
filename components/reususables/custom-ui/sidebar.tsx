@@ -669,7 +669,6 @@ export function AppSidebar() {
     {
       icon: IoBusiness,
       title: "Mobiflex Sales Agent",
-      url: "/access/verify/staff/agents",
       id: "verify-staff-mobiflex",
     },
   ];

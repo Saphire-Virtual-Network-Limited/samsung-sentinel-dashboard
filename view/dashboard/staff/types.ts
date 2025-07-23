@@ -78,6 +78,9 @@ export interface Meta {
 export interface AgentsData {
   data: AgentRecord[];
   meta: Meta;
+  limit?: number;
+  page?: number;
+  total?: number;
 }
 
 export interface StoreNew {
