@@ -1044,3 +1044,9 @@ export async function updateCommunication(
 export async function deleteCommunicationLog(id: string) {
   return apiCall(`/admin/communication-log/delete/${id}`, "DELETE");
 }
+
+//get all downpayment lower than 20%
+export async function getAllDownpaymentLowerThan20() {
+  return apiCall(`/admin/loan/low-downpayment`, "GET"); 
+}
+

@@ -257,6 +257,10 @@ export function AppSidebar() {
               title: "Sentinel",
               url: "/access/admin/reports/sales/sentinel",
             },
+            {
+              title: "Low Downpayment",
+              url: "/access/admin/reports/sales/low-downpayment",
+            },
           ],
         },
         { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
