@@ -1,12 +1,8 @@
-// @/view/dashboard/user-management/user.ts
-// Updated to include the new company fields
-
 export interface AgentType {
   label: string;
   value: string;
 }
 
-// Updated to include company fields
 export interface CreateUserFormData {
   firstName: string;
   lastName: string;
@@ -20,7 +16,6 @@ export interface CreateUserFormData {
   companyLGA?: string;
 }
 
-// Updated to include company field errors
 export interface CreateUserFormErrors {
   firstName?: string | null;
   lastName?: string | null;

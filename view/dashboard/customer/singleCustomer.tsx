@@ -195,6 +195,8 @@ export default function CollectionSingleCustomerPage() {
     description: string;
     imei: string;
   } | null>(null);
+  const [dueDate, setDueDate] = useState<string>("");
+  const [dueTime, setDueTime] = useState<string>("");
 
   const {
     isOpen: isUpdateWallet,
@@ -584,7 +586,7 @@ export default function CollectionSingleCustomerPage() {
     if (!imei || imei === "N/A") {
       showToast({
         type: "error",
-        message: "No device found",
+        message: "No device imei found",
         duration: 5000,
       });
       return;
@@ -601,7 +603,7 @@ export default function CollectionSingleCustomerPage() {
           successMessage = "Device locked successfully";
           break;
         case "unlock_device":
-          response = await unlockDevice(imei);
+          response = await unlockDevice(imei, dueDate, dueTime);
           successMessage = "Device unlocked successfully";
           break;
         case "release_device":
@@ -621,6 +623,8 @@ export default function CollectionSingleCustomerPage() {
       onDeviceActionClose();
       setSelectedAction("");
       setDeviceActionData(null);
+      setDueDate("");
+      setDueTime("");
       // Refresh the page
       window.location.reload();
     } catch (error: any) {
@@ -2474,19 +2478,65 @@ export default function CollectionSingleCustomerPage() {
                       ⚠️ Warning: This action cannot be undone.
                     </p>
                   </div>
+
+                  {/* Due Date and Time fields for unlock device action */}
+                  {deviceActionData?.action === "unlock_device" && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-default-700 mb-2">
+                            Due Date
+                          </label>
+                          <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-default-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-default-700 mb-2">
+                            Due Time
+                          </label>
+                          <input
+                            type="time"
+                            value={dueTime}
+                            onChange={(e) => setDueTime(e.target.value)}
+                            className="w-full px-3 py-2 border border-default-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-info-50 border border-info-200 rounded-lg p-3">
+                        <p className="text-sm text-info-700">
+                          📅 Please set the due date and time for when the device should be locked again.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ModalBody>
               <ModalFooter className="flex gap-2">
                 <Button
                   color="success"
                   variant="solid"
-                  onPress={() =>
+                  onPress={() => {
+                    if (deviceActionData?.action === "unlock_device" && (!dueDate || !dueTime)) {
+                      showToast({
+                        type: "error",
+                        message: "Please select both due date and due time",
+                        duration: 5000,
+                      });
+                      return;
+                    }
+                    
                     deviceActionData &&
                     handleDeviceAction(
                       deviceActionData.action,
                       deviceActionData.imei
-                    )
-                  }
+                    );
+                  }}
                   isLoading={isButtonLoading}
                 >
                   Confirm
@@ -2498,6 +2548,8 @@ export default function CollectionSingleCustomerPage() {
                     onDeviceActionClose();
                     setSelectedAction("");
                     setDeviceActionData(null);
+                    setDueDate("");
+                    setDueTime("");
                   }}
                 >
                   Cancel
