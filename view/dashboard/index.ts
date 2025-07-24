@@ -51,7 +51,7 @@ import DueLoansView from "./loans/dueLoansView";
 import CreateStorePage from "./finance/createStore";
 import StoreForm from "./finance/StoreForm";
 import DeviceForm from "./devices/deviceForm";
-
+import LowDownpayment from "./loans/lowDowpayment";
 export {
   MBEPage,
   SingleMBEPage,
@@ -105,6 +105,6 @@ export {
   DueLoansView,
   CreateStorePage,
   StoreForm,
-  DeviceForm
-
+  DeviceForm,
+  LowDownpayment
 };
