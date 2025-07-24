@@ -59,7 +59,7 @@ export interface PermissionConfig {
   viewCommissionDetails: boolean;
   verifyMobiflex: boolean;
   viewAgentPerformanceData: boolean;
-
+  updateScanPartner: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -91,7 +91,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     viewLoanDetails: true,
     viewCommissionDetails: true,
     viewAgentPerformanceData: true,
-
+    updateScanPartner: true,
     // Admin has no special permissions by default
     // All permissions default to false
   },
@@ -109,7 +109,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
-
+    updateScanPartner: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
 
@@ -278,7 +278,7 @@ function getDefaultPermissions(): PermissionConfig {
     updateAddressStatus: false,
     viewLoanDetails: false,
     viewCommissionDetails: false,
-
+    updateScanPartner: false,
     viewAgentPerformanceData: false,
 
     // Example of how to add a new permission:
@@ -372,7 +372,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "viewCommissionDetails",
     "verifyMobiflex",
     "viewAgentPerformanceData",
-
+    "updateScanPartner",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',

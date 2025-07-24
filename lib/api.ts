@@ -562,17 +562,19 @@ export async function updateAgentGuarantorStatus(
     status,
     mbeId,
     guarantorId,
+    comment,
   }: {
     status: "APPROVED" | "REJECTED" | any;
     mbeId: string;
     guarantorId: string;
+    comment?: string;
   },
   options?: ApiCallOptions
 ) {
   return apiCall(
     `/admin/mbe/verify-guarantors`,
     "POST",
-    { status, mbeId, guarantorId },
+    { status, mbeId, guarantorId, comment },
     options
   );
 }
@@ -583,6 +585,18 @@ export async function exportAllAgentDetails(options?: ApiCallOptions) {
 
 export async function deleteAgentDetails(data: any, options?: ApiCallOptions) {
   return apiCall(`/admin/mbe/delete-agent`, "POST", data, options);
+}
+
+export async function updateScanPartner(
+  { mbeId, userId }: { mbeId: string; userId: string },
+  options?: ApiCallOptions
+) {
+  return apiCall(
+    `/admin/mbe/update-scan-partner`,
+    "POST",
+    { mbeId, userId },
+    options
+  );
 }
 
 // ============================================================================
