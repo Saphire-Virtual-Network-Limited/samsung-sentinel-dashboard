@@ -820,6 +820,7 @@ export default function CollectionSingleCustomerPage() {
                   <InfoField label="KYC Created At" value={customer.CustomerKYC?.[0]?.createdAt ? new Date(customer.CustomerKYC?.[0]?.createdAt).toLocaleString() : "N/A"} />
                   <InfoField label="KYC Updated At" value={customer.CustomerKYC?.[0]?.updatedAt ? new Date(customer.CustomerKYC?.[0]?.updatedAt).toLocaleString() : "N/A"} />
                   <InfoField label="KYC Channel" value={customer.CustomerKYC?.[0]?.channel} />
+
                 </div>
 
                 {/* Referee Information */}
@@ -840,6 +841,7 @@ export default function CollectionSingleCustomerPage() {
                     >
                       {customer.CustomerKYC?.[0]?.generalStatus}
                     </p>
+                    
                   </div>
 
                   <div>
@@ -855,7 +857,17 @@ export default function CollectionSingleCustomerPage() {
                         <div className="font-medium text-default-900">
                           {customer.CustomerKYC?.[0]?.phoneApproved}
                         </div>
+
+                        {customer.CustomerKYC?.[0]?.generalStatus === "REJECTED" && customer.CustomerKYC?.[0]?.generalComment && (
+                      <div className="bg-red-50 rounded-lg p-4 mt-4">
+                        <p className="text-red-700 font-medium mb-2">Rejection Reason</p>
+                        <div className="font-medium text-default-900">
+                          {customer.CustomerKYC?.[0]?.generalComment}
+                        </div>
                       </div>
+                    )}
+                      </div>
+                      
                     )}
                   </div>
                 </div>
