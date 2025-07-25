@@ -1046,7 +1046,240 @@ export async function deleteCommunicationLog(id: string) {
 }
 
 //get all downpayment lower than 20%
+
+export async function getAllDownpaymentLowerThan20(includeRelations: boolean = true) {
+  return apiCall(`/admin/loan/low-downpayment?includeRelations=${includeRelations}`, "GET"); 
+
 export async function getAllDownpaymentLowerThan20() {
-  return apiCall(`/admin/loan/low-downpayment`, "GET"); 
+  return apiCall(`/admin/loan/low-downpayment`, "GET");
 }
 
+// ============================================================================
+// CREDITFLEX PAYDAY LOANS 😒😢
+// ============================================================================
+
+export interface BaseApiResponse<T = any> {
+  statusCode: number;
+  statusType: string;
+  message: string;
+  data: T;
+  responseTime: string;
+  channel: string;
+}
+
+export interface BulkDisbursementResponse {
+  totalProcessed: number;
+  successful: number;
+  failed: number;
+  results: Array<{
+    loanId: string;
+    invoiceReference: string;
+    amount: number;
+    paymentStatus: string;
+    transferMeta: {
+      tnxId: string;
+      sessionId: string;
+      reference: string;
+      channel: string;
+    };
+    customerId: string;
+    status: string;
+  }>;
+  errors: Array<{
+    loanId: string;
+    error: string;
+    status: string;
+  }>;
+  summary: {
+    totalAmount: number;
+    successfulDisbursements: string[];
+    failedDisbursements: string[];
+  };
+}
+
+/**
+ * Triggers bulk loan disbursement for multiple loans
+ *
+ * @param disbursements - Array of disbursement objects containing loan ID and invoice reference
+ * @returns Promise with bulk disbursement response
+ */
+export async function triggerCDFAdminBulkDisbursement(
+  disbursements: { loanId: string; invoiceReference?: string }[]
+): Promise<BaseApiResponse<BulkDisbursementResponse>> {
+  return apiCall("/admin/payday/loans/bulk-disbursement", "POST", {
+    disbursements,
+  });
+}
+
+/**
+ * Triggers loan disbursement for a specific loan ID
+ *
+ * @param loanId - Loan ID to disburse
+ * @param invoiceReference - Invoice reference for the disbursement
+ * @returns Promise with disbursement response
+ */
+export async function triggerCDFAdminDisbursement(
+  loanId: string,
+  invoiceReference: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(`/admin/payday/loans/${loanId}/disbursement`, "POST", {
+    invoiceReference,
+  });
+
+}
+
+/**
+ * Retrieves all loans for a specific telemarketer with optional filters
+ *
+ * @param telemarketerID - Telemarketer ID to get loans for (required)
+ * @param status - Loan status filter (defaults to "all")
+ * @param startDate - Start date filter (optional, format: YYYY-MM-DD)
+ * @param endDate - End date filter (optional, format: YYYY-MM-DD)
+ * @param limit - Number of results to return (optional)
+ * @param offset - Number of results to skip (optional)
+ * @param options - Caching options
+ * @returns Promise with telemarketer loans response including pagination
+ */
+
+export async function getCDFAllLoanData(
+  filters: {
+    loanId?: string;
+    telemarketerName?: string;
+    customerName?: string;
+    ippisNumber?: string;
+    loanProductId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  } = {}
+) {
+  const {
+    loanId,
+    telemarketerName,
+    customerName,
+    ippisNumber,
+    loanProductId,
+    status,
+    startDate,
+    endDate,
+    page = 1,
+    limit = 10,
+  } = filters;
+
+  const params = new URLSearchParams();
+
+  const entries = {
+    loanId,
+    telemarketerName,
+    customerName,
+    ippisNumber,
+    loanProductId,
+    startDate,
+    endDate,
+    page: String(page),
+    limit: String(limit),
+  };
+
+  Object.entries(entries).forEach(([key, value]) => {
+    if (value) params.append(key, value);
+  });
+
+  if (status && status !== "all") {
+    params.append("loanStatus", status);
+  }
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiCall(`/admin/payday/loans${query}`, "GET");
+}
+
+export async function getCDFLoanById(
+  loanId: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(`/admin/payday/loans/${loanId}`, "GET", undefined);
+}
+
+export async function getCDFAllTeleMarketers(search?: string, status?: string) {
+  const params = new URLSearchParams();
+
+  if (search) params.append("search", search);
+  if (status && status !== "ALL") params.append("status", status);
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  return apiCall(`/admin/payday/telemarketers${query}`, "GET");
+}
+
+export async function getCDFAllCustomers(search?: string, status?: string) {
+  const params = new URLSearchParams();
+
+  if (search) params.append("search", search);
+  if (status) params.append("status", status);
+
+  //const query = params.toString() ? `?${params.toString()}` : "";
+
+  return apiCall(`/admin/payday/telemarketers`, "GET");
+}
+
+export async function getCDFAllLoanProducts() {
+  return apiCall(`/admin/payday/loan-products`, "GET");
+}
+
+export async function getCDFAllRepayments() {
+  return apiCall(`/admin/payday/repayments`, "GET");
+}
+
+export async function getCDFAllInvoices() {
+  return apiCall(`/admin/payday/invoices`, "GET");
+}
+
+export async function cdfAdminRegisterAgent(payload: {
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone: string;
+}) {
+  return apiCall("/admin/payday/telemarketers/register", "POST", payload);
+}
+
+export async function cdfAdminEditAgent({
+  telemarketerId,
+  status,
+}: {
+  telemarketerId: string;
+  status: string;
+}) {
+  return apiCall(
+    `/admin/payday/telemarketers/${telemarketerId}/status`,
+    "POST",
+    { status }
+  );
+}
+
+export async function cdfAdminDeleteAgent({
+  telemarketerId,
+}: {
+  telemarketerId: string;
+}) {
+  return apiCall(`/admin/payday/telemarketers/${telemarketerId}`, "DELETE");
+}
+
+export async function getCDFAdminDashboardStatistics(): Promise<
+  BaseApiResponse<AdminDashboardStatistics>
+> {
+  return apiCall(`/admin/payday/dashboard-statistics`, "GET");
+}
+export interface AdminDashboardStatistics {
+  totalUsersOnboarded: number;
+  totalLoansDisbursed: number;
+  activeLoans: number;
+  totalLoansRepaid: number;
+  totalLoanAmountRepaid: number;
+  activeLoanApplications: number;
+  totalDisbursedAmount: number;
+  totalOutstandingBalance: number;
+  totalTelemarketers: number;
+  repaymentRate: string;
+  averageLoanAmount: number;
+  conversionRate: string;
+}
