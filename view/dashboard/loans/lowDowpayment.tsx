@@ -31,8 +31,20 @@ const columns: ColumnDef[] = [
 // Display columns for table view
 const displayColumns: ColumnDef[] = [
     { name: "Customer Id", uid: "customerId", sortable: true },
+    { name: "Customer Name", uid: "customerName", sortable: true },
+    { name: "Customer Phone", uid: "customerPhone", sortable: true },
+    { name: "Customer Email", uid: "customerEmail", sortable: true },
     { name: "Device Id", uid: "deviceId", sortable: true },
+    { name: "Device Name", uid: "deviceName", sortable: true },
+    { name: "Device IMEI", uid: "deviceImei", sortable: true },
+    { name: "Device Manufacturer", uid: "deviceManufacturer", sortable: true },
     { name: "Store Id", uid: "storeId", sortable: true },
+    { name: "Store Name", uid: "storeName", sortable: true },
+    { name: "Store City", uid: "storeCity", sortable: true },
+    { name: "Store State", uid: "storeState", sortable: true },
+    { name: "Store Partner", uid: "storePartner", sortable: true },
+    { name: "MBE Name", uid: "mbeName", sortable: true },
+    { name: "MBE Phone", uid: "mbePhone", sortable: true },
     { name: "Insurance Package", uid: "insurancePackage", sortable: true },
     { name: "Insurance Price", uid: "insurancePrice", sortable: true },
     { name: "Mbs Eligible Amount", uid: "mbsEligibleAmount", sortable: true },
@@ -40,7 +52,6 @@ const displayColumns: ColumnDef[] = [
     { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
     { name: "Duration", uid: "duration", sortable: true },
     { name: "Interest Amount", uid: "interestAmount", sortable: true },
-    { name: "Device Name", uid: "deviceName", sortable: true },
     { name: "Device Price", uid: "devicePrice", sortable: true },
     { name: "Device Amount", uid: "deviceAmount", sortable: true },
     { name: "Loan Amount", uid: "loanAmount", sortable: true },
@@ -48,6 +59,7 @@ const displayColumns: ColumnDef[] = [
     { name: "Down Payment Percentage", uid: "downPaymentPercentage", sortable: true },
     { name: "Expected Down Payment", uid: "expectedDownPayment", sortable: true },
     { name: "Shortfall", uid: "shortfall", sortable: true },
+    { name: "Device On Loan Status", uid: "deviceOnLoanStatus", sortable: true },
     { name: "Created At", uid: "createdAt", sortable: true },
     { name: "Updated At", uid: "updatedAt", sortable: true },
     { name: "Channel", uid: "channel", sortable: true },
@@ -81,27 +93,157 @@ type CustomerRecord = {
     loanStatus: string;
     createdAt: string;
     updatedAt: string;
-    loanAmount: string;
+    loanAmount: number;
     deviceId: string;
-    downPayment: string;
+    downPayment: number;
     insurancePackage: string;
-    insurancePrice: string;
-    mbsEligibleAmount: string;
+    insurancePrice: number;
+    mbsEligibleAmount: number;
     payFrequency: string;
     storeId: string;
-    devicePrice: string;
-    deviceAmount: string;
-    monthlyRepayment: string;
-    duration: string;
-    interestAmount: string;
+    devicePrice: number;
+    deviceAmount: number;
+    monthlyRepayment: number;
+    duration: number;
+    interestAmount: number;
     deviceName: string;
     mbeId: string;
     solarPackageId: string | null;
     powerflexCustomCalculationId: string | null;
     downPaymentPercentage: string;
-    expectedDownPayment: string;
-    shortfall: string;
-    
+    expectedDownPayment: number;
+    shortfall: number;
+    customer?: {
+        customerId: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        bvn: string;
+        dob: string;
+        dobMisMatch: boolean;
+        createdAt: string;
+        updatedAt: string;
+        customerLoanDiskId: string;
+        channel: string;
+        bvnPhoneNumber: string;
+        mainPhoneNumber: string;
+        mbeId: string;
+        monoCustomerConnectedCustomerId: string;
+        inputtedDob: string;
+    };
+    device?: {
+        price: number;
+        deviceModelNumber: string;
+        SAP: number;
+        SLD: number;
+        createdAt: string;
+        deviceManufacturer: string;
+        deviceName: string;
+        deviceRam: string | null;
+        deviceScreen: string | null;
+        deviceStorage: string | null;
+        imageLink: string;
+        newDeviceId: string;
+        oldDeviceId: string;
+        sentiprotect: number;
+        updatedAt: string;
+        deviceType: string;
+        deviceCamera: string[];
+        android_go: string;
+        erpItemCode: string | null;
+        erpName: string | null;
+        erpSerialNo: string | null;
+        devfinStatus: boolean;
+    };
+    store?: {
+        storeOldId: number;
+        storeName: string;
+        city: string;
+        state: string;
+        region: string | null;
+        address: string;
+        accountNumber: string;
+        accountName: string;
+        bankName: string;
+        bankCode: string;
+        phoneNumber: string | null;
+        storeEmail: string;
+        longitude: number;
+        latitude: number;
+        clusterId: number;
+        partner: string;
+        storeOpen: string;
+        storeClose: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        storeId: string;
+        isArchived: boolean;
+        storeErpId: string | null;
+        channel: string | null;
+    };
+    mbe?: {
+        title: string;
+        createdAt: string;
+        mbeId: string;
+        mbe_old_id: string;
+        updatedAt: string;
+        firstname: string;
+        lastname: string;
+        phone: string;
+        state: string | null;
+        username: string;
+        accountStatus: string;
+        bvn: string | null;
+        bvnPhoneNumber: string | null;
+        channel: string;
+        dob: string | null;
+        email: string | null;
+        isActive: boolean;
+        otp: string | null;
+        otpExpiry: string | null;
+        password: string | null;
+        role: string;
+        tokenVersion: number;
+        resetOtp: string | null;
+        resetOtpExpiry: string | null;
+        imagePublicId: string | null;
+        imageUrl: string | null;
+        defaultSplitPercent: number | null;
+        userId: string | null;
+    };
+    solarPackage: any | null;
+    powerflexCustomCalculation: any | null;
+    DeviceOnLoan: Array<{
+        deviceOnLoanId: string;
+        deviceId: string;
+        loanRecordId: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        channel: string;
+        imei: string;
+        amount: number;
+        devicePrice: number;
+        lockType: string;
+    }>;
+    LoanRecordCard: any[];
+    StoresOnLoan: Array<{
+        storeOnLoanId: string;
+        storeId: string;
+        loanRecordId: string;
+        amount: number;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        channel: string;
+        bankUsed: string;
+        payChannel: string;
+        reference: string;
+        sessionId: string;
+        tnxId: string;
+    }>;
+    WacsCustomerLoan: any | null;
 };
 
 export default function LowDownpayment() {
@@ -186,16 +328,47 @@ export default function LowDownpayment() {
                 payFrequency: r.payFrequency ? r.payFrequency : 'N/A',
                 storeId: r.storeId ? r.storeId : 'N/A',
                 deviceId: r.deviceId ? r.deviceId : 'N/A',
+                // Add customer information
+                customerName: r.customer ? `${r.customer.firstName} ${r.customer.lastName}` : 'N/A',
+                customerEmail: r.customer?.email || 'N/A',
+                customerPhone: r.customer?.bvnPhoneNumber || 'N/A',
+                customerBVN: r.customer?.bvn || 'N/A',
+                // Add store information
+                storeName: r.store?.storeName || 'N/A',
+                storeCity: r.store?.city || 'N/A',
+                storeState: r.store?.state || 'N/A',
+                storePartner: r.store?.partner || 'N/A',
+                // Add MBE information
+                mbeName: r.mbe ? `${r.mbe.firstname} ${r.mbe.lastname}` : 'N/A',
+                mbePhone: r.mbe?.phone || 'N/A',
+                mbeUsername: r.mbe?.username || 'N/A',
+                // Add device information
+                deviceManufacturer: r.device?.deviceManufacturer || 'N/A',
+                deviceModelNumber: r.device?.deviceModelNumber || 'N/A',
+                deviceSAP: r.device?.SAP?.toString() || 'N/A',
+                deviceSLD: r.device?.SLD?.toString() || 'N/A',
+                deviceSentiprotect: r.device?.sentiprotect?.toString() || 'N/A',
+                // Add IMEI from DeviceOnLoan
+                deviceImei: r.DeviceOnLoan?.[0]?.imei || 'N/A',
+                deviceOnLoanStatus: r.DeviceOnLoan?.[0]?.status || 'N/A',
+                // Add store payment information
+                storePaymentStatus: r.StoresOnLoan?.[0]?.status || 'N/A',
+                storePaymentBank: r.StoresOnLoan?.[0]?.bankUsed || 'N/A',
+                storePaymentReference: r.StoresOnLoan?.[0]?.reference || 'N/A',
 			})),
 		[raw]
 	);
 
 	const filtered = useMemo(() => {
-		let list = [...customers].filter(c => c.loanStatus?.toUpperCase() === 'APPROVED');
-		if (filterValue) {
+        let list = [...customers];
+        if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => 
 				c.customerId?.toLowerCase().includes(f) ||
+				c.customerName?.toLowerCase().includes(f) ||
+				c.customerPhone?.toLowerCase().includes(f) ||
+				c.customerEmail?.toLowerCase().includes(f) ||
+				c.customerBVN?.toLowerCase().includes(f) ||
 				c.loanDiskId?.toLowerCase().includes(f) ||
 				c.lastPoint?.toLowerCase().includes(f) ||
 				c.channel?.toLowerCase().includes(f) ||
@@ -204,24 +377,38 @@ export default function LowDownpayment() {
 				c.updatedAt?.toLowerCase().includes(f) ||
 				c.loanAmount?.toString().toLowerCase().includes(f) ||
 				c.deviceId?.toLowerCase().includes(f) ||
+				c.deviceName?.toLowerCase().includes(f) ||
+				c.deviceImei?.toLowerCase().includes(f) ||
+				c.deviceManufacturer?.toLowerCase().includes(f) ||
+				c.deviceModelNumber?.toLowerCase().includes(f) ||
 				c.downPayment?.toString().toLowerCase().includes(f) ||
 				c.insurancePackage?.toLowerCase().includes(f) ||
 				c.insurancePrice?.toString().toLowerCase().includes(f) ||
 				c.mbsEligibleAmount?.toString().toLowerCase().includes(f) ||
 				c.payFrequency?.toLowerCase().includes(f) ||
 				c.storeId?.toLowerCase().includes(f) ||
+				c.storeName?.toLowerCase().includes(f) ||
+				c.storeCity?.toLowerCase().includes(f) ||
+				c.storeState?.toLowerCase().includes(f) ||
+				c.storePartner?.toLowerCase().includes(f) ||
+				c.mbeName?.toLowerCase().includes(f) ||
+				c.mbePhone?.toLowerCase().includes(f) ||
+				c.mbeUsername?.toLowerCase().includes(f) ||
 				c.devicePrice?.toString().toLowerCase().includes(f) ||
 				c.deviceAmount?.toString().toLowerCase().includes(f) ||
 				c.monthlyRepayment?.toString().toLowerCase().includes(f) ||
 				c.duration?.toString().toLowerCase().includes(f) ||
 				c.interestAmount?.toString().toLowerCase().includes(f) ||
-				c.deviceName?.toLowerCase().includes(f) ||
 				c.mbeId?.toLowerCase().includes(f) ||
 				c.solarPackageId?.toLowerCase().includes(f) ||
 				c.powerflexCustomCalculationId?.toLowerCase().includes(f) ||
 				c.downPaymentPercentage?.toLowerCase().includes(f) ||
 				c.expectedDownPayment?.toString().toLowerCase().includes(f) ||
-				c.shortfall?.toString().toLowerCase().includes(f)
+				c.shortfall?.toString().toLowerCase().includes(f) ||
+				c.deviceOnLoanStatus?.toLowerCase().includes(f) ||
+				c.storePaymentStatus?.toLowerCase().includes(f) ||
+				c.storePaymentBank?.toLowerCase().includes(f) ||
+				c.storePaymentReference?.toLowerCase().includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
@@ -330,7 +517,6 @@ export default function LowDownpayment() {
 					onDateFilterChange={handleDateFilter}
 					initialStartDate={startDate}
 					initialEndDate={endDate}
-					defaultDateRange={{ days: 2 }}
 				/>
 			)}
 		</>
