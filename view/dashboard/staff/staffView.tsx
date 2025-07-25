@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
 import GenericTable, {
@@ -27,8 +27,24 @@ import { statusOptions, columns, statusColorMap } from "./constants";
 export default function SalesUsersPage() {
   const router = useRouter();
   const pathname = usePathname();
+
   // Get the role from the URL path (e.g., /access/dev/staff/agents -> dev)
   const role = pathname.split("/")[2];
+
+  // State for guarantor status filter from search params
+  const [guarantorStatusFilter, setGuarantorStatusFilter] = useState<
+    string | null
+  >(null);
+
+  // Extract search params safely on client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get("status");
+      setGuarantorStatusFilter(status);
+    }
+  }, [pathname]); // Re-run when pathname changes
+
   // --- date filter state ---
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
@@ -106,6 +122,20 @@ export default function SalesUsersPage() {
     }
 
     let list = [...salesStaff];
+
+    // Filter by guarantor status if search param is provided
+    if (guarantorStatusFilter) {
+      const targetStatus = guarantorStatusFilter.toLowerCase().trim();
+      list = list.filter((agent: AgentRecord) => {
+        const guarantors = agent.MbeGuarantor || [];
+        return guarantors.some(
+          (guarantor) =>
+            guarantor.guarantorStatus?.toLowerCase().trim() === targetStatus
+        );
+      });
+    }
+
+    // Filter by search text
     if (filterValue) {
       const f = filterValue.toLowerCase();
       list = list.filter(
@@ -123,11 +153,14 @@ export default function SalesUsersPage() {
           c.MbeAccountDetails?.accountNumber?.toLowerCase().includes(f)
       );
     }
+
+    // Filter by account status
     if (statusFilter.size > 0) {
       list = list.filter((c) => statusFilter.has(c.accountStatus || ""));
     }
+
     return list;
-  }, [salesStaff, filterValue, statusFilter]);
+  }, [salesStaff, filterValue, statusFilter, guarantorStatusFilter]);
 
   const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
   const paged = useMemo(() => {

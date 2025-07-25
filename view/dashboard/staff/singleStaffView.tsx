@@ -7,7 +7,11 @@ import {
   getAgentRecordByMbeId,
   updateAgentAddressStatus,
   getAgentLoansAndCommissionsByScanPartner, // Add this import
+  updateScanPartner,
+  getAllScanPartners,
+  getScanPartnerByUserId,
 } from "@/lib";
+import { SelectField } from "@/components/reususables";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
@@ -29,6 +33,9 @@ import {
   DropdownItem,
   Divider,
   ButtonGroup,
+  Select,
+  SelectItem,
+  Textarea,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -48,9 +55,10 @@ import {
   Calendar,
   UserIcon,
 } from "lucide-react";
+import { IoBusiness } from "react-icons/io5";
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { AccountStatus, AgentRecord } from "./types";
 import useSWR from "swr";
 import GenericTable, {
@@ -424,7 +432,7 @@ const DeviceCard = ({ device }: { device: DeviceItem }) => {
             ))}
           </div>
         ) : (
-          <div className="hidden flex flex-wrap gap-1">
+          <div className="hidden">
             {device.serialNumbers.slice(0, 3).map((serial) => (
               <Snippet
                 key={serial}
@@ -526,14 +534,18 @@ const mockDeleteAgent = async (agentId: string) => {
 const mockUpdateGuarantorStatus = async (
   guarantorId: string,
   newStatus: string,
-  agentId: string
+  agentId: string,
+  comment?: string
 ) => {
   await updateAgentGuarantorStatus({
     status: newStatus,
     mbeId: agentId,
     guarantorId,
+    comment: comment || "none stated",
   });
-  console.log(`Updating guarantor ${guarantorId} status to ${newStatus}`);
+  console.log(
+    `Updating guarantor ${guarantorId} status to ${newStatus} with comment: ${comment}`
+  );
   return { success: true, message: `Guarantor status updated to ${newStatus}` };
 };
 
@@ -804,6 +816,8 @@ export default function AgentSinglePage() {
     role,
     "viewAgentPerformanceData"
   );
+  const canChangeScanPartner = hasPermission(role, "updateScanPartner");
+
   const router = useRouter();
   const [isUpdatingGuarantor, setIsUpdatingGuarantor] = useState<string | null>(
     null
@@ -815,11 +829,38 @@ export default function AgentSinglePage() {
   const [performanceViewType, setPerformanceViewType] = useState<
     "loans" | "commissions"
   >("loans");
+
+  const [isChangingScanPartner, setIsChangingScanPartner] = useState(false);
+  const [selectedScanPartner, setSelectedScanPartner] = useState<any>(null);
+  const [scanPartners, setScanPartners] = useState<any[]>([]);
+  const [scanPartnerDetails, setScanPartnerDetails] = useState<any>(null);
+
+  const [guarantorToUpdate, setGuarantorToUpdate] = useState<any>(null);
+  const [guarantorUpdateAction, setGuarantorUpdateAction] = useState<
+    "approve" | "reject" | null
+  >(null);
+  const [guarantorComment, setGuarantorComment] = useState("");
+  const [guarantorReason, setGuarantorReason] = useState("");
+  const [isOtherReason, setIsOtherReason] = useState(false);
+
+  const [currentScanPartnerDetails, setCurrentScanPartnerDetails] =
+    useState<any>(null);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
+  } = useDisclosure();
+  const {
+    isOpen: isScanPartnerModalOpen,
+    onOpen: onScanPartnerModalOpen,
+    onClose: onScanPartnerModalClose,
+  } = useDisclosure();
+  const {
+    isOpen: isGuarantorModalOpen,
+    onOpen: onGuarantorModalOpen,
+    onClose: onGuarantorModalClose,
   } = useDisclosure();
 
   // Filter states for performance data
@@ -900,6 +941,42 @@ export default function AgentSinglePage() {
     };
   }, [performanceData]);
 
+  // Load scan partners when modal opens
+  useEffect(() => {
+    if (isScanPartnerModalOpen && canChangeScanPartner) {
+      loadScanPartners();
+    }
+  }, [isScanPartnerModalOpen, canChangeScanPartner]);
+
+  // Load current scan partner details when agent is loaded
+  useEffect(() => {
+    const loadCurrentScanPartnerDetails = async () => {
+      if (agent?.userId) {
+        try {
+          const response = await getScanPartnerByUserId(agent.userId);
+          // The API returns an array with the scan partner data
+          if (response.data && response.data.length > 0) {
+            setCurrentScanPartnerDetails(response.data[0]);
+          } else {
+            setCurrentScanPartnerDetails(null);
+          }
+        } catch (error: any) {
+          console.error("Error loading current scan partner details:", error);
+          showToast({
+            type: "error",
+            message:
+              error?.response?.data?.message ||
+              error?.message ||
+              "Failed to load current scan partner details",
+            duration: 5000,
+          });
+        }
+      }
+    };
+
+    loadCurrentScanPartnerDetails();
+  }, [agent?.userId]);
+
   // Filter loans and commissions
   const filteredLoans = useMemo(() => {
     let filtered = [...processedPerformanceData.loans];
@@ -938,47 +1015,6 @@ export default function AgentSinglePage() {
     return filtered;
   }, [processedPerformanceData.commissions, commissionFilterValue]);
 
-  const handleGuarantorStatusUpdate = async (
-    guarantorId: string,
-    newStatus: string
-  ) => {
-    if (!agent) return;
-    setIsUpdatingGuarantor(guarantorId);
-    try {
-      const result = await mockUpdateGuarantorStatus(
-        guarantorId,
-        newStatus,
-        agent.mbeId
-      );
-      if (result.success) {
-        const updatedGuarantors = agent.MbeGuarantor?.map((g) =>
-          g.guarantorid === guarantorId
-            ? { ...g, guarantorStatus: newStatus }
-            : g
-        );
-        await mutate(
-          { ...agent, MbeGuarantor: updatedGuarantors },
-          { revalidate: false }
-        );
-        showToast({
-          type: "success",
-          message: result.message,
-          duration: 3000,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating guarantor status:", error);
-      showToast({
-        type: "error",
-        message: "Failed to update guarantor status",
-        duration: 5000,
-      });
-      mutate();
-    } finally {
-      setIsUpdatingGuarantor(null);
-    }
-  };
-
   const handleAddressStatusUpdate = async (
     kycId: string,
     newStatus: string
@@ -1005,12 +1041,21 @@ export default function AgentSinglePage() {
           message: result.message,
           duration: 3000,
         });
+      } else {
+        showToast({
+          type: "error",
+          message: result.message || "Failed to update address status",
+          duration: 5000,
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating address status:", error);
       showToast({
         type: "error",
-        message: "Failed to update address status",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update address status",
         duration: 5000,
       });
       mutate();
@@ -1031,17 +1076,227 @@ export default function AgentSinglePage() {
           duration: 3000,
         });
         router.back();
+      } else {
+        showToast({
+          type: "error",
+          message: result.message || "Failed to delete agent",
+          duration: 5000,
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting agent:", error);
       showToast({
         type: "error",
-        message: "Failed to delete agent",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to delete agent",
         duration: 5000,
       });
     } finally {
       setIsDeleting(false);
       onDeleteClose();
+    }
+  };
+
+  // Scan Partner Change Handlers
+  const loadScanPartners = async () => {
+    try {
+      const response = await getAllScanPartners();
+      console.log("Scan partners loaded:", response.data); // Debug log
+      setScanPartners(response.data || []);
+    } catch (error: any) {
+      console.error("Error loading scan partners:", error);
+      showToast({
+        type: "error",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load scan partners",
+        duration: 5000,
+      });
+    }
+  };
+
+  const loadScanPartnerDetails = async (partnerId: string) => {
+    try {
+      const response = await getScanPartnerByUserId(partnerId);
+
+      console.log("Scan partner details loaded:", response.data); // Debug log
+      // The API returns an array with the scan partner data
+      if (response.data && response.data.length > 0) {
+        setScanPartnerDetails(response.data[0]);
+      } else {
+        setScanPartnerDetails(null);
+      }
+    } catch (error: any) {
+      console.error("Error loading scan partner details:", error);
+      showToast({
+        type: "error",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load scan partner details",
+        duration: 5000,
+      });
+      setScanPartnerDetails(null);
+    }
+  };
+
+  const handleScanPartnerSelect = async (partnerId: string) => {
+    // Find partner by userId (based on API response structure)
+    const partner = scanPartners.find((p) => p.userId === partnerId);
+    console.log("Selected partner:", partner, "from ID:", partnerId); // Debug log
+    setSelectedScanPartner(partner);
+    if (partnerId) {
+      await loadScanPartnerDetails(partnerId);
+    } else {
+      setScanPartnerDetails(null);
+    }
+  };
+
+  const handleScanPartnerChange = async () => {
+    if (!agent || !selectedScanPartner) return;
+    setIsChangingScanPartner(true);
+    try {
+      // Use the correct ID property from the selected partner
+      const partnerUserId =
+        selectedScanPartner.userId ||
+        selectedScanPartner.id ||
+        selectedScanPartner.scanPartnerId ||
+        selectedScanPartner.mbeId;
+
+      console.log("Updating scan partner with ID:", partnerUserId); // Debug log
+
+      const result = await updateScanPartner({
+        mbeId: agent.mbeId,
+        userId: partnerUserId,
+      });
+      if (result.success) {
+        showToast({
+          type: "success",
+          message: result.message || "Scan Partner updated successfully",
+          duration: 3000,
+        });
+        // Update local state
+        await mutate(
+          { ...agent, userId: partnerUserId },
+          { revalidate: false }
+        );
+        // Update current scan partner details
+        setCurrentScanPartnerDetails(scanPartnerDetails);
+        onScanPartnerModalClose();
+        setSelectedScanPartner(null);
+        setScanPartnerDetails(null);
+      } else {
+        showToast({
+          type: "error",
+          message: result.message || "Failed to update scan partner",
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error updating scan partner:", error);
+      showToast({
+        type: "error",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update scan partner",
+        duration: 5000,
+      });
+    } finally {
+      setIsChangingScanPartner(false);
+    }
+  };
+
+  const reasonOptions = [
+    "Referees not reachable/switched off",
+    "Referees doesn't want to stand", 
+    "Referees wants to speak with the agent",
+    "Referees doesn't know the agent",
+    "Agent used themselves as referees",
+    "Other",
+  ];
+
+  const handleGuarantorActionStart = (
+    guarantor: any,
+    action: "approve" | "reject"
+  ) => {
+    setGuarantorToUpdate(guarantor);
+    setGuarantorUpdateAction(action);
+    setGuarantorComment("");
+    setGuarantorReason("");
+    setIsOtherReason(false);
+    onGuarantorModalOpen();
+  };
+
+  const handleGuarantorStatusUpdateConfirm = async () => {
+    if (!guarantorToUpdate || !guarantorUpdateAction || !agent) return;
+    const comment =
+      guarantorUpdateAction === "approve"
+        ? "No reason stated"
+        : isOtherReason
+        ? guarantorComment
+        : guarantorReason;
+
+    if (guarantorUpdateAction === "reject" && !comment.trim()) {
+      showToast({
+        type: "error",
+        message: "Please provide a reason for this action",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsUpdatingGuarantor(guarantorToUpdate.guarantorid);
+    try {
+      const newStatus =
+        guarantorUpdateAction === "approve" ? "APPROVED" : "REJECTED";
+      const result = await mockUpdateGuarantorStatus(
+        guarantorToUpdate.guarantorid,
+        newStatus,
+        agent.mbeId,
+        comment
+      );
+      if (result.success) {
+        const updatedGuarantors = agent.MbeGuarantor?.map((g) =>
+          g.guarantorid === guarantorToUpdate.guarantorid
+            ? { ...g, guarantorStatus: newStatus }
+            : g
+        );
+        await mutate(
+          { ...agent, MbeGuarantor: updatedGuarantors },
+          { revalidate: false }
+        );
+        showToast({
+          type: "success",
+          message: result.message,
+          duration: 3000,
+        });
+        onGuarantorModalClose();
+      } else {
+        showToast({
+          type: "error",
+          message: result.message || "Failed to update guarantor status",
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error updating guarantor status:", error);
+      showToast({
+        type: "error",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update guarantor status",
+        duration: 5000,
+      });
+      mutate();
+    } finally {
+      setIsUpdatingGuarantor(null);
+      setGuarantorToUpdate(null);
+      setGuarantorUpdateAction(null);
     }
   };
 
@@ -1331,28 +1586,41 @@ export default function AgentSinglePage() {
             >
               <div className="grid gap-4">
                 <InfoField label="Agent ID" value={agent.mbeId} copyable />
-                {agent?.userId && (
-                  <InfoField
-                    endComponent={
-                      <Button
-                        variant="flat"
-                        color="primary"
-                        size="sm"
-                        onPress={() => {
-                          router.push(
-                            `/access/${role}/staff/scan-partners/${agent.userId}`
-                          );
-                        }}
-                        className="font-medium"
-                      >
-                        View Details
-                      </Button>
-                    }
-                    label="SCAN Partner ID"
-                    value={agent.userId}
-                    copyable
-                  />
-                )}
+                <InfoField
+                  endComponent={
+                    <div className="flex gap-2">
+                      {agent?.userId && (
+                        <Button
+                          variant="flat"
+                          color="primary"
+                          size="sm"
+                          onPress={() => {
+                            router.push(
+                              `/access/${role}/staff/scan-partners/${agent.userId}`
+                            );
+                          }}
+                          className="font-medium"
+                        >
+                          View Details
+                        </Button>
+                      )}
+                      {canChangeScanPartner && (
+                        <Button
+                          variant="flat"
+                          color={agent?.userId ? "warning" : "success"}
+                          size="sm"
+                          onPress={onScanPartnerModalOpen}
+                          className="font-medium"
+                        >
+                          {agent?.userId ? "Change Partner" : "Assign Partner"}
+                        </Button>
+                      )}
+                    </div>
+                  }
+                  label="SCAN Partner ID"
+                  value={agent?.userId || "No partner assigned"}
+                  copyable={!!agent?.userId}
+                />
                 <InfoField
                   label="Full Name"
                   value={`${agent.firstname} ${agent.lastname}`.trim()}
@@ -1417,6 +1685,44 @@ export default function AgentSinglePage() {
 
           {/* Right Column - Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Current Scan Partner Details */}
+            {agent?.userId && currentScanPartnerDetails && (
+              <InfoCard
+                title="Current Scan Partner"
+                icon={<IoBusiness className="w-5 h-5 text-default-600" />}
+                collapsible={true}
+                defaultExpanded={false}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <InfoField
+                    label="Partner Name"
+                    value={`${currentScanPartnerDetails.firstName || ""} ${
+                      currentScanPartnerDetails.lastName || ""
+                    }`.trim()}
+                  />
+                  <InfoField
+                    label="Company"
+                    value={currentScanPartnerDetails.companyName || "N/A"}
+                  />
+                  <InfoField
+                    label="Email"
+                    value={currentScanPartnerDetails.email || "N/A"}
+                  />
+                  <InfoField
+                    label="Phone"
+                    value={currentScanPartnerDetails.telephoneNumber || "N/A"}
+                  />
+                  <InfoField
+                    label="State"
+                    value={currentScanPartnerDetails.companyState || "N/A"}
+                  />
+                  <InfoField
+                    label="City"
+                    value={currentScanPartnerDetails.companyCity || "N/A"}
+                  />
+                </div>
+              </InfoCard>
+            )}
             {/* Performance Data */}
             {canViewAgentPerformanceData && (
               <InfoCard
@@ -1874,7 +2180,8 @@ export default function AgentSinglePage() {
                     label="Full Address"
                     value={kyc.fullAddress}
                     endComponent={
-                      canUpdateAddressStatus && (
+                      canUpdateAddressStatus &&
+                      canChangeScanPartner && (
                         <div className="flex items-center gap-2">
                           <AddressStatusChip
                             status={kyc.addressStatus || "PENDING"}
@@ -2055,12 +2362,20 @@ export default function AgentSinglePage() {
                               </DropdownTrigger>
                               <DropdownMenu
                                 aria-label="Guarantor status actions"
-                                onAction={(key) =>
-                                  handleGuarantorStatusUpdate(
-                                    guarantor.guarantorid,
-                                    key as string
-                                  )
-                                }
+                                onAction={(key) => {
+                                  const action = key as string;
+                                  if (action === "APPROVED") {
+                                    handleGuarantorActionStart(
+                                      guarantor,
+                                      "approve"
+                                    );
+                                  } else if (action === "REJECTED") {
+                                    handleGuarantorActionStart(
+                                      guarantor,
+                                      "reject"
+                                    );
+                                  }
+                                }}
                               >
                                 {guarantorStatusOptions.map((option) => (
                                   <DropdownItem
@@ -2137,6 +2452,238 @@ export default function AgentSinglePage() {
           </div>
         </div>
       </div>
+
+      {/* Scan Partner Change Modal */}
+      <Modal
+        isOpen={isScanPartnerModalOpen}
+        onClose={onScanPartnerModalClose}
+        size="lg"
+        placement="center"
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            <h3 className="text-lg font-semibold">
+              {agent?.userId ? "Change Scan Partner" : "Assign Scan Partner"}
+            </h3>
+            <p className="text-sm text-default-500">
+              {agent?.userId
+                ? `Select a new scan partner for ${agent?.firstname} ${agent?.lastname}`
+                : `Assign a scan partner to ${agent?.firstname} ${agent?.lastname}`}
+            </p>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              {/* Debug section - remove after fixing */}
+
+              <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+                <p className="text-sm text-warning-700">
+                  <strong>Current Scan Partner:</strong>{" "}
+                  {agent?.userId || "Not assigned"}
+                </p>
+              </div>
+
+              <SelectField
+                label="Select New Scan Partner"
+                htmlFor="scanPartnerSelect"
+                id="scanPartnerSelect"
+                placeholder="Choose a scan partner..."
+                defaultSelectedKeys={
+                  selectedScanPartner?.userId
+                    ? [selectedScanPartner.userId]
+                    : []
+                }
+                onChange={(value) =>
+                  handleScanPartnerSelect(
+                    Array.isArray(value) ? value[0] : value
+                  )
+                }
+                options={scanPartners.map((partner) => ({
+                  value: partner.userId,
+                  label:
+                    `${partner.firstName || ""} ${
+                      partner.lastName || ""
+                    }`.trim() + ` - ${partner.companyName || "N/A"}`,
+                }))}
+                disabled={scanPartners.length === 0}
+              />
+
+              {scanPartnerDetails && (
+                <div className="bg-default-50 rounded-lg p-4">
+                  <h4 className="font-semibold mb-3">
+                    Selected Partner Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm text-default-600">Name</p>
+                      <p className="font-medium">
+                        {scanPartnerDetails.firstName || ""}{" "}
+                        {scanPartnerDetails.lastName || ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-600">Company</p>
+                      <p className="font-medium">
+                        {scanPartnerDetails.companyName || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-600">Email</p>
+                      <p className="font-medium">
+                        {scanPartnerDetails.email || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-600">Phone</p>
+                      <p className="font-medium">
+                        {scanPartnerDetails.telephoneNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              onPress={onScanPartnerModalClose}
+              isDisabled={isChangingScanPartner}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onPress={handleScanPartnerChange}
+              isLoading={isChangingScanPartner}
+              isDisabled={!selectedScanPartner || isChangingScanPartner}
+            >
+              {isChangingScanPartner
+                ? "Updating..."
+                : agent?.userId
+                ? "Change Partner"
+                : "Assign Partner"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Guarantor Status Update Modal */}
+      <Modal
+        isOpen={isGuarantorModalOpen}
+        onClose={onGuarantorModalClose}
+        size="md"
+        placement="center"
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            <h3 className="text-lg font-semibold">
+              {guarantorUpdateAction === "approve" ? "Approve" : "Reject"}{" "}
+              Guarantor
+            </h3>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              {guarantorToUpdate && (
+                <div className="bg-default-50 rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">Guarantor Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm text-default-600">Name</p>
+                      <p className="font-medium">
+                        {guarantorToUpdate.guarantorName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-600">Phone</p>
+                      <p className="font-medium">
+                        {guarantorToUpdate.guarantorPhone}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-sm text-default-600">Relationship</p>
+                      <p className="font-medium">
+                        {guarantorToUpdate.guarantorRelationship}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+                <p className="text-sm text-warning-700">
+                  Are you sure you want to{" "}
+                  <strong>{guarantorUpdateAction}</strong> this guarantor? This
+                  action will update their status and cannot be easily undone.
+                </p>
+              </div>
+
+              {guarantorUpdateAction == "reject" && (
+                <div className="space-y-3">
+                  <SelectField
+                    label="Reason for this action"
+                    htmlFor="guarantorReasonSelect"
+                    id="guarantorReasonSelect"
+                    placeholder="Select a reason..."
+                    defaultSelectedKeys={
+                      guarantorReason
+                        ? [isOtherReason ? "other" : guarantorReason]
+                        : []
+                    }
+                    onChange={(value) => {
+                      const selectedValue = Array.isArray(value)
+                        ? value[0]
+                        : value;
+                      if (selectedValue === "other") {
+                        setIsOtherReason(true);
+                        setGuarantorReason("other");
+                      } else {
+                        setIsOtherReason(false);
+                        setGuarantorReason(selectedValue);
+                        setGuarantorComment("");
+                      }
+                    }}
+                    options={reasonOptions.map((reason) => ({
+                      label: reason,
+                      value: reason === "Other" ? "other" : reason,
+                    }))}
+                  />
+
+                  {isOtherReason && (
+                    <Textarea
+                      label="Please specify the reason"
+                      placeholder="Enter your reason..."
+                      value={guarantorComment}
+                      onValueChange={setGuarantorComment}
+                      minRows={3}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              onPress={onGuarantorModalClose}
+              isDisabled={isUpdatingGuarantor !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              color={guarantorUpdateAction === "approve" ? "success" : "danger"}
+              onPress={handleGuarantorStatusUpdateConfirm}
+              isLoading={isUpdatingGuarantor !== null}
+              isDisabled={isUpdatingGuarantor !== null}
+            >
+              {isUpdatingGuarantor !== null
+                ? "Updating..."
+                : guarantorUpdateAction === "approve"
+                ? "Approve Guarantor"
+                : "Reject Guarantor"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

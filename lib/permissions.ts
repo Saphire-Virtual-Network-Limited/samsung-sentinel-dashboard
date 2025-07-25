@@ -44,6 +44,7 @@ export interface PermissionConfig {
   canViewDeviceActivityLog: boolean;
   canViewCommunicationLog: boolean;
   suspendDashboardUser: boolean;
+  canChangeDashboardUserPassword: boolean;
   canCreate: boolean;
   canSync: boolean;
   canEdit: boolean;
@@ -58,7 +59,7 @@ export interface PermissionConfig {
   viewCommissionDetails: boolean;
   verifyMobiflex: boolean;
   viewAgentPerformanceData: boolean;
-
+  updateScanPartner: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -90,7 +91,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     viewLoanDetails: true,
     viewCommissionDetails: true,
     viewAgentPerformanceData: true,
-
+    updateScanPartner: true,
     // Admin has no special permissions by default
     // All permissions default to false
   },
@@ -108,7 +109,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canCreate: true,
     canSync: true,
     canEdit: true,
-
+    updateScanPartner: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
 
@@ -138,6 +139,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewDeviceActivityLog: true,
     canViewCommunicationLog: true,
+    suspendDashboardUser: true,
+    canChangeDashboardUserPassword: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
   },
@@ -263,6 +266,7 @@ function getDefaultPermissions(): PermissionConfig {
     canViewDeviceActivityLog: false,
     canViewCommunicationLog: false,
     suspendDashboardUser: false,
+    canChangeDashboardUserPassword: false,
     canCreate: false,
     canSync: false,
     canEdit: false,
@@ -274,7 +278,7 @@ function getDefaultPermissions(): PermissionConfig {
     updateAddressStatus: false,
     viewLoanDetails: false,
     viewCommissionDetails: false,
-
+    updateScanPartner: false,
     viewAgentPerformanceData: false,
 
     // Example of how to add a new permission:
@@ -353,6 +357,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "canViewOverDuePayments",
     "canViewDeviceActivityLog",
     "canViewCommunicationLog",
+    "suspendDashboardUser",
+    "canChangeDashboardUserPassword",
     "canCreate",
     "canSync",
     "canEdit",
@@ -366,7 +372,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "viewCommissionDetails",
     "verifyMobiflex",
     "viewAgentPerformanceData",
-
+    "updateScanPartner",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',
