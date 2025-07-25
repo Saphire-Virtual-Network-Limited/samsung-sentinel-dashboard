@@ -19,6 +19,10 @@ import {
   ClipboardCheckIcon,
   Wrench,
   BarChart3,
+  LayoutDashboard,
+  IdCard,
+  Receipt,
+  Package,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -38,7 +42,6 @@ import { useAuth } from "@/lib";
 import { useState } from "react";
 import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
-import { useSelectedProduct } from "@/hooks/useSelectedProduct";
 import { hasPermission } from "@/lib/permissions";
 
 console.log("Selected Product:", getSelectedProduct());
@@ -64,7 +67,7 @@ export function AppSidebar() {
   const [openNestedMenus, setOpenNestedMenus] = useState<{
     [key: string]: boolean;
   }>({});
-  const { value: selectedProduct } = useSelectedProduct();
+  const { label: selectedProduct } = getSelectedProduct();
   const handleLogout = async () => {
     try {
       logout();
@@ -285,6 +288,7 @@ export function AppSidebar() {
       ],
     },
   ];
+
   const adminAndroidItems: MenuItem[] =
     selectedProduct === "Android"
       ? [
@@ -406,132 +410,200 @@ export function AppSidebar() {
         ]
       : [];
 
-  const subAdminItems: MenuItem[] = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      url: "/access/sub-admin/",
-      id: "sub-admin-dashboard",
-    },
-    {
-      icon: CreditCard,
-      title: "Loans",
-      url: "/access/sub-admin/loans",
-      id: "sub-admin-loans",
-    },
-    {
-      icon: Users,
-      title: "Customers",
-      url: "/access/sub-admin/customers",
-      id: "sub-admin-customers",
-    },
-    {
-      icon: UserCheck,
-      title: "Verification",
-      id: "sub-admin-referees",
-      subItems: [
-        {
-          title: "Pending",
-          url: "/access/sub-admin/referees/unapproved-referees",
-        },
-        {
-          title: "Approved",
-          url: "/access/sub-admin/referees/approved-referees",
-        },
-        {
-          title: "Rejected",
-          url: "/access/sub-admin/referees/rejected-referees",
-        },
-      ],
-    },
-    {
-      icon: Store,
-      title: "Stores",
-      url: "/access/sub-admin/stores",
-      id: "sub-admin-stores",
-    },
-    {
-      icon: IoBusiness,
-      title: "Staff",
-      url: "/access/sub-admin/staff",
-      id: "sub-admin-staff",
-      subItems: [
-        {
-          title: "Mobiflex Sales Agent",
-          url: "/access/sub-admin/staff/agents",
-        },
-        {
-          title: "MBE",
-          url: "/access/sub-admin/staff/mbe",
-        },
-        {
-          title: "SCAN Partners",
-          url: "/access/sub-admin/staff/scan-partners",
-        },
-      ],
-    },
-    {
-      icon: ChartBar,
-      title: "Reports",
-      id: "sub-admin-reports",
-      subItems: [
-        {
-          title: "Sales",
-          subItems: [
-            {
-              title: "Overview",
-              url: "/access/sub-admin/reports/sales/overview",
-            },
-            {
-              title: "MBE Report",
-              url: "/access/sub-admin/reports/sales/mbe",
-            },
-            {
-              title: "Samsung Report",
-              url: "/access/sub-admin/reports/sales/samsung",
-            },
-            {
-              title: "Xiaomi Report",
-              url: "/access/sub-admin/reports/sales/xiaomi",
-            },
-            {
-              title: "Oppo Report",
-              url: "/access/sub-admin/reports/sales/oppo",
-            },
-            {
-              title: "Sentinel",
-              url: "/access/sub-admin/reports/sales/sentinel",
-            },
-          ],
-        },
-        { title: "Drop-offs", url: "/access/sub-admin/reports/drop-offs" },
-        { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
-      ],
-    },
-    {
-      icon: Users2,
-      title: "Users",
-      id: "admin-users",
-      url: "/access/sub-admin/users/",
-    },
+  const adminCreditflexItems: MenuItem[] =
+    selectedProduct === "Creditflex"
+      ? [
+          {
+            title: "Dashboard",
+            icon: LayoutDashboard,
+            url: `/access/${accessRole}`, ///creditflex`,
+            id: `${accessRole}-creditflex-dashboard`,
+          },
+          {
+            icon: IdCard,
+            title: "Loan Management",
+            id: `${accessRole}-creditflex-loan-management`,
+            subItems: [
+              {
+                title: "All Loans",
+                url: `/access/${accessRole}/creditflex/all-loans`,
+              },
+              {
+                title: "Disbursed Loans",
+                url: `/access/${accessRole}/creditflex/all-loans?status=active`,
+              },
+            ],
+          },
+          {
+            title: "Loan Products",
+            icon: Receipt,
+            url: `/access/${accessRole}`, ///creditflex/loan-products`,
+            id: `${accessRole}-creditflex-loan-products`,
+          },
+          {
+            title: "Invoice",
+            icon: Package,
+            url: `/access/${accessRole}`, ///creditflex/invoices`,
+            id: `${accessRole}-creditflex-invoices`,
+          },
+          {
+            title: "Repayment",
+            icon: Package,
+            url: `/access/${accessRole}`, ///creditflex/repayments`,
+            id: `${accessRole}-creditflex-repayments`,
+          },
+          {
+            title: "Liquidation Request",
+            icon: Package,
+            url: `/access/${accessRole}`, ///creditflex/liquidation-requests`,
+            id: `${accessRole}-creditflex-liquidation-requests`,
+          },
+          {
+            title: "Top-Up Request",
+            icon: Package,
+            url: `/access/${accessRole}`, ///creditflex/topup-requests`,
+            id: `${accessRole}-creditflex-topup-requests`,
+          },
+          {
+            title: "Telesales Agents",
+            icon: Users,
+            url: `/access/${accessRole}`, ///creditflex/telesales-agents`,
+            id: `${accessRole}-creditflex-telesales-agents`,
+          },
+        ]
+      : [];
 
-    {
-      icon: Package2Icon,
-      title: "Inventory",
-      id: "sub-admin-inventory",
-      subItems: [
-        { title: "Devices", url: "/access/sub-admin/inventory/devices" },
-        { title: "TVs", url: "/access/sub-admin/inventory/tvs" },
-        { title: "Solar", url: "/access/sub-admin/inventory/solar" },
-      ],
-    },
-  ];
+  const subAdminItems: MenuItem[] =
+    selectedProduct == "Creditflex"
+      ? adminCreditflexItems
+      : [
+          {
+            title: "Dashboard",
+            icon: Home,
+            url: "/access/sub-admin/",
+            id: "sub-admin-dashboard",
+          },
+          {
+            icon: CreditCard,
+            title: "Loans",
+            url: "/access/sub-admin/loans",
+            id: "sub-admin-loans",
+          },
+          {
+            icon: Users,
+            title: "Customers",
+            url: "/access/sub-admin/customers",
+            id: "sub-admin-customers",
+          },
+          {
+            icon: UserCheck,
+            title: "Verification",
+            id: "sub-admin-referees",
+            subItems: [
+              {
+                title: "Pending",
+                url: "/access/sub-admin/referees/unapproved-referees",
+              },
+              {
+                title: "Approved",
+                url: "/access/sub-admin/referees/approved-referees",
+              },
+              {
+                title: "Rejected",
+                url: "/access/sub-admin/referees/rejected-referees",
+              },
+            ],
+          },
+          {
+            icon: Store,
+            title: "Stores",
+            url: "/access/sub-admin/stores",
+            id: "sub-admin-stores",
+          },
+          {
+            icon: IoBusiness,
+            title: "Staff",
+            url: "/access/sub-admin/staff",
+            id: "sub-admin-staff",
+            subItems: [
+              {
+                title: "Mobiflex Sales Agent",
+                url: "/access/sub-admin/staff/agents",
+              },
+              {
+                title: "MBE",
+                url: "/access/sub-admin/staff/mbe",
+              },
+              {
+                title: "SCAN Partners",
+                url: "/access/sub-admin/staff/scan-partners",
+              },
+            ],
+          },
+          {
+            icon: ChartBar,
+            title: "Reports",
+            id: "sub-admin-reports",
+            subItems: [
+              {
+                title: "Sales",
+                subItems: [
+                  {
+                    title: "Overview",
+                    url: "/access/sub-admin/reports/sales/overview",
+                  },
+                  {
+                    title: "MBE Report",
+                    url: "/access/sub-admin/reports/sales/mbe",
+                  },
+                  {
+                    title: "Samsung Report",
+                    url: "/access/sub-admin/reports/sales/samsung",
+                  },
+                  {
+                    title: "Xiaomi Report",
+                    url: "/access/sub-admin/reports/sales/xiaomi",
+                  },
+                  {
+                    title: "Oppo Report",
+                    url: "/access/sub-admin/reports/sales/oppo",
+                  },
+                  {
+                    title: "Sentinel",
+                    url: "/access/sub-admin/reports/sales/sentinel",
+                  },
+                ],
+              },
+              {
+                title: "Drop-offs",
+                url: "/access/sub-admin/reports/drop-offs",
+              },
+              { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
+            ],
+          },
+          {
+            icon: Users2,
+            title: "Users",
+            id: "admin-users",
+            url: "/access/sub-admin/users/",
+          },
 
-  const adminItems: MenuItem[] = [
-    ...adminRootItems,
-    ...adminRelayItems,
-    ...adminAndroidItems,
-  ];
+          {
+            icon: Package2Icon,
+            title: "Inventory",
+            id: "sub-admin-inventory",
+            subItems: [
+              { title: "Devices", url: "/access/sub-admin/inventory/devices" },
+              { title: "TVs", url: "/access/sub-admin/inventory/tvs" },
+              { title: "Solar", url: "/access/sub-admin/inventory/solar" },
+            ],
+          },
+        ];
+
+  const adminItems: MenuItem[] =
+    selectedProduct == "Creditflex"
+      ? adminCreditflexItems
+      : [...adminRootItems, ...adminRelayItems, ...adminAndroidItems];
 
   const salesItems: MenuItem[] = [
     {
