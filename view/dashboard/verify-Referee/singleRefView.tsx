@@ -739,6 +739,14 @@ export default function SingleRefereeView({
                     </div>
                   </div>
                 )}
+                {customer.CustomerKYC?.[0]?.generalStatus === "REJECTED" && customer.CustomerKYC?.[0]?.generalComment && (
+                  <div className="bg-red-50 rounded-lg p-4 mt-4">
+                    <p className="text-red-700 font-medium mb-2">Rejection Reason</p>
+                    <div className="font-medium text-default-900">
+                      {customer.CustomerKYC?.[0]?.generalComment}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
