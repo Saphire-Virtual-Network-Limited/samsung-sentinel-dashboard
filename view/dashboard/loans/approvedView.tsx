@@ -12,6 +12,8 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Age", uid: "age", sortable: true },
 	{ name: "Device Price", uid: "devicePrice", sortable: true },
@@ -226,7 +228,8 @@ export default function LoansView() {
 		() =>
 			raw.map((r: LoanRecord) => ({
 				...r,
-				// customerId: r.customer?.customerId || 'N/A',
+				customerId: r.customer?.customerId || 'N/A',
+				loanRecordId: r.loanRecordId,
 				fullName: r.customer?.firstName && r.customer?.lastName ? `${capitalize(r.customer.firstName)} ${capitalize(r.customer.lastName)}` : 'N/A',
 				age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
 				monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',		

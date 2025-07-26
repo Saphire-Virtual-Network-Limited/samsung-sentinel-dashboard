@@ -12,6 +12,8 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 
 const columns: ColumnDef[] = [
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Email", uid: "email", sortable: true },
 	{ name: "BVN Phone", uid: "bvnPhoneNumber" },
@@ -61,6 +63,7 @@ type LoanRecord = {
 	status?: string;
 	loanStatus?: string;
 	regBy: string | null;
+	loanRecordId?: string;
 	LoanRecord?: Array<{
 		loanRecordId: string;
 		customerId: string;
@@ -187,6 +190,8 @@ export default function DefaultedView() {
 		() =>
 			raw.map((r: LoanRecord) => ({
 				...r,
+				customerId: r.customerId,
+				loanRecordId: r.loanRecordId,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				email: r.email,
 				age: calculateAge(r.dob),
