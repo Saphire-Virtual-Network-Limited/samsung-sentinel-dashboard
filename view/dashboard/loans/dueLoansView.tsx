@@ -234,6 +234,7 @@ type TransformedDueLoanRecord = {
     email: string;
     phone: string;
     altPhone: string;
+	
     state: string;
     loanAmount: string;
     duration: string | number;
