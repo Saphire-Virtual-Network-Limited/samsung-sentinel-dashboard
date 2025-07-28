@@ -1220,6 +1220,22 @@ export async function getCDFAllLoanProducts() {
   return apiCall(`/admin/payday/loan-products`, "GET");
 }
 
+export async function createCDFLoanProduct(data: any) {
+  return apiCall(`/admin/payday/loan-products`, "POST", data);
+}
+
+export async function updateCDFLoanProduct(id: string, data: any) {
+  return apiCall(`/admin/payday/loan-products/${id}`, "PUT", data);
+}
+
+export async function deleteCDFLoanProduct(id: string) {
+  return apiCall(`/admin/payday/loan-products/${id}`, "DELETE");
+}
+
+export async function getCDFLoanProductById(id: string) {
+  return apiCall(`/admin/payday/loan-products/${id}`, "GET");
+}
+
 export async function getCDFAllRepayments() {
   return apiCall(`/admin/payday/repayments`, "GET");
 }
