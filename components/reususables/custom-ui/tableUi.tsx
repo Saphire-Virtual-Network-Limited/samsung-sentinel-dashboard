@@ -79,6 +79,7 @@ export interface GenericTableProps<T> {
   selectedKeys?: Set<string>;
   onSelectionChange?: (keys: any) => void; // HeroUI can pass "all", Set<string>, or other values
   disabledKeys?: Set<string>;
+  searchPlaceholder?: string;
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
@@ -118,6 +119,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
     selectedKeys,
     onSelectionChange,
     disabledKeys,
+    searchPlaceholder,
   } = props;
 
   // Exclude status column if hidden
@@ -162,7 +164,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
         <Input
           isClearable
           className="w-full sm:max-w-[44%]"
-          placeholder="Search by ID, Name, BVN"
+          placeholder={searchPlaceholder || "Search by ID, Name, BVN"}
           startContent={<SearchIcon className="w-3" />}
           value={filterValue}
           onClear={() => onFilterChange("")}
