@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Channel", uid: "channel", sortable: true },
 	{ name: "Last Point", uid: "lastPoint" },
 	{ name: "Loan Amount", uid: "loanAmount" },
@@ -190,6 +191,7 @@ export default function EnrolledView() {
 			raw.map((r: LoanRecord) => ({
 				...r,
 				loanRecordId: r.loanRecordId || r.customerId,
+				customerId: r.customerId,
 				channel: r.channel,
 				lastPoint: r.lastPoint,
 				loanAmount: r.loanAmount,

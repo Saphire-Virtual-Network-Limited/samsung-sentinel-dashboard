@@ -1046,8 +1046,8 @@ export async function deleteCommunicationLog(id: string) {
 }
 
 //get all downpayment lower than 20%
-export async function getAllDownpaymentLowerThan20() {
-  return apiCall(`/admin/loan/low-downpayment`, "GET");
+export async function getAllDownpaymentLowerThan20(includeRelations: boolean = true) {
+  return apiCall(`/admin/loan/low-downpayment?includeRelations=${includeRelations}`, "GET"); 
 }
 
 // ============================================================================
@@ -1121,6 +1121,7 @@ export async function triggerCDFAdminDisbursement(
   return apiCall(`/admin/payday/loans/${loanId}/disbursement`, "POST", {
     invoiceReference,
   });
+
 }
 
 /**
