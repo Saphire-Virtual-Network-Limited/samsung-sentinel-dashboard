@@ -15,10 +15,18 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  useDisclosure,
 } from "@heroui/react";
-import { EllipsisVertical, MoreHorizontal } from "lucide-react";
+import {
+  EllipsisVertical,
+  MoreHorizontal,
+  Eye,
+  Link,
+  ExternalLink,
+} from "lucide-react";
 import GenericTable from "@/components/reususables/custom-ui/tableUi";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
+import { LoanDetailsModal } from "@/components/modals/LoanDetailsModal";
 import { useAdminAllLoans } from "@/hooks/creditflex/useAdminAllLoans";
 import { capitalize, showToast, getColor } from "@/lib";
 import {
@@ -65,24 +73,19 @@ const CreditflexAllLoansView = () => {
   const [selectedLoanIds, setSelectedLoanIds] = useState<Set<string>>(
     new Set()
   );
+  const [selectedLoan, setSelectedLoan] = useState<CreditflexLoan | null>(null);
 
   const [isBulkDisbursing, setIsBulkDisbursing] = useState(false);
 
+  // Modal states
+  const {
+    isOpen: isLoanModalOpen,
+    onOpen: openLoanModal,
+    onClose: closeLoanModal,
+  } = useDisclosure();
+
   // Get status from URL parameter if present (client-side only)
   const [urlStatus, setUrlStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Only run on client side to avoid SSR issues
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const statusParam = searchParams.get('status');
-      if (statusParam) {
-        setUrlStatus(statusParam.toLowerCase());
-        // Also set the status filter to match the URL
-        setStatusFilter(new Set([statusParam.toLowerCase()]));
-      }
-    }
-  }, []);
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -125,7 +128,7 @@ const CreditflexAllLoansView = () => {
       //   filterBy === "loan-product" && { loanProductId: filterValue }),
       // ...(filterValue && !filterBy && { customerName: filterValue }),
     }),
-    [startDate, endDate, page] //statusFilter 
+    [startDate, endDate, page] //statusFilter
   );
 
   const { data: response, error, isLoading } = useAdminAllLoans(filters);
@@ -173,10 +176,62 @@ const CreditflexAllLoansView = () => {
     }));
   }, [response, isLoading, error]);
 
+  // Handle URL parameters for status and loan ID
+  useEffect(() => {
+    // Only run on client side to avoid SSR issues
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const statusParam = searchParams.get("status");
+      const loanIdParam = searchParams.get("loanId");
+
+      if (statusParam) {
+        setUrlStatus(statusParam.toLowerCase());
+        // Also set the status filter to match the URL
+        setStatusFilter(new Set([statusParam.toLowerCase()]));
+      }
+
+      // Handle loan ID parameter for opening loan modal
+      if (loanIdParam && loansData.length > 0) {
+        const loan = loansData.find(
+          (loan: CreditflexLoan) =>
+            loan.loanId === loanIdParam || loan.id === loanIdParam
+        );
+        if (loan) {
+          setSelectedLoan(loan);
+          openLoanModal();
+
+          // Clean URL without causing page reload
+          const newUrl =
+            window.location.pathname +
+            (statusParam ? `?status=${statusParam}` : "");
+          window.history.replaceState({}, "", newUrl);
+        }
+      }
+    }
+  }, [loansData, openLoanModal]);
+
   const handleDateFilter = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
     setPage(1);
+  };
+
+  // Handle viewing loan details
+  const handleViewLoan = (loan: CreditflexLoan) => {
+    setSelectedLoan(loan);
+    openLoanModal();
+  };
+
+  // Handle copy shareable link
+  const handleCopyLoanLink = (loan: CreditflexLoan) => {
+    const currentUrl = window.location.origin + window.location.pathname;
+    const shareableLink = `${currentUrl}?loanId=${loan.loanId || loan.id}`;
+
+    navigator.clipboard.writeText(shareableLink);
+    showToast({
+      message: "Shareable link copied to clipboard!",
+      type: "success",
+    });
   };
 
   const filtered = useMemo(() => {
@@ -186,8 +241,10 @@ const CreditflexAllLoansView = () => {
 
     // Local status filtering
     if (statusFilter.size > 0) {
-      const selectedStatuses = Array.from(statusFilter).map(s => s.toLowerCase());
-      list = list.filter((loan: CreditflexLoan) => 
+      const selectedStatuses = Array.from(statusFilter).map((s) =>
+        s.toLowerCase()
+      );
+      list = list.filter((loan: CreditflexLoan) =>
         selectedStatuses.includes(loan.status?.toLowerCase() || "")
       );
     }
@@ -502,14 +559,20 @@ const CreditflexAllLoansView = () => {
             <DropdownItem
               key="view"
               color="primary"
-              onPress={() => {
-                router.push(
-                  `/access/${role}/creditflex/loans/${loan.loanId || loan.id}`
-                );
-              }}
+              startContent={<Eye className="w-4 h-4" />}
+              onPress={() => handleViewLoan(loan)}
             >
               View Details
             </DropdownItem>
+            <DropdownItem
+              key="copy-link"
+              color="default"
+              startContent={<Link className="w-4 h-4" />}
+              onPress={() => handleCopyLoanLink(loan)}
+            >
+              Copy Shareable Link
+            </DropdownItem>
+
             <DropdownItem
               key="disburse"
               color="success"
@@ -547,11 +610,7 @@ const CreditflexAllLoansView = () => {
       return (
         <div
           className="capitalize cursor-pointer font-medium text-blue-600 hover:text-blue-800"
-          onClick={() =>
-            router.push(
-              `/access/${role}/creditflex/loans/${loan.loanId || loan.id}`
-            )
-          }
+          onClick={() => handleViewLoan(loan)}
         >
           {loan.customerName}
         </div>
@@ -699,6 +758,13 @@ const CreditflexAllLoansView = () => {
           }
         />
       )}
+
+      {/* Loan Details Modal */}
+      <LoanDetailsModal
+        isOpen={isLoanModalOpen}
+        onClose={closeLoanModal}
+        loan={selectedLoan}
+      />
     </div>
   );
 };

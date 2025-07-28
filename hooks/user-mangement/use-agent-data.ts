@@ -29,6 +29,8 @@ export const fallbackAgentTypes: AgentType[] = [
   { label: "Collection Officer", value: "COLLECTION_OFFICER" },
   { label: "Zoho Notifier", value: "ZOHO_NOTIFIER" },
   { label: "Scan Partner", value: "SCAN_PARTNER" },
+  { label: "MBE", value: "MBE" },
+
   { label: "Telemarketer", value: "TELEMARKETER" },
 ];
 

@@ -416,7 +416,7 @@ export function AppSidebar() {
           {
             title: "Dashboard",
             icon: LayoutDashboard,
-            url: `/access/${accessRole}`, ///creditflex`,
+            url: `/access/${accessRole}/creditflex`,
             id: `${accessRole}-creditflex-dashboard`,
           },
           {
@@ -437,13 +437,13 @@ export function AppSidebar() {
           {
             title: "Loan Products",
             icon: Receipt,
-            url: `/access/${accessRole}`, ///creditflex/loan-products`,
+            url: `/access/${accessRole}/creditflex/loan-products`,
             id: `${accessRole}-creditflex-loan-products`,
           },
           {
             title: "Invoice",
             icon: Package,
-            url: `/access/${accessRole}`, ///creditflex/invoices`,
+            url: `/access/${accessRole}/creditflex/invoices`,
             id: `${accessRole}-creditflex-invoices`,
           },
           {
@@ -467,7 +467,7 @@ export function AppSidebar() {
           {
             title: "Telesales Agents",
             icon: Users,
-            url: `/access/${accessRole}`, ///creditflex/telesales-agents`,
+            url: `/access/${accessRole}/creditflex/telesales-agents`,
             id: `${accessRole}-creditflex-telesales-agents`,
           },
         ]
@@ -746,6 +746,20 @@ export function AppSidebar() {
       icon: IoBusiness,
       title: "Mobiflex Sales Agent",
       id: "verify-staff-mobiflex",
+      subItems: [
+        {
+          title: "Pending",
+          url: "/access/verify/staff/agents?status=pending",
+        },
+        {
+          title: "Approved",
+          url: "/access/verify/staff/agents?status=approved",
+        },
+        {
+          title: "Rejected",
+          url: "/access/verify/staff/agents?status=rejected",
+        },
+      ],
     },
   ];
   const verificationItems: MenuItem[] = [
