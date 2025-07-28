@@ -287,10 +287,12 @@ const StoreForm = () => {
 
     const handleBankSelection = (bankCode: string) => {
 		setSelectedBankCode(bankCode);
-		setSelectedBankName(bankList.find((bank) => bank.value === bankCode)?.label || '');  
+		const selectedBank = bankList.find((bank) => bank.value === bankCode);
+		setSelectedBankName(selectedBank?.label || '');  
 		// Auto-fill the bank code field when a bank is selected
 		setBankCode(bankCode);
 		setBankCodeError(""); // Clear any existing error
+		setBankNameError(""); // Clear any existing bank name error
 	};
 
     // Fetch store data if in edit mode
@@ -312,8 +314,10 @@ const StoreForm = () => {
                         setAddress(store.address || '');
                         setAccountNo(store.accountNumber || '');
                         setAccountName(store.accountName || '');
-                        setBankName(selectedBankName || '');
+                        setBankName(store.bankName || '');
+                        setSelectedBankName(store.bankName || '');
                         setBankCode(store.bankCode || '');
+                        setSelectedBankCode(store.bankCode || '');
                         setPhoneNumber(store.phoneNumber || '');
                         setStoreEmail(store.storeEmail || '');
                         setLongitude(store.longitude?.toString() || '');
@@ -346,6 +350,17 @@ const StoreForm = () => {
     }, [isEditMode, storeId, router]);
 
     const handleSubmit = async() => {
+        // Validate required fields
+        if (!selectedBankName && !bankName) {
+            setBankNameError("Bank name is required");
+            return;
+        }
+        
+        if (!selectedBankCode && !bankCode) {
+            setBankCodeError("Bank code is required");
+            return;
+        }
+
         setIsDisabled(true);
         setIsLoading(true);
        
@@ -357,8 +372,8 @@ const StoreForm = () => {
             address,
             accountNumber: accountNo,
             accountName,
-            bankName: selectedBankName || '',
-            bankCode: selectedBankCode?.toString() || '',
+            bankName: selectedBankName || bankName || '',
+            bankCode: selectedBankCode?.toString() || bankCode || '',
             phoneNumber,
             storeEmail,
             longitude: parseFloat(longitude),
@@ -368,6 +383,15 @@ const StoreForm = () => {
             storeOpen,
             storeClose
         }
+
+        // Debug logging
+        console.log('Submitting store data:', {
+            bankName: store.bankName,
+            bankCode: store.bankCode,
+            selectedBankName,
+            selectedBankCode,
+            formBankName: bankName
+        });
 
         try {
             if (isEditMode && storeId) {
@@ -507,14 +531,15 @@ const StoreForm = () => {
 									isInvalid={!!bankNameError}
 									errorMessage={bankNameError || ""}
 									placeholder={loadingBanks ? "Loading banks..." : bankList.length > 0 ? "Search/select bank" : "No bank available"}
-									value={bankCode}
+									value={selectedBankCode || bankCode}
 									onChange={(value) => handleBankSelection(value)}
 									options={bankList.map((bank) => ({
 										label: bank.label,
 										value: bank.value.toString(),
-										key: bank.slug.toString(),
 									}))}
 									isDisabled={loadingBanks || bankList.length === 0}
+									required={true}
+									reqValue="*"
 								/>
 
                     <FormField
