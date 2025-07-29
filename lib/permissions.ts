@@ -185,7 +185,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateLastPoint: true,
     canUpdateLoanStatus: true,
     canTriggerDeviceActions: true,
-    canDeleteCustomers: true,
+    // canDeleteCustomers: true,
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
