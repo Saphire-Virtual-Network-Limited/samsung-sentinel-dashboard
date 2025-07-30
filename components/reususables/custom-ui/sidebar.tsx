@@ -713,7 +713,7 @@ export function AppSidebar() {
       icon: Users2,
       title: "Users",
       id: "admin-users",
-      url: "/access/admin/users/",
+      url: "/access/dev/users",
     },
     {
       icon: Store,

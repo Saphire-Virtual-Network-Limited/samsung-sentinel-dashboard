@@ -1046,8 +1046,13 @@ export async function deleteCommunicationLog(id: string) {
 }
 
 //get all downpayment lower than 20%
-export async function getAllDownpaymentLowerThan20(includeRelations: boolean = true) {
-  return apiCall(`/admin/loan/low-downpayment?includeRelations=${includeRelations}`, "GET"); 
+export async function getAllDownpaymentLowerThan20(
+  includeRelations: boolean = true
+) {
+  return apiCall(
+    `/admin/loan/low-downpayment?includeRelations=${includeRelations}`,
+    "GET"
+  );
 }
 
 // ============================================================================
@@ -1121,7 +1126,6 @@ export async function triggerCDFAdminDisbursement(
   return apiCall(`/admin/payday/loans/${loanId}/disbursement`, "POST", {
     invoiceReference,
   });
-
 }
 
 /**
@@ -1294,4 +1298,59 @@ export interface AdminDashboardStatistics {
   repaymentRate: string;
   averageLoanAmount: number;
   conversionRate: string;
+}
+
+// Bank Details API Functions
+export async function getVfdBanks(): Promise<
+  BaseApiResponse<{ status: string; message: string; data: { bank: any[] } }>
+> {
+  return apiCall("/payments/bank-list", "GET", undefined, {
+    appKey: process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY,
+  });
+}
+
+export async function getPaystackBanks(): Promise<
+  BaseApiResponse<{ status: boolean; message: string; data: any[] }>
+> {
+  return apiCall("/payments/banks", "GET", undefined, {
+    appKey: process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY,
+  });
+}
+
+export async function verifyBankAccount(data: {
+  accountNumber: string;
+  bankCode: string; // This should be the Paystack bank code
+}): Promise<
+  BaseApiResponse<{
+    account_number: string;
+    account_name: string;
+    bank_id: number;
+  }>
+> {
+  return apiCall(
+    `/payments/resolve-account-number?bankCode=${data.bankCode}&accountNumber=${data.accountNumber}`,
+    "GET",
+    undefined,
+    {
+      appKey: process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY,
+    }
+  );
+}
+
+export async function addUserBankDetails(
+  userId: string,
+  data: {
+    accountName: string;
+    accountNumber: string;
+    vfdBankName: string;
+    vfdBankCode: string;
+    channel: string;
+    bankID: number;
+    bankCode: string;
+    bankName: string;
+  }
+): Promise<BaseApiResponse<any>> {
+  return apiCall(`/admin/account-details/${userId}`, "POST", data, {
+    appKey: process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY,
+  });
 }
