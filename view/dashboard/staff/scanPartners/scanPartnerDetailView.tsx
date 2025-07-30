@@ -7,6 +7,10 @@ import {
   suspendUser as suspendScanPartner,
   useAuth,
   getAgentLoansAndCommissions, // Add this import
+  getVfdBanks,
+  getPaystackBanks,
+  verifyBankAccount,
+  addUserBankDetails,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -28,6 +32,9 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure,
+  Input,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -45,13 +52,16 @@ import {
   Eye,
   UserIcon,
   Smartphone,
+  Plus,
+  Edit,
+  Building2,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { statusColorMap } from "./constants";
-import type { ScanPartnerRecord } from "./types";
+import type { ScanPartnerRecord, UserAccountDetails } from "./types";
 import {
   ButtonGroup,
   Table,
@@ -68,6 +78,7 @@ import GenericTable, {
 } from "@/components/reususables/custom-ui/tableUi";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import AutoCompleteField from "@/components/reususables/form/AutoCompleteField";
 
 // Agent interface for the Mbe array
 interface AgentRecord {
@@ -83,6 +94,63 @@ interface AgentRecord {
   imageUrl?: string;
   bvn: string;
   dob: string;
+  channel: string;
+}
+
+// Bank details interfaces
+interface BankDetails {
+  mbeAccountDetailsId?: string;
+  mbeId?: string;
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+  bankCode: string;
+  channel: string;
+  createdAt?: string;
+  updatedAt?: string;
+  recipientCode?: string;
+  vfdBankCode: string;
+  vfdBankName: string;
+  bankID?: number;
+}
+
+interface VfdBank {
+  id: number;
+  code: string;
+  name: string;
+  logo: string;
+  created: string;
+}
+
+interface PaystackBank {
+  id: number;
+  name: string;
+  slug: string;
+  code: string;
+  longcode: string;
+  gateway: string;
+  pay_with_bank: boolean;
+  supports_transfer: boolean;
+  available_for_direct_debit: boolean;
+  active: boolean;
+  country: string;
+  currency: string;
+  type: string;
+  is_deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BankVerificationResponse {
+  statusCode: number;
+  statusType: string;
+  message: string;
+  data: {
+    account_number: string;
+    account_name: string;
+    bank_id: number;
+  };
+  responseTime: string;
   channel: string;
 }
 
@@ -611,6 +679,67 @@ const fetchAgentLoanAndCommission = async (userId: string) => {
   return response?.data;
 };
 
+// Bank API functions
+const fetchVfdBanks = async (): Promise<VfdBank[]> => {
+  try {
+    const response = await getVfdBanks();
+    return response?.data?.data?.bank || [];
+  } catch (error) {
+    console.error("Error fetching VFD banks:", error);
+    return [];
+  }
+};
+
+const fetchPaystackBanks = async (): Promise<PaystackBank[]> => {
+  try {
+    const response = await getPaystackBanks();
+    return response?.data?.data || [];
+  } catch (error) {
+    console.error("Error fetching Paystack banks:", error);
+    return [];
+  }
+};
+
+const verifyBankDetails = async (
+  accountNumber: string,
+  bankCode: string
+): Promise<BankVerificationResponse> => {
+  try {
+    const response = await verifyBankAccount({
+      accountNumber,
+      bankCode, // Paystack bank code
+    });
+
+    return response as BankVerificationResponse;
+  } catch (error) {
+    console.error("Error verifying bank details:", error);
+    throw error;
+  }
+};
+
+const addAccountDetails = async (
+  userId: string,
+  bankDetails: BankDetails
+): Promise<any> => {
+  try {
+    const response = await addUserBankDetails(userId, {
+      accountName: bankDetails.accountName,
+      accountNumber: bankDetails.accountNumber,
+      vfdBankName: bankDetails.vfdBankName,
+      vfdBankCode: bankDetails.vfdBankCode,
+      channel: "Mobiflex",
+      bankID: bankDetails.bankID || 0,
+      bankCode: bankDetails.bankCode,
+      bankName: bankDetails.bankName,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error adding account details:", error);
+    throw error;
+  }
+};
+
 // Main Component
 export default function ScanPartnerSinglePage() {
   const params = useParams();
@@ -626,6 +755,32 @@ export default function ScanPartnerSinglePage() {
     onOpen: onSuspendOpen,
     onClose: onSuspendClose,
   } = useDisclosure();
+
+  // Bank details modal state
+  const {
+    isOpen: isBankModalOpen,
+    onOpen: onBankModalOpen,
+    onClose: onBankModalClose,
+  } = useDisclosure();
+
+  // Bank details form state
+  const [bankFormData, setBankFormData] = useState<BankDetails>({
+    accountName: "",
+    accountNumber: "",
+    bankName: "",
+    bankCode: "",
+    vfdBankName: "",
+    vfdBankCode: "",
+    channel: "Mobiflex",
+    bankID: 0,
+  });
+
+  const [isVerifyingBank, setIsVerifyingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [isAccountVerified, setIsAccountVerified] = useState(false);
+  const [selectedVfdBank, setSelectedVfdBank] = useState<VfdBank | null>(null);
+  const [selectedPaystackBank, setSelectedPaystackBank] =
+    useState<PaystackBank | null>(null);
 
   // Add these state variables after the existing ones
   const [loanFilterValue, setLoanFilterValue] = useState("");
@@ -704,6 +859,61 @@ export default function ScanPartnerSinglePage() {
     }
   );
 
+  // Fetch VFD banks
+  const { data: vfdBanks = [] } = useSWR("vfd-banks", fetchVfdBanks, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000, // 1 hour
+  });
+
+  // Fetch Paystack banks
+  const { data: paystackBanks = [] } = useSWR(
+    "paystack-banks",
+    fetchPaystackBanks,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 3600000, // 1 hour
+    }
+  );
+
+  // Extract the latest user bank details from UserAccountDetails array
+  const userBankDetails = useMemo(() => {
+    if (
+      !scanPartner?.UserAccountDetails ||
+      scanPartner.UserAccountDetails.length === 0
+    ) {
+      return null;
+    }
+
+    // Get the latest bank details (most recent updatedAt)
+    const latestBankDetails = scanPartner.UserAccountDetails.reduce(
+      (latest, current) => {
+        return new Date(current.updatedAt) > new Date(latest.updatedAt)
+          ? current
+          : latest;
+      }
+    );
+
+    // Convert UserAccountDetails to BankDetails format
+    return {
+      accountName: latestBankDetails.accountName,
+      accountNumber: latestBankDetails.accountNumber,
+      bankName: latestBankDetails.bankName,
+      bankCode: latestBankDetails.bankCode,
+      vfdBankName: latestBankDetails.vfdBankName,
+      vfdBankCode: latestBankDetails.vfdBankCode,
+      channel: latestBankDetails.channel,
+      bankID: latestBankDetails.bankID,
+      createdAt: latestBankDetails.createdAt,
+      updatedAt: latestBankDetails.updatedAt,
+    } as BankDetails;
+  }, [scanPartner?.UserAccountDetails]);
+
+  // Function to refresh bank details after adding new ones
+  const mutateBankDetails = () => {
+    // Refetch the scan partner data to get updated UserAccountDetails
+    mutate();
+  };
+
   const handleSuspendScanPartner = async () => {
     if (!scanPartner) return;
     setIsDeleting(true);
@@ -730,6 +940,142 @@ export default function ScanPartnerSinglePage() {
     } finally {
       setIsDeleting(false);
       onSuspendClose();
+    }
+  };
+
+  // Bank details management functions
+  const handleOpenBankModal = () => {
+    if (userBankDetails) {
+      // Edit mode - populate form with existing data
+      setBankFormData({
+        accountName: userBankDetails.accountName,
+        accountNumber: userBankDetails.accountNumber,
+        bankName: userBankDetails.bankName,
+        bankCode: userBankDetails.bankCode,
+        vfdBankName: userBankDetails.vfdBankName,
+        vfdBankCode: userBankDetails.vfdBankCode,
+        channel: userBankDetails.channel || "Mobiflex",
+        bankID: userBankDetails.bankID || 0,
+      });
+      setIsAccountVerified(true);
+    } else {
+      // Add mode - reset form
+      setBankFormData({
+        accountName: "",
+        accountNumber: "",
+        bankName: "",
+        bankCode: "",
+        vfdBankName: "",
+        vfdBankCode: "",
+        channel: "Mobiflex",
+        bankID: 0,
+      });
+      setIsAccountVerified(false);
+    }
+    setSelectedVfdBank(null);
+    setSelectedPaystackBank(null);
+    onBankModalOpen();
+  };
+
+  const handleVfdBankSelect = (bankCode: string) => {
+    const bank = vfdBanks.find((b) => b.code === bankCode);
+    if (bank) {
+      setSelectedVfdBank(bank);
+      setBankFormData((prev) => ({
+        ...prev,
+        vfdBankName: bank.name,
+        vfdBankCode: bank.code,
+      }));
+    }
+  };
+
+  const handlePaystackBankSelect = (bankCode: string) => {
+    const bank = paystackBanks.find((b) => b.code === bankCode);
+    if (bank) {
+      setSelectedPaystackBank(bank);
+      setBankFormData((prev) => ({
+        ...prev,
+        bankName: bank.name,
+        bankCode: bank.code,
+        bankID: bank.id,
+      }));
+    }
+  };
+
+  const handleVerifyBankDetails = async () => {
+    if (!bankFormData.accountNumber || !bankFormData.bankCode) {
+      showToast({
+        type: "error",
+        message: "Please select a bank and enter account number",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsVerifyingBank(true);
+    try {
+      const response = await verifyBankDetails(
+        bankFormData.accountNumber,
+        bankFormData.bankCode // This is the Paystack bank code
+      );
+
+      if (response.statusCode === 200) {
+        setBankFormData((prev) => ({
+          ...prev,
+          accountName: response.data.account_name,
+          bankID: response.data.bank_id,
+        }));
+        setIsAccountVerified(true);
+        showToast({
+          type: "success",
+          message: "Bank details verified successfully",
+          duration: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Bank verification error:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to verify bank details",
+        duration: 5000,
+      });
+    } finally {
+      setIsVerifyingBank(false);
+    }
+  };
+
+  const handleSaveBankDetails = async () => {
+    if (!scanPartner || !isAccountVerified) {
+      showToast({
+        type: "error",
+        message: "Please verify bank details first",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsSavingBank(true);
+    try {
+      await addAccountDetails(scanPartner.userId, bankFormData);
+
+      showToast({
+        type: "success",
+        message: "Bank details saved successfully",
+        duration: 3000,
+      });
+
+      // Refresh bank details
+      mutateBankDetails();
+      onBankModalClose();
+    } catch (error: any) {
+      console.error("Save bank details error:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to save bank details",
+        duration: 5000,
+      });
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -1418,6 +1764,84 @@ export default function ScanPartnerSinglePage() {
                 />
               </div>
             </InfoCard>
+
+            {/* Bank Details */}
+            <InfoCard
+              title="Bank Details"
+              icon={<CreditCard className="w-5 h-5 text-default-600" />}
+              headerContent={
+                !userBankDetails ? (
+                  <Button
+                    size="sm"
+                    color="primary"
+                    variant="flat"
+                    startContent={<Plus className="w-4 h-4" />}
+                    onPress={handleOpenBankModal}
+                  >
+                    Add Bank Details
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    color="default"
+                    variant="flat"
+                    startContent={<Edit className="w-4 h-4" />}
+                    onPress={handleOpenBankModal}
+                  >
+                    Edit
+                  </Button>
+                )
+              }
+            >
+              {userBankDetails ? (
+                <div className="grid gap-4">
+                  <InfoField
+                    label="Account Name"
+                    value={userBankDetails.accountName}
+                  />
+                  <InfoField
+                    label="Account Number"
+                    value={userBankDetails.accountNumber}
+                    copyable
+                  />
+                  <InfoField
+                    label="Bank Name"
+                    value={userBankDetails.bankName}
+                  />
+                  <InfoField
+                    label="Bank Code"
+                    value={userBankDetails.bankCode}
+                  />
+                  {userBankDetails.vfdBankName && (
+                    <InfoField
+                      label="VFD Bank Name"
+                      value={userBankDetails.vfdBankName}
+                    />
+                  )}
+                  {userBankDetails.vfdBankCode && (
+                    <InfoField
+                      label="VFD Bank Code"
+                      value={userBankDetails.vfdBankCode}
+                    />
+                  )}
+                  <InfoField label="Channel" value={userBankDetails.channel} />
+                  <InfoField
+                    label="Last Updated"
+                    value={
+                      userBankDetails.updatedAt
+                        ? new Date(userBankDetails.updatedAt).toLocaleString()
+                        : "N/A"
+                    }
+                  />
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Bank Details"
+                  description="No bank account information has been added for this scan partner yet."
+                  icon={<CreditCard className="w-6 h-6 text-default-400" />}
+                />
+              )}
+            </InfoCard>
           </div>
 
           {/* Right Column - Associated Agents, Loans, and Commissions */}
@@ -1624,9 +2048,201 @@ export default function ScanPartnerSinglePage() {
                 </>
               )}
             </InfoCard>
+            {/* Bank Details */}
+            <InfoCard
+              title="Bank Details"
+              icon={<Building2 className="w-5 h-5 text-default-600" />}
+              headerContent={
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                  startContent={
+                    userBankDetails ? (
+                      <Edit className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )
+                  }
+                  onPress={handleOpenBankModal}
+                >
+                  {userBankDetails ? "Edit" : "Add"} Bank Details
+                </Button>
+              }
+            >
+              {userBankDetails ? (
+                <div className="grid gap-4">
+                  <InfoField
+                    label="Account Name"
+                    value={userBankDetails.accountName}
+                  />
+                  <InfoField
+                    label="Account Number"
+                    value={userBankDetails.accountNumber}
+                    copyable
+                  />
+                  <InfoField
+                    label="Bank Name"
+                    value={userBankDetails.bankName}
+                  />
+                  <InfoField
+                    label="VFD Bank Name"
+                    value={userBankDetails.vfdBankName}
+                  />
+                  <InfoField label="Channel" value={userBankDetails.channel} />
+                  {userBankDetails.createdAt && (
+                    <InfoField
+                      label="Added At"
+                      value={new Date(
+                        userBankDetails.createdAt
+                      ).toLocaleString()}
+                    />
+                  )}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Bank Details"
+                  description="No bank account details have been added for this scan partner yet."
+                  icon={<Building2 className="w-6 h-6 text-default-400" />}
+                />
+              )}
+            </InfoCard>
           </div>
         </div>
       </div>
+
+      {/* Bank Details Modal */}
+      <Modal
+        isOpen={isBankModalOpen}
+        onClose={onBankModalClose}
+        size="2xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            <h3 className="text-lg font-semibold">
+              {userBankDetails ? "Edit" : "Add"} Bank Details
+            </h3>
+            <p className="text-sm text-default-500">
+              {userBankDetails
+                ? "Update the bank account information"
+                : "Add bank account information. Select your bank and enter account number to verify account name automatically."}
+            </p>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-6">
+              {/* VFD Bank Selection (Optional) */}
+              <div className="space-y-2">
+                <AutoCompleteField
+                  label="Bank"
+                  htmlFor="vfd-bank"
+                  id="vfd-bank"
+                  placeholder="Select  bank"
+                  value={selectedVfdBank?.code || bankFormData.vfdBankCode}
+                  onChange={handleVfdBankSelect}
+                  options={vfdBanks.map((bank) => ({
+                    label: bank.name,
+                    value: bank.code,
+                  }))}
+                  required
+                />
+              </div>
+              {/* Paystack Bank Selection */}
+              <div className="space-y-2">
+                <AutoCompleteField
+                  label="Verification Bank"
+                  htmlFor="paystack-bank"
+                  id="paystack-bank"
+                  placeholder="Select bank for verification"
+                  value={selectedPaystackBank?.code || bankFormData.bankCode}
+                  onChange={handlePaystackBankSelect}
+                  options={paystackBanks.map((bank) => ({
+                    label: bank.name,
+                    value: bank.code,
+                  }))}
+                  required
+                  reqValue="*"
+                />
+              </div>
+
+              {/* Account Number */}
+              <Input
+                label="Account Number"
+                placeholder="Enter account number"
+                value={bankFormData.accountNumber}
+                onChange={(e) => {
+                  setBankFormData((prev) => ({
+                    ...prev,
+                    accountNumber: e.target.value,
+                  }));
+                  setIsAccountVerified(false);
+                }}
+                variant="bordered"
+                isRequired
+              />
+
+              {/* Verify Button */}
+              <div className="flex justify-end">
+                <Button
+                  color="secondary"
+                  variant="flat"
+                  onPress={handleVerifyBankDetails}
+                  isLoading={isVerifyingBank}
+                  isDisabled={
+                    !bankFormData.accountNumber || !bankFormData.bankCode
+                  }
+                >
+                  {isVerifyingBank ? "Verifying..." : "Verify Account"}
+                </Button>
+              </div>
+
+              {/* Account Name (Auto-filled after verification) */}
+              {isAccountVerified && (
+                <Input
+                  label="Account Name"
+                  placeholder="Account name will be auto-filled"
+                  value={bankFormData.accountName}
+                  onChange={(e) =>
+                    setBankFormData((prev) => ({
+                      ...prev,
+                      accountName: e.target.value,
+                    }))
+                  }
+                  variant="bordered"
+                  isReadOnly={!userBankDetails} // Allow editing only in edit mode
+                />
+              )}
+
+              {/* Verification Status */}
+              {isAccountVerified && (
+                <div className="flex items-center gap-2 p-3 bg-success-50 rounded-lg border border-success-200">
+                  <UserCheck className="w-5 h-5 text-success" />
+                  <span className="text-sm text-success-700">
+                    Bank account verified successfully
+                  </span>
+                </div>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              onPress={onBankModalClose}
+              isDisabled={isSavingBank}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onPress={handleSaveBankDetails}
+              isLoading={isSavingBank}
+              isDisabled={!isAccountVerified}
+            >
+              {isSavingBank ? "Saving..." : "Save Bank Details"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

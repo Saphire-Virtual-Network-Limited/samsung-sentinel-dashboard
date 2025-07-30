@@ -8,6 +8,21 @@ export enum AccountStatus {
   REJECTED = "REJECTED",
 }
 
+export interface UserAccountDetails {
+  userAccountDetailsId: string;
+  userId: string;
+  accountName: string;
+  accountNumber: string;
+  vfdBankName: string;
+  vfdBankCode: string;
+  channel: string;
+  createdAt: string;
+  updatedAt: string;
+  bankID: number;
+  bankCode: string;
+  bankName: string;
+}
+
 export interface ScanPartnerRecord {
   userId: string;
   firstName: string;
@@ -33,6 +48,7 @@ export interface ScanPartnerRecord {
   updatedAt: string;
   accountType: string;
   Mbe: any[];
+  UserAccountDetails?: UserAccountDetails[];
 }
 
 export interface ScanPartnerData {
