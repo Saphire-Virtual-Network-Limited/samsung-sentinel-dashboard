@@ -123,15 +123,38 @@ export default function SalesUsersPage() {
 
     let list = [...salesStaff];
 
-    // Filter by guarantor status if search param is provided
+    // Filter by guarantor status with priority-based logic
     if (guarantorStatusFilter) {
       const targetStatus = guarantorStatusFilter.toLowerCase().trim();
       list = list.filter((agent: AgentRecord) => {
         const guarantors = agent.MbeGuarantor || [];
-        return guarantors.some(
-          (guarantor) =>
-            guarantor.guarantorStatus?.toLowerCase().trim() === targetStatus
-        );
+
+        if (guarantors.length === 0) return false;
+
+        // Get all guarantor statuses in lowercase
+        const statuses = guarantors
+          .map((g) => g.guarantorStatus?.toLowerCase().trim())
+          .filter(Boolean);
+
+        //  If any guarantor is pending, agent appears in "pending" filter (even if some are rejected)
+        if (targetStatus === "pending" && statuses.includes("pending")) {
+          return true;
+        }
+        //  If any guarantor is rejected, agent appears in "rejected" filter
+        if (targetStatus === "rejected" && statuses.includes("rejected")) {
+          return true;
+        }
+
+        //  If all guarantors are approved, agent appears in "approved" filter
+        if (
+          targetStatus === "approved" &&
+          statuses.length > 0 &&
+          statuses.every((status) => status === "approved")
+        ) {
+          return true;
+        }
+
+        return false;
       });
     }
 

@@ -226,6 +226,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canEdit: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
+    createDashboardUser: true,
   },
   // "seyi@sapphirevirtual.com": {
   //   canUpdateWalletBalance: true,
