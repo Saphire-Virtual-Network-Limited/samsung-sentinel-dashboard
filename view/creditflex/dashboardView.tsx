@@ -5,7 +5,7 @@ import { StatCard } from "@/components/atoms/StatCard";
 import { useAdminDashboardStatistics } from "@/hooks/useAdminDashboardStats";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
-import CreditflexAllLoansView from "@/view/creditflex/allLoansView";
+import CreditflexAllLoansView from "@/view/creditflex/allLoans/allLoansView";
 import {
   BarChart3,
   Users,

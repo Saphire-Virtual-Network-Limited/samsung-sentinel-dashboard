@@ -26,12 +26,8 @@ import { CreateLoanProductDetailModal } from "@/components/modals/CreateLoanProd
 import { capitalize, showToast } from "@/lib";
 import { getColor } from "@/lib/utils";
 import { updateCDFLoanProduct, deleteCDFLoanProduct } from "@/lib/api";
-import { LoanProduct, searchFilterOptions } from "./loanProducts/types";
-import {
-  columns,
-  statusOptions,
-  statusColorMap,
-} from "./loanProducts/constants";
+import { LoanProduct, searchFilterOptions } from "./types";
+import { columns, statusOptions, statusColorMap } from "./constants";
 
 // Status color mapping for Excel export
 const STATUS_COLOR_MAP: Record<string, string> = {

@@ -32,8 +32,8 @@ import { OnboardTelemarketerModal } from "@/components/modals/OnboardTelemarkete
 import { capitalize, showToast } from "@/lib";
 import { cdfAdminDeleteAgent } from "@/lib/api";
 import { getColor } from "@/lib/utils";
-import { TeleMarketer, searchFilterOptions } from "./telesales/types";
-import { columns, statusOptions, statusColorMap } from "./telesales/constants";
+import { TeleMarketer, searchFilterOptions } from "./types";
+import { columns, statusOptions, statusColorMap } from "./constants";
 
 // Status color mapping for Excel export
 const STATUS_COLOR_MAP: Record<string, string> = {
