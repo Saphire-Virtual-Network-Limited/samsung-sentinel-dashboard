@@ -1,4 +1,4 @@
-import CreditflexInvoicesView from "@/view/creditflex/invoicesView";
+import CreditflexInvoicesView from "@/view/creditflex/invoices/invoicesView";
 
 export default function AdminCreditflexInvoices() {
   return <CreditflexInvoicesView />;

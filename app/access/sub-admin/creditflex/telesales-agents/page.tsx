@@ -1,4 +1,4 @@
-import CreditflexTelesalesAgentsView from "@/view/creditflex/telesalesAgentsView";
+import CreditflexTelesalesAgentsView from "@/view/creditflex/telesales/telesalesAgentsView";
 
 export default function SubAdminCreditflexTelesalesAgents() {
   return <CreditflexTelesalesAgentsView />;

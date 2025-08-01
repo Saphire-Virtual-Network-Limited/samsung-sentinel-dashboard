@@ -11,8 +11,21 @@ import {
   getPaystackBanks,
   verifyBankAccount,
   addUserBankDetails,
+  getMobiflexScanPartnerStatsById, // Add this import
+  getMobiflexPartnerApprovedAgents, // Add this import
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
+import {
+  LoadingSpinner,
+  NotFound,
+  InfoCard,
+  InfoField,
+  EmptyState,
+  ConfirmationModal,
+  FormModal,
+  ImagePreviewModal,
+  BankDetailsModal,
+} from "@/components/reususables/custom-ui";
 import {
   Avatar,
   Button,
@@ -26,15 +39,12 @@ import {
   DropdownMenu,
   DropdownTrigger,
   Image,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   useDisclosure,
   Input,
   Select,
   SelectItem,
+  Tabs,
+  Tab,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -55,6 +65,11 @@ import {
   Plus,
   Edit,
   Building2,
+  TrendingUp,
+  FileText,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
@@ -282,99 +297,7 @@ const getAgentFilterOptions = (agents: AgentRecord[]) => {
   }));
 };
 
-// Utility Components
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
-
-const NotFound = ({ onGoBack }: { onGoBack: () => void }) => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h2 className="text-2xl font-semibold text-default-900 mb-2">
-        Scan Partner Not Found
-      </h2>
-      <p className="text-default-500 mb-4">
-        The requested scan partner information could not be found.
-      </p>
-      <Button
-        variant="flat"
-        color="primary"
-        startContent={<ArrowLeft />}
-        onPress={onGoBack}
-      >
-        Go Back
-      </Button>
-    </div>
-  </div>
-);
-
-const InfoCard = ({
-  title,
-  children,
-  className = "",
-  icon,
-  headerContent,
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-  icon?: React.ReactNode;
-  headerContent?: React.ReactNode;
-}) => {
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-    >
-      <div className="p-4 border-b border-default-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
-          </div>
-          {headerContent}
-        </div>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
-};
-
-const InfoField = ({
-  label,
-  value,
-  copyable = false,
-}: {
-  label: string;
-  value?: string | null;
-  copyable?: boolean;
-}) => (
-  <div className="bg-default-50 rounded-lg p-4">
-    <div className="text-sm text-default-500 mb-1">{label}</div>
-    <div className="font-medium text-default-900 flex items-center gap-2">
-      {value || "N/A"}
-    </div>
-  </div>
-);
-
-const EmptyState = ({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="text-center py-8">
-    <div className="flex justify-center mb-4">
-      <div className="p-3 bg-default-100 rounded-full">{icon}</div>
-    </div>
-    <h3 className="text-lg font-semibold text-default-900 mb-2">{title}</h3>
-    <p className="text-default-500 text-sm">{description}</p>
-  </div>
-);
+// Use imported reusable components from components/reususables/custom-ui
 
 const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
   const router = useRouter();
@@ -740,6 +663,41 @@ const addAccountDetails = async (
   }
 };
 
+// Reusable Performance Card Component
+interface PerformanceCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  gradient: string;
+  textColor: string;
+  iconColor: string;
+}
+
+const PerformanceCard: React.FC<PerformanceCardProps> = ({
+  title,
+  value,
+  icon,
+  gradient,
+  textColor,
+  iconColor,
+}) => {
+  return (
+    <Card className={`bg-gradient-to-r ${gradient} border-opacity-20`}>
+      <CardBody className="flex flex-row items-center justify-between p-4">
+        <div>
+          <p className={`text-sm ${textColor} font-medium`}>{title}</p>
+          <p
+            className={`text-2xl font-bold ${textColor.replace("600", "800")}`}
+          >
+            {value}
+          </p>
+        </div>
+        <div className={iconColor}>{icon}</div>
+      </CardBody>
+    </Card>
+  );
+};
+
 // Main Component
 export default function ScanPartnerSinglePage() {
   const params = useParams();
@@ -747,7 +705,7 @@ export default function ScanPartnerSinglePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewType, setViewType] = useState<"cards" | "table">("table");
   const [dataViewType, setDataViewType] = useState<
-    "agents" | "loans" | "commissions"
+    "agents" | "loans" | "commissions" | "analytics"
   >("agents");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -857,6 +815,25 @@ export default function ScanPartnerSinglePage() {
       revalidateOnReconnect: true,
       dedupingInterval: 30000,
     }
+  );
+
+  // Sales Analytics State
+  const [salesPeriod, setSalesPeriod] = useState<string>("all");
+  const partnerId = isScanPartner ? userId : params.id;
+
+  // Sales Analytics Data
+  const { data: salesStats, isLoading: salesStatsLoading } = useSWR(
+    partnerId ? `/mobiflex-stats/${partnerId}` : null,
+    () =>
+      getMobiflexScanPartnerStatsById(partnerId as string).then((r) => r.data),
+    { refreshInterval: 30000 }
+  );
+
+  const { data: approvedAgents, isLoading: approvedAgentsLoading } = useSWR(
+    partnerId ? `/mobiflex-approved-agents/${partnerId}` : null,
+    () =>
+      getMobiflexPartnerApprovedAgents(partnerId as string).then((r) => r.data),
+    { refreshInterval: 30000 }
   );
 
   // Fetch VFD banks
@@ -1462,25 +1439,13 @@ export default function ScanPartnerSinglePage() {
                   onClick={onOpen}
                   color={statusColorMap[scanPartner.accountStatus]}
                 />
-                <Modal
+                <ImagePreviewModal
                   isOpen={isOpen}
                   onClose={onClose}
-                  size="sm"
-                  placement="center"
-                >
-                  <ModalContent>
-                    <ModalHeader className="flex flex-col gap-1">
-                      {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                    </ModalHeader>
-                    <ModalBody className="p-0">
-                      <Image
-                        src={scanPartner.profile_picture || "/placeholder.svg"}
-                        alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName}) - Full preview`}
-                        className="w-full h-auto rounded-b-lg"
-                      />
-                    </ModalBody>
-                  </ModalContent>
-                </Modal>
+                  imageUrl={scanPartner.profile_picture || "/placeholder.svg"}
+                  title={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
+                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName}) - Full preview`}
+                />
                 <div>
                   <h1 className="text-xl font-bold text-default-900">
                     {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
@@ -1624,81 +1589,37 @@ export default function ScanPartnerSinglePage() {
       </div>
 
       {/* Suspend Confirmation Modal */}
-      <Modal
+      <ConfirmationModal
         isOpen={isSuspendOpen}
         onClose={onSuspendClose}
-        size="md"
-        placement="center"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold text-danger">
-              Suspend Scan Partner
-            </h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={scanPartner?.profile_picture || "/placeholder.svg"}
-                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                  className="w-12 h-12"
-                />
-                <div>
-                  <p className="font-medium">
-                    {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                  </p>
-                  <p className="text-small text-default-500">
-                    {scanPartner?.email}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-danger-700 mb-1">
-                      Permanent Deletion Warning
-                    </p>
-                    <p className="text-sm text-danger-600">
-                      This action cannot be undone. Deleting this scan partner
-                      will permanently remove:
-                    </p>
-                    <ul className="text-sm text-danger-600 mt-2 ml-4 list-disc">
-                      <li>All scan partner information and records</li>
-                      <li>Associated agent relationships</li>
-                      <li>Transaction history and referrals</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-default-50 rounded-lg p-3">
-                <p className="text-sm text-default-600">
-                  <strong>User ID:</strong> {scanPartner?.userId}
-                </p>
-              </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onSuspendClose}
-              isDisabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              onPress={handleSuspendScanPartner}
-              isLoading={isDeleting}
-              isDisabled={isDeleting}
-              startContent={!isDeleting ? <Trash2 className="w-4 h-4" /> : null}
-            >
-              {isDeleting ? "Deleting..." : "Suspend Scan Partner"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onConfirm={handleSuspendScanPartner}
+        title="Suspend Scan Partner"
+        confirmText={isDeleting ? "Deleting..." : "Suspend Scan Partner"}
+        isLoading={isDeleting}
+        variant="danger"
+        entity={{
+          name: `${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`,
+          subtitle: scanPartner?.email,
+          imageUrl: scanPartner?.profile_picture || "/placeholder.svg",
+        }}
+        warning={{
+          title: "Permanent Deletion Warning",
+          message:
+            "This action cannot be undone. Deleting this scan partner will permanently remove:",
+          items: [
+            "All scan partner information and records",
+            "Associated agent relationships",
+            "Transaction history and referrals",
+          ],
+          icon: (
+            <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
+          ),
+        }}
+        additionalInfo={{
+          label: "User ID",
+          value: scanPartner?.userId || "",
+        }}
+      />
 
       <div className="px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1875,6 +1796,13 @@ export default function ScanPartnerSinglePage() {
                   >
                     Commissions ({processedData.commissions.length})
                   </Button>
+                  <Button
+                    color={dataViewType === "analytics" ? "primary" : "default"}
+                    onPress={() => setDataViewType("analytics")}
+                    startContent={<TrendingUp className="w-4 h-4" />}
+                  >
+                    Sales Analytics
+                  </Button>
                 </ButtonGroup>
               }
             >
@@ -2047,6 +1975,262 @@ export default function ScanPartnerSinglePage() {
                   )}
                 </>
               )}
+
+              {/* Sales Analytics View */}
+              {dataViewType === "analytics" && (
+                <>
+                  {salesStatsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Period Selector */}
+                      <div className="flex items-center justify-between mb-6">
+                        <p className="text-sm text-default-600">
+                          Sales performance analytics for this scan partner
+                        </p>
+                        <Select
+                          label="Period"
+                          size="sm"
+                          className="max-w-[200px]"
+                          selectedKeys={[salesPeriod]}
+                          onSelectionChange={(keys) =>
+                            setSalesPeriod(Array.from(keys)[0] as string)
+                          }
+                        >
+                          <SelectItem key="all" value="all">
+                            All Time
+                          </SelectItem>
+                          <SelectItem key="today" value="today">
+                            Today
+                          </SelectItem>
+                          <SelectItem key="this-week" value="this-week">
+                            This Week
+                          </SelectItem>
+                          <SelectItem key="this-month" value="this-month">
+                            This Month
+                          </SelectItem>
+                          <SelectItem key="last-month" value="last-month">
+                            Last Month
+                          </SelectItem>
+                          <SelectItem key="this-quarter" value="this-quarter">
+                            This Quarter
+                          </SelectItem>
+                          <SelectItem key="this-year" value="this-year">
+                            This Year
+                          </SelectItem>
+                        </Select>
+                      </div>
+
+                      {/* Performance Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <PerformanceCard
+                          title="Total Commission"
+                          value={`₦${(
+                            salesStats?.totalCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<DollarSign className="w-6 h-6" />}
+                          gradient="from-green-100 to-green-200"
+                          textColor="text-green-600"
+                          iconColor="text-green-500"
+                        />
+                        <PerformanceCard
+                          title="Partner Commission"
+                          value={`₦${(
+                            salesStats?.totalPartnerCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<TrendingUp className="w-6 h-6" />}
+                          gradient="from-blue-100 to-blue-200"
+                          textColor="text-blue-600"
+                          iconColor="text-blue-500"
+                        />
+                        <PerformanceCard
+                          title="Agent Commission"
+                          value={`₦${(
+                            salesStats?.totalAgentCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<Users className="w-6 h-6" />}
+                          gradient="from-purple-100 to-purple-200"
+                          textColor="text-purple-600"
+                          iconColor="text-purple-500"
+                        />
+                        <PerformanceCard
+                          title="Total Agents"
+                          value={salesStats?.agentCount || 0}
+                          icon={<Users className="w-6 h-6" />}
+                          gradient="from-amber-100 to-amber-200"
+                          textColor="text-amber-600"
+                          iconColor="text-amber-500"
+                        />
+                      </div>
+
+                      {/* Top Agents Table */}
+                      {salesStats?.topAgents &&
+                        salesStats.topAgents.length > 0 && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-semibold">
+                                Top Performing Agents
+                              </h3>
+                              <Chip size="sm" variant="flat" color="success">
+                                {salesStats.topAgents.length} Agent
+                                {salesStats.topAgents.length !== 1 ? "s" : ""}
+                              </Chip>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <Table
+                                aria-label="Top performing agents"
+                                className="w-full"
+                              >
+                                <TableHeader>
+                                  <TableColumn>AGENT</TableColumn>
+                                  <TableColumn>MBE ID</TableColumn>
+                                  <TableColumn>PHONE</TableColumn>
+                                  <TableColumn>TOTAL COMMISSION</TableColumn>
+                                  <TableColumn>AGENT COMMISSION</TableColumn>
+                                  <TableColumn>SALES COUNT</TableColumn>
+                                </TableHeader>
+                                <TableBody>
+                                  {salesStats.topAgents.map(
+                                    (agent: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell>
+                                          <div>
+                                            <p className="font-medium">
+                                              {agent.firstName} {agent.lastName}
+                                            </p>
+                                            <p className="text-sm text-default-500">
+                                              Rank #{index + 1}
+                                            </p>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="font-mono text-sm">
+                                            {agent.mbeId}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>{agent.phone}</TableCell>
+                                        <TableCell>
+                                          <p className="font-medium text-green-600">
+                                            ₦
+                                            {(
+                                              agent.totalCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="text-sm">
+                                            ₦
+                                            {(
+                                              agent.agentCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Chip
+                                            size="sm"
+                                            variant="flat"
+                                            color="success"
+                                          >
+                                            {agent.loanCount || 0}
+                                          </Chip>
+                                        </TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Approved Agents Summary */}
+                      {approvedAgents && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Agent Approval Status
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Daily Stats */}
+                            <div className="space-y-3">
+                              <h5 className="font-medium text-default-700">
+                                Daily Summary
+                              </h5>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-green-600">
+                                    Approved
+                                  </p>
+                                  <p className="text-xl font-bold text-green-800">
+                                    {approvedAgents?.daily?.approved || 0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                  <p className="text-sm text-orange-600">
+                                    Pending
+                                  </p>
+                                  <p className="text-xl font-bold text-orange-800">
+                                    {approvedAgents?.daily?.unapproved || 0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <p className="text-sm text-blue-600">Total</p>
+                                  <p className="text-xl font-bold text-blue-800">
+                                    {approvedAgents?.daily?.total || 0}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Month-to-Date Stats */}
+                            <div className="space-y-3">
+                              <h5 className="font-medium text-default-700">
+                                Month-to-Date
+                              </h5>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-green-600">
+                                    Approved
+                                  </p>
+                                  <p className="text-xl font-bold text-green-800">
+                                    {approvedAgents?.monthToDate?.approved || 0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                  <p className="text-sm text-orange-600">
+                                    Pending
+                                  </p>
+                                  <p className="text-xl font-bold text-orange-800">
+                                    {approvedAgents?.monthToDate?.unapproved ||
+                                      0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <p className="text-sm text-blue-600">Total</p>
+                                  <p className="text-xl font-bold text-blue-800">
+                                    {approvedAgents?.monthToDate?.total || 0}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!salesStats && !salesStatsLoading && (
+                        <EmptyState
+                          title="No Analytics Data"
+                          description="No sales analytics data available for this scan partner yet."
+                          icon={
+                            <TrendingUp className="w-6 h-6 text-default-400" />
+                          }
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </InfoCard>
             {/* Bank Details */}
             <InfoCard
@@ -2112,137 +2296,25 @@ export default function ScanPartnerSinglePage() {
       </div>
 
       {/* Bank Details Modal */}
-      <Modal
+      <BankDetailsModal
         isOpen={isBankModalOpen}
         onClose={onBankModalClose}
-        size="2xl"
-        scrollBehavior="inside"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold">
-              {userBankDetails ? "Edit" : "Add"} Bank Details
-            </h3>
-            <p className="text-sm text-default-500">
-              {userBankDetails
-                ? "Update the bank account information"
-                : "Add bank account information. Select your bank and enter account number to verify account name automatically."}
-            </p>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-6">
-              {/* VFD Bank Selection (Optional) */}
-              <div className="space-y-2">
-                <AutoCompleteField
-                  label="Bank"
-                  htmlFor="vfd-bank"
-                  id="vfd-bank"
-                  placeholder="Select  bank"
-                  value={selectedVfdBank?.code || bankFormData.vfdBankCode}
-                  onChange={handleVfdBankSelect}
-                  options={vfdBanks.map((bank) => ({
-                    label: bank.name,
-                    value: bank.code,
-                  }))}
-                  required
-                />
-              </div>
-              {/* Paystack Bank Selection */}
-              <div className="space-y-2">
-                <AutoCompleteField
-                  label="Verification Bank"
-                  htmlFor="paystack-bank"
-                  id="paystack-bank"
-                  placeholder="Select bank for verification"
-                  value={selectedPaystackBank?.code || bankFormData.bankCode}
-                  onChange={handlePaystackBankSelect}
-                  options={paystackBanks.map((bank) => ({
-                    label: bank.name,
-                    value: bank.code,
-                  }))}
-                  required
-                  reqValue="*"
-                />
-              </div>
-
-              {/* Account Number */}
-              <Input
-                label="Account Number"
-                placeholder="Enter account number"
-                value={bankFormData.accountNumber}
-                onChange={(e) => {
-                  setBankFormData((prev) => ({
-                    ...prev,
-                    accountNumber: e.target.value,
-                  }));
-                  setIsAccountVerified(false);
-                }}
-                variant="bordered"
-                isRequired
-              />
-
-              {/* Verify Button */}
-              <div className="flex justify-end">
-                <Button
-                  color="secondary"
-                  variant="flat"
-                  onPress={handleVerifyBankDetails}
-                  isLoading={isVerifyingBank}
-                  isDisabled={
-                    !bankFormData.accountNumber || !bankFormData.bankCode
-                  }
-                >
-                  {isVerifyingBank ? "Verifying..." : "Verify Account"}
-                </Button>
-              </div>
-
-              {/* Account Name (Auto-filled after verification) */}
-              {isAccountVerified && (
-                <Input
-                  label="Account Name"
-                  placeholder="Account name will be auto-filled"
-                  value={bankFormData.accountName}
-                  onChange={(e) =>
-                    setBankFormData((prev) => ({
-                      ...prev,
-                      accountName: e.target.value,
-                    }))
-                  }
-                  variant="bordered"
-                  isReadOnly={!userBankDetails} // Allow editing only in edit mode
-                />
-              )}
-
-              {/* Verification Status */}
-              {isAccountVerified && (
-                <div className="flex items-center gap-2 p-3 bg-success-50 rounded-lg border border-success-200">
-                  <UserCheck className="w-5 h-5 text-success" />
-                  <span className="text-sm text-success-700">
-                    Bank account verified successfully
-                  </span>
-                </div>
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onBankModalClose}
-              isDisabled={isSavingBank}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={handleSaveBankDetails}
-              isLoading={isSavingBank}
-              isDisabled={!isAccountVerified}
-            >
-              {isSavingBank ? "Saving..." : "Save Bank Details"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onSave={handleSaveBankDetails}
+        isEdit={!!userBankDetails}
+        bankFormData={bankFormData}
+        setBankFormData={setBankFormData}
+        vfdBanks={vfdBanks}
+        paystackBanks={paystackBanks}
+        selectedVfdBank={selectedVfdBank}
+        selectedPaystackBank={selectedPaystackBank}
+        onVfdBankSelect={handleVfdBankSelect}
+        onPaystackBankSelect={handlePaystackBankSelect}
+        onVerifyBankDetails={handleVerifyBankDetails}
+        isVerifyingBank={isVerifyingBank}
+        isSavingBank={isSavingBank}
+        isAccountVerified={isAccountVerified}
+        setIsAccountVerified={setIsAccountVerified}
+      />
     </div>
   );
 }

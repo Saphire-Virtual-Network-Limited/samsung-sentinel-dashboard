@@ -530,7 +530,7 @@ export async function getAgentDevice(
   options?: ApiCallOptions
 ) {
   return apiCall(
-    `/agent/erp/admin/item-balances/${mbeId}`,
+    `/admin/mbe/item-balances/${mbeId}`,
     "GET",
     undefined,
     options
@@ -1353,4 +1353,515 @@ export async function addUserBankDetails(
   return apiCall(`/admin/account-details/${userId}`, "POST", data, {
     appKey: process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY,
   });
+}
+
+// ============================================================================
+// AMBASSADOR MANAGEMENT APIs
+// ============================================================================
+
+export interface Lead {
+  id: string;
+  bvn: string;
+  phoneNumber: string;
+  leadName: string;
+  ippisNumber: string;
+  salaryAccountNumber: string;
+  salaryAccountName: string;
+  salaryBankName: string;
+  salaryBankCode: string;
+  gradeLevel: string;
+  pfaName: string;
+  dob: string;
+  state: string;
+  status: string;
+  ambassadorId: string | null;
+  teleMarketerId: string | null;
+  createdAt: string;
+  updatedBy: string;
+  ambassador?: {
+    id: string;
+    fullName: string;
+    emailAddress: string | null;
+    phoneNumber: string;
+    ambassadorProfile: string;
+    teleMarketer?: {
+      teleMarketerId: string;
+      firstname: string;
+      lastname: string;
+      email: string;
+      phone: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null;
+  } | null;
+}
+
+export interface Ambassador {
+  id: string;
+  bvn?: string;
+  phoneNumber: string;
+  emailAddress: string | null;
+  institution?: string | null;
+  fullName: string;
+  address?: string;
+  ippisNumber?: string | null;
+  password?: string;
+  accountNumber?: string;
+  accountName?: string;
+  bankName?: string;
+  bankCode?: string;
+  referralCode?: string;
+  referredBy?: string | null;
+  ambassadorProfile: string;
+  teleMarketerId?: string | null;
+  createdAt: string;
+  updatedBy: string;
+  PaydayLead?: Lead[];
+  teleMarketer?: {
+    teleMarketerId: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+}
+
+export interface ConversionRate {
+  ambassadorId: string;
+  ambassadorName: string;
+  fullName: string;
+  emailAddress: string | null;
+  phoneNumber: string;
+  state: string;
+  totalLeads: number;
+  convertedLeads: number;
+  disbursedLeads: number;
+  rejectedLeads: number;
+  conversionRate: number;
+  teleMarketerName?: string;
+}
+
+/**
+ * Get all leads with their details
+ */
+export async function getAmbassadorLeadsWithDetails(): Promise<
+  BaseApiResponse<Lead[]>
+> {
+  return apiCall("/admin/ambassador/leads-with-details", "GET");
+}
+
+/**
+ * Get all ambassadors with their leads
+ */
+export async function getAmbassadorsWithLeads(): Promise<
+  BaseApiResponse<Ambassador[]>
+> {
+  return apiCall("/admin/ambassador/ambassadors-with-leads", "GET");
+}
+
+/**
+ * Get unassigned leads (leads without telemarketer assignment)
+ */
+export async function getUnassignedLeadsWithDetails(): Promise<
+  BaseApiResponse<Lead[]>
+> {
+  return apiCall("/admin/ambassador/unassigned-leads-with-details", "GET");
+}
+
+/**
+ * Get conversion rates for all ambassadors
+ */
+export async function getAmbassadorConversionRates(): Promise<
+  BaseApiResponse<ConversionRate[]>
+> {
+  return apiCall("/admin/ambassador/conversion-rate", "GET");
+}
+
+/**
+ * Get all ambassadors
+ */
+export async function getAllAmbassadors(): Promise<
+  BaseApiResponse<Ambassador[]>
+> {
+  return apiCall("/admin/ambassador/", "GET");
+}
+
+/**
+ * Get a specific ambassador by ID
+ */
+export async function getAmbassadorById(
+  ambassadorId: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(`/admin/ambassador/${ambassadorId}`, "GET");
+}
+
+/**
+ * Delete an ambassador
+ */
+export async function deleteAmbassador(
+  ambassadorId: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(`/admin/ambassador/${ambassadorId}`, "DELETE");
+}
+
+/**
+ * Update lead status
+ */
+export async function updateLeadStatus(
+  ambassadorId: string,
+  leadId: string,
+  status: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(
+    `/admin/ambassador/${ambassadorId}/lead/${leadId}/status`,
+    "PATCH",
+    { status }
+  );
+}
+
+/**
+ * Assign telemarketer to a lead
+ */
+export async function assignTelemarketerToLead(
+  ambassadorId: string,
+  leadId: string,
+  teleMarketerId: string
+): Promise<BaseApiResponse<any>> {
+  return apiCall(
+    `/admin/ambassador/${ambassadorId}/${leadId}/assign-telemarketer`,
+    "PATCH",
+    {
+      teleMarketerId,
+    }
+  );
+}
+
+// ============================================================================
+// MOBIFLEX APIs
+// ============================================================================
+
+export interface MobiflexAgent {
+  mbeId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  state: string | null;
+  partnerName: string;
+  totalCommission: number;
+  agentCommission: number;
+  loanCount: number;
+  averageCommissionPerLoan: number;
+  createdAt: string;
+}
+
+export interface MobiflexLeaderboardData {
+  leaderboard: MobiflexAgent[];
+  totalAgents: number;
+  period: string;
+  sortBy: string;
+  summary: {
+    totalCommission: number;
+    totalAgentCommission: number;
+    totalLoans: number;
+    topAgent: MobiflexAgent;
+  };
+}
+
+export interface RegionStat {
+  state: string;
+  totalCommission: number;
+  totalAgentCommission: number;
+  totalPartnerCommission: number;
+  commissionCount: number;
+  agentCount: number;
+  averageCommissionPerAgent: number;
+}
+
+export interface RegionStatsData {
+  period: string;
+  regionStats: RegionStat[];
+  summary: {
+    totalStates: number;
+    grandTotalCommission: number;
+    grandTotalAgentCommission: number;
+    grandTotalPartnerCommission: number;
+    totalCommissions: number;
+    totalAgents: number;
+    topPerformingState: RegionStat;
+  };
+}
+
+export interface PartnerStat {
+  partnerId: string;
+  partnerName: string;
+  totalCommission: number;
+  totalAgentCommission: number;
+  totalPartnerCommission: number;
+  commissionCount: number;
+  agentCount: number;
+  stateCount: number;
+  averageCommissionPerAgent: number;
+}
+
+export interface PartnerStatsData {
+  period: string;
+  partnerStats: PartnerStat[];
+  summary: {
+    totalPartners: number;
+    grandTotalCommission: number;
+    grandTotalAgentCommission: number;
+    grandTotalPartnerCommission: number;
+    totalCommissions: number;
+    totalAgents: number;
+    topPerformingPartner: PartnerStat;
+    averageAgentsPerPartner: number;
+  };
+}
+
+export interface AgentPerformanceData {
+  mbeId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  state: string | null;
+  partnerName: string;
+  totalCommission: number;
+  agentCommission: number;
+  loanCount: number;
+  averageCommissionPerLoan: number;
+  createdAt: string;
+  performanceMetrics: {
+    dailyCommission: number;
+    weeklyCommission: number;
+    monthlyCommission: number;
+    yearlyCommission: number;
+    rank: number;
+    percentile: number;
+  };
+}
+
+export interface LeaderboardComparisonData {
+  scanPartnerLeaderboard: MobiflexAgent[];
+  generalLeaderboard: MobiflexAgent[];
+  comparison: {
+    scanPartnerAvgCommission: number;
+    generalAvgCommission: number;
+    scanPartnerTotalAgents: number;
+    scanPartnerTopPerformer: MobiflexAgent;
+    generalTopPerformer: MobiflexAgent;
+    performanceGap: number;
+  };
+}
+
+export interface RegionSpecificData {
+  state: string;
+  totalCommission: number;
+  totalAgentCommission: number;
+  totalPartnerCommission: number;
+  commissionCount: number;
+  agentCount: number;
+  averageCommissionPerAgent: number;
+  topAgents: MobiflexAgent[];
+  partnerBreakdown: PartnerStat[];
+}
+
+export interface PartnerSpecificData {
+  partnerId: string;
+  partnerName: string;
+  totalCommission: number;
+  totalAgentCommission: number;
+  totalPartnerCommission: number;
+  commissionCount: number;
+  agentCount: number;
+  stateCount: number;
+  averageCommissionPerAgent: number;
+  topAgents: MobiflexAgent[];
+  stateBreakdown: RegionStat[];
+}
+
+export interface PartnerAgentStatusData {
+  partnerId: string;
+  partnerName: string;
+  daily: {
+    approved: number;
+    unapproved: number;
+    total: number;
+  };
+  monthToDate: {
+    approved: number;
+    unapproved: number;
+    total: number;
+  };
+  agents: Array<{
+    mbeId: string;
+    firstName: string;
+    lastName: string;
+    status: string;
+    approvedDate?: string;
+    createdAt: string;
+  }>;
+}
+
+/**
+ * Get Mobiflex leaderboard data with agent performance metrics
+ */
+export async function getMobiflexLeaderboard(
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<MobiflexLeaderboardData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/leaderboard/general${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get Mobiflex regional statistics and performance data
+ */
+export async function getMobiflexRegionStats(
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<RegionStatsData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(`/admin/mbe/by-region${query}`, "GET", undefined, options);
+}
+
+/**
+ * Get Mobiflex partner statistics and performance data
+ */
+export async function getMobiflexPartnerStats(
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<PartnerStatsData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/sale/scan-partner${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get agent leaderboard for specific scan partner
+ */
+export async function getMobiflexScanPartnerLeaderboard(
+  scanPartnerId: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<MobiflexLeaderboardData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/leaderboard/scan-partner/${scanPartnerId}${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get detailed agent performance metrics for a specific agent
+ */
+export async function getMobiflexAgentPerformance(
+  mbeId: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<AgentPerformanceData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/performance/${mbeId}${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Compare scan partner agents with general leaderboard
+ */
+export async function getMobiflexLeaderboardComparison(
+  scanPartnerId: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<LeaderboardComparisonData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/leaderboard/comparison/${scanPartnerId}${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get sales statistics for a specific state/region
+ */
+export async function getMobiflexRegionStatsById(
+  state: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<RegionSpecificData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/by-region/${state}${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get sales statistics for a specific scan partner
+ */
+export async function getMobiflexScanPartnerStatsById(
+  partnerId: string,
+  period?: "daily" | "weekly" | "monthly" | "yearly",
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<PartnerSpecificData>> {
+  const query = period ? `?period=${period}` : "";
+  return apiCall(
+    `/admin/mbe/by-scan-partner/${partnerId}${query}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get daily and MTD approved agents for a specific scan partner
+ */
+export async function getMobiflexPartnerApprovedAgents(
+  partnerId: string,
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<PartnerAgentStatusData>> {
+  return apiCall(
+    `/admin/mbe/approved-agents/${partnerId}`,
+    "GET",
+    undefined,
+    options
+  );
+}
+
+/**
+ * Get daily and MTD unapproved agents for a specific scan partner
+ */
+export async function getMobiflexPartnerUnapprovedAgents(
+  partnerId: string,
+  options?: ApiCallOptions
+): Promise<BaseApiResponse<PartnerAgentStatusData>> {
+  return apiCall(
+    `/admin/mbe/unapproved-agents/${partnerId}`,
+    "GET",
+    undefined,
+    options
+  );
 }
