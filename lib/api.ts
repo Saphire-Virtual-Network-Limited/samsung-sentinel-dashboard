@@ -1674,15 +1674,24 @@ export interface RegionSpecificData {
 export interface PartnerSpecificData {
   partnerId: string;
   partnerName: string;
-  totalCommission: number;
-  totalAgentCommission: number;
-  totalPartnerCommission: number;
-  commissionCount: number;
-  agentCount: number;
-  stateCount: number;
-  averageCommissionPerAgent: number;
-  topAgents: MobiflexAgent[];
-  stateBreakdown: RegionStat[];
+  summary: {
+    totalCommission: number;
+    totalAgentCommission: number;
+    totalPartnerCommission: number;
+    totalAgents: number;
+  };
+  agentPerformance: Array<{
+    agent: {
+      firstname: string;
+      lastname: string;
+      phone: string;
+      mbeId: string;
+    };
+    totalCommission: number;
+    agentCommission: number;
+    partnerCommission: number;
+    commissionCount: number;
+  }>;
 }
 
 export interface PartnerAgentStatusData {
@@ -1692,11 +1701,17 @@ export interface PartnerAgentStatusData {
     approved: number;
     unapproved: number;
     total: number;
+    totalCount: number;
   };
-  monthToDate: {
+  mtd: {
     approved: number;
     unapproved: number;
     total: number;
+    totalCount: number;
+    period: string;
+  };
+  scanPartner?: {
+    name: string;
   };
   agents: Array<{
     mbeId: string;

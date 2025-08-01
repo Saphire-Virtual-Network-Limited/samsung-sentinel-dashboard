@@ -146,7 +146,29 @@ export default function ScanPartnerPage() {
           ? getMobiflexScanPartnerStatsById(
               selectedPartnerId,
               salesPeriod
-            ).then((r) => r.data)
+            ).then(
+              (r) =>
+                r.data as {
+                  summary: {
+                    totalCommission: number;
+                    totalAgentCommission: number;
+                    totalPartnerCommission: number;
+                    totalAgents: number;
+                  };
+                  agentPerformance: Array<{
+                    agent: {
+                      firstname: string;
+                      lastname: string;
+                      phone: string;
+                      mbeId: string;
+                    };
+                    totalCommission: number;
+                    agentCommission: number;
+                    partnerCommission: number;
+                    commissionCount: number;
+                  }>;
+                }
+            )
           : null,
       {
         refreshInterval: 5 * 60 * 1000,
@@ -163,7 +185,19 @@ export default function ScanPartnerPage() {
       () =>
         selectedPartnerId && selectedPartnerId !== ""
           ? getMobiflexPartnerApprovedAgents(selectedPartnerId).then(
-              (r) => r.data
+              (r) =>
+                r.data as {
+                  daily: {
+                    totalCount: number;
+                  };
+                  mtd: {
+                    totalCount: number;
+                    period: string;
+                  };
+                  scanPartner: {
+                    name: string;
+                  };
+                }
             )
           : null,
       {
@@ -1626,8 +1660,8 @@ export default function ScanPartnerPage() {
                                   <p className="text-xl font-bold text-indigo-800">
                                     ₦
                                     {(
-                                      specificPartnerData.totalPartnerCommission ||
-                                      0
+                                      specificPartnerData?.summary
+                                        ?.totalPartnerCommission || 0
                                     ).toLocaleString()}
                                   </p>
                                 </div>
@@ -1646,8 +1680,8 @@ export default function ScanPartnerPage() {
                                   <p className="text-xl font-bold text-emerald-800">
                                     ₦
                                     {(
-                                      specificPartnerData.totalAgentCommission ||
-                                      0
+                                      specificPartnerData?.summary
+                                        ?.totalAgentCommission || 0
                                     ).toLocaleString()}
                                   </p>
                                 </div>
@@ -1664,7 +1698,8 @@ export default function ScanPartnerPage() {
                                     Total Agents
                                   </p>
                                   <p className="text-xl font-bold text-amber-800">
-                                    {specificPartnerData?.agentCount || 0}
+                                    {specificPartnerData?.summary
+                                      ?.totalAgents || 0}
                                   </p>
                                 </div>
                                 <Users className="h-6 w-6 text-amber-600" />
@@ -1677,10 +1712,14 @@ export default function ScanPartnerPage() {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className="text-sm text-rose-600 font-medium">
-                                    Commission Count
+                                    Total Commission
                                   </p>
                                   <p className="text-xl font-bold text-rose-800">
-                                    {specificPartnerData?.commissionCount || 0}
+                                    ₦
+                                    {(
+                                      specificPartnerData?.summary
+                                        ?.totalCommission || 0
+                                    ).toLocaleString()}
                                   </p>
                                 </div>
                                 <TrendingUp className="h-6 w-6 text-rose-600" />
@@ -1691,99 +1730,102 @@ export default function ScanPartnerPage() {
                       )}
 
                       {/* Top Agents for Selected Partner */}
-                      {specificPartnerData?.topAgents && (
-                        <Card>
-                          <CardHeader>
-                            <h4 className="text-md font-semibold">
-                              Top Performing Agents
-                            </h4>
-                          </CardHeader>
-                          <CardBody>
-                            <div className="overflow-x-auto">
-                              <table className="w-full table-auto">
-                                <thead>
-                                  <tr className="border-b">
-                                    <th className="text-left p-3 font-medium">
-                                      Agent
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      MBE ID
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      Phone
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      Total Commission
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      Agent Commission
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      Partner Commission
-                                    </th>
-                                    <th className="text-left p-3 font-medium">
-                                      Sales Count
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {specificPartnerData?.topAgents?.map(
-                                    (agent, index) => (
-                                      <tr
-                                        key={agent.mbeId}
-                                        className="border-b hover:bg-gray-50"
-                                      >
-                                        <td className="p-3">
-                                          <div>
-                                            <p className="font-medium">
-                                              {agent.firstName} {agent.lastName}
-                                            </p>
-                                            <p className="text-sm text-gray-500">
-                                              Rank #{index + 1}
-                                            </p>
-                                          </div>
-                                        </td>
-                                        <td className="p-3 font-mono text-sm">
-                                          {agent.mbeId}
-                                        </td>
-                                        <td className="p-3">{agent.phone}</td>
-                                        <td className="p-3 font-medium text-green-600">
-                                          ₦
-                                          {(
-                                            agent.totalCommission || 0
-                                          ).toLocaleString()}
-                                        </td>
-                                        <td className="p-3">
-                                          ₦
-                                          {(
-                                            agent.agentCommission || 0
-                                          ).toLocaleString()}
-                                        </td>
-                                        <td className="p-3">
-                                          ₦
-                                          {(
-                                            (agent.totalCommission || 0) -
-                                            (agent.agentCommission || 0)
-                                          ).toLocaleString()}
-                                        </td>
-                                        <td className="p-3">
-                                          <Chip
-                                            size="sm"
-                                            color="success"
-                                            variant="flat"
-                                          >
-                                            {agent.loanCount}
-                                          </Chip>
-                                        </td>
-                                      </tr>
-                                    )
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          </CardBody>
-                        </Card>
-                      )}
+                      {specificPartnerData?.agentPerformance &&
+                        specificPartnerData.agentPerformance.length > 0 && (
+                          <Card>
+                            <CardHeader>
+                              <h4 className="text-md font-semibold">
+                                Top Performing Agents
+                              </h4>
+                            </CardHeader>
+                            <CardBody>
+                              <div className="overflow-x-auto">
+                                <table className="w-full table-auto">
+                                  <thead>
+                                    <tr className="border-b">
+                                      <th className="text-left p-3 font-medium">
+                                        Agent
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        MBE ID
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Phone
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Total Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Agent Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Partner Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Sales Count
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {specificPartnerData.agentPerformance.map(
+                                      (agentData: any, index: number) => (
+                                        <tr
+                                          key={agentData.agent.mbeId}
+                                          className="border-b hover:bg-gray-50"
+                                        >
+                                          <td className="p-3">
+                                            <div>
+                                              <p className="font-medium">
+                                                {agentData.agent.firstname}{" "}
+                                                {agentData.agent.lastname}
+                                              </p>
+                                              <p className="text-sm text-gray-500">
+                                                Rank #{index + 1}
+                                              </p>
+                                            </div>
+                                          </td>
+                                          <td className="p-3 font-mono text-sm">
+                                            {agentData.agent.mbeId}
+                                          </td>
+                                          <td className="p-3">
+                                            {agentData.agent.phone}
+                                          </td>
+                                          <td className="p-3 font-medium text-green-600">
+                                            ₦
+                                            {(
+                                              agentData.totalCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            ₦
+                                            {(
+                                              agentData.agentCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            ₦
+                                            {(
+                                              agentData.partnerCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            <Chip
+                                              size="sm"
+                                              color="success"
+                                              variant="flat"
+                                            >
+                                              {agentData.commissionCount || 0}
+                                            </Chip>
+                                          </td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </CardBody>
+                          </Card>
+                        )}
 
                       {/* Approved Agents Summary */}
                       {approvedAgentsData && (
@@ -1803,27 +1845,28 @@ export default function ScanPartnerPage() {
                                 <div className="grid grid-cols-3 gap-3">
                                   <div className="text-center p-3 bg-green-50 rounded-lg">
                                     <p className="text-sm text-green-600">
-                                      Approved
+                                      Total Agents
                                     </p>
                                     <p className="text-xl font-bold text-green-800">
-                                      {approvedAgentsData?.daily?.approved || 0}
+                                      {approvedAgentsData?.daily?.totalCount ||
+                                        0}
                                     </p>
                                   </div>
                                   <div className="text-center p-3 bg-orange-50 rounded-lg">
                                     <p className="text-sm text-orange-600">
-                                      Pending
+                                      Partner
                                     </p>
                                     <p className="text-xl font-bold text-orange-800">
-                                      {approvedAgentsData?.daily?.unapproved ||
-                                        0}
+                                      {approvedAgentsData?.scanPartner?.name ||
+                                        "N/A"}
                                     </p>
                                   </div>
                                   <div className="text-center p-3 bg-blue-50 rounded-lg">
                                     <p className="text-sm text-blue-600">
-                                      Total
+                                      Period
                                     </p>
                                     <p className="text-xl font-bold text-blue-800">
-                                      {approvedAgentsData?.daily?.total || 0}
+                                      Daily
                                     </p>
                                   </div>
                                 </div>
@@ -1837,29 +1880,26 @@ export default function ScanPartnerPage() {
                                 <div className="grid grid-cols-3 gap-3">
                                   <div className="text-center p-3 bg-green-50 rounded-lg">
                                     <p className="text-sm text-green-600">
-                                      Approved
+                                      Total Agents
                                     </p>
                                     <p className="text-xl font-bold text-green-800">
-                                      {approvedAgentsData?.monthToDate
-                                        ?.approved || 0}
+                                      {approvedAgentsData?.mtd?.totalCount || 0}
                                     </p>
                                   </div>
                                   <div className="text-center p-3 bg-orange-50 rounded-lg">
                                     <p className="text-sm text-orange-600">
-                                      Pending
+                                      Period
                                     </p>
                                     <p className="text-xl font-bold text-orange-800">
-                                      {approvedAgentsData?.monthToDate
-                                        ?.unapproved || 0}
+                                      {approvedAgentsData?.mtd?.period || "N/A"}
                                     </p>
                                   </div>
                                   <div className="text-center p-3 bg-blue-50 rounded-lg">
                                     <p className="text-sm text-blue-600">
-                                      Total
+                                      Status
                                     </p>
                                     <p className="text-xl font-bold text-blue-800">
-                                      {approvedAgentsData?.monthToDate?.total ||
-                                        0}
+                                      MTD
                                     </p>
                                   </div>
                                 </div>

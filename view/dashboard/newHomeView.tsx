@@ -10,10 +10,12 @@ import {
 } from "@/components/reususables";
 import { getSelectedProduct } from "@/utils";
 import MobiflexHomeView from "./MobiflexHomeView";
+import NewSalesHomeView from "../creditflex/dashboardView";
 const NewHomeView = () => {
   const { label: selectedProduct } = getSelectedProduct();
-  if (selectedProduct == "Mobiflex") {
-    return <MobiflexHomeView />;
+
+  if (selectedProduct == "CreditFlex") {
+    return <NewSalesHomeView />;
   }
   return (
     <div className="space-y-6">
@@ -21,6 +23,7 @@ const NewHomeView = () => {
       <InceptionDashCard />
       <DeviceDashAnalytic />
       <ScreenReport />
+      {selectedProduct == "Mobiflex" && <MobiflexHomeView />}
     </div>
   );
 };

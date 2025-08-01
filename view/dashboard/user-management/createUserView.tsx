@@ -92,7 +92,10 @@ export default function CreateUserView({ onSuccess }: CreateUserViewProps) {
   };
 
   useEffect(() => {
-    if (userResponse && !hasPermission(role, "createDashboardUser")) {
+    if (
+      userResponse &&
+      !hasPermission(role, "createDashboardUser", userResponse?.data?.email)
+    ) {
       router.push("/404");
     }
   }, [userResponse, router, role]);

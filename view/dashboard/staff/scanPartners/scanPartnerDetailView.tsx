@@ -822,19 +822,22 @@ export default function ScanPartnerSinglePage() {
   const partnerId = isScanPartner ? userId : params.id;
 
   // Sales Analytics Data
-  const { data: salesStats, isLoading: salesStatsLoading } = useSWR(
+  const { data: salesStats, isLoading: salesStatsLoading } = useSWR<any>(
     partnerId ? `/mobiflex-stats/${partnerId}` : null,
     () =>
       getMobiflexScanPartnerStatsById(partnerId as string).then((r) => r.data),
     { refreshInterval: 30000 }
   );
 
-  const { data: approvedAgents, isLoading: approvedAgentsLoading } = useSWR(
-    partnerId ? `/mobiflex-approved-agents/${partnerId}` : null,
-    () =>
-      getMobiflexPartnerApprovedAgents(partnerId as string).then((r) => r.data),
-    { refreshInterval: 30000 }
-  );
+  const { data: approvedAgents, isLoading: approvedAgentsLoading } =
+    useSWR<any>(
+      partnerId ? `/mobiflex-approved-agents/${partnerId}` : null,
+      () =>
+        getMobiflexPartnerApprovedAgents(partnerId as string).then(
+          (r) => r.data
+        ),
+      { refreshInterval: 30000 }
+    );
 
   // Fetch VFD banks
   const { data: vfdBanks = [] } = useSWR("vfd-banks", fetchVfdBanks, {
@@ -2028,7 +2031,7 @@ export default function ScanPartnerSinglePage() {
                         <PerformanceCard
                           title="Total Commission"
                           value={`₦${(
-                            salesStats?.totalCommission || 0
+                            salesStats?.summary?.totalCommission || 0
                           ).toLocaleString()}`}
                           icon={<DollarSign className="w-6 h-6" />}
                           gradient="from-green-100 to-green-200"
@@ -2038,7 +2041,7 @@ export default function ScanPartnerSinglePage() {
                         <PerformanceCard
                           title="Partner Commission"
                           value={`₦${(
-                            salesStats?.totalPartnerCommission || 0
+                            salesStats?.summary?.totalPartnerCommission || 0
                           ).toLocaleString()}`}
                           icon={<TrendingUp className="w-6 h-6" />}
                           gradient="from-blue-100 to-blue-200"
@@ -2048,7 +2051,7 @@ export default function ScanPartnerSinglePage() {
                         <PerformanceCard
                           title="Agent Commission"
                           value={`₦${(
-                            salesStats?.totalAgentCommission || 0
+                            salesStats?.summary?.totalAgentCommission || 0
                           ).toLocaleString()}`}
                           icon={<Users className="w-6 h-6" />}
                           gradient="from-purple-100 to-purple-200"
@@ -2057,7 +2060,7 @@ export default function ScanPartnerSinglePage() {
                         />
                         <PerformanceCard
                           title="Total Agents"
-                          value={salesStats?.agentCount || 0}
+                          value={salesStats?.summary?.totalAgents || 0}
                           icon={<Users className="w-6 h-6" />}
                           gradient="from-amber-100 to-amber-200"
                           textColor="text-amber-600"
@@ -2066,16 +2069,18 @@ export default function ScanPartnerSinglePage() {
                       </div>
 
                       {/* Top Agents Table */}
-                      {salesStats?.topAgents &&
-                        salesStats.topAgents.length > 0 && (
+                      {salesStats?.agentPerformance &&
+                        salesStats.agentPerformance.length > 0 && (
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <h3 className="text-lg font-semibold">
                                 Top Performing Agents
                               </h3>
                               <Chip size="sm" variant="flat" color="success">
-                                {salesStats.topAgents.length} Agent
-                                {salesStats.topAgents.length !== 1 ? "s" : ""}
+                                {salesStats.agentPerformance.length} Agent
+                                {salesStats.agentPerformance.length !== 1
+                                  ? "s"
+                                  : ""}
                               </Chip>
                             </div>
                             <div className="overflow-x-auto">
@@ -2089,16 +2094,18 @@ export default function ScanPartnerSinglePage() {
                                   <TableColumn>PHONE</TableColumn>
                                   <TableColumn>TOTAL COMMISSION</TableColumn>
                                   <TableColumn>AGENT COMMISSION</TableColumn>
+                                  <TableColumn>PARTNER COMMISSION</TableColumn>
                                   <TableColumn>SALES COUNT</TableColumn>
                                 </TableHeader>
                                 <TableBody>
-                                  {salesStats.topAgents.map(
-                                    (agent: any, index: number) => (
+                                  {salesStats.agentPerformance.map(
+                                    (agentData: any, index: number) => (
                                       <TableRow key={index}>
                                         <TableCell>
                                           <div>
                                             <p className="font-medium">
-                                              {agent.firstName} {agent.lastName}
+                                              {agentData.agent.firstname}{" "}
+                                              {agentData.agent.lastname}
                                             </p>
                                             <p className="text-sm text-default-500">
                                               Rank #{index + 1}
@@ -2107,15 +2114,17 @@ export default function ScanPartnerSinglePage() {
                                         </TableCell>
                                         <TableCell>
                                           <p className="font-mono text-sm">
-                                            {agent.mbeId}
+                                            {agentData.agent.mbeId}
                                           </p>
                                         </TableCell>
-                                        <TableCell>{agent.phone}</TableCell>
+                                        <TableCell>
+                                          {agentData.agent.phone}
+                                        </TableCell>
                                         <TableCell>
                                           <p className="font-medium text-green-600">
                                             ₦
                                             {(
-                                              agent.totalCommission || 0
+                                              agentData.totalCommission || 0
                                             ).toLocaleString()}
                                           </p>
                                         </TableCell>
@@ -2123,7 +2132,15 @@ export default function ScanPartnerSinglePage() {
                                           <p className="text-sm">
                                             ₦
                                             {(
-                                              agent.agentCommission || 0
+                                              agentData.agentCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="text-sm">
+                                            ₦
+                                            {(
+                                              agentData.partnerCommission || 0
                                             ).toLocaleString()}
                                           </p>
                                         </TableCell>
@@ -2133,7 +2150,7 @@ export default function ScanPartnerSinglePage() {
                                             variant="flat"
                                             color="success"
                                           >
-                                            {agent.loanCount || 0}
+                                            {agentData.commissionCount || 0}
                                           </Chip>
                                         </TableCell>
                                       </TableRow>
@@ -2160,24 +2177,26 @@ export default function ScanPartnerSinglePage() {
                               <div className="grid grid-cols-3 gap-3">
                                 <div className="text-center p-3 bg-green-50 rounded-lg">
                                   <p className="text-sm text-green-600">
-                                    Approved
+                                    Total Agents
                                   </p>
                                   <p className="text-xl font-bold text-green-800">
-                                    {approvedAgents?.daily?.approved || 0}
-                                  </p>
-                                </div>
-                                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                  <p className="text-sm text-orange-600">
-                                    Pending
-                                  </p>
-                                  <p className="text-xl font-bold text-orange-800">
-                                    {approvedAgents?.daily?.unapproved || 0}
+                                    {approvedAgents?.daily?.totalCount || 0}
                                   </p>
                                 </div>
                                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                  <p className="text-sm text-blue-600">Total</p>
+                                  <p className="text-sm text-blue-600">
+                                    Partner
+                                  </p>
                                   <p className="text-xl font-bold text-blue-800">
-                                    {approvedAgents?.daily?.total || 0}
+                                    {approvedAgents?.scanPartner?.name || "N/A"}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-purple-600">
+                                    Period
+                                  </p>
+                                  <p className="text-xl font-bold text-purple-800">
+                                    Daily
                                   </p>
                                 </div>
                               </div>
@@ -2191,25 +2210,26 @@ export default function ScanPartnerSinglePage() {
                               <div className="grid grid-cols-3 gap-3">
                                 <div className="text-center p-3 bg-green-50 rounded-lg">
                                   <p className="text-sm text-green-600">
-                                    Approved
+                                    Total Agents
                                   </p>
                                   <p className="text-xl font-bold text-green-800">
-                                    {approvedAgents?.monthToDate?.approved || 0}
-                                  </p>
-                                </div>
-                                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                  <p className="text-sm text-orange-600">
-                                    Pending
-                                  </p>
-                                  <p className="text-xl font-bold text-orange-800">
-                                    {approvedAgents?.monthToDate?.unapproved ||
-                                      0}
+                                    {approvedAgents?.mtd?.totalCount || 0}
                                   </p>
                                 </div>
                                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                  <p className="text-sm text-blue-600">Total</p>
+                                  <p className="text-sm text-blue-600">
+                                    Period
+                                  </p>
                                   <p className="text-xl font-bold text-blue-800">
-                                    {approvedAgents?.monthToDate?.total || 0}
+                                    {approvedAgents?.mtd?.period || "N/A"}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-purple-600">
+                                    Status
+                                  </p>
+                                  <p className="text-xl font-bold text-purple-800">
+                                    MTD
                                   </p>
                                 </div>
                               </div>
