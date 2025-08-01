@@ -6,12 +6,29 @@ import {
   getAgentDevice,
   getAgentRecordByMbeId,
   updateAgentAddressStatus,
-  getAgentLoansAndCommissionsByScanPartner, // Add this import
+  getAgentLoansAndCommissionsByScanPartner,
   updateScanPartner,
   getAllScanPartners,
   getScanPartnerByUserId,
 } from "@/lib";
 import { SelectField } from "@/components/reususables";
+import {
+  LoadingSpinner,
+  NotFound,
+  InfoCard,
+  InfoField,
+  EmptyState,
+  AgentDeviceCard,
+  StatusChip,
+  GuarantorStatusChip,
+  AddressStatusChip,
+  getStatusColor,
+  ConfirmationModal,
+  FormModal,
+  ImagePreviewModal,
+  SelectionWithPreview,
+  ReasonSelection,
+} from "@/components/reususables/custom-ui";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
@@ -19,11 +36,6 @@ import {
   Avatar,
   Button,
   Chip,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
   Snippet,
   useDisclosure,
   Image,
@@ -35,7 +47,6 @@ import {
   ButtonGroup,
   Select,
   SelectItem,
-  Textarea,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -194,333 +205,6 @@ const loanStatusOptions = [
   { name: "Rejected", uid: "REJECTED" },
 ];
 
-// Utility Components
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
-
-const NotFound = ({ onGoBack }: { onGoBack: () => void }) => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h2 className="text-2xl font-semibold text-default-900 mb-2">
-        Agent Not Found
-      </h2>
-      <p className="text-default-500 mb-4">
-        The requested agent information could not be found.
-      </p>
-      <Button
-        variant="flat"
-        color="primary"
-        startContent={<ArrowLeft />}
-        onPress={onGoBack}
-      >
-        Go Back
-      </Button>
-    </div>
-  </div>
-);
-
-const InfoCard = ({
-  title,
-  children,
-  className = "",
-  icon,
-  collapsible = false,
-  defaultExpanded = true,
-  headerContent,
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-  icon?: React.ReactNode;
-  collapsible?: boolean;
-  defaultExpanded?: boolean;
-  headerContent?: React.ReactNode;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  if (!collapsible) {
-    return (
-      <div
-        className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-      >
-        <div className="p-4 border-b border-default-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {icon}
-              <h3 className="text-lg font-semibold text-default-900">
-                {title}
-              </h3>
-            </div>
-            {headerContent}
-          </div>
-        </div>
-        <div className="p-6">{children}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-    >
-      <div
-        className="p-4 border-b border-default-200 cursor-pointer hover:bg-default-50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            {headerContent}
-            <Button
-              variant="light"
-              size="sm"
-              isIconOnly
-              className="text-default-500"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div
-        className={`transition-all duration-300 ease-in-out ${
-          isExpanded
-            ? "max-h-none opacity-100"
-            : "max-h-0 opacity-0 overflow-hidden"
-        }`}
-      >
-        <div className="p-6">{children}</div>
-      </div>
-    </div>
-  );
-};
-
-const InfoField = ({
-  label,
-  value,
-  endComponent,
-  copyable = false,
-}: {
-  label: string;
-  value?: string | null;
-  endComponent?: React.ReactNode;
-  copyable?: boolean;
-}) => (
-  <div className="bg-default-50 rounded-lg p-4">
-    <div className="flex items-center justify-between mb-1">
-      <div className="text-sm text-default-500">{label}</div>
-      {endComponent}
-    </div>
-    <div className="font-medium text-default-900 flex items-center gap-2">
-      {value || "N/A"}
-      {copyable && value && (
-        <Snippet
-          codeString={value}
-          className="p-0"
-          size="sm"
-          hideSymbol
-          hideCopyButton={false}
-        />
-      )}
-    </div>
-  </div>
-);
-
-const EmptyState = ({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="text-center py-8">
-    <div className="flex justify-center mb-4">
-      <div className="p-3 bg-default-100 rounded-full">{icon}</div>
-    </div>
-    <h3 className="text-lg font-semibold text-default-900 mb-2">{title}</h3>
-    <p className="text-default-500 text-sm">{description}</p>
-  </div>
-);
-
-const DeviceCard = ({ device }: { device: DeviceItem }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const isExpiringSoon =
-    device.expiryDate &&
-    new Date(device.expiryDate) <=
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  const isExpired =
-    device.expiryDate && new Date(device.expiryDate) < new Date();
-
-  return (
-    <div className="bg-default-50 rounded-lg p-3 border border-default-200">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-default-900 text-sm truncate">
-            {device.itemName}
-          </h4>
-          <div className="flex items-center gap-2 text-xs text-default-500">
-            <span>#{device.itemCode}</span>
-            <span>•</span>
-            <span>
-              {device.availableQty} unit{device.availableQty !== 1 ? "s" : ""}
-            </span>
-            {device.expiryDate && (
-              <>
-                <span>•</span>
-                <span
-                  className={
-                    isExpired
-                      ? "text-danger"
-                      : isExpiringSoon
-                      ? "text-warning"
-                      : "text-success"
-                  }
-                >
-                  {isExpired
-                    ? "Expired"
-                    : isExpiringSoon
-                    ? "Due Soon"
-                    : "Active"}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        <Button
-          variant="light"
-          size="md"
-          isIconOnly
-          className="text-default-400 hover:text-default-600 w-fit"
-          onPress={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? <span>Hide</span> : <span>View More</span>}
-        </Button>
-      </div>
-      <div className="space-y-1">
-        <div className="text-xs text-default-500">Serial Numbers:</div>
-        {isExpanded ? (
-          <div className="space-y-1">
-            {device.serialNumbers.map((serial, index) => (
-              <div
-                key={serial}
-                className="flex items-center justify-between bg-white rounded px-2 py-1 text-xs"
-              >
-                <span className="text-default-600">#{index + 1}</span>
-                <Snippet
-                  codeString={serial}
-                  size="sm"
-                  className="text-xs"
-                  hideSymbol
-                >
-                  {serial}
-                </Snippet>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="hidden">
-            {device.serialNumbers.slice(0, 3).map((serial) => (
-              <Snippet
-                key={serial}
-                codeString={serial}
-                size="sm"
-                className="text-xs"
-                hideSymbol
-              >
-                {serial.length > 8 ? `${serial.slice(0, 8)}...` : serial}
-              </Snippet>
-            ))}
-            {device.serialNumbers.length > 3 && (
-              <Chip size="sm" variant="flat" className="text-xs">
-                +{device.serialNumbers.length - 3} more
-              </Chip>
-            )}
-          </div>
-        )}
-      </div>
-      {(isExpanded || device.expiryDate) && (
-        <div className="flex items-center justify-between text-xs text-default-500 mt-2 pt-2 border-t border-default-200">
-          <span>
-            Assigned: {new Date(device.createdAt).toLocaleDateString()}
-          </span>
-          {device.expiryDate && (
-            <span
-              className={
-                isExpired
-                  ? "text-danger"
-                  : isExpiringSoon
-                  ? "text-warning"
-                  : "text-success"
-              }
-            >
-              Return by: {new Date(device.expiryDate).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const getStatusColor = (status?: string) => {
-  switch (status) {
-    case "ACTIVE":
-      return "primary";
-    case "VERIFIED":
-      return "success";
-    case "APPROVED":
-      return "success";
-    case "KYC_2":
-      return "warning";
-    case "KYC_1":
-      return "warning";
-    case "PENDING":
-      return "warning";
-    case "REJECTED":
-      return "danger";
-    default:
-      return "default";
-  }
-};
-
-const StatusChip = ({ status }: { status?: string }) => {
-  return (
-    <Chip color={getStatusColor(status)} variant="flat" className="font-medium">
-      {status || "PENDING"}
-    </Chip>
-  );
-};
-
-const GuarantorStatusChip = ({ status }: { status: string }) => {
-  return (
-    <Chip color={getStatusColor(status)} variant="flat" size="sm">
-      {status}
-    </Chip>
-  );
-};
-
-const AddressStatusChip = ({ status }: { status: string }) => {
-  return (
-    <Chip color={getStatusColor(status)} variant="flat" size="sm">
-      {status}
-    </Chip>
-  );
-};
-
 const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
 
 // Delete agent function
@@ -583,10 +267,9 @@ const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
     throw new Error("Agent ID is required");
   }
   try {
-    const response: DeviceResponse = await getAgentDevice(
-      { mbeId: agentId },
-      { appKey: MOBIFLEX_APP_KEY }
-    );
+    const response: DeviceResponse = await getAgentDevice({
+      mbeId: agentId,
+    });
     return response?.data || [];
   } catch (error) {
     console.error("Error fetching agent devices:", error);
@@ -1212,7 +895,7 @@ export default function AgentSinglePage() {
 
   const reasonOptions = [
     "Referees not reachable/switched off",
-    "Referees doesn't want to stand", 
+    "Referees doesn't want to stand",
     "Referees wants to speak with the agent",
     "Referees doesn't know the agent",
     "Agent used themselves as referees",
@@ -1341,25 +1024,13 @@ export default function AgentSinglePage() {
                       onClick={onOpen}
                       color={getStatusColor(agent.accountStatus)}
                     />
-                    <Modal
+                    <ImagePreviewModal
                       isOpen={isOpen}
                       onClose={onClose}
-                      size="sm"
-                      placement="center"
-                    >
-                      <ModalContent>
-                        <ModalHeader className="flex flex-col gap-1">
-                          {agent.firstname} {agent.lastname}
-                        </ModalHeader>
-                        <ModalBody className="p-0">
-                          <Image
-                            src={agent.imageUrl || "/placeholder.svg"}
-                            alt={`${agent.firstname} ${agent.lastname} - Full preview`}
-                            className="w-full h-auto rounded-b-lg"
-                          />
-                        </ModalBody>
-                      </ModalContent>
-                    </Modal>
+                      imageUrl={agent.imageUrl || "/placeholder.svg"}
+                      title={`${agent.firstname} ${agent.lastname}`}
+                      alt={`${agent.firstname} ${agent.lastname} - Full preview`}
+                    />
                   </>
                 )}
                 <div>
@@ -1500,78 +1171,38 @@ export default function AgentSinglePage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmationModal
         isOpen={isDeleteOpen}
         onClose={onDeleteClose}
-        size="md"
-        placement="center"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold text-danger">Delete Agent</h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={agent?.imageUrl || "/placeholder.svg"}
-                  alt={`${agent?.firstname} ${agent?.lastname}`}
-                  className="w-12 h-12"
-                />
-                <div>
-                  <p className="font-medium">
-                    {agent?.firstname} {agent?.lastname}
-                  </p>
-                  <p className="text-small text-default-500">{agent?.email}</p>
-                </div>
-              </div>
-              <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-danger-700 mb-1">
-                      Permanent Deletion Warning
-                    </p>
-                    <p className="text-sm text-danger-600">
-                      This action cannot be undone. Deleting this agent will
-                      permanently remove:
-                    </p>
-                    <ul className="text-sm text-danger-600 mt-2 ml-4 list-disc">
-                      <li>All agent information and records</li>
-                      <li>Associated KYC and account details</li>
-                      <li>Guarantor information</li>
-                      <li>Store assignments and transaction history</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-default-50 rounded-lg p-3">
-                <p className="text-sm text-default-600">
-                  <strong>Agent ID:</strong> {agent?.mbeId}
-                </p>
-              </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onDeleteClose}
-              isDisabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              onPress={handleDeleteAgent}
-              isLoading={isDeleting}
-              isDisabled={isDeleting}
-              startContent={!isDeleting ? <Trash2 className="w-4 h-4" /> : null}
-            >
-              {isDeleting ? "Deleting..." : "Delete Agent"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onConfirm={handleDeleteAgent}
+        title="Delete Agent"
+        confirmText={isDeleting ? "Deleting..." : "Delete Agent"}
+        isLoading={isDeleting}
+        variant="danger"
+        entity={{
+          name: `${agent?.firstname} ${agent?.lastname}`,
+          subtitle: agent?.email,
+          imageUrl: agent?.imageUrl || "/placeholder.svg",
+        }}
+        warning={{
+          title: "Permanent Deletion Warning",
+          message:
+            "This action cannot be undone. Deleting this agent will permanently remove:",
+          items: [
+            "All agent information and records",
+            "Associated KYC and account details",
+            "Guarantor information",
+            "Store assignments and transaction history",
+          ],
+          icon: (
+            <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
+          ),
+        }}
+        additionalInfo={{
+          label: "Agent ID",
+          value: agent?.mbeId || "",
+        }}
+      />
 
       <div className="px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1925,7 +1556,7 @@ export default function AgentSinglePage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {devices.map((device) => (
-                      <DeviceCard key={device.id} device={device} />
+                      <AgentDeviceCard key={device.id} device={device} />
                     ))}
                   </div>
                 </div>
@@ -2454,236 +2085,133 @@ export default function AgentSinglePage() {
       </div>
 
       {/* Scan Partner Change Modal */}
-      <Modal
+      <FormModal
         isOpen={isScanPartnerModalOpen}
         onClose={onScanPartnerModalClose}
+        onSubmit={handleScanPartnerChange}
+        title={agent?.userId ? "Change Scan Partner" : "Assign Scan Partner"}
+        description={
+          agent?.userId
+            ? `Select a new scan partner for ${agent?.firstname} ${agent?.lastname}`
+            : `Assign a scan partner to ${agent?.firstname} ${agent?.lastname}`
+        }
+        submitText={
+          isChangingScanPartner
+            ? "Updating..."
+            : agent?.userId
+            ? "Change Partner"
+            : "Assign Partner"
+        }
+        isLoading={isChangingScanPartner}
+        isSubmitDisabled={!selectedScanPartner}
         size="lg"
-        placement="center"
       >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold">
-              {agent?.userId ? "Change Scan Partner" : "Assign Scan Partner"}
-            </h3>
-            <p className="text-sm text-default-500">
-              {agent?.userId
-                ? `Select a new scan partner for ${agent?.firstname} ${agent?.lastname}`
-                : `Assign a scan partner to ${agent?.firstname} ${agent?.lastname}`}
-            </p>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              {/* Debug section - remove after fixing */}
-
-              <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
-                <p className="text-sm text-warning-700">
-                  <strong>Current Scan Partner:</strong>{" "}
-                  {agent?.userId || "Not assigned"}
+        <SelectionWithPreview
+          label="Select New Scan Partner"
+          placeholder="Choose a scan partner..."
+          options={scanPartners.map((partner) => ({
+            value: partner.userId,
+            label:
+              `${partner.firstName || ""} ${partner.lastName || ""}`.trim() +
+              ` - ${partner.companyName || "N/A"}`,
+          }))}
+          selectedValue={selectedScanPartner?.userId}
+          onSelectionChange={handleScanPartnerSelect}
+          isDisabled={scanPartners.length === 0}
+          warning={{
+            message:
+              "Select a new scan partner to assign or change the current assignment.",
+            currentValue: agent?.userId || "Not assigned",
+          }}
+          previewData={scanPartnerDetails}
+          renderPreview={(data) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p className="text-sm text-default-600">Name</p>
+                <p className="font-medium">
+                  {data.firstName || ""} {data.lastName || ""}
                 </p>
               </div>
-
-              <SelectField
-                label="Select New Scan Partner"
-                htmlFor="scanPartnerSelect"
-                id="scanPartnerSelect"
-                placeholder="Choose a scan partner..."
-                defaultSelectedKeys={
-                  selectedScanPartner?.userId
-                    ? [selectedScanPartner.userId]
-                    : []
-                }
-                onChange={(value) =>
-                  handleScanPartnerSelect(
-                    Array.isArray(value) ? value[0] : value
-                  )
-                }
-                options={scanPartners.map((partner) => ({
-                  value: partner.userId,
-                  label:
-                    `${partner.firstName || ""} ${
-                      partner.lastName || ""
-                    }`.trim() + ` - ${partner.companyName || "N/A"}`,
-                }))}
-                disabled={scanPartners.length === 0}
-              />
-
-              {scanPartnerDetails && (
-                <div className="bg-default-50 rounded-lg p-4">
-                  <h4 className="font-semibold mb-3">
-                    Selected Partner Details
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-sm text-default-600">Name</p>
-                      <p className="font-medium">
-                        {scanPartnerDetails.firstName || ""}{" "}
-                        {scanPartnerDetails.lastName || ""}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-600">Company</p>
-                      <p className="font-medium">
-                        {scanPartnerDetails.companyName || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-600">Email</p>
-                      <p className="font-medium">
-                        {scanPartnerDetails.email || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-600">Phone</p>
-                      <p className="font-medium">
-                        {scanPartnerDetails.telephoneNumber || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-default-600">Company</p>
+                <p className="font-medium">{data.companyName || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-default-600">Email</p>
+                <p className="font-medium">{data.email || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-default-600">Phone</p>
+                <p className="font-medium">{data.telephoneNumber || "N/A"}</p>
+              </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onScanPartnerModalClose}
-              isDisabled={isChangingScanPartner}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={handleScanPartnerChange}
-              isLoading={isChangingScanPartner}
-              isDisabled={!selectedScanPartner || isChangingScanPartner}
-            >
-              {isChangingScanPartner
-                ? "Updating..."
-                : agent?.userId
-                ? "Change Partner"
-                : "Assign Partner"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          )}
+        />
+      </FormModal>
 
       {/* Guarantor Status Update Modal */}
-      <Modal
+      <FormModal
         isOpen={isGuarantorModalOpen}
         onClose={onGuarantorModalClose}
-        size="md"
-        placement="center"
+        onSubmit={handleGuarantorStatusUpdateConfirm}
+        title={`${
+          guarantorUpdateAction === "approve" ? "Approve" : "Reject"
+        } Guarantor`}
+        submitText={
+          isUpdatingGuarantor !== null
+            ? "Updating..."
+            : guarantorUpdateAction === "approve"
+            ? "Approve Guarantor"
+            : "Reject Guarantor"
+        }
+        isLoading={isUpdatingGuarantor !== null}
+        variant={guarantorUpdateAction === "approve" ? "success" : "danger"}
       >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold">
-              {guarantorUpdateAction === "approve" ? "Approve" : "Reject"}{" "}
-              Guarantor
-            </h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              {guarantorToUpdate && (
-                <div className="bg-default-50 rounded-lg p-4">
-                  <h4 className="font-semibold mb-2">Guarantor Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-sm text-default-600">Name</p>
-                      <p className="font-medium">
-                        {guarantorToUpdate.guarantorName}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-default-600">Phone</p>
-                      <p className="font-medium">
-                        {guarantorToUpdate.guarantorPhone}
-                      </p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-default-600">Relationship</p>
-                      <p className="font-medium">
-                        {guarantorToUpdate.guarantorRelationship}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
-                <p className="text-sm text-warning-700">
-                  Are you sure you want to{" "}
-                  <strong>{guarantorUpdateAction}</strong> this guarantor? This
-                  action will update their status and cannot be easily undone.
+        {guarantorToUpdate && (
+          <div className="bg-default-50 rounded-lg p-4">
+            <h4 className="font-semibold mb-2">Guarantor Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p className="text-sm text-default-600">Name</p>
+                <p className="font-medium">{guarantorToUpdate.guarantorName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-default-600">Phone</p>
+                <p className="font-medium">
+                  {guarantorToUpdate.guarantorPhone}
                 </p>
               </div>
-
-              {guarantorUpdateAction == "reject" && (
-                <div className="space-y-3">
-                  <SelectField
-                    label="Reason for this action"
-                    htmlFor="guarantorReasonSelect"
-                    id="guarantorReasonSelect"
-                    placeholder="Select a reason..."
-                    defaultSelectedKeys={
-                      guarantorReason
-                        ? [isOtherReason ? "other" : guarantorReason]
-                        : []
-                    }
-                    onChange={(value) => {
-                      const selectedValue = Array.isArray(value)
-                        ? value[0]
-                        : value;
-                      if (selectedValue === "other") {
-                        setIsOtherReason(true);
-                        setGuarantorReason("other");
-                      } else {
-                        setIsOtherReason(false);
-                        setGuarantorReason(selectedValue);
-                        setGuarantorComment("");
-                      }
-                    }}
-                    options={reasonOptions.map((reason) => ({
-                      label: reason,
-                      value: reason === "Other" ? "other" : reason,
-                    }))}
-                  />
-
-                  {isOtherReason && (
-                    <Textarea
-                      label="Please specify the reason"
-                      placeholder="Enter your reason..."
-                      value={guarantorComment}
-                      onValueChange={setGuarantorComment}
-                      minRows={3}
-                    />
-                  )}
-                </div>
-              )}
+              <div className="col-span-2">
+                <p className="text-sm text-default-600">Relationship</p>
+                <p className="font-medium">
+                  {guarantorToUpdate.guarantorRelationship}
+                </p>
+              </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onGuarantorModalClose}
-              isDisabled={isUpdatingGuarantor !== null}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={guarantorUpdateAction === "approve" ? "success" : "danger"}
-              onPress={handleGuarantorStatusUpdateConfirm}
-              isLoading={isUpdatingGuarantor !== null}
-              isDisabled={isUpdatingGuarantor !== null}
-            >
-              {isUpdatingGuarantor !== null
-                ? "Updating..."
-                : guarantorUpdateAction === "approve"
-                ? "Approve Guarantor"
-                : "Reject Guarantor"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </div>
+        )}
+
+        <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+          <p className="text-sm text-warning-700">
+            Are you sure you want to <strong>{guarantorUpdateAction}</strong>{" "}
+            this guarantor? This action will update their status and cannot be
+            easily undone.
+          </p>
+        </div>
+
+        {guarantorUpdateAction === "reject" && (
+          <ReasonSelection
+            label="Reason for this action"
+            reasonOptions={reasonOptions}
+            selectedReason={guarantorReason}
+            onReasonChange={setGuarantorReason}
+            isOtherReason={isOtherReason}
+            onOtherReasonToggle={setIsOtherReason}
+            customComment={guarantorComment}
+            onCustomCommentChange={setGuarantorComment}
+          />
+        )}
+      </FormModal>
     </div>
   );
 }

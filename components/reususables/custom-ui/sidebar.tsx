@@ -264,6 +264,10 @@ export function AppSidebar() {
               title: "Low Downpayment",
               url: "/access/admin/reports/sales/low-downpayment",
             },
+            {
+              title: "Mobiflex Report",
+              url: "/access/admin/reports/mobiflex",
+            },
           ],
         },
         { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
@@ -470,6 +474,25 @@ export function AppSidebar() {
             url: `/access/${accessRole}/creditflex/telesales-agents`,
             id: `${accessRole}-creditflex-telesales-agents`,
           },
+          {
+            title: "Ambassadors",
+            icon: UserCheck,
+            id: `${accessRole}-creditflex-ambassadors`,
+            subItems: [
+              {
+                title: "All Ambassadors",
+                url: `/access/${accessRole}/creditflex/ambassadors`,
+              },
+              {
+                title: "Ambassador Leads",
+                url: `/access/${accessRole}/creditflex/ambassadors/leads`,
+              },
+              {
+                title: "Conversion Rates",
+                url: `/access/${accessRole}/creditflex/ambassadors/conversion-rates`,
+              },
+            ],
+          },
         ]
       : [];
 
@@ -572,6 +595,10 @@ export function AppSidebar() {
                     title: "Sentinel",
                     url: "/access/sub-admin/reports/sales/sentinel",
                   },
+                  {
+                    title: "Mobiflex Report",
+                    url: "/access/sub-admin/reports/mobiflex",
+                  },
                 ],
               },
               {
@@ -650,6 +677,7 @@ export function AppSidebar() {
             },
             { title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
             { title: "Sentinel", url: "/access/sales/reports/sales/sentinel" },
+            { title: "Mobiflex Report", url: "/access/sales/reports/mobiflex" },
           ],
         },
         { title: "Drop-offs", url: "/access/sales/reports/drop-offs" },
@@ -841,6 +869,10 @@ export function AppSidebar() {
               title: "Sentinel",
               url: "/access/finance/reports/sales/sentinel",
             },
+            {
+              title: "Mobiflex Report",
+              url: "/access/finance/reports/mobiflex",
+            },
           ],
         },
         { title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
@@ -956,6 +988,10 @@ export function AppSidebar() {
           url: "/access/collection-admin/reports/xiaomi",
         },
         { title: "Oppo Report", url: "/access/collection-admin/reports/oppo" },
+        {
+          title: "Mobiflex Report",
+          url: "/access/collection-admin/reports/mobiflex",
+        },
       ],
     },
   ];

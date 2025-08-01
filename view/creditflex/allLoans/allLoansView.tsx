@@ -38,8 +38,8 @@ import {
   CreditflexLoan,
   CreditflexLoanFilters,
   searchFilterOptions,
-} from "./allLoans/types";
-import { columns, statusOptions, statusColorMap } from "./allLoans/constants";
+} from "./types";
+import { columns, statusOptions, statusColorMap } from "./constants";
 
 // Status color mapping for Excel export
 const STATUS_COLOR_MAP: Record<string, string> = {

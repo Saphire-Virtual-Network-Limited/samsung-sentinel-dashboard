@@ -23,8 +23,8 @@ import { useInvoices } from "@/hooks/creditflex/useInvoices";
 import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import { capitalize, showToast } from "@/lib";
 import { getColor } from "@/lib/utils";
-import { Invoice, searchFilterOptions } from "./invoices/types";
-import { columns, statusOptions, statusColorMap } from "./invoices/constants";
+import { Invoice, searchFilterOptions } from "./types";
+import { columns, statusOptions, statusColorMap } from "./constants";
 
 // Status color mapping for Excel export
 const STATUS_COLOR_MAP: Record<string, string> = {
