@@ -303,14 +303,12 @@ export default function UsersPage() {
         currentUser?.data.email
       )
     : false;
-
-  const canChangePasswords = currentUser?.data?.role
-    ? hasPermission(
-        currentUser?.data.role,
-        "canChangeDashboardUserPassword",
-        currentUser?.data.email
-      )
-    : false;
+  const canChangePasswords = hasPermission(
+    currentUser?.data?.role,
+    "canChangeDashboardUserPassword",
+    currentUser?.data?.email
+  );
+  console.log("curent user is: ", canChangePasswords);
 
   const renderCell = (row: User & { fullName: string }, key: string) => {
     if (key === "actions") {
@@ -328,7 +326,14 @@ export default function UsersPage() {
       ];
 
       // Add Change Password option only for devs and if user has adminid
-      if (canChangePasswords && row.Admins?.adminid) {
+      if (
+        canChangePasswords ||
+        hasPermission(
+          currentUser?.data?.role,
+          "canChangeDashboardUserPassword",
+          currentUser?.data?.email
+        )
+      ) {
         dropdownItems.push(
           <DropdownItem
             key="change-password"
