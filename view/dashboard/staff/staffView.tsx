@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import GenericTable, {
   ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
@@ -27,6 +27,7 @@ import { statusOptions, columns, statusColorMap } from "./constants";
 export default function SalesUsersPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Get the role from the URL path (e.g., /access/dev/staff/agents -> dev)
   const role = pathname.split("/")[2];
@@ -36,14 +37,11 @@ export default function SalesUsersPage() {
     string | null
   >(null);
 
-  // Extract search params safely on client side
+  // Extract search params and update filters
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const status = urlParams.get("status");
-      setGuarantorStatusFilter(status);
-    }
-  }, [pathname]); // Re-run when pathname changes
+    const status = searchParams.get("status");
+    setGuarantorStatusFilter(status);
+  }, [searchParams]); // Re-run when search params change
 
   // --- date filter state ---
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -64,6 +62,26 @@ export default function SalesUsersPage() {
   const handleDateFilter = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
+  };
+
+  // Handle status filter change and update URL
+  const handleStatusFilterChange = (newStatusFilter: Set<string>) => {
+    setStatusFilter(newStatusFilter);
+
+    // Update URL with new status
+    const params = new URLSearchParams(searchParams.toString());
+    if (newStatusFilter.size > 0) {
+      const firstStatus = Array.from(newStatusFilter)[0];
+      params.set("status", firstStatus);
+      setGuarantorStatusFilter(firstStatus);
+    } else {
+      params.delete("status");
+      setGuarantorStatusFilter(null);
+    }
+
+    // Update URL without triggering a page reload
+    const newUrl = `${pathname}?${params.toString()}`;
+    router.replace(newUrl);
   };
   const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
   // Fetch data based on date filter
@@ -293,9 +311,9 @@ export default function SalesUsersPage() {
           }}
           statusOptions={statusOptions}
           statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
+          onStatusChange={handleStatusFilterChange}
           statusColorMap={statusColorMap}
-          showStatus={false}
+          showStatus={true}
           sortDescriptor={sortDescriptor}
           onSortChange={setSortDescriptor}
           page={page}

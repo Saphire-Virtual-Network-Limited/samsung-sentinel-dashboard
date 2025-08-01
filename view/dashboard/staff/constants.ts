@@ -21,10 +21,12 @@ export const statusOptions = [
   { name: "ACTIVE", uid: AccountStatus.ACTIVE },
   { name: "PENDING", uid: AccountStatus.PENDING },
   { name: "VERIFIED", uid: AccountStatus.VERIFIED },
-    { name: "APPROVED", uid: AccountStatus.APPROVED },
-      { name: "REJECTED", uid: AccountStatus.REJECTED },
-
-
+  { name: "APPROVED", uid: AccountStatus.APPROVED },
+  { name: "REJECTED", uid: AccountStatus.REJECTED },
+  // Add guarantor status options
+  { name: "Guarantor Pending", uid: "pending" },
+  { name: "Guarantor Approved", uid: "approved" },
+  { name: "Guarantor Rejected", uid: "rejected" },
 ];
 
 export const statusColorMap: Record<string, ChipProps["color"]> = {
@@ -34,5 +36,9 @@ export const statusColorMap: Record<string, ChipProps["color"]> = {
   PENDING: "warning",
   VERIFIED: "success",
   APPROVED: "success",
-  REJECTED: "danger"
+  REJECTED: "danger",
+  // Add guarantor status colors
+  pending: "warning",
+  approved: "success",
+  rejected: "danger",
 };

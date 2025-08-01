@@ -17,6 +17,15 @@ const NewHomeView = () => {
   if (selectedProduct == "CreditFlex") {
     return <NewSalesHomeView />;
   }
+    if (selectedProduct == "Mobiflex") {
+    return (  <div className="space-y-6">
+      <DailyDashCard />
+      <InceptionDashCard />
+      <DeviceDashAnalytic />
+      <ScreenReport />
+      {selectedProduct == "Mobiflex" && <MobiflexHomeView />}
+    </div>);
+  }
   return (
     <div className="space-y-6">
       <DailyDashCard />
