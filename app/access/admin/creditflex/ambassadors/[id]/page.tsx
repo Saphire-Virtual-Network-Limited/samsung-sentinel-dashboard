@@ -6,8 +6,6 @@ interface AmbassadorDetailPageProps {
   };
 }
 
-export default function AdminAmbassadorDetailPage({
-  params,
-}: AmbassadorDetailPageProps) {
+export default function AdminAmbassadorDetailPage({ params }: any) {
   return <AmbassadorDetailView ambassadorId={params.id} />;
 }
