@@ -36,6 +36,7 @@ import {
 	getAdminProfile,
 	updateUserProfile,
 	updateAdminPassword,
+	validateOldPassword,
 	showToast,
 	cn,
 	GeneralSans_SemiBold,
@@ -65,6 +66,7 @@ interface ProfileData {
 }
 
 interface PasswordFormData {
+	oldPassword: string;
 	password: string;
 	confirmPassword: string;
 }
@@ -74,8 +76,10 @@ export default function SettingsView() {
 	const [isEditingProfile, setIsEditingProfile] = useState(false);
 	const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 	const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+	const [showOldPassword, setShowOldPassword] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [oldPasswordError, setOldPasswordError] = useState("");
 
 	const { states, getLgas } = useNaijaStates();
 
@@ -93,6 +97,7 @@ export default function SettingsView() {
 
 	// Password form state
 	const [passwordForm, setPasswordForm] = useState<PasswordFormData>({
+		oldPassword: "",
 		password: "",
 		confirmPassword: "",
 	});
@@ -141,6 +146,11 @@ export default function SettingsView() {
 		value: string
 	) => {
 		setPasswordForm((prev) => ({ ...prev, [field]: value }));
+
+		// Clear old password error when user starts typing
+		if (field === "oldPassword" && oldPasswordError) {
+			setOldPasswordError("");
+		}
 	};
 
 	const handleUpdateProfile = async () => {
@@ -177,6 +187,16 @@ export default function SettingsView() {
 	};
 
 	const handleUpdatePassword = async () => {
+		if (!profileData?.email) {
+			showToast({ type: "error", message: "User email not found" });
+			return;
+		}
+
+		if (!passwordForm.oldPassword) {
+			showToast({ type: "error", message: "Current password is required" });
+			return;
+		}
+
 		if (passwordForm.password !== passwordForm.confirmPassword) {
 			showToast({ type: "error", message: "Passwords do not match" });
 			return;
@@ -192,11 +212,28 @@ export default function SettingsView() {
 
 		try {
 			setIsUpdatingPassword(true);
+			setOldPasswordError("");
+
+			const validation = await validateOldPassword(
+				profileData.email,
+				passwordForm.oldPassword
+			);
+
+			if (!validation.isValid) {
+				setOldPasswordError(validation.message || "Invalid current password");
+				showToast({
+					type: "error",
+					message: "Current password is incorrect",
+				});
+				return;
+			}
+
 			await updateAdminPassword({
 				password: passwordForm.password,
 				confirmPassword: passwordForm.confirmPassword,
 			});
-			setPasswordForm({ password: "", confirmPassword: "" });
+
+			setPasswordForm({ oldPassword: "", password: "", confirmPassword: "" });
 			showToast({ type: "success", message: "Password updated successfully" });
 		} catch (error: any) {
 			showToast({
@@ -619,6 +656,38 @@ export default function SettingsView() {
 										</h3>
 										<div className="grid grid-cols-1 gap-4 max-w-lg">
 											<Input
+												label="Current Password"
+												placeholder="Enter current password"
+												type={showOldPassword ? "text" : "password"}
+												value={passwordForm.oldPassword}
+												onChange={(e) =>
+													handlePasswordFieldChange(
+														"oldPassword",
+														e.target.value
+													)
+												}
+												startContent={
+													<Lock className="w-4 h-4 text-default-400" />
+												}
+												endContent={
+													<button
+														type="button"
+														onClick={() => setShowOldPassword(!showOldPassword)}
+														className="text-default-400 hover:text-default-600"
+													>
+														{showOldPassword ? (
+															<EyeOff className="w-4 h-4" />
+														) : (
+															<Eye className="w-4 h-4" />
+														)}
+													</button>
+												}
+												isInvalid={!!oldPasswordError}
+												errorMessage={oldPasswordError}
+												color={oldPasswordError ? "danger" : "default"}
+											/>
+
+											<Input
 												label="New Password"
 												placeholder="Enter new password"
 												type={showPassword ? "text" : "password"}
@@ -682,6 +751,7 @@ export default function SettingsView() {
 												onPress={handleUpdatePassword}
 												isLoading={isUpdatingPassword}
 												isDisabled={
+													!passwordForm.oldPassword ||
 													!passwordForm.password ||
 													!passwordForm.confirmPassword
 												}
