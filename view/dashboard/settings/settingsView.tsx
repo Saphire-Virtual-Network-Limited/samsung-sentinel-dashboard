@@ -7,31 +7,13 @@ import {
 	CardHeader,
 	Tabs,
 	Tab,
-	Button,
-	Input,
-	Select,
-	SelectItem,
 	Avatar,
-	Divider,
 	Chip,
 } from "@heroui/react";
-import {
-	User,
-	Lock,
-	Building2,
-	Phone,
-	Mail,
-	MapPin,
-	Calendar,
-	Edit,
-	Save,
-	X,
-	Camera,
-	Eye,
-	EyeOff,
-} from "lucide-react";
+import { User, Lock, Building2, Calendar, Camera } from "lucide-react";
 import useSWR from "swr";
-import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
+import ProfileTab from "./ProfileTab";
+import SecurityTab from "./SecurityTab";
 import {
 	getAdminProfile,
 	updateUserProfile,
@@ -40,7 +22,6 @@ import {
 	showToast,
 	cn,
 	GeneralSans_SemiBold,
-	GeneralSans_Meduim,
 } from "@/lib";
 
 interface ProfileData {
@@ -81,8 +62,6 @@ export default function SettingsView() {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [oldPasswordError, setOldPasswordError] = useState("");
 
-	const { states, getLgas } = useNaijaStates();
-
 	// Fetch profile data
 	const {
 		data: profileResponse,
@@ -118,11 +97,6 @@ export default function SettingsView() {
 			});
 		}
 	}, [profileData]);
-
-	// Get LGAs for selected state
-	const lgas = profileForm.companyState
-		? getLgas(profileForm.companyState)
-		: [];
 
 	const handleProfileFieldChange = (
 		field: keyof ProfileData,
@@ -389,447 +363,38 @@ export default function SettingsView() {
 
 						<CardBody className="space-y-6 px-4 sm:px-6">
 							{selectedTab === "profile" && (
-								<div className="space-y-6">
-									{/* Profile Header */}
-									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-										<div>
-											<h2
-												className={cn(
-													"text-lg font-semibold",
-													GeneralSans_SemiBold.className
-												)}
-											>
-												Profile Information
-											</h2>
-											<p className="text-gray-600 text-sm">
-												Update your personal and company information
-											</p>
-										</div>
-
-										{!isEditingProfile ? (
-											<Button
-												color="primary"
-												variant="flat"
-												startContent={<Edit className="w-4 h-4" />}
-												onPress={() => setIsEditingProfile(true)}
-												className="w-full sm:w-auto"
-											>
-												Edit Profile
-											</Button>
-										) : (
-											<div className="flex gap-2 w-full sm:w-auto">
-												<Button
-													color="danger"
-													variant="flat"
-													startContent={<X className="w-4 h-4" />}
-													onPress={handleCancelEdit}
-													isDisabled={isUpdatingProfile}
-													className="flex-1 sm:flex-none"
-												>
-													Cancel
-												</Button>
-												<Button
-													color="primary"
-													startContent={<Save className="w-4 h-4" />}
-													onPress={handleUpdateProfile}
-													isLoading={isUpdatingProfile}
-													className="flex-1 sm:flex-none"
-												>
-													Save Changes
-												</Button>
-											</div>
-										)}
-									</div>
-
-									<Divider />
-
-									{/* Personal Information */}
-									<div>
-										<h3
-											className={cn(
-												"font-medium mb-4",
-												GeneralSans_SemiBold.className
-											)}
-										>
-											Personal Information
-										</h3>
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-											<Input
-												label="First Name"
-												placeholder="Enter first name"
-												value={profileForm.firstName || ""}
-												onChange={(e) =>
-													handleProfileFieldChange("firstName", e.target.value)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<User className="w-4 h-4 text-default-400" />
-												}
-											/>
-
-											<Input
-												label="Last Name"
-												placeholder="Enter last name"
-												value={profileForm.lastName || ""}
-												onChange={(e) =>
-													handleProfileFieldChange("lastName", e.target.value)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<User className="w-4 h-4 text-default-400" />
-												}
-											/>
-
-											<Input
-												label="Email Address"
-												placeholder="Enter email address"
-												value={profileForm.email || ""}
-												onChange={(e) =>
-													handleProfileFieldChange("email", e.target.value)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<Mail className="w-4 h-4 text-default-400" />
-												}
-												className="sm:col-span-2"
-											/>
-
-											<Input
-												label="Phone Number"
-												placeholder="Enter phone number"
-												value={profileForm.telephoneNumber || ""}
-												onChange={(e) =>
-													handleProfileFieldChange(
-														"telephoneNumber",
-														e.target.value
-													)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<Phone className="w-4 h-4 text-default-400" />
-												}
-											/>
-										</div>
-									</div>
-
-									<Divider />
-
-									{/* Company Information */}
-									<div>
-										<h3
-											className={cn(
-												"font-medium mb-4",
-												GeneralSans_SemiBold.className
-											)}
-										>
-											Company Information
-										</h3>
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-											<Input
-												label="Company Name"
-												placeholder="Enter company name"
-												value={profileForm.companyName || ""}
-												onChange={(e) =>
-													handleProfileFieldChange(
-														"companyName",
-														e.target.value
-													)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<Building2 className="w-4 h-4 text-default-400" />
-												}
-												className="sm:col-span-2"
-											/>
-
-											<Input
-												label="Company Address"
-												placeholder="Enter company address"
-												value={profileForm.companyAddress || ""}
-												onChange={(e) =>
-													handleProfileFieldChange(
-														"companyAddress",
-														e.target.value
-													)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<MapPin className="w-4 h-4 text-default-400" />
-												}
-												className="sm:col-span-2"
-											/>
-
-											<Select
-												label="State"
-												placeholder="Select state"
-												selectedKeys={
-													profileForm.companyState
-														? [profileForm.companyState]
-														: []
-												}
-												onSelectionChange={(keys) => {
-													const selectedState = Array.from(keys)[0] as string;
-													handleProfileFieldChange(
-														"companyState",
-														selectedState
-													);
-												}}
-												isDisabled={!isEditingProfile}
-											>
-												{states.map((state) => (
-													<SelectItem key={state.value} value={state.value}>
-														{state.label}
-													</SelectItem>
-												))}
-											</Select>
-
-											<Select
-												label="LGA"
-												placeholder="Select LGA"
-												selectedKeys={
-													profileForm.companyLGA ? [profileForm.companyLGA] : []
-												}
-												onSelectionChange={(keys) => {
-													const selectedLGA = Array.from(keys)[0] as string;
-													handleProfileFieldChange("companyLGA", selectedLGA);
-												}}
-												isDisabled={
-													!isEditingProfile || !profileForm.companyState
-												}
-											>
-												{lgas.map((lga) => (
-													<SelectItem key={lga.value} value={lga.value}>
-														{lga.label}
-													</SelectItem>
-												))}
-											</Select>
-
-											<Input
-												label="City"
-												placeholder="Enter city"
-												value={profileForm.companyCity || ""}
-												onChange={(e) =>
-													handleProfileFieldChange(
-														"companyCity",
-														e.target.value
-													)
-												}
-												isReadOnly={!isEditingProfile}
-												startContent={
-													<MapPin className="w-4 h-4 text-default-400" />
-												}
-												className="sm:col-span-2"
-											/>
-										</div>
-									</div>
-								</div>
+								<ProfileTab
+									profileData={profileData}
+									profileForm={profileForm}
+									isEditingProfile={isEditingProfile}
+									isUpdatingProfile={isUpdatingProfile}
+									onProfileFieldChange={handleProfileFieldChange}
+									onStartEdit={() => setIsEditingProfile(true)}
+									onCancelEdit={handleCancelEdit}
+									onUpdateProfile={handleUpdateProfile}
+								/>
 							)}
 
 							{selectedTab === "security" && (
-								<div className="space-y-6">
-									{/* Security Header */}
-									<div>
-										<h2
-											className={cn(
-												"text-lg font-semibold",
-												GeneralSans_SemiBold.className
-											)}
-										>
-											Password & Security
-										</h2>
-										<p className="text-gray-600 text-sm">
-											Update your password and security settings
-										</p>
-									</div>
-
-									<Divider />
-
-									{/* Change Password */}
-									<div>
-										<h3
-											className={cn(
-												"font-medium mb-4",
-												GeneralSans_SemiBold.className
-											)}
-										>
-											Change Password
-										</h3>
-										<div className="grid grid-cols-1 gap-4 max-w-lg">
-											<Input
-												label="Current Password"
-												placeholder="Enter current password"
-												type={showOldPassword ? "text" : "password"}
-												value={passwordForm.oldPassword}
-												onChange={(e) =>
-													handlePasswordFieldChange(
-														"oldPassword",
-														e.target.value
-													)
-												}
-												startContent={
-													<Lock className="w-4 h-4 text-default-400" />
-												}
-												endContent={
-													<button
-														type="button"
-														onClick={() => setShowOldPassword(!showOldPassword)}
-														className="text-default-400 hover:text-default-600"
-													>
-														{showOldPassword ? (
-															<EyeOff className="w-4 h-4" />
-														) : (
-															<Eye className="w-4 h-4" />
-														)}
-													</button>
-												}
-												isInvalid={!!oldPasswordError}
-												errorMessage={oldPasswordError}
-												color={oldPasswordError ? "danger" : "default"}
-											/>
-
-											<Input
-												label="New Password"
-												placeholder="Enter new password"
-												type={showPassword ? "text" : "password"}
-												value={passwordForm.password}
-												onChange={(e) =>
-													handlePasswordFieldChange("password", e.target.value)
-												}
-												startContent={
-													<Lock className="w-4 h-4 text-default-400" />
-												}
-												endContent={
-													<button
-														type="button"
-														onClick={() => setShowPassword(!showPassword)}
-														className="text-default-400 hover:text-default-600"
-													>
-														{showPassword ? (
-															<EyeOff className="w-4 h-4" />
-														) : (
-															<Eye className="w-4 h-4" />
-														)}
-													</button>
-												}
-											/>
-
-											<Input
-												label="Confirm Password"
-												placeholder="Confirm new password"
-												type={showConfirmPassword ? "text" : "password"}
-												value={passwordForm.confirmPassword}
-												onChange={(e) =>
-													handlePasswordFieldChange(
-														"confirmPassword",
-														e.target.value
-													)
-												}
-												startContent={
-													<Lock className="w-4 h-4 text-default-400" />
-												}
-												endContent={
-													<button
-														type="button"
-														onClick={() =>
-															setShowConfirmPassword(!showConfirmPassword)
-														}
-														className="text-default-400 hover:text-default-600"
-													>
-														{showConfirmPassword ? (
-															<EyeOff className="w-4 h-4" />
-														) : (
-															<Eye className="w-4 h-4" />
-														)}
-													</button>
-												}
-											/>
-										</div>
-
-										<div className="mt-4">
-											<Button
-												color="primary"
-												onPress={handleUpdatePassword}
-												isLoading={isUpdatingPassword}
-												isDisabled={
-													!passwordForm.oldPassword ||
-													!passwordForm.password ||
-													!passwordForm.confirmPassword
-												}
-												startContent={<Save className="w-4 h-4" />}
-											>
-												Update Password
-											</Button>
-										</div>
-									</div>
-
-									<Divider />
-
-									{/* Account Information */}
-									<div>
-										<h3
-											className={cn(
-												"font-medium mb-4",
-												GeneralSans_SemiBold.className
-											)}
-										>
-											Account Information
-										</h3>
-										<div className="space-y-3 max-w-md">
-											<div className="flex justify-between items-center py-2 border-b border-gray-100">
-												<span className="text-sm text-gray-600">
-													Account Status
-												</span>
-												<Chip
-													size="sm"
-													color={getStatusColor(
-														profileData?.accountStatus || ""
-													)}
-													variant="flat"
-												>
-													{profileData?.accountStatus}
-												</Chip>
-											</div>
-
-											<div className="flex justify-between items-center py-2 border-b border-gray-100">
-												<span className="text-sm text-gray-600">
-													Account Type
-												</span>
-												<span className="text-sm font-medium break-words">
-													{profileData?.accountType}
-												</span>
-											</div>
-
-											<div className="flex justify-between items-center py-2 border-b border-gray-100">
-												<span className="text-sm text-gray-600">Role</span>
-												<span className="text-sm font-medium break-words">
-													{profileData?.role}
-												</span>
-											</div>
-
-											<div className="flex justify-between items-center py-2 border-b border-gray-100">
-												<span className="text-sm text-gray-600">
-													Member Since
-												</span>
-												<span className="text-sm font-medium">
-													{new Date(
-														profileData?.createdAt || ""
-													).toLocaleDateString()}
-												</span>
-											</div>
-
-											<div className="flex justify-between items-center py-2">
-												<span className="text-sm text-gray-600">
-													Last Updated
-												</span>
-												<span className="text-sm font-medium">
-													{new Date(
-														profileData?.updatedAt || ""
-													).toLocaleDateString()}
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
+								<SecurityTab
+									profileData={profileData}
+									passwordForm={passwordForm}
+									isUpdatingPassword={isUpdatingPassword}
+									showOldPassword={showOldPassword}
+									showPassword={showPassword}
+									showConfirmPassword={showConfirmPassword}
+									oldPasswordError={oldPasswordError}
+									onPasswordFieldChange={handlePasswordFieldChange}
+									onUpdatePassword={handleUpdatePassword}
+									onToggleOldPassword={() =>
+										setShowOldPassword(!showOldPassword)
+									}
+									onTogglePassword={() => setShowPassword(!showPassword)}
+									onToggleConfirmPassword={() =>
+										setShowConfirmPassword(!showConfirmPassword)
+									}
+									getStatusColor={getStatusColor}
+								/>
 							)}
 						</CardBody>
 					</Card>
