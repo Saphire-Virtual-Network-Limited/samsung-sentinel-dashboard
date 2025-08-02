@@ -1,5 +1,6 @@
 import HomeView from "./homeView";
 import CustomerView from "./customer/customerView";
+import SettingsView from "./settings/settingsView";
 import DropOffsView from "./reports/drop-offsView";
 import LoansView from "./loans/loansView";
 import UnpaidStoresView from "./finance/unpaidStores";
@@ -47,7 +48,7 @@ import ActivationOtpView from "./sales/activities/ActivationOtpView";
 import NewSalesHomeView from "./sales/NewSalesHomeView";
 import MBEPage from "./staff/MBE/mbeView";
 import SingleMBEPage from "./staff/MBE/singleMBE";
-import DueLoansView from "./loans/dueLoansView";    
+import DueLoansView from "./loans/dueLoansView";
 import CreateStorePage from "./finance/createStore";
 import StoreForm from "./finance/StoreForm";
 import DeviceForm from "./devices/deviceForm";
@@ -106,5 +107,6 @@ export {
   CreateStorePage,
   StoreForm,
   DeviceForm,
-  LowDownpayment
+  LowDownpayment,
+  SettingsView,
 };
