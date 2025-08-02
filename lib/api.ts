@@ -968,14 +968,8 @@ export async function searchGlobalCustomer(search: string) {
 // }
 
 //update admin password
-export async function updateAdminPassword(
-  password: string,
-  confirmPassword: string
-) {
-  return apiCall(`/admin/update-password`, "POST", {
-    password,
-    confirmPassword,
-  });
+export async function updateAdminPassword(data: UpdatePasswordDto) {
+  return apiCall(`/admin/update-password`, "POST", data);
 }
 
 //update admin password  for only dev
@@ -1864,6 +1858,58 @@ export async function getMobiflexPartnerApprovedAgents(
     undefined,
     options
   );
+}
+
+// Settings/Profile interfaces
+export interface AdminProfile {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dob: string | null;
+  gender: string | null;
+  role: string;
+  referralCode: string | null;
+  telephoneNumber: string;
+  profile_picture: string | null;
+  accountStatus: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  accountType: string;
+  companyName: string | null;
+  companyAddress: string | null;
+  companyState: string | null;
+  companyCity: string | null;
+  companyLGA: string | null;
+  Admins: {
+    adminid: string;
+    userid: string;
+    inviteStatus: string;
+  };
+}
+
+export interface UpdateUserDto {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyState?: string;
+  companyCity?: string;
+  companyLGA?: string;
+  telephoneNumber?: string;
+  profile_picture?: string;
+}
+
+export interface UpdatePasswordDto {
+  password: string;
+  confirmPassword: string;
+}
+
+// Update user profile function
+export async function updateUserProfile(userId: string, data: UpdateUserDto) {
+  return apiCall(`/admin/update/${userId}`, "PUT", data);
 }
 
 /**
