@@ -1905,6 +1905,7 @@ export interface UpdateUserDto {
 export interface UpdatePasswordDto {
 	password: string;
 	confirmPassword: string;
+  oldPassword: string;
 }
 
 // Validate old password by attempting login

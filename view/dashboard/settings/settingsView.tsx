@@ -204,6 +204,7 @@ export default function SettingsView() {
 
 			await updateAdminPassword({
 				password: passwordForm.password,
+				oldPassword: passwordForm.oldPassword,
 				confirmPassword: passwordForm.confirmPassword,
 			});
 
