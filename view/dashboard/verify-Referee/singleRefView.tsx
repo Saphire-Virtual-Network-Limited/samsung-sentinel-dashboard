@@ -452,9 +452,18 @@ export default function SingleRefereeView({
                       Registered By
                     </div>
                     <div className="font-medium text-default-900">
-                      {customer.mbeId || "N/A"}
+                      {customer.regBy?.firstname && customer.regBy?.lastname
+                        ? `${customer.regBy?.firstname} ${customer.regBy?.lastname}`
+                        : "N/A"}
+                    </div>
+                    <div className="font-medium text-default-900">
+                      {customer.regBy?.title || "N/A"}
+                    </div>
+                    <div className="font-medium text-default-900">
+                      {customer.regBy?.phone || "N/A"}
                     </div>
                   </div>
+                  
                   <div>
                     <div className="text-sm text-default-500 mb-1">
                       Created At
@@ -759,6 +768,16 @@ export default function SingleRefereeView({
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-green-600 rounded-lg p-4">
+                    <div className="text-sm text-default-500 mb-1">
+                      Down Payment
+                    </div>
+                    <div className="font-medium text-default-900">
+                      {customer.LoanRecord?.[0]?.downPayment !== undefined
+                        ? `₦${customer.LoanRecord[0].downPayment.toLocaleString()}`
+                        : "N/A"}
+                    </div>
+                  </div>
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">
                       Loan Amount
@@ -820,22 +839,7 @@ export default function SingleRefereeView({
                       </Chip>
                     </div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Loan Record ID
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.loanRecordId || "N/A"}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Loan Disk ID
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.loanDiskId || "N/A"}
-                    </div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">
                       Last Point
@@ -844,24 +848,7 @@ export default function SingleRefereeView({
                       {customer.LoanRecord?.[0]?.lastPoint || "N/A"}
                     </div>
                   </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Device ID
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.deviceId || "N/A"}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Down Payment
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.downPayment !== undefined
-                        ? `₦${customer.LoanRecord[0].downPayment.toLocaleString()}`
-                        : "N/A"}
-                    </div>
-                  </div>
+                  
                   <div className="bg-default-50 rounded-lg p-4">
                     <div className="text-sm text-default-500 mb-1">
                       Insurance Package
@@ -888,14 +875,6 @@ export default function SingleRefereeView({
                       {customer.LoanRecord?.[0]?.mbsEligibleAmount !== undefined
                         ? `₦${customer.LoanRecord[0].mbsEligibleAmount.toLocaleString()}`
                         : "N/A"}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Pay Frequency
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.payFrequency || "N/A"}
                     </div>
                   </div>
                   <div className="bg-default-50 rounded-lg p-4">
@@ -931,18 +910,6 @@ export default function SingleRefereeView({
                     <div className="font-medium text-default-900">
                       {customer.LoanRecord?.[0]?.deviceAmount !== undefined
                         ? `₦${customer.LoanRecord[0].deviceAmount.toLocaleString()}`
-                        : "N/A"}
-                    </div>
-                  </div>
-                  <div className="bg-default-50 rounded-lg p-4">
-                    <div className="text-sm text-default-500 mb-1">
-                      Loan Created At
-                    </div>
-                    <div className="font-medium text-default-900">
-                      {customer.LoanRecord?.[0]?.createdAt
-                        ? new Date(
-                            customer.LoanRecord[0].createdAt
-                          ).toLocaleString()
                         : "N/A"}
                     </div>
                   </div>
