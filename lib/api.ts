@@ -503,6 +503,29 @@ export async function syncStores() {
 	return apiCall(`/resources/sync-stores`, "GET");
 }
 
+//** Agent Store Assignment */
+
+// Interface for assign/update agent store
+export interface AssignAgentStore {
+	storeId: string;
+	mbeId: string;
+}
+
+// Assign agent to store
+export async function assignAgentToStore(data: AssignAgentStore) {
+	return apiCall("/admin/mbe/assign/agent/store", "POST", data);
+}
+
+// Update agent store assignment
+export async function updateAgentStore(data: AssignAgentStore) {
+	return apiCall("/admin/mbe/update-store", "PUT", data);
+}
+
+// Get available stores for an agent
+export async function getAgentAvailableStores(mbeId: string) {
+	return apiCall(`/admin/mbe/stores/${mbeId}`, "GET");
+}
+
 // ============================================================================
 // AGENTS
 // ============================================================================
@@ -526,11 +549,12 @@ export async function getAgentRecordByMbeId(
 }
 
 export async function getAgentDevice(
-	{ mbeId }: { mbeId: string },
+	{ mbeId, acceptedDate }: { mbeId: string; acceptedDate?: string },
 	options?: ApiCallOptions
 ) {
+	const query = acceptedDate ? `?acceptedDate=${acceptedDate}` : "";
 	return apiCall(
-		`/admin/mbe/item-balances/${mbeId}`,
+		`/admin/mbe/item-balances/${mbeId}${query}`,
 		"GET",
 		undefined,
 		options
@@ -689,7 +713,7 @@ export async function getAgentLoansAndCommissionsByScanPartner(
 
 export async function getCommissionAnalytics(
 	scanPartnerId: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	mbeId?: string
 ) {
 	const queryParams = new URLSearchParams();
@@ -1721,7 +1745,7 @@ export interface PartnerAgentStatusData {
  * Get Mobiflex leaderboard data with agent performance metrics
  */
 export async function getMobiflexLeaderboard(
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<MobiflexLeaderboardData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1737,7 +1761,7 @@ export async function getMobiflexLeaderboard(
  * Get Mobiflex regional statistics and performance data
  */
 export async function getMobiflexRegionStats(
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<RegionStatsData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1748,7 +1772,7 @@ export async function getMobiflexRegionStats(
  * Get Mobiflex partner statistics and performance data
  */
 export async function getMobiflexPartnerStats(
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<PartnerStatsData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1765,7 +1789,7 @@ export async function getMobiflexPartnerStats(
  */
 export async function getMobiflexScanPartnerLeaderboard(
 	scanPartnerId: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<MobiflexLeaderboardData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1782,7 +1806,7 @@ export async function getMobiflexScanPartnerLeaderboard(
  */
 export async function getMobiflexAgentPerformance(
 	mbeId: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<AgentPerformanceData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1799,7 +1823,7 @@ export async function getMobiflexAgentPerformance(
  */
 export async function getMobiflexLeaderboardComparison(
 	scanPartnerId: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<LeaderboardComparisonData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1816,7 +1840,7 @@ export async function getMobiflexLeaderboardComparison(
  */
 export async function getMobiflexRegionStatsById(
 	state: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<RegionSpecificData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1833,7 +1857,7 @@ export async function getMobiflexRegionStatsById(
  */
 export async function getMobiflexScanPartnerStatsById(
 	partnerId: string,
-	period?: "daily" | "weekly" | "monthly" | "yearly",
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
 	options?: ApiCallOptions
 ): Promise<BaseApiResponse<PartnerSpecificData>> {
 	const query = period ? `?period=${period}` : "";
@@ -1905,7 +1929,7 @@ export interface UpdateUserDto {
 export interface UpdatePasswordDto {
 	password: string;
 	confirmPassword: string;
-  oldPassword: string;
+	oldPassword: string;
 }
 
 // Validate old password by attempting login

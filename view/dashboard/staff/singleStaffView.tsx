@@ -10,6 +10,9 @@ import {
 	updateScanPartner,
 	getAllScanPartners,
 	getScanPartnerByUserId,
+	assignAgentToStore,
+	updateAgentStore,
+	getAgentAvailableStores,
 } from "@/lib";
 import { SelectField } from "@/components/reususables";
 import {
@@ -47,6 +50,26 @@ import {
 	ButtonGroup,
 	Select,
 	SelectItem,
+	Table,
+	TableHeader,
+	TableColumn,
+	TableBody,
+	TableRow,
+	TableCell,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	Input,
+	Switch,
+	Card,
+	CardHeader,
+	CardBody,
+	Pagination,
+	DateInput,
+	Autocomplete,
+	AutocompleteItem,
 } from "@heroui/react";
 import {
 	ArrowLeft,
@@ -65,6 +88,9 @@ import {
 	TrendingUp,
 	Calendar,
 	UserIcon,
+	Grid3X3,
+	List,
+	Eye,
 } from "lucide-react";
 import { IoBusiness } from "react-icons/io5";
 import { useParams, useRouter } from "next/navigation";
@@ -134,24 +160,40 @@ interface CommissionSummary {
 
 // Types for device data
 interface DeviceItem {
-	id: string;
-	itemCode: string;
-	itemName: string;
-	availableQty: number;
-	serialNumbers: string[];
+	price: number;
+	deviceModelNumber: string;
+	SAP: number;
+	SLD: number;
 	createdAt: string;
+	deviceManufacturer: string;
+	deviceName: string;
+	deviceRam: string;
+	deviceScreen: string | null;
+	deviceStorage: string;
+	imageLink: string;
+	newDeviceId: string;
+	oldDeviceId: string | null;
+	sentiprotect: number;
 	updatedAt: string;
-	mbeId: string;
-	expiryDate?: string;
+	deviceType: string | null;
+	deviceCamera: any[];
+	android_go: string;
+	erpItemCode: string;
+	erpName: string;
+	erpSerialNo: string;
+	devfinStatus: boolean;
 }
 
 interface DeviceResponse {
 	statusCode: number;
 	statusType: string;
 	message: string;
-	data: DeviceItem[];
+	data: {
+		devices: DeviceItem[];
+		acceptedDate: string;
+		expiryDate: string;
+	};
 	responseTime: string;
-	channel: string;
 }
 
 // Column definitions for loans table
@@ -262,15 +304,19 @@ const fetchAgent = async (agentId: string) => {
 };
 
 // Fetcher function for agent devices
-const fetchAgentDevices = async (agentId: string): Promise<DeviceItem[]> => {
+const fetchAgentDevices = async (
+	agentId: string,
+	acceptedDate?: string
+): Promise<DeviceItem[]> => {
 	if (!agentId) {
 		throw new Error("Agent ID is required");
 	}
 	try {
 		const response: DeviceResponse = await getAgentDevice({
 			mbeId: agentId,
+			acceptedDate: acceptedDate || new Date().toISOString().split("T")[0], // Default to today
 		});
-		return response?.data || [];
+		return response?.data?.devices || [];
 	} catch (error) {
 		console.error("Error fetching agent devices:", error);
 		return [];
@@ -526,6 +572,21 @@ export default function AgentSinglePage() {
 	const [guarantorReason, setGuarantorReason] = useState("");
 	const [isOtherReason, setIsOtherReason] = useState(false);
 
+	// Device states
+	const [deviceViewMode, setDeviceViewMode] = useState<"card" | "table">(
+		"card"
+	);
+	const [deviceDate, setDeviceDate] = useState<string>(
+		new Date().toISOString().split("T")[0]
+	);
+	const [selectedDevice, setSelectedDevice] = useState<DeviceItem | null>(null);
+
+	// Store assignment states
+	const [isAssigningStore, setIsAssigningStore] = useState(false);
+	const [availableStores, setAvailableStores] = useState<any[]>([]);
+	const [selectedStore, setSelectedStore] = useState<any>(null);
+	const [storeSearchValue, setStoreSearchValue] = useState("");
+
 	const [currentScanPartnerDetails, setCurrentScanPartnerDetails] =
 		useState<any>(null);
 
@@ -544,6 +605,16 @@ export default function AgentSinglePage() {
 		isOpen: isGuarantorModalOpen,
 		onOpen: onGuarantorModalOpen,
 		onClose: onGuarantorModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isDeviceModalOpen,
+		onOpen: onDeviceModalOpen,
+		onClose: onDeviceModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isStoreModalOpen,
+		onOpen: onStoreModalOpen,
+		onClose: onStoreModalClose,
 	} = useDisclosure();
 
 	// Filter states for performance data
@@ -581,9 +652,10 @@ export default function AgentSinglePage() {
 		data: devices,
 		error: devicesError,
 		isLoading: devicesLoading,
+		mutate: mutateDevices,
 	} = useSWR(
-		agent ? `agent-devices-${agent.mbeId}` : null,
-		() => fetchAgentDevices(agent!.mbeId),
+		agent ? `agent-devices-${agent.mbeId}-${deviceDate}` : null,
+		() => fetchAgentDevices(agent!.mbeId, deviceDate),
 		{
 			revalidateOnFocus: false,
 			revalidateOnReconnect: true,
@@ -623,6 +695,25 @@ export default function AgentSinglePage() {
 			summary: agentData.commissionSummary || null,
 		};
 	}, [performanceData]);
+
+	// Fetch available stores for the agent
+	const { data: storesData, error: storesError } = useSWR(
+		agent?.mbeId ? `agent-stores-${agent.mbeId}` : null,
+		() => getAgentAvailableStores(agent!.mbeId),
+		{
+			revalidateOnFocus: false,
+			revalidateOnReconnect: true,
+			dedupingInterval: 60000,
+		}
+	);
+
+	// Process stores data
+	const processedStoresData = useMemo(() => {
+		if (!storesData?.data) {
+			return [];
+		}
+		return storesData.data;
+	}, [storesData]);
 
 	// Load scan partners when modal opens
 	useEffect(() => {
@@ -982,6 +1073,76 @@ export default function AgentSinglePage() {
 			setGuarantorUpdateAction(null);
 		}
 	};
+
+	// Store Assignment Functions
+	const handleStoreSelect = (store: any) => {
+		setSelectedStore(store);
+	};
+
+	const handleStoreAssignment = async () => {
+		if (!selectedStore || !agent?.mbeId) return;
+
+		setIsAssigningStore(true);
+		try {
+			const data = {
+				storeId: selectedStore.storeId,
+				mbeId: agent.mbeId,
+			};
+
+			const result = mainStore?.storeNew
+				? await updateAgentStore(data)
+				: await assignAgentToStore(data);
+
+			if (result?.status === "success") {
+				showToast({
+					type: "success",
+					message: mainStore?.storeNew
+						? "Store assignment updated successfully!"
+						: "Agent assigned to store successfully!",
+					duration: 5000,
+				});
+
+				// Refresh agent data
+				mutate();
+				onStoreModalClose();
+				setSelectedStore(null);
+			} else {
+				showToast({
+					type: "error",
+					message: result.message || "Failed to assign store",
+					duration: 5000,
+				});
+			}
+		} catch (error: any) {
+			console.error("Error assigning store:", error);
+			showToast({
+				type: "error",
+				message:
+					error?.response?.data?.message ||
+					error?.message ||
+					"Failed to assign store",
+				duration: 5000,
+			});
+		} finally {
+			setIsAssigningStore(false);
+		}
+	};
+
+	// Filter stores based on search
+	const filteredStores = useMemo(() => {
+		if (!processedStoresData) return [];
+
+		if (!storeSearchValue) return processedStoresData;
+
+		const searchTerm = storeSearchValue.toLowerCase();
+		return processedStoresData.filter(
+			(store: any) =>
+				store.storeName?.toLowerCase().includes(searchTerm) ||
+				store.address?.toLowerCase().includes(searchTerm) ||
+				store.city?.toLowerCase().includes(searchTerm) ||
+				store.state?.toLowerCase().includes(searchTerm)
+		);
+	}, [processedStoresData, storeSearchValue]);
 
 	// Handle loading state
 	if (isLoading) return <LoadingSpinner />;
@@ -1536,34 +1697,211 @@ export default function AgentSinglePage() {
 								</div>
 							) : devices && devices.length > 0 ? (
 								<div className="space-y-4">
-									<div className="flex items-center justify-between mb-4">
-										<p className="text-sm text-default-600">
-											Individual devices currently assigned to this agent
-										</p>
-										<Chip size="sm" variant="flat" color="primary">
-											{devices.reduce(
-												(total, device) => total + device.serialNumbers.length,
-												0
-											)}{" "}
-											Total Device
-											{devices.reduce(
-												(total, device) => total + device.serialNumbers.length,
-												0
-											) !== 1
-												? "s"
-												: ""}
-										</Chip>
+									{/* Controls */}
+									<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+										<div className="flex items-center gap-4">
+											<p className="text-sm text-default-600">
+												Devices assigned to this agent
+											</p>
+											<Chip size="sm" variant="flat" color="primary">
+												{devices.length} Device{devices.length !== 1 ? "s" : ""}
+											</Chip>
+										</div>
+										<div className="flex items-center gap-3">
+											<Input
+												type="date"
+												label="Date"
+												size="sm"
+												value={deviceDate}
+												onChange={(e) => setDeviceDate(e.target.value)}
+												className="w-auto"
+											/>
+											<ButtonGroup size="sm" variant="flat">
+												<Button
+													variant={deviceViewMode === "card" ? "solid" : "flat"}
+													color={
+														deviceViewMode === "card" ? "primary" : "default"
+													}
+													onPress={() => setDeviceViewMode("card")}
+													startContent={<Grid3X3 className="w-4 h-4" />}
+												>
+													Cards
+												</Button>
+												<Button
+													variant={
+														deviceViewMode === "table" ? "solid" : "flat"
+													}
+													color={
+														deviceViewMode === "table" ? "primary" : "default"
+													}
+													onPress={() => setDeviceViewMode("table")}
+													startContent={<List className="w-4 h-4" />}
+												>
+													Table
+												</Button>
+											</ButtonGroup>
+										</div>
 									</div>
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{devices.map((device) => (
-											<AgentDeviceCard key={device.id} device={device} />
-										))}
-									</div>
+
+									{/* Content */}
+									{deviceViewMode === "card" ? (
+										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+											{devices.map((device, index) => (
+												<div
+													key={device.newDeviceId || index}
+													className="p-4 border border-default-200 rounded-lg hover:shadow-md transition-shadow"
+												>
+													<div className="flex items-center gap-3 mb-3">
+														{device.imageLink ? (
+															<Image
+																src={device.imageLink}
+																alt={device.deviceName}
+																width={50}
+																height={50}
+																className="rounded-lg object-cover"
+															/>
+														) : (
+															<div className="w-12 h-12 bg-default-200 rounded-lg flex items-center justify-center">
+																<Smartphone className="w-6 h-6 text-default-400" />
+															</div>
+														)}
+														<div className="flex-1">
+															<h4 className="font-semibold text-sm text-default-900">
+																{device.deviceName}
+															</h4>
+															<p className="text-xs text-default-500">
+																{device.deviceManufacturer}
+															</p>
+														</div>
+													</div>
+													<div className="space-y-2 text-xs">
+														<div className="flex justify-between">
+															<span className="text-default-500">Price:</span>
+															<span className="font-medium">
+																₦{device.price?.toLocaleString()}
+															</span>
+														</div>
+														<div className="flex justify-between">
+															<span className="text-default-500">RAM:</span>
+															<span>{device.deviceRam || "N/A"}</span>
+														</div>
+														<div className="flex justify-between">
+															<span className="text-default-500">Storage:</span>
+															<span>{device.deviceStorage || "N/A"}</span>
+														</div>
+														<div className="flex justify-between">
+															<span className="text-default-500">Serial:</span>
+															<span className="font-mono text-xs">
+																{device.erpSerialNo}
+															</span>
+														</div>
+													</div>
+													<Button
+														size="sm"
+														variant="flat"
+														color="primary"
+														className="w-full mt-3"
+														onPress={() => {
+															setSelectedDevice(device);
+															onDeviceModalOpen();
+														}}
+														startContent={<Eye className="w-3 h-3" />}
+													>
+														View Details
+													</Button>
+												</div>
+											))}
+										</div>
+									) : (
+										<div className="overflow-x-auto">
+											<Table aria-label="Agent devices table">
+												<TableHeader>
+													<TableColumn>DEVICE</TableColumn>
+													<TableColumn>MANUFACTURER</TableColumn>
+													<TableColumn>PRICE</TableColumn>
+													<TableColumn>SPECS</TableColumn>
+													<TableColumn>STATUS</TableColumn>
+													<TableColumn>ACTIONS</TableColumn>
+												</TableHeader>
+												<TableBody>
+													{devices.map((device, index) => (
+														<TableRow key={device.newDeviceId || index}>
+															<TableCell>
+																<div className="flex items-center gap-3">
+																	{device.imageLink ? (
+																		<Image
+																			src={device.imageLink}
+																			alt={device.deviceName}
+																			width={40}
+																			height={40}
+																			className="rounded object-cover"
+																		/>
+																	) : (
+																		<div className="w-10 h-10 bg-default-200 rounded flex items-center justify-center">
+																			<Smartphone className="w-5 h-5 text-default-400" />
+																		</div>
+																	)}
+																	<div>
+																		<p className="font-medium text-sm">
+																			{device.deviceName}
+																		</p>
+																		<p className="text-xs text-default-500">
+																			{device.deviceModelNumber}
+																		</p>
+																	</div>
+																</div>
+															</TableCell>
+															<TableCell>
+																<span className="capitalize">
+																	{device.deviceManufacturer}
+																</span>
+															</TableCell>
+															<TableCell>
+																<span className="font-medium">
+																	₦{device.price?.toLocaleString()}
+																</span>
+															</TableCell>
+															<TableCell>
+																<div className="text-xs">
+																	<p>{device.deviceRam} RAM</p>
+																	<p>{device.deviceStorage} Storage</p>
+																</div>
+															</TableCell>
+															<TableCell>
+																<Chip
+																	size="sm"
+																	color={
+																		device.devfinStatus ? "success" : "warning"
+																	}
+																	variant="flat"
+																>
+																	{device.devfinStatus ? "Active" : "Inactive"}
+																</Chip>
+															</TableCell>
+															<TableCell>
+																<Button
+																	size="sm"
+																	variant="flat"
+																	onPress={() => {
+																		setSelectedDevice(device);
+																		onDeviceModalOpen();
+																	}}
+																	startContent={<Eye className="w-3 h-3" />}
+																>
+																	View
+																</Button>
+															</TableCell>
+														</TableRow>
+													))}
+												</TableBody>
+											</Table>
+										</div>
+									)}
 								</div>
 							) : (
 								<EmptyState
-									title="No Devices Assigned"
-									description="This agent currently has no devices assigned to them."
+									title="No Devices Found"
+									description={`No devices found for ${deviceDate}. Try selecting a different date.`}
 									icon={<Smartphone className="w-6 h-6 text-default-400" />}
 								/>
 							)}
@@ -1598,15 +1936,26 @@ export default function AgentSinglePage() {
 												</Button>
 											</div>
 										</div>
-										<Chip
-											color={
-												mainStore.storeNew.isArchived ? "danger" : "success"
-											}
-											variant="flat"
-											size="sm"
-										>
-											{mainStore.storeNew.isArchived ? "Archived" : "Active"}
-										</Chip>
+										<div className="flex items-center gap-2">
+											<Chip
+												color={
+													mainStore.storeNew.isArchived ? "danger" : "success"
+												}
+												variant="flat"
+												size="sm"
+											>
+												{mainStore.storeNew.isArchived ? "Archived" : "Active"}
+											</Chip>
+											<Button
+												variant="flat"
+												color="warning"
+												size="sm"
+												onPress={onStoreModalOpen}
+												className="font-medium"
+											>
+												Change Store
+											</Button>
+										</div>
 									</div>
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<InfoField
@@ -1759,6 +2108,17 @@ export default function AgentSinglePage() {
 								icon={<Store className="w-5 h-5 text-default-600" />}
 								collapsible={true}
 								defaultExpanded={false}
+								headerContent={
+									<Button
+										variant="flat"
+										color="success"
+										size="sm"
+										onPress={onStoreModalOpen}
+										className="font-medium"
+									>
+										Assign Store
+									</Button>
+								}
 							>
 								<EmptyState
 									title="No Store Assigned"
@@ -2218,6 +2578,392 @@ export default function AgentSinglePage() {
 					/>
 				)}
 			</FormModal>
+
+			{/* Store Assignment Modal */}
+			<Modal isOpen={isStoreModalOpen} onClose={onStoreModalClose} size="2xl">
+				<ModalContent>
+					<ModalHeader>
+						{mainStore?.storeNew ? "Change Store Assignment" : "Assign Store"}
+					</ModalHeader>
+					<ModalBody>
+						<div className="space-y-4">
+							{/* Current store info if exists */}
+							{mainStore?.storeNew && (
+								<div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+									<h4 className="font-semibold text-warning-800 mb-2">
+										Current Store Assignment
+									</h4>
+									<div className="text-sm text-warning-700">
+										<p>
+											<strong>Store:</strong> {mainStore.storeNew.storeName}
+										</p>
+										<p>
+											<strong>Location:</strong> {mainStore.storeNew.city},{" "}
+											{mainStore.storeNew.state}
+										</p>
+										<p>
+											<strong>Store ID:</strong> {mainStore.storeNew.storeId}
+										</p>
+									</div>
+								</div>
+							)}
+
+							{/* Store selection */}
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									{mainStore?.storeNew
+										? "Select New Store"
+										: "Select Store to Assign"}
+								</label>
+								<Autocomplete
+									placeholder="Search for a store..."
+									value={storeSearchValue}
+									onValueChange={setStoreSearchValue}
+									selectedKey={selectedStore?.storeId || ""}
+									onSelectionChange={(key) => {
+										if (key) {
+											const store = filteredStores.find(
+												(s: any) => s.storeId === key
+											);
+											handleStoreSelect(store);
+										}
+									}}
+									className="w-full"
+									variant="bordered"
+									size="lg"
+									startContent={<Store className="w-4 h-4 text-default-400" />}
+								>
+									{filteredStores.map((store: any) => (
+										<AutocompleteItem
+											key={store.storeId}
+											value={store.storeId}
+											className="capitalize"
+											description={`${store.address || "N/A"} - ${
+												store.city
+											}, ${store.state}`}
+											startContent={
+												<div className="w-2 h-2 bg-success-500 rounded-full" />
+											}
+										>
+											<div className="flex flex-col">
+												<span className="font-medium">{store.storeName}</span>
+												<span className="text-xs text-default-500">
+													ID: {store.storeId} | {store.partner || "N/A"}
+												</span>
+											</div>
+										</AutocompleteItem>
+									))}
+								</Autocomplete>
+								{filteredStores.length === 0 && (
+									<p className="text-sm text-default-500 mt-2">
+										{processedStoresData.length === 0
+											? "No stores available for this agent"
+											: "No stores match your search"}
+									</p>
+								)}
+							</div>
+
+							{/* Selected store preview */}
+							{selectedStore && (
+								<div className="bg-success-50 border border-success-200 rounded-lg p-4">
+									<h4 className="font-semibold text-success-800 mb-2">
+										Selected Store Details
+									</h4>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-success-700">
+										<div>
+											<p className="text-default-600">Store Name</p>
+											<p className="font-medium">{selectedStore.storeName}</p>
+										</div>
+										<div>
+											<p className="text-default-600">Store ID</p>
+											<p className="font-medium">{selectedStore.storeId}</p>
+										</div>
+										<div>
+											<p className="text-default-600">Partner</p>
+											<p className="font-medium">
+												{selectedStore.partner || "N/A"}
+											</p>
+										</div>
+										<div>
+											<p className="text-default-600">Channel</p>
+											<p className="font-medium">
+												{selectedStore.channel || "N/A"}
+											</p>
+										</div>
+										<div className="col-span-2">
+											<p className="text-default-600">Address</p>
+											<p className="font-medium">
+												{selectedStore.address || "N/A"}
+											</p>
+										</div>
+										<div>
+											<p className="text-default-600">Location</p>
+											<p className="font-medium">
+												{selectedStore.city}, {selectedStore.state}
+											</p>
+										</div>
+										<div>
+											<p className="text-default-600">Status</p>
+											<Chip
+												size="sm"
+												color={selectedStore.isArchived ? "danger" : "success"}
+												variant="flat"
+											>
+												{selectedStore.isArchived ? "Archived" : "Active"}
+											</Chip>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{/* Warning message */}
+							<div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+								<p className="text-sm text-warning-700">
+									<strong>Note:</strong>{" "}
+									{mainStore?.storeNew
+										? "Changing the store assignment will update the agent's current store. This action cannot be easily undone."
+										: "Assigning a store to this agent will link them to the selected store for their operations."}
+								</p>
+							</div>
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={onStoreModalClose}>
+							Cancel
+						</Button>
+						<Button
+							color={mainStore?.storeNew ? "warning" : "success"}
+							onPress={handleStoreAssignment}
+							isLoading={isAssigningStore}
+							isDisabled={!selectedStore}
+						>
+							{isAssigningStore
+								? "Processing..."
+								: mainStore?.storeNew
+								? "Change Store"
+								: "Assign Store"}
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Device Details Modal */}
+			<Modal isOpen={isDeviceModalOpen} onClose={onDeviceModalClose} size="2xl">
+				<ModalContent>
+					<ModalHeader>Device Details</ModalHeader>
+					<ModalBody>
+						{selectedDevice && (
+							<div className="space-y-6">
+								{/* Device Image and Basic Info */}
+								<div className="flex items-start gap-4">
+									{selectedDevice.imageLink ? (
+										<Image
+											src={selectedDevice.imageLink}
+											alt={selectedDevice.deviceName}
+											width={120}
+											height={120}
+											className="rounded-lg object-cover"
+										/>
+									) : (
+										<div className="w-30 h-30 bg-default-200 rounded-lg flex items-center justify-center">
+											<Smartphone className="w-8 h-8 text-default-400" />
+										</div>
+									)}
+									<div className="flex-1">
+										<h3 className="text-xl font-bold text-default-900 mb-1">
+											{selectedDevice.deviceName}
+										</h3>
+										<p className="text-default-600 capitalize mb-2">
+											{selectedDevice.deviceManufacturer}
+										</p>
+										<p className="text-sm text-default-500 mb-2">
+											{selectedDevice.deviceModelNumber}
+										</p>
+										<Chip
+											size="sm"
+											color={
+												selectedDevice.devfinStatus ? "success" : "warning"
+											}
+											variant="flat"
+										>
+											{selectedDevice.devfinStatus ? "Active" : "Inactive"}
+										</Chip>
+									</div>
+								</div>
+
+								{/* Device Specifications */}
+								<div>
+									<h4 className="font-semibold mb-3">Specifications</h4>
+									<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+										<div className="bg-default-50 p-3 rounded-lg">
+											<p className="text-xs text-default-500 mb-1">RAM</p>
+											<p className="font-semibold">
+												{selectedDevice.deviceRam || "N/A"}
+											</p>
+										</div>
+										<div className="bg-default-50 p-3 rounded-lg">
+											<p className="text-xs text-default-500 mb-1">Storage</p>
+											<p className="font-semibold">
+												{selectedDevice.deviceStorage || "N/A"}
+											</p>
+										</div>
+										<div className="bg-default-50 p-3 rounded-lg">
+											<p className="text-xs text-default-500 mb-1">Screen</p>
+											<p className="font-semibold">
+												{selectedDevice.deviceScreen || "N/A"}
+											</p>
+										</div>
+										<div className="bg-default-50 p-3 rounded-lg">
+											<p className="text-xs text-default-500 mb-1">
+												Android Go
+											</p>
+											<p className="font-semibold">
+												{selectedDevice.android_go}
+											</p>
+										</div>
+										<div className="bg-default-50 p-3 rounded-lg">
+											<p className="text-xs text-default-500 mb-1">
+												Device Type
+											</p>
+											<p className="font-semibold">
+												{selectedDevice.deviceType || "N/A"}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								{/* Pricing Information */}
+								<div>
+									<h4 className="font-semibold mb-3">Pricing Information</h4>
+									<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+										<div className="bg-success-50 p-3 rounded-lg">
+											<p className="text-xs text-success-600 mb-1">
+												Device Price
+											</p>
+											<p className="font-bold text-success-700">
+												₦{selectedDevice.price?.toLocaleString()}
+											</p>
+										</div>
+										<div className="bg-primary-50 p-3 rounded-lg">
+											<p className="text-xs text-primary-600 mb-1">SAP</p>
+											<p className="font-bold text-primary-700">
+												₦{selectedDevice.SAP?.toLocaleString()}
+											</p>
+										</div>
+										<div className="bg-warning-50 p-3 rounded-lg">
+											<p className="text-xs text-warning-600 mb-1">SLD</p>
+											<p className="font-bold text-warning-700">
+												₦{selectedDevice.SLD?.toLocaleString()}
+											</p>
+										</div>
+										<div className="bg-secondary-50 p-3 rounded-lg">
+											<p className="text-xs text-secondary-600 mb-1">
+												Sentiprotect
+											</p>
+											<p className="font-bold text-secondary-700">
+												₦{selectedDevice.sentiprotect?.toLocaleString()}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								{/* ERP Information */}
+								<div>
+									<h4 className="font-semibold mb-3">ERP Information</h4>
+									<div className="space-y-3">
+										<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<span className="text-sm text-default-600">
+												ERP Item Code
+											</span>
+											<span className="font-medium">
+												{selectedDevice.erpItemCode}
+											</span>
+										</div>
+										<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<span className="text-sm text-default-600">ERP Name</span>
+											<span className="font-medium">
+												{selectedDevice.erpName}
+											</span>
+										</div>
+										<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<span className="text-sm text-default-600">
+												Serial Number
+											</span>
+											<Snippet size="sm" symbol="" color="primary">
+												{selectedDevice.erpSerialNo}
+											</Snippet>
+										</div>
+									</div>
+								</div>
+
+								{/* Device IDs and Timestamps */}
+								<div>
+									<h4 className="font-semibold mb-3">Technical Information</h4>
+									<div className="space-y-3">
+										<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<span className="text-sm text-default-600">
+												Device ID
+											</span>
+											<Snippet size="sm" symbol="" color="secondary">
+												{selectedDevice.newDeviceId}
+											</Snippet>
+										</div>
+										{selectedDevice.oldDeviceId && (
+											<div className="flex items-center justify-between py-2 border-b border-default-100">
+												<span className="text-sm text-default-600">
+													Old Device ID
+												</span>
+												<span className="font-mono text-sm">
+													{selectedDevice.oldDeviceId}
+												</span>
+											</div>
+										)}
+										<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<span className="text-sm text-default-600">
+												Created At
+											</span>
+											<span className="text-sm">
+												{new Date(selectedDevice.createdAt).toLocaleDateString(
+													"en-US",
+													{
+														year: "numeric",
+														month: "short",
+														day: "numeric",
+														hour: "2-digit",
+														minute: "2-digit",
+													}
+												)}
+											</span>
+										</div>
+										<div className="flex items-center justify-between py-2">
+											<span className="text-sm text-default-600">
+												Updated At
+											</span>
+											<span className="text-sm">
+												{new Date(selectedDevice.updatedAt).toLocaleDateString(
+													"en-US",
+													{
+														year: "numeric",
+														month: "short",
+														day: "numeric",
+														hour: "2-digit",
+														minute: "2-digit",
+													}
+												)}
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={onDeviceModalClose}>
+							Close
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }
