@@ -29,6 +29,8 @@ export const fallbackAgentTypes: AgentType[] = [
   { label: "Collection Officer", value: "COLLECTION_OFFICER" },
   { label: "Zoho Notifier", value: "ZOHO_NOTIFIER" },
   { label: "Scan Partner", value: "SCAN_PARTNER" },
+  { label: "MBE", value: "MBE" },
+
   { label: "Telemarketer", value: "TELEMARKETER" },
 ];
 
@@ -39,7 +41,7 @@ export const useAgentData = (): UseAgentDataReturn => {
 
     if (userRole === "ADMIN") {
       return fallbackAgentTypes.filter((type) => type.value !== "SUPER_ADMIN");
-    } else if (userRole === "SUPER_ADMIN") {
+    } else if (userRole === "SUPER_ADMIN" || userRole == "DEVELOPER") {
       return fallbackAgentTypes;
     } else {
       return [];

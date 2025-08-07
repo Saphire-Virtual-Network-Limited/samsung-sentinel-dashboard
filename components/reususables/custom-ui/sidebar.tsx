@@ -264,6 +264,10 @@ export function AppSidebar() {
               title: "Low Downpayment",
               url: "/access/admin/reports/sales/low-downpayment",
             },
+            {
+              title: "Mobiflex Report",
+              url: "/access/admin/reports/mobiflex",
+            },
           ],
         },
         { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
@@ -416,7 +420,7 @@ export function AppSidebar() {
           {
             title: "Dashboard",
             icon: LayoutDashboard,
-            url: `/access/${accessRole}`, ///creditflex`,
+            url: `/access/${accessRole}/creditflex`,
             id: `${accessRole}-creditflex-dashboard`,
           },
           {
@@ -437,13 +441,13 @@ export function AppSidebar() {
           {
             title: "Loan Products",
             icon: Receipt,
-            url: `/access/${accessRole}`, ///creditflex/loan-products`,
+            url: `/access/${accessRole}/creditflex/loan-products`,
             id: `${accessRole}-creditflex-loan-products`,
           },
           {
             title: "Invoice",
             icon: Package,
-            url: `/access/${accessRole}`, ///creditflex/invoices`,
+            url: `/access/${accessRole}/creditflex/invoices`,
             id: `${accessRole}-creditflex-invoices`,
           },
           {
@@ -467,8 +471,27 @@ export function AppSidebar() {
           {
             title: "Telesales Agents",
             icon: Users,
-            url: `/access/${accessRole}`, ///creditflex/telesales-agents`,
+            url: `/access/${accessRole}/creditflex/telesales-agents`,
             id: `${accessRole}-creditflex-telesales-agents`,
+          },
+          {
+            title: "Ambassadors",
+            icon: UserCheck,
+            id: `${accessRole}-creditflex-ambassadors`,
+            subItems: [
+              {
+                title: "All Ambassadors",
+                url: `/access/${accessRole}/creditflex/ambassadors`,
+              },
+              {
+                title: "Ambassador Leads",
+                url: `/access/${accessRole}/creditflex/ambassadors/leads`,
+              },
+              {
+                title: "Conversion Rates",
+                url: `/access/${accessRole}/creditflex/ambassadors/conversion-rates`,
+              },
+            ],
           },
         ]
       : [];
@@ -572,6 +595,10 @@ export function AppSidebar() {
                     title: "Sentinel",
                     url: "/access/sub-admin/reports/sales/sentinel",
                   },
+                  {
+                    title: "Mobiflex Report",
+                    url: "/access/sub-admin/reports/mobiflex",
+                  },
                 ],
               },
               {
@@ -650,6 +677,7 @@ export function AppSidebar() {
             },
             { title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
             { title: "Sentinel", url: "/access/sales/reports/sales/sentinel" },
+            { title: "Mobiflex Report", url: "/access/sales/reports/mobiflex" },
           ],
         },
         { title: "Drop-offs", url: "/access/sales/reports/drop-offs" },
@@ -713,7 +741,7 @@ export function AppSidebar() {
       icon: Users2,
       title: "Users",
       id: "admin-users",
-      url: "/access/admin/users/",
+      url: "/access/dev/users",
     },
     {
       icon: Store,
@@ -746,6 +774,20 @@ export function AppSidebar() {
       icon: IoBusiness,
       title: "Mobiflex Sales Agent",
       id: "verify-staff-mobiflex",
+      subItems: [
+        {
+          title: "Pending",
+          url: "/access/verify/staff/agents?status=pending",
+        },
+        {
+          title: "Approved",
+          url: "/access/verify/staff/agents?status=approved",
+        },
+        {
+          title: "Rejected",
+          url: "/access/verify/staff/agents?status=rejected",
+        },
+      ],
     },
   ];
   const verificationItems: MenuItem[] = [
@@ -826,6 +868,10 @@ export function AppSidebar() {
             {
               title: "Sentinel",
               url: "/access/finance/reports/sales/sentinel",
+            },
+            {
+              title: "Mobiflex Report",
+              url: "/access/finance/reports/mobiflex",
             },
           ],
         },
@@ -942,6 +988,10 @@ export function AppSidebar() {
           url: "/access/collection-admin/reports/xiaomi",
         },
         { title: "Oppo Report", url: "/access/collection-admin/reports/oppo" },
+        {
+          title: "Mobiflex Report",
+          url: "/access/collection-admin/reports/mobiflex",
+        },
       ],
     },
   ];

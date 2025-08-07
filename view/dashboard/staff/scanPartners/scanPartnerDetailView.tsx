@@ -7,8 +7,25 @@ import {
   suspendUser as suspendScanPartner,
   useAuth,
   getAgentLoansAndCommissions, // Add this import
+  getVfdBanks,
+  getPaystackBanks,
+  verifyBankAccount,
+  addUserBankDetails,
+  getMobiflexScanPartnerStatsById, // Add this import
+  getMobiflexPartnerApprovedAgents, // Add this import
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
+import {
+  LoadingSpinner,
+  NotFound,
+  InfoCard,
+  InfoField,
+  EmptyState,
+  ConfirmationModal,
+  FormModal,
+  ImagePreviewModal,
+  BankDetailsModal,
+} from "@/components/reususables/custom-ui";
 import {
   Avatar,
   Button,
@@ -22,12 +39,12 @@ import {
   DropdownMenu,
   DropdownTrigger,
   Image,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   useDisclosure,
+  Input,
+  Select,
+  SelectItem,
+  Tabs,
+  Tab,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -45,13 +62,21 @@ import {
   Eye,
   UserIcon,
   Smartphone,
+  Plus,
+  Edit,
+  Building2,
+  TrendingUp,
+  FileText,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { statusColorMap } from "./constants";
-import type { ScanPartnerRecord } from "./types";
+import type { ScanPartnerRecord, UserAccountDetails } from "./types";
 import {
   ButtonGroup,
   Table,
@@ -68,6 +93,7 @@ import GenericTable, {
 } from "@/components/reususables/custom-ui/tableUi";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import AutoCompleteField from "@/components/reususables/form/AutoCompleteField";
 
 // Agent interface for the Mbe array
 interface AgentRecord {
@@ -83,6 +109,63 @@ interface AgentRecord {
   imageUrl?: string;
   bvn: string;
   dob: string;
+  channel: string;
+}
+
+// Bank details interfaces
+interface BankDetails {
+  mbeAccountDetailsId?: string;
+  mbeId?: string;
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+  bankCode: string;
+  channel: string;
+  createdAt?: string;
+  updatedAt?: string;
+  recipientCode?: string;
+  vfdBankCode: string;
+  vfdBankName: string;
+  bankID?: number;
+}
+
+interface VfdBank {
+  id: number;
+  code: string;
+  name: string;
+  logo: string;
+  created: string;
+}
+
+interface PaystackBank {
+  id: number;
+  name: string;
+  slug: string;
+  code: string;
+  longcode: string;
+  gateway: string;
+  pay_with_bank: boolean;
+  supports_transfer: boolean;
+  available_for_direct_debit: boolean;
+  active: boolean;
+  country: string;
+  currency: string;
+  type: string;
+  is_deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BankVerificationResponse {
+  statusCode: number;
+  statusType: string;
+  message: string;
+  data: {
+    account_number: string;
+    account_name: string;
+    bank_id: number;
+  };
+  responseTime: string;
   channel: string;
 }
 
@@ -214,99 +297,7 @@ const getAgentFilterOptions = (agents: AgentRecord[]) => {
   }));
 };
 
-// Utility Components
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
-
-const NotFound = ({ onGoBack }: { onGoBack: () => void }) => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h2 className="text-2xl font-semibold text-default-900 mb-2">
-        Scan Partner Not Found
-      </h2>
-      <p className="text-default-500 mb-4">
-        The requested scan partner information could not be found.
-      </p>
-      <Button
-        variant="flat"
-        color="primary"
-        startContent={<ArrowLeft />}
-        onPress={onGoBack}
-      >
-        Go Back
-      </Button>
-    </div>
-  </div>
-);
-
-const InfoCard = ({
-  title,
-  children,
-  className = "",
-  icon,
-  headerContent,
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-  icon?: React.ReactNode;
-  headerContent?: React.ReactNode;
-}) => {
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-default-200 overflow-hidden ${className}`}
-    >
-      <div className="p-4 border-b border-default-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="text-lg font-semibold text-default-900">{title}</h3>
-          </div>
-          {headerContent}
-        </div>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
-};
-
-const InfoField = ({
-  label,
-  value,
-  copyable = false,
-}: {
-  label: string;
-  value?: string | null;
-  copyable?: boolean;
-}) => (
-  <div className="bg-default-50 rounded-lg p-4">
-    <div className="text-sm text-default-500 mb-1">{label}</div>
-    <div className="font-medium text-default-900 flex items-center gap-2">
-      {value || "N/A"}
-    </div>
-  </div>
-);
-
-const EmptyState = ({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="text-center py-8">
-    <div className="flex justify-center mb-4">
-      <div className="p-3 bg-default-100 rounded-full">{icon}</div>
-    </div>
-    <h3 className="text-lg font-semibold text-default-900 mb-2">{title}</h3>
-    <p className="text-default-500 text-sm">{description}</p>
-  </div>
-);
+// Use imported reusable components from components/reususables/custom-ui
 
 const AgentCard = ({ agent, role }: { agent: AgentRecord; role: string }) => {
   const router = useRouter();
@@ -611,6 +602,102 @@ const fetchAgentLoanAndCommission = async (userId: string) => {
   return response?.data;
 };
 
+// Bank API functions
+const fetchVfdBanks = async (): Promise<VfdBank[]> => {
+  try {
+    const response = await getVfdBanks();
+    return response?.data?.data?.bank || [];
+  } catch (error) {
+    console.error("Error fetching VFD banks:", error);
+    return [];
+  }
+};
+
+const fetchPaystackBanks = async (): Promise<PaystackBank[]> => {
+  try {
+    const response = await getPaystackBanks();
+    return response?.data?.data || [];
+  } catch (error) {
+    console.error("Error fetching Paystack banks:", error);
+    return [];
+  }
+};
+
+const verifyBankDetails = async (
+  accountNumber: string,
+  bankCode: string
+): Promise<BankVerificationResponse> => {
+  try {
+    const response = await verifyBankAccount({
+      accountNumber,
+      bankCode, // Paystack bank code
+    });
+
+    return response as BankVerificationResponse;
+  } catch (error) {
+    console.error("Error verifying bank details:", error);
+    throw error;
+  }
+};
+
+const addAccountDetails = async (
+  userId: string,
+  bankDetails: BankDetails
+): Promise<any> => {
+  try {
+    const response = await addUserBankDetails(userId, {
+      accountName: bankDetails.accountName,
+      accountNumber: bankDetails.accountNumber,
+      vfdBankName: bankDetails.vfdBankName,
+      vfdBankCode: bankDetails.vfdBankCode,
+      channel: "Mobiflex",
+      bankID: bankDetails.bankID || 0,
+      bankCode: bankDetails.bankCode,
+      bankName: bankDetails.bankName,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error adding account details:", error);
+    throw error;
+  }
+};
+
+// Reusable Performance Card Component
+interface PerformanceCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  gradient: string;
+  textColor: string;
+  iconColor: string;
+}
+
+const PerformanceCard: React.FC<PerformanceCardProps> = ({
+  title,
+  value,
+  icon,
+  gradient,
+  textColor,
+  iconColor,
+}) => {
+  return (
+    <Card className={`bg-gradient-to-r ${gradient} border-opacity-20`}>
+      <CardBody className="flex flex-row items-center justify-between p-4">
+        <div>
+          <p className={`text-sm ${textColor} font-medium`}>{title}</p>
+          <p
+            className={`text-2xl font-bold ${textColor.replace("600", "800")}`}
+          >
+            {value}
+          </p>
+        </div>
+        <div className={iconColor}>{icon}</div>
+      </CardBody>
+    </Card>
+  );
+};
+
 // Main Component
 export default function ScanPartnerSinglePage() {
   const params = useParams();
@@ -618,7 +705,7 @@ export default function ScanPartnerSinglePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewType, setViewType] = useState<"cards" | "table">("table");
   const [dataViewType, setDataViewType] = useState<
-    "agents" | "loans" | "commissions"
+    "agents" | "loans" | "commissions" | "analytics"
   >("agents");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -626,6 +713,32 @@ export default function ScanPartnerSinglePage() {
     onOpen: onSuspendOpen,
     onClose: onSuspendClose,
   } = useDisclosure();
+
+  // Bank details modal state
+  const {
+    isOpen: isBankModalOpen,
+    onOpen: onBankModalOpen,
+    onClose: onBankModalClose,
+  } = useDisclosure();
+
+  // Bank details form state
+  const [bankFormData, setBankFormData] = useState<BankDetails>({
+    accountName: "",
+    accountNumber: "",
+    bankName: "",
+    bankCode: "",
+    vfdBankName: "",
+    vfdBankCode: "",
+    channel: "Mobiflex",
+    bankID: 0,
+  });
+
+  const [isVerifyingBank, setIsVerifyingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [isAccountVerified, setIsAccountVerified] = useState(false);
+  const [selectedVfdBank, setSelectedVfdBank] = useState<VfdBank | null>(null);
+  const [selectedPaystackBank, setSelectedPaystackBank] =
+    useState<PaystackBank | null>(null);
 
   // Add these state variables after the existing ones
   const [loanFilterValue, setLoanFilterValue] = useState("");
@@ -704,6 +817,83 @@ export default function ScanPartnerSinglePage() {
     }
   );
 
+  // Sales Analytics State
+  const [salesPeriod, setSalesPeriod] = useState<string>("all");
+  const partnerId = isScanPartner ? userId : params.id;
+
+  // Sales Analytics Data
+  const { data: salesStats, isLoading: salesStatsLoading } = useSWR<any>(
+    partnerId ? `/mobiflex-stats/${partnerId}` : null,
+    () =>
+      getMobiflexScanPartnerStatsById(partnerId as string).then((r) => r.data),
+    { refreshInterval: 30000 }
+  );
+
+  const { data: approvedAgents, isLoading: approvedAgentsLoading } =
+    useSWR<any>(
+      partnerId ? `/mobiflex-approved-agents/${partnerId}` : null,
+      () =>
+        getMobiflexPartnerApprovedAgents(partnerId as string).then(
+          (r) => r.data
+        ),
+      { refreshInterval: 30000 }
+    );
+
+  // Fetch VFD banks
+  const { data: vfdBanks = [] } = useSWR("vfd-banks", fetchVfdBanks, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000, // 1 hour
+  });
+
+  // Fetch Paystack banks
+  const { data: paystackBanks = [] } = useSWR(
+    "paystack-banks",
+    fetchPaystackBanks,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 3600000, // 1 hour
+    }
+  );
+
+  // Extract the latest user bank details from UserAccountDetails array
+  const userBankDetails = useMemo(() => {
+    if (
+      !scanPartner?.UserAccountDetails ||
+      scanPartner.UserAccountDetails.length === 0
+    ) {
+      return null;
+    }
+
+    // Get the latest bank details (most recent updatedAt)
+    const latestBankDetails = scanPartner.UserAccountDetails.reduce(
+      (latest, current) => {
+        return new Date(current.updatedAt) > new Date(latest.updatedAt)
+          ? current
+          : latest;
+      }
+    );
+
+    // Convert UserAccountDetails to BankDetails format
+    return {
+      accountName: latestBankDetails.accountName,
+      accountNumber: latestBankDetails.accountNumber,
+      bankName: latestBankDetails.bankName,
+      bankCode: latestBankDetails.bankCode,
+      vfdBankName: latestBankDetails.vfdBankName,
+      vfdBankCode: latestBankDetails.vfdBankCode,
+      channel: latestBankDetails.channel,
+      bankID: latestBankDetails.bankID,
+      createdAt: latestBankDetails.createdAt,
+      updatedAt: latestBankDetails.updatedAt,
+    } as BankDetails;
+  }, [scanPartner?.UserAccountDetails]);
+
+  // Function to refresh bank details after adding new ones
+  const mutateBankDetails = () => {
+    // Refetch the scan partner data to get updated UserAccountDetails
+    mutate();
+  };
+
   const handleSuspendScanPartner = async () => {
     if (!scanPartner) return;
     setIsDeleting(true);
@@ -730,6 +920,142 @@ export default function ScanPartnerSinglePage() {
     } finally {
       setIsDeleting(false);
       onSuspendClose();
+    }
+  };
+
+  // Bank details management functions
+  const handleOpenBankModal = () => {
+    if (userBankDetails) {
+      // Edit mode - populate form with existing data
+      setBankFormData({
+        accountName: userBankDetails.accountName,
+        accountNumber: userBankDetails.accountNumber,
+        bankName: userBankDetails.bankName,
+        bankCode: userBankDetails.bankCode,
+        vfdBankName: userBankDetails.vfdBankName,
+        vfdBankCode: userBankDetails.vfdBankCode,
+        channel: userBankDetails.channel || "Mobiflex",
+        bankID: userBankDetails.bankID || 0,
+      });
+      setIsAccountVerified(true);
+    } else {
+      // Add mode - reset form
+      setBankFormData({
+        accountName: "",
+        accountNumber: "",
+        bankName: "",
+        bankCode: "",
+        vfdBankName: "",
+        vfdBankCode: "",
+        channel: "Mobiflex",
+        bankID: 0,
+      });
+      setIsAccountVerified(false);
+    }
+    setSelectedVfdBank(null);
+    setSelectedPaystackBank(null);
+    onBankModalOpen();
+  };
+
+  const handleVfdBankSelect = (bankCode: string) => {
+    const bank = vfdBanks.find((b) => b.code === bankCode);
+    if (bank) {
+      setSelectedVfdBank(bank);
+      setBankFormData((prev) => ({
+        ...prev,
+        vfdBankName: bank.name,
+        vfdBankCode: bank.code,
+      }));
+    }
+  };
+
+  const handlePaystackBankSelect = (bankCode: string) => {
+    const bank = paystackBanks.find((b) => b.code === bankCode);
+    if (bank) {
+      setSelectedPaystackBank(bank);
+      setBankFormData((prev) => ({
+        ...prev,
+        bankName: bank.name,
+        bankCode: bank.code,
+        bankID: bank.id,
+      }));
+    }
+  };
+
+  const handleVerifyBankDetails = async () => {
+    if (!bankFormData.accountNumber || !bankFormData.bankCode) {
+      showToast({
+        type: "error",
+        message: "Please select a bank and enter account number",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsVerifyingBank(true);
+    try {
+      const response = await verifyBankDetails(
+        bankFormData.accountNumber,
+        bankFormData.bankCode // This is the Paystack bank code
+      );
+
+      if (response.statusCode === 200) {
+        setBankFormData((prev) => ({
+          ...prev,
+          accountName: response.data.account_name,
+          bankID: response.data.bank_id,
+        }));
+        setIsAccountVerified(true);
+        showToast({
+          type: "success",
+          message: "Bank details verified successfully",
+          duration: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Bank verification error:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to verify bank details",
+        duration: 5000,
+      });
+    } finally {
+      setIsVerifyingBank(false);
+    }
+  };
+
+  const handleSaveBankDetails = async () => {
+    if (!scanPartner || !isAccountVerified) {
+      showToast({
+        type: "error",
+        message: "Please verify bank details first",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsSavingBank(true);
+    try {
+      await addAccountDetails(scanPartner.userId, bankFormData);
+
+      showToast({
+        type: "success",
+        message: "Bank details saved successfully",
+        duration: 3000,
+      });
+
+      // Refresh bank details
+      mutateBankDetails();
+      onBankModalClose();
+    } catch (error: any) {
+      console.error("Save bank details error:", error);
+      showToast({
+        type: "error",
+        message: error.message || "Failed to save bank details",
+        duration: 5000,
+      });
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -1116,25 +1442,13 @@ export default function ScanPartnerSinglePage() {
                   onClick={onOpen}
                   color={statusColorMap[scanPartner.accountStatus]}
                 />
-                <Modal
+                <ImagePreviewModal
                   isOpen={isOpen}
                   onClose={onClose}
-                  size="sm"
-                  placement="center"
-                >
-                  <ModalContent>
-                    <ModalHeader className="flex flex-col gap-1">
-                      {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                    </ModalHeader>
-                    <ModalBody className="p-0">
-                      <Image
-                        src={scanPartner.profile_picture || "/placeholder.svg"}
-                        alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName}) - Full preview`}
-                        className="w-full h-auto rounded-b-lg"
-                      />
-                    </ModalBody>
-                  </ModalContent>
-                </Modal>
+                  imageUrl={scanPartner.profile_picture || "/placeholder.svg"}
+                  title={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
+                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName}) - Full preview`}
+                />
                 <div>
                   <h1 className="text-xl font-bold text-default-900">
                     {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
@@ -1278,81 +1592,37 @@ export default function ScanPartnerSinglePage() {
       </div>
 
       {/* Suspend Confirmation Modal */}
-      <Modal
+      <ConfirmationModal
         isOpen={isSuspendOpen}
         onClose={onSuspendClose}
-        size="md"
-        placement="center"
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold text-danger">
-              Suspend Scan Partner
-            </h3>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={scanPartner?.profile_picture || "/placeholder.svg"}
-                  alt={`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                  className="w-12 h-12"
-                />
-                <div>
-                  <p className="font-medium">
-                    {`${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`}
-                  </p>
-                  <p className="text-small text-default-500">
-                    {scanPartner?.email}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-danger-700 mb-1">
-                      Permanent Deletion Warning
-                    </p>
-                    <p className="text-sm text-danger-600">
-                      This action cannot be undone. Deleting this scan partner
-                      will permanently remove:
-                    </p>
-                    <ul className="text-sm text-danger-600 mt-2 ml-4 list-disc">
-                      <li>All scan partner information and records</li>
-                      <li>Associated agent relationships</li>
-                      <li>Transaction history and referrals</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-default-50 rounded-lg p-3">
-                <p className="text-sm text-default-600">
-                  <strong>User ID:</strong> {scanPartner?.userId}
-                </p>
-              </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              onPress={onSuspendClose}
-              isDisabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              onPress={handleSuspendScanPartner}
-              isLoading={isDeleting}
-              isDisabled={isDeleting}
-              startContent={!isDeleting ? <Trash2 className="w-4 h-4" /> : null}
-            >
-              {isDeleting ? "Deleting..." : "Suspend Scan Partner"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onConfirm={handleSuspendScanPartner}
+        title="Suspend Scan Partner"
+        confirmText={isDeleting ? "Deleting..." : "Suspend Scan Partner"}
+        isLoading={isDeleting}
+        variant="danger"
+        entity={{
+          name: `${scanPartner?.companyName} (${scanPartner.firstName} ${scanPartner.lastName})`,
+          subtitle: scanPartner?.email,
+          imageUrl: scanPartner?.profile_picture || "/placeholder.svg",
+        }}
+        warning={{
+          title: "Permanent Deletion Warning",
+          message:
+            "This action cannot be undone. Deleting this scan partner will permanently remove:",
+          items: [
+            "All scan partner information and records",
+            "Associated agent relationships",
+            "Transaction history and referrals",
+          ],
+          icon: (
+            <Trash2 className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
+          ),
+        }}
+        additionalInfo={{
+          label: "User ID",
+          value: scanPartner?.userId || "",
+        }}
+      />
 
       <div className="px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1418,6 +1688,84 @@ export default function ScanPartnerSinglePage() {
                 />
               </div>
             </InfoCard>
+
+            {/* Bank Details */}
+            <InfoCard
+              title="Bank Details"
+              icon={<CreditCard className="w-5 h-5 text-default-600" />}
+              headerContent={
+                !userBankDetails ? (
+                  <Button
+                    size="sm"
+                    color="primary"
+                    variant="flat"
+                    startContent={<Plus className="w-4 h-4" />}
+                    onPress={handleOpenBankModal}
+                  >
+                    Add Bank Details
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    color="default"
+                    variant="flat"
+                    startContent={<Edit className="w-4 h-4" />}
+                    onPress={handleOpenBankModal}
+                  >
+                    Edit
+                  </Button>
+                )
+              }
+            >
+              {userBankDetails ? (
+                <div className="grid gap-4">
+                  <InfoField
+                    label="Account Name"
+                    value={userBankDetails.accountName}
+                  />
+                  <InfoField
+                    label="Account Number"
+                    value={userBankDetails.accountNumber}
+                    copyable
+                  />
+                  <InfoField
+                    label="Bank Name"
+                    value={userBankDetails.bankName}
+                  />
+                  <InfoField
+                    label="Bank Code"
+                    value={userBankDetails.bankCode}
+                  />
+                  {userBankDetails.vfdBankName && (
+                    <InfoField
+                      label="VFD Bank Name"
+                      value={userBankDetails.vfdBankName}
+                    />
+                  )}
+                  {userBankDetails.vfdBankCode && (
+                    <InfoField
+                      label="VFD Bank Code"
+                      value={userBankDetails.vfdBankCode}
+                    />
+                  )}
+                  <InfoField label="Channel" value={userBankDetails.channel} />
+                  <InfoField
+                    label="Last Updated"
+                    value={
+                      userBankDetails.updatedAt
+                        ? new Date(userBankDetails.updatedAt).toLocaleString()
+                        : "N/A"
+                    }
+                  />
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Bank Details"
+                  description="No bank account information has been added for this scan partner yet."
+                  icon={<CreditCard className="w-6 h-6 text-default-400" />}
+                />
+              )}
+            </InfoCard>
           </div>
 
           {/* Right Column - Associated Agents, Loans, and Commissions */}
@@ -1450,6 +1798,13 @@ export default function ScanPartnerSinglePage() {
                     startContent={<DollarSign className="w-4 h-4" />}
                   >
                     Commissions ({processedData.commissions.length})
+                  </Button>
+                  <Button
+                    color={dataViewType === "analytics" ? "primary" : "default"}
+                    onPress={() => setDataViewType("analytics")}
+                    startContent={<TrendingUp className="w-4 h-4" />}
+                  >
+                    Sales Analytics
                   </Button>
                 </ButtonGroup>
               }
@@ -1623,10 +1978,363 @@ export default function ScanPartnerSinglePage() {
                   )}
                 </>
               )}
+
+              {/* Sales Analytics View */}
+              {dataViewType === "analytics" && (
+                <>
+                  {salesStatsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Period Selector */}
+                      <div className="flex items-center justify-between mb-6">
+                        <p className="text-sm text-default-600">
+                          Sales performance analytics for this scan partner
+                        </p>
+                        <Select
+                          label="Period"
+                          size="sm"
+                          className="max-w-[200px]"
+                          selectedKeys={[salesPeriod]}
+                          onSelectionChange={(keys) =>
+                            setSalesPeriod(Array.from(keys)[0] as string)
+                          }
+                        >
+                          <SelectItem key="all" value="all">
+                            All Time
+                          </SelectItem>
+                          <SelectItem key="today" value="today">
+                            Today
+                          </SelectItem>
+                          <SelectItem key="this-week" value="this-week">
+                            This Week
+                          </SelectItem>
+                          <SelectItem key="this-month" value="this-month">
+                            This Month
+                          </SelectItem>
+                          <SelectItem key="last-month" value="last-month">
+                            Last Month
+                          </SelectItem>
+                          <SelectItem key="this-quarter" value="this-quarter">
+                            This Quarter
+                          </SelectItem>
+                          <SelectItem key="this-year" value="this-year">
+                            This Year
+                          </SelectItem>
+                        </Select>
+                      </div>
+
+                      {/* Performance Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <PerformanceCard
+                          title="Total Commission"
+                          value={`₦${(
+                            salesStats?.summary?.totalCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<DollarSign className="w-6 h-6" />}
+                          gradient="from-green-100 to-green-200"
+                          textColor="text-green-600"
+                          iconColor="text-green-500"
+                        />
+                        <PerformanceCard
+                          title="Partner Commission"
+                          value={`₦${(
+                            salesStats?.summary?.totalPartnerCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<TrendingUp className="w-6 h-6" />}
+                          gradient="from-blue-100 to-blue-200"
+                          textColor="text-blue-600"
+                          iconColor="text-blue-500"
+                        />
+                        <PerformanceCard
+                          title="Agent Commission"
+                          value={`₦${(
+                            salesStats?.summary?.totalAgentCommission || 0
+                          ).toLocaleString()}`}
+                          icon={<Users className="w-6 h-6" />}
+                          gradient="from-purple-100 to-purple-200"
+                          textColor="text-purple-600"
+                          iconColor="text-purple-500"
+                        />
+                        <PerformanceCard
+                          title="Total Agents"
+                          value={salesStats?.summary?.totalAgents || 0}
+                          icon={<Users className="w-6 h-6" />}
+                          gradient="from-amber-100 to-amber-200"
+                          textColor="text-amber-600"
+                          iconColor="text-amber-500"
+                        />
+                      </div>
+
+                      {/* Top Agents Table */}
+                      {salesStats?.agentPerformance &&
+                        salesStats.agentPerformance.length > 0 && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-semibold">
+                                Top Performing Agents
+                              </h3>
+                              <Chip size="sm" variant="flat" color="success">
+                                {salesStats.agentPerformance.length} Agent
+                                {salesStats.agentPerformance.length !== 1
+                                  ? "s"
+                                  : ""}
+                              </Chip>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <Table
+                                aria-label="Top performing agents"
+                                className="w-full"
+                              >
+                                <TableHeader>
+                                  <TableColumn>AGENT</TableColumn>
+                                  <TableColumn>MBE ID</TableColumn>
+                                  <TableColumn>PHONE</TableColumn>
+                                  <TableColumn>TOTAL COMMISSION</TableColumn>
+                                  <TableColumn>AGENT COMMISSION</TableColumn>
+                                  <TableColumn>PARTNER COMMISSION</TableColumn>
+                                  <TableColumn>SALES COUNT</TableColumn>
+                                </TableHeader>
+                                <TableBody>
+                                  {salesStats.agentPerformance.map(
+                                    (agentData: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell>
+                                          <div>
+                                            <p className="font-medium">
+                                              {agentData.agent.firstname}{" "}
+                                              {agentData.agent.lastname}
+                                            </p>
+                                            <p className="text-sm text-default-500">
+                                              Rank #{index + 1}
+                                            </p>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="font-mono text-sm">
+                                            {agentData.agent.mbeId}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          {agentData.agent.phone}
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="font-medium text-green-600">
+                                            ₦
+                                            {(
+                                              agentData.totalCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="text-sm">
+                                            ₦
+                                            {(
+                                              agentData.agentCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <p className="text-sm">
+                                            ₦
+                                            {(
+                                              agentData.partnerCommission || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Chip
+                                            size="sm"
+                                            variant="flat"
+                                            color="success"
+                                          >
+                                            {agentData.commissionCount || 0}
+                                          </Chip>
+                                        </TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Approved Agents Summary */}
+                      {approvedAgents && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Agent Approval Status
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Daily Stats */}
+                            <div className="space-y-3">
+                              <h5 className="font-medium text-default-700">
+                                Daily Summary
+                              </h5>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-green-600">
+                                    Total Agents
+                                  </p>
+                                  <p className="text-xl font-bold text-green-800">
+                                    {approvedAgents?.daily?.totalCount || 0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <p className="text-sm text-blue-600">
+                                    Partner
+                                  </p>
+                                  <p className="text-xl font-bold text-blue-800">
+                                    {approvedAgents?.scanPartner?.name || "N/A"}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-purple-600">
+                                    Period
+                                  </p>
+                                  <p className="text-xl font-bold text-purple-800">
+                                    Daily
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Month-to-Date Stats */}
+                            <div className="space-y-3">
+                              <h5 className="font-medium text-default-700">
+                                Month-to-Date
+                              </h5>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-green-600">
+                                    Total Agents
+                                  </p>
+                                  <p className="text-xl font-bold text-green-800">
+                                    {approvedAgents?.mtd?.totalCount || 0}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <p className="text-sm text-blue-600">
+                                    Period
+                                  </p>
+                                  <p className="text-xl font-bold text-blue-800">
+                                    {approvedAgents?.mtd?.period || "N/A"}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-purple-600">
+                                    Status
+                                  </p>
+                                  <p className="text-xl font-bold text-purple-800">
+                                    MTD
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!salesStats && !salesStatsLoading && (
+                        <EmptyState
+                          title="No Analytics Data"
+                          description="No sales analytics data available for this scan partner yet."
+                          icon={
+                            <TrendingUp className="w-6 h-6 text-default-400" />
+                          }
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </InfoCard>
+            {/* Bank Details */}
+            <InfoCard
+              title="Bank Details"
+              icon={<Building2 className="w-5 h-5 text-default-600" />}
+              headerContent={
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                  startContent={
+                    userBankDetails ? (
+                      <Edit className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )
+                  }
+                  onPress={handleOpenBankModal}
+                >
+                  {userBankDetails ? "Edit" : "Add"} Bank Details
+                </Button>
+              }
+            >
+              {userBankDetails ? (
+                <div className="grid gap-4">
+                  <InfoField
+                    label="Account Name"
+                    value={userBankDetails.accountName}
+                  />
+                  <InfoField
+                    label="Account Number"
+                    value={userBankDetails.accountNumber}
+                    copyable
+                  />
+                  <InfoField
+                    label="Bank Name"
+                    value={userBankDetails.bankName}
+                  />
+                  <InfoField
+                    label="VFD Bank Name"
+                    value={userBankDetails.vfdBankName}
+                  />
+                  <InfoField label="Channel" value={userBankDetails.channel} />
+                  {userBankDetails.createdAt && (
+                    <InfoField
+                      label="Added At"
+                      value={new Date(
+                        userBankDetails.createdAt
+                      ).toLocaleString()}
+                    />
+                  )}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Bank Details"
+                  description="No bank account details have been added for this scan partner yet."
+                  icon={<Building2 className="w-6 h-6 text-default-400" />}
+                />
+              )}
             </InfoCard>
           </div>
         </div>
       </div>
+
+      {/* Bank Details Modal */}
+      <BankDetailsModal
+        isOpen={isBankModalOpen}
+        onClose={onBankModalClose}
+        onSave={handleSaveBankDetails}
+        isEdit={!!userBankDetails}
+        bankFormData={bankFormData}
+        setBankFormData={setBankFormData}
+        vfdBanks={vfdBanks}
+        paystackBanks={paystackBanks}
+        selectedVfdBank={selectedVfdBank}
+        selectedPaystackBank={selectedPaystackBank}
+        onVfdBankSelect={handleVfdBankSelect}
+        onPaystackBankSelect={handlePaystackBankSelect}
+        onVerifyBankDetails={handleVerifyBankDetails}
+        isVerifyingBank={isVerifyingBank}
+        isSavingBank={isSavingBank}
+        isAccountVerified={isAccountVerified}
+        setIsAccountVerified={setIsAccountVerified}
+      />
     </div>
   );
 }

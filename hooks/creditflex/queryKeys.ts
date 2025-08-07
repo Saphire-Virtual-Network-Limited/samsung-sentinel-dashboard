@@ -16,7 +16,7 @@ export const creditflexQueryKeys = {
   repayments: (filters?: any) => ["creditflex", "repayments", filters],
 
   // Invoices
-  invoices: (filters?: any) => ["creditflex", "invoices", filters],
+  invoices: () => ["creditflex", "invoices"],
 
   // Liquidation requests
   liquidationRequests: (filters?: any) => [

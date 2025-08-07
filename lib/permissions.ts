@@ -144,6 +144,20 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
   },
+  developer: {
+    canUpdateWalletBalance: true,
+    canUpdateLastPoint: true,
+    canUpdateLoanStatus: true,
+    canTriggerDeviceActions: true,
+    // canDeleteCustomers: true,
+    canViewOverDuePayments: true,
+    canViewDeviceActivityLog: true,
+    canViewCommunicationLog: true,
+    suspendDashboardUser: true,
+    canChangeDashboardUserPassword: true,
+    canUpdateDeviceImei: true,
+    canAssignAgent: true,
+  },
   finance: {
     // Finance has no special permissions
     // All permissions default to false
@@ -185,7 +199,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     // canUpdateLastPoint: true,
     // canUpdateLoanStatus: true,
     canTriggerDeviceActions: true,
-      // canDeleteCustomers: true,
+    // canDeleteCustomers: true,
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
@@ -211,13 +225,14 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
     createDashboardUser: true,
+    canChangeDashboardUserPassword: true,
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
     canUpdateLastPoint: true,
     canUpdateLoanStatus: true,
     canTriggerDeviceActions: true,
-      // canDeleteCustomers: true,
+    // canDeleteCustomers: true,
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
@@ -226,6 +241,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     // canEdit: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
+    createDashboardUser: true,
   },
   // "seyi@sapphirevirtual.com": {
   //   canUpdateWalletBalance: true,

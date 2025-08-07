@@ -94,6 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUserResponse(response);
 
       const isAllowedRoute = (() => {
+        // Allow settings route for all authenticated users
+        if (currentPath.startsWith("/access/settings")) {
+          return true;
+        }
+
         switch (userRole) {
           case "SUPER_ADMIN":
             return currentPath.startsWith("/access/admin");

@@ -11,6 +11,9 @@ import {
   capitalize,
   calculateAge,
   getScanPartnerAgents,
+  getMobiflexPartnerStats,
+  getMobiflexScanPartnerStatsById,
+  getMobiflexPartnerApprovedAgents,
 } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -23,8 +26,21 @@ import {
   Chip,
   type SortDescriptor,
   type ChipProps,
+  Card,
+  CardBody,
+  CardHeader,
+  Select,
+  SelectItem,
+  Tabs,
+  Tab,
 } from "@heroui/react";
-import { EllipsisVertical } from "lucide-react";
+import {
+  EllipsisVertical,
+  TrendingUp,
+  Users,
+  DollarSign,
+  Calendar,
+} from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import type { ScanPartnerRecord } from "./types";
 import { statusOptions, columns, statusColorMap } from "./constants";
@@ -50,6 +66,13 @@ export default function ScanPartnerPage() {
   });
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
+
+  // --- sales reporting state ---
+  const [selectedTab, setSelectedTab] = useState("partners");
+  const [salesPeriod, setSalesPeriod] = useState<
+    "daily" | "weekly" | "monthly" | "yearly"
+  >("monthly");
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
 
   // --- handle date filter ---
   const handleDateFilter = (start: string, end: string) => {
@@ -100,6 +123,88 @@ export default function ScanPartnerPage() {
       mbeCount: r.Mbe ? r.Mbe.length : 0,
     }));
   }, [raw]);
+
+  // Fetch sales data for Mobiflex integration
+  const { data: partnerStatsData, isLoading: isPartnerStatsLoading } = useSWR(
+    `mobiflex-partner-stats-${salesPeriod}`,
+    () => getMobiflexPartnerStats(salesPeriod).then((r) => r.data),
+    {
+      refreshInterval: 5 * 60 * 1000, // 5 minutes
+      revalidateOnFocus: false,
+      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+    }
+  );
+
+  // Fetch specific partner stats when a partner is selected
+  const { data: specificPartnerData, isLoading: isSpecificPartnerLoading } =
+    useSWR(
+      selectedPartnerId && selectedPartnerId !== ""
+        ? `mobiflex-partner-specific-${selectedPartnerId}-${salesPeriod}`
+        : null,
+      () =>
+        selectedPartnerId && selectedPartnerId !== ""
+          ? getMobiflexScanPartnerStatsById(
+              selectedPartnerId,
+              salesPeriod
+            ).then(
+              (r) =>
+                r.data as {
+                  summary: {
+                    totalCommission: number;
+                    totalAgentCommission: number;
+                    totalPartnerCommission: number;
+                    totalAgents: number;
+                  };
+                  agentPerformance: Array<{
+                    agent: {
+                      firstname: string;
+                      lastname: string;
+                      phone: string;
+                      mbeId: string;
+                    };
+                    totalCommission: number;
+                    agentCommission: number;
+                    partnerCommission: number;
+                    commissionCount: number;
+                  }>;
+                }
+            )
+          : null,
+      {
+        refreshInterval: 5 * 60 * 1000,
+        revalidateOnFocus: false,
+      }
+    );
+
+  // Fetch approved agents data for the selected partner
+  const { data: approvedAgentsData, isLoading: isApprovedAgentsLoading } =
+    useSWR(
+      selectedPartnerId && selectedPartnerId !== ""
+        ? `mobiflex-approved-agents-${selectedPartnerId}`
+        : null,
+      () =>
+        selectedPartnerId && selectedPartnerId !== ""
+          ? getMobiflexPartnerApprovedAgents(selectedPartnerId).then(
+              (r) =>
+                r.data as {
+                  daily: {
+                    totalCount: number;
+                  };
+                  mtd: {
+                    totalCount: number;
+                    period: string;
+                  };
+                  scanPartner: {
+                    name: string;
+                  };
+                }
+            )
+          : null,
+      {
+        refreshInterval: 5 * 60 * 1000,
+        revalidateOnFocus: false,
+      }
+    );
 
   const filtered = useMemo(() => {
     // Add safety check
@@ -152,6 +257,10 @@ export default function ScanPartnerPage() {
       // Fetch detailed agent data from getScanPartnerAgents
       const agentsResponse = await getScanPartnerAgents();
       const allAgentData = agentsResponse?.data || [];
+
+      // Fetch Mobiflex sales data for comprehensive reporting
+      const salesDataResponse = await getMobiflexPartnerStats(salesPeriod);
+      const salesData = salesDataResponse?.data || null;
 
       const wb = new ExcelJS.Workbook();
 
@@ -265,6 +374,15 @@ export default function ScanPartnerPage() {
         });
       });
 
+      // Add autofilter to Scan Partner Summary sheet
+      scanPartnerWs.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: {
+          row: allAgentData.length + 1,
+          column: scanPartnerWs.columns.length,
+        },
+      };
+
       // 2. MBE Details Sheet
       const mbeWs = wb.addWorksheet("MBE Details");
       mbeWs.columns = [
@@ -302,6 +420,8 @@ export default function ScanPartnerPage() {
         { header: "KYC State", key: "kycState", width: 15 },
         { header: "City", key: "city", width: 15 },
         { header: "Full Address", key: "fullAddress", width: 40 },
+        { header: "Address Status", key: "addressStatus", width: 15 },
+        { header: "Provisional", key: "provisional", width: 12 },
         { header: "Account Name", key: "accountName", width: 25 },
         { header: "Account Number", key: "accountNumber", width: 20 },
         { header: "Bank Name", key: "bankName", width: 25 },
@@ -345,6 +465,30 @@ export default function ScanPartnerPage() {
           const guarantor1 = guarantors[0];
           const guarantor2 = guarantors[1];
 
+          // Calculate provisional status: more granular based on guarantor statuses
+          const approvedGuarantors = guarantors.filter(
+            (guarantor: any) => guarantor.guarantorStatus === "APPROVED"
+          );
+          const rejectedGuarantors = guarantors.filter(
+            (guarantor: any) => guarantor.guarantorStatus === "REJECTED"
+          );
+          const pendingGuarantors = guarantors.filter(
+            (guarantor: any) => guarantor.guarantorStatus === "PENDING"
+          );
+
+          let provisionalStatus = "No";
+
+          // Only provisional if exactly one guarantor is approved
+          if (approvedGuarantors.length === 1) {
+            if (rejectedGuarantors.length === 1) {
+              provisionalStatus = "Provisional Rejected";
+            } else if (pendingGuarantors.length === 1) {
+              provisionalStatus = "Provisional Pending";
+            } else {
+              provisionalStatus = "Provisional Agnostic";
+            }
+          }
+
           const rowData = {
             sn: mbeRowIndex++,
             scanPartnerCompany: scanPartnerData.companyName,
@@ -376,6 +520,8 @@ export default function ScanPartnerPage() {
             kycState: agent.MbeKyc?.state || "N/A",
             city: agent.MbeKyc?.city || "N/A",
             fullAddress: agent.MbeKyc?.fullAddress || "N/A",
+            addressStatus: agent.MbeKyc?.addressStatus || "N/A",
+            provisional: provisionalStatus,
             accountName: agent.MbeAccountDetails?.accountName || "N/A",
             accountNumber: agent.MbeAccountDetails?.accountNumber || "N/A",
             bankName: agent.MbeAccountDetails?.bankName || "N/A",
@@ -408,6 +554,12 @@ export default function ScanPartnerPage() {
           });
         }
       }
+
+      // Add autofilter to MBE Details sheet
+      mbeWs.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: mbeRowIndex, column: mbeWs.columns.length },
+      };
 
       // 3. Guarantors Sheet
       const guarantorWs = wb.addWorksheet("Guarantors");
@@ -464,6 +616,12 @@ export default function ScanPartnerPage() {
           }
         }
       }
+
+      // Add autofilter to Guarantors sheet
+      guarantorWs.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: guarantorRowIndex, column: guarantorWs.columns.length },
+      };
 
       // 4. Summary Sheet
       const summaryWs = wb.addWorksheet("Summary");
@@ -649,7 +807,220 @@ export default function ScanPartnerPage() {
         summaryWs.addRow(item);
       });
 
-      // 5. Location Analysis Sheet
+      // 5. Partner Performance Breakdown Sheet (Mobiflex Sales Data)
+      if (salesData && salesData.partnerStats) {
+        const performanceWs = wb.addWorksheet("Partner Performance Breakdown");
+        performanceWs.columns = [
+          { header: "S/N", key: "sn", width: 8 },
+          { header: "Partner ID", key: "partnerId", width: 25 },
+          { header: "Partner Name", key: "partnerName", width: 30 },
+          { header: "Total Commission", key: "totalCommission", width: 20 },
+          { header: "Agent Commission", key: "agentCommission", width: 20 },
+          { header: "Partner Commission", key: "partnerCommission", width: 20 },
+          { header: "Commission Count", key: "commissionCount", width: 18 },
+          { header: "Agent Count", key: "agentCount", width: 15 },
+          { header: "State Count", key: "stateCount", width: 15 },
+          {
+            header: "Avg Commission/Agent",
+            key: "avgCommissionPerAgent",
+            width: 22,
+          },
+          { header: "Period", key: "period", width: 15 },
+        ];
+
+        // Add partner performance data
+        salesData.partnerStats.forEach((partner, index) => {
+          const rowData = {
+            sn: index + 1,
+            partnerId: partner.partnerId,
+            partnerName: partner.partnerName,
+            totalCommission: partner.totalCommission || 0,
+            agentCommission: partner.totalAgentCommission || 0,
+            partnerCommission: partner.totalPartnerCommission || 0,
+            commissionCount: partner.commissionCount || 0,
+            agentCount: partner.agentCount || 0,
+            stateCount: partner.stateCount || 0,
+            avgCommissionPerAgent: partner.averageCommissionPerAgent || 0,
+            period: salesData.period || salesPeriod,
+          };
+
+          const row = performanceWs.addRow(rowData);
+
+          // Apply light blue background for performance data
+          row.eachCell((cell) => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFE6F3FF" }, // Light blue
+            };
+          });
+        });
+
+        // Add summary row
+        if (salesData.summary) {
+          const summaryRow = performanceWs.addRow({
+            sn: "",
+            partnerId: "SUMMARY",
+            partnerName: "TOTAL ACROSS ALL PARTNERS",
+            totalCommission: salesData.summary.grandTotalCommission || 0,
+            agentCommission: salesData.summary.grandTotalAgentCommission || 0,
+            partnerCommission:
+              salesData.summary.grandTotalPartnerCommission || 0,
+            commissionCount: salesData.summary.totalCommissions || 0,
+            agentCount: salesData.summary.totalAgents || 0,
+            stateCount: "-",
+            avgCommissionPerAgent:
+              salesData.summary.averageAgentsPerPartner || 0,
+            period: salesData.period || salesPeriod,
+          });
+
+          // Apply bold formatting and different color for summary
+          summaryRow.eachCell((cell) => {
+            cell.font = { bold: true };
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFFFD700" }, // Gold color
+            };
+          });
+        }
+
+        // Add autofilter to Partner Performance Breakdown sheet
+        performanceWs.autoFilter = {
+          from: { row: 1, column: 1 },
+          to: {
+            row: salesData.partnerStats.length + 2,
+            column: performanceWs.columns.length,
+          },
+        };
+      }
+
+      // 6. Sales Report Summary Sheet
+      if (salesData) {
+        const salesReportWs = wb.addWorksheet("Sales Report Summary");
+        salesReportWs.columns = [
+          { header: "Metric", key: "metric", width: 35 },
+          { header: "Value", key: "value", width: 20 },
+          { header: "Period", key: "period", width: 15 },
+        ];
+
+        const salesSummaryData = [
+          { metric: "=== MOBIFLEX SALES SUMMARY ===", value: "", period: "" },
+          {
+            metric: "Reporting Period",
+            value: salesData.period || salesPeriod,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Total Active Partners",
+            value: salesData.summary?.totalPartners || 0,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Grand Total Commission",
+            value: `₦${(
+              salesData.summary?.grandTotalCommission || 0
+            ).toLocaleString()}`,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Total Agent Commission",
+            value: `₦${(
+              salesData.summary?.grandTotalAgentCommission || 0
+            ).toLocaleString()}`,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Total Partner Commission",
+            value: `₦${(
+              salesData.summary?.grandTotalPartnerCommission || 0
+            ).toLocaleString()}`,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Total Commission Transactions",
+            value: salesData.summary?.totalCommissions || 0,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Total Active Agents",
+            value: salesData.summary?.totalAgents || 0,
+            period: salesData.period || salesPeriod,
+          },
+          {
+            metric: "Average Agents per Partner",
+            value: (salesData.summary?.averageAgentsPerPartner || 0).toFixed(1),
+            period: salesData.period || salesPeriod,
+          },
+          { metric: "", value: "", period: "" },
+          { metric: "=== TOP PERFORMING PARTNER ===", value: "", period: "" },
+        ];
+
+        // Add top performing partner details if available
+        if (salesData.summary?.topPerformingPartner) {
+          const topPartner = salesData.summary.topPerformingPartner;
+          salesSummaryData.push(
+            {
+              metric: "Top Partner Name",
+              value: topPartner.partnerName,
+              period: salesData.period || salesPeriod,
+            },
+            {
+              metric: "Top Partner ID",
+              value: topPartner.partnerId,
+              period: salesData.period || salesPeriod,
+            },
+            {
+              metric: "Top Partner Total Commission",
+              value: `₦${(topPartner.totalCommission || 0).toLocaleString()}`,
+              period: salesData.period || salesPeriod,
+            },
+            {
+              metric: "Top Partner Agent Count",
+              value: topPartner.agentCount || 0,
+              period: salesData.period || salesPeriod,
+            },
+            {
+              metric: "Top Partner States Covered",
+              value: topPartner.stateCount || 0,
+              period: salesData.period || salesPeriod,
+            }
+          );
+        }
+
+        salesSummaryData.forEach((item) => {
+          const row = salesReportWs.addRow(item);
+
+          // Style headers and totals
+          if (
+            item.metric.includes("===") ||
+            item.metric.includes("Grand Total") ||
+            item.metric.includes("Top Partner")
+          ) {
+            row.eachCell((cell) => {
+              cell.font = { bold: true };
+              if (item.metric.includes("===")) {
+                cell.fill = {
+                  type: "pattern",
+                  pattern: "solid",
+                  fgColor: { argb: "FFB0C4DE" }, // Light steel blue
+                };
+              }
+            });
+          }
+        });
+
+        // Add autofilter to Sales Report Summary sheet
+        salesReportWs.autoFilter = {
+          from: { row: 1, column: 1 },
+          to: {
+            row: salesSummaryData.length + 1,
+            column: salesReportWs.columns.length,
+          },
+        };
+      }
+
+      // 7. Location Analysis Sheet
       const locationWs = wb.addWorksheet("Location Analysis");
       locationWs.columns = [
         { header: "Category", key: "category", width: 30 },
@@ -725,6 +1096,17 @@ export default function ScanPartnerPage() {
           });
         });
       });
+
+      // Add autofilter to Location Analysis sheet
+      let totalLocationRows = 0;
+      allAgentData.forEach((scanPartnerData: any) => {
+        totalLocationRows += 1; // For scan partner
+        totalLocationRows += (scanPartnerData.agents || []).length; // For agents
+      });
+      locationWs.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: totalLocationRows + 1, column: locationWs.columns.length },
+      };
 
       // 6. Verification Analysis Sheet
       const verificationWs = wb.addWorksheet("Verification Analysis");
@@ -803,6 +1185,15 @@ export default function ScanPartnerPage() {
         });
       });
 
+      // Add autofilter to Verification Analysis sheet
+      verificationWs.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: {
+          row: allAgentData.length + 1,
+          column: verificationWs.columns.length,
+        },
+      };
+
       // Style the summary sheet
       summaryWs.getRow(1).font = { bold: true };
       summaryWs.columns.forEach((column) => {
@@ -810,20 +1201,32 @@ export default function ScanPartnerPage() {
       });
 
       // Style all worksheets headers
-      [
+      const allWorksheets = [
         scanPartnerWs,
         mbeWs,
         guarantorWs,
         summaryWs,
         locationWs,
         verificationWs,
-      ].forEach((ws) => {
-        ws.getRow(1).font = { bold: true };
-        ws.getRow(1).fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FFD3D3D3" },
-        };
+      ];
+
+      // Add sales sheets if they exist
+      if (salesData && salesData.partnerStats) {
+        const performanceWs = wb.getWorksheet("Partner Performance Breakdown");
+        const salesReportWs = wb.getWorksheet("Sales Report Summary");
+        if (performanceWs) allWorksheets.push(performanceWs);
+        if (salesReportWs) allWorksheets.push(salesReportWs);
+      }
+
+      allWorksheets.forEach((ws) => {
+        if (ws) {
+          ws.getRow(1).font = { bold: true };
+          ws.getRow(1).fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFD3D3D3" },
+          };
+        }
       });
 
       const buf = await wb.xlsx.writeBuffer();
@@ -977,41 +1380,589 @@ export default function ScanPartnerPage() {
 
   return (
     <>
-      <div className="mb-4 flex justify-center md:justify-end"></div>
-      {isLoading ? (
-        <TableSkeleton columns={columns.length} rows={10} />
-      ) : (
-        <GenericTable<
-          ScanPartnerRecord & { fullName: string; companyName: string }
-        >
-          columns={columns}
-          data={sorted}
-          allCount={filtered.length}
-          exportData={filtered}
-          isLoading={isLoading}
-          filterValue={filterValue}
-          onFilterChange={(v) => {
-            setFilterValue(v);
-            setPage(1);
-          }}
-          statusOptions={statusOptions}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          statusColorMap={statusColorMap}
-          showStatus={true}
-          sortDescriptor={sortDescriptor}
-          onSortChange={setSortDescriptor}
-          page={page}
-          pages={pages}
-          onPageChange={setPage}
-          exportFn={exportFn}
-          renderCell={renderCell}
-          hasNoRecords={hasNoRecords}
-          onDateFilterChange={handleDateFilter}
-          initialStartDate={startDate}
-          initialEndDate={endDate}
-        />
-      )}
+      <div className="space-y-6">
+        {/* Sales Reporting Section */}
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">
+                Mobiflex Sales Analytics
+              </h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <Select
+                label="Period"
+                size="sm"
+                value={salesPeriod}
+                onChange={(e) => setSalesPeriod(e.target.value as any)}
+                className="w-36"
+              >
+                <SelectItem key="daily" value="daily">
+                  Daily
+                </SelectItem>
+                <SelectItem key="weekly" value="weekly">
+                  Weekly
+                </SelectItem>
+                <SelectItem key="monthly" value="monthly">
+                  Monthly
+                </SelectItem>
+                <SelectItem key="yearly" value="yearly">
+                  Yearly
+                </SelectItem>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <Tabs
+              selectedKey={selectedTab}
+              onSelectionChange={(key) => setSelectedTab(key as string)}
+            >
+              <Tab key="partners" title="Partner Overview">
+                <div className="space-y-4">
+                  {/* Summary Cards */}
+                  {partnerStatsData?.summary && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                        <CardBody className="flex flex-row items-center justify-between p-4">
+                          <div>
+                            <p className="text-sm text-blue-600 font-medium">
+                              Total Partners
+                            </p>
+                            <p className="text-2xl font-bold text-blue-800">
+                              {partnerStatsData?.summary?.totalPartners || 0}
+                            </p>
+                          </div>
+                          <Users className="h-8 w-8 text-blue-600" />
+                        </CardBody>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                        <CardBody className="flex flex-row items-center justify-between p-4">
+                          <div>
+                            <p className="text-sm text-green-600 font-medium">
+                              Total Commission
+                            </p>
+                            <p className="text-2xl font-bold text-green-800">
+                              ₦
+                              {(
+                                partnerStatsData.summary.grandTotalCommission ||
+                                0
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+                          <DollarSign className="h-8 w-8 text-green-600" />
+                        </CardBody>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                        <CardBody className="flex flex-row items-center justify-between p-4">
+                          <div>
+                            <p className="text-sm text-purple-600 font-medium">
+                              Total Agents
+                            </p>
+                            <p className="text-2xl font-bold text-purple-800">
+                              {partnerStatsData?.summary?.totalAgents || 0}
+                            </p>
+                          </div>
+                          <Users className="h-8 w-8 text-purple-600" />
+                        </CardBody>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+                        <CardBody className="flex flex-row items-center justify-between p-4">
+                          <div>
+                            <p className="text-sm text-orange-600 font-medium">
+                              Avg Agents/Partner
+                            </p>
+                            <p className="text-2xl font-bold text-orange-800">
+                              {(
+                                partnerStatsData?.summary
+                                  ?.averageAgentsPerPartner || 0
+                              ).toFixed(1)}
+                            </p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-orange-600" />
+                        </CardBody>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Partner Sales Table */}
+                  {partnerStatsData?.partnerStats && (
+                    <Card>
+                      <CardHeader>
+                        <h4 className="text-md font-semibold">
+                          Partner Performance Breakdown
+                        </h4>
+                      </CardHeader>
+                      <CardBody>
+                        <div className="overflow-x-auto">
+                          <table className="w-full table-auto">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left p-3 font-medium">
+                                  Partner
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Total Commission
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Agent Commission
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Partner Commission
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Agents
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  States
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Avg/Agent
+                                </th>
+                                <th className="text-left p-3 font-medium">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {partnerStatsData?.partnerStats?.map(
+                                (partner, index) => (
+                                  <tr
+                                    key={partner.partnerId}
+                                    className="border-b hover:bg-gray-50"
+                                  >
+                                    <td className="p-3">
+                                      <div>
+                                        <p className="font-medium">
+                                          {partner.partnerName}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                          {partner.partnerId}
+                                        </p>
+                                      </div>
+                                    </td>
+                                    <td className="p-3 font-medium text-green-600">
+                                      ₦
+                                      {(
+                                        partner.totalCommission || 0
+                                      ).toLocaleString()}
+                                    </td>
+                                    <td className="p-3">
+                                      ₦
+                                      {(
+                                        partner.totalAgentCommission || 0
+                                      ).toLocaleString()}
+                                    </td>
+                                    <td className="p-3">
+                                      ₦
+                                      {(
+                                        partner.totalPartnerCommission || 0
+                                      ).toLocaleString()}
+                                    </td>
+                                    <td className="p-3">
+                                      <Chip
+                                        size="sm"
+                                        color="primary"
+                                        variant="flat"
+                                      >
+                                        {partner.agentCount}
+                                      </Chip>
+                                    </td>
+                                    <td className="p-3">
+                                      {partner.stateCount}
+                                    </td>
+                                    <td className="p-3">
+                                      ₦
+                                      {(
+                                        partner.averageCommissionPerAgent || 0
+                                      ).toLocaleString()}
+                                    </td>
+                                    <td className="p-3">
+                                      <Button
+                                        size="sm"
+                                        color="primary"
+                                        variant="flat"
+                                        onPress={() => {
+                                          setSelectedPartnerId(
+                                            partner.partnerId
+                                          );
+                                          setSelectedTab("partner-details");
+                                        }}
+                                      >
+                                        View Details
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                )
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  )}
+                </div>
+              </Tab>
+
+              <Tab key="partner-details" title="Partner Details">
+                <div className="space-y-4">
+                  {!selectedPartnerId ? (
+                    <Card>
+                      <CardBody className="text-center py-8">
+                        <p className="text-gray-500">
+                          Select a partner from the overview to view detailed
+                          analytics
+                        </p>
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    <>
+                      {/* Partner Selection */}
+                      <Card>
+                        <CardBody>
+                          <div className="flex items-center gap-4">
+                            <Select
+                              label="Select Partner"
+                              value={selectedPartnerId}
+                              onChange={(e) =>
+                                setSelectedPartnerId(e.target.value)
+                              }
+                              className="max-w-xs"
+                            >
+                              {partnerStatsData?.partnerStats?.map(
+                                (partner) => (
+                                  <SelectItem
+                                    key={partner.partnerId}
+                                    value={partner.partnerId}
+                                  >
+                                    {partner.partnerName}
+                                  </SelectItem>
+                                )
+                              ) || []}
+                            </Select>
+                          </div>
+                        </CardBody>
+                      </Card>
+
+                      {/* Specific Partner Performance */}
+                      {specificPartnerData && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <Card className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200">
+                            <CardBody className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-indigo-600 font-medium">
+                                    Partner Commission
+                                  </p>
+                                  <p className="text-xl font-bold text-indigo-800">
+                                    ₦
+                                    {(
+                                      specificPartnerData?.summary
+                                        ?.totalPartnerCommission || 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                                <DollarSign className="h-6 w-6 text-indigo-600" />
+                              </div>
+                            </CardBody>
+                          </Card>
+
+                          <Card className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
+                            <CardBody className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-emerald-600 font-medium">
+                                    Agent Commission
+                                  </p>
+                                  <p className="text-xl font-bold text-emerald-800">
+                                    ₦
+                                    {(
+                                      specificPartnerData?.summary
+                                        ?.totalAgentCommission || 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                                <Users className="h-6 w-6 text-emerald-600" />
+                              </div>
+                            </CardBody>
+                          </Card>
+
+                          <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
+                            <CardBody className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-amber-600 font-medium">
+                                    Total Agents
+                                  </p>
+                                  <p className="text-xl font-bold text-amber-800">
+                                    {specificPartnerData?.summary
+                                      ?.totalAgents || 0}
+                                  </p>
+                                </div>
+                                <Users className="h-6 w-6 text-amber-600" />
+                              </div>
+                            </CardBody>
+                          </Card>
+
+                          <Card className="bg-gradient-to-r from-rose-50 to-rose-100 border-rose-200">
+                            <CardBody className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-rose-600 font-medium">
+                                    Total Commission
+                                  </p>
+                                  <p className="text-xl font-bold text-rose-800">
+                                    ₦
+                                    {(
+                                      specificPartnerData?.summary
+                                        ?.totalCommission || 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                                <TrendingUp className="h-6 w-6 text-rose-600" />
+                              </div>
+                            </CardBody>
+                          </Card>
+                        </div>
+                      )}
+
+                      {/* Top Agents for Selected Partner */}
+                      {specificPartnerData?.agentPerformance &&
+                        specificPartnerData.agentPerformance.length > 0 && (
+                          <Card>
+                            <CardHeader>
+                              <h4 className="text-md font-semibold">
+                                Top Performing Agents
+                              </h4>
+                            </CardHeader>
+                            <CardBody>
+                              <div className="overflow-x-auto">
+                                <table className="w-full table-auto">
+                                  <thead>
+                                    <tr className="border-b">
+                                      <th className="text-left p-3 font-medium">
+                                        Agent
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        MBE ID
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Phone
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Total Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Agent Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Partner Commission
+                                      </th>
+                                      <th className="text-left p-3 font-medium">
+                                        Sales Count
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {specificPartnerData.agentPerformance.map(
+                                      (agentData: any, index: number) => (
+                                        <tr
+                                          key={agentData.agent.mbeId}
+                                          className="border-b hover:bg-gray-50"
+                                        >
+                                          <td className="p-3">
+                                            <div>
+                                              <p className="font-medium">
+                                                {agentData.agent.firstname}{" "}
+                                                {agentData.agent.lastname}
+                                              </p>
+                                              <p className="text-sm text-gray-500">
+                                                Rank #{index + 1}
+                                              </p>
+                                            </div>
+                                          </td>
+                                          <td className="p-3 font-mono text-sm">
+                                            {agentData.agent.mbeId}
+                                          </td>
+                                          <td className="p-3">
+                                            {agentData.agent.phone}
+                                          </td>
+                                          <td className="p-3 font-medium text-green-600">
+                                            ₦
+                                            {(
+                                              agentData.totalCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            ₦
+                                            {(
+                                              agentData.agentCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            ₦
+                                            {(
+                                              agentData.partnerCommission || 0
+                                            ).toLocaleString()}
+                                          </td>
+                                          <td className="p-3">
+                                            <Chip
+                                              size="sm"
+                                              color="success"
+                                              variant="flat"
+                                            >
+                                              {agentData.commissionCount || 0}
+                                            </Chip>
+                                          </td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </CardBody>
+                          </Card>
+                        )}
+
+                      {/* Approved Agents Summary */}
+                      {approvedAgentsData && (
+                        <Card>
+                          <CardHeader>
+                            <h4 className="text-md font-semibold">
+                              Agent Approval Status
+                            </h4>
+                          </CardHeader>
+                          <CardBody>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Daily Stats */}
+                              <div className="space-y-3">
+                                <h5 className="font-medium text-gray-700">
+                                  Daily Summary
+                                </h5>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                                    <p className="text-sm text-green-600">
+                                      Total Agents
+                                    </p>
+                                    <p className="text-xl font-bold text-green-800">
+                                      {approvedAgentsData?.daily?.totalCount ||
+                                        0}
+                                    </p>
+                                  </div>
+                                  <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                    <p className="text-sm text-orange-600">
+                                      Partner
+                                    </p>
+                                    <p className="text-xl font-bold text-orange-800">
+                                      {approvedAgentsData?.scanPartner?.name ||
+                                        "N/A"}
+                                    </p>
+                                  </div>
+                                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-sm text-blue-600">
+                                      Period
+                                    </p>
+                                    <p className="text-xl font-bold text-blue-800">
+                                      Daily
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Month-to-Date Stats */}
+                              <div className="space-y-3">
+                                <h5 className="font-medium text-gray-700">
+                                  Month-to-Date
+                                </h5>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                                    <p className="text-sm text-green-600">
+                                      Total Agents
+                                    </p>
+                                    <p className="text-xl font-bold text-green-800">
+                                      {approvedAgentsData?.mtd?.totalCount || 0}
+                                    </p>
+                                  </div>
+                                  <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                    <p className="text-sm text-orange-600">
+                                      Period
+                                    </p>
+                                    <p className="text-xl font-bold text-orange-800">
+                                      {approvedAgentsData?.mtd?.period || "N/A"}
+                                    </p>
+                                  </div>
+                                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-sm text-blue-600">
+                                      Status
+                                    </p>
+                                    <p className="text-xl font-bold text-blue-800">
+                                      MTD
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      )}
+                    </>
+                  )}
+                </div>
+              </Tab>
+            </Tabs>
+          </CardBody>
+        </Card>
+
+        {/* Scan Partner Management Section */}
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Scan Partner Management</h3>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="mb-4 flex justify-center md:justify-end"></div>
+            {isLoading ? (
+              <TableSkeleton columns={columns.length} rows={10} />
+            ) : (
+              <GenericTable<
+                ScanPartnerRecord & { fullName: string; companyName: string }
+              >
+                columns={columns}
+                data={sorted}
+                allCount={filtered.length}
+                exportData={filtered}
+                isLoading={isLoading}
+                filterValue={filterValue}
+                onFilterChange={(v) => {
+                  setFilterValue(v);
+                  setPage(1);
+                }}
+                statusOptions={statusOptions}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                statusColorMap={statusColorMap}
+                showStatus={true}
+                sortDescriptor={sortDescriptor}
+                onSortChange={setSortDescriptor}
+                page={page}
+                pages={pages}
+                onPageChange={setPage}
+                exportFn={exportFn}
+                renderCell={renderCell}
+                hasNoRecords={hasNoRecords}
+                onDateFilterChange={handleDateFilter}
+                initialStartDate={startDate}
+                initialEndDate={endDate}
+              />
+            )}
+          </CardBody>
+        </Card>
+      </div>
     </>
   );
 }
