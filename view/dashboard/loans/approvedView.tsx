@@ -22,6 +22,7 @@ const columns: ColumnDef[] = [
 	{ name: "Monthly Repay.", uid: "monthlyRepayment", sortable: true },
 	{ name: "Duration", uid: "duration", sortable: true },
 	{ name: "Loan Status", uid: "loanStatus", sortable: true },
+	{ name: "Date", uid: "updatedAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -238,7 +239,8 @@ export default function LoansView() {
 				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : 'N/A',
 				downPayment: r.downPayment ? `₦${r.downPayment.toLocaleString()}` : 'N/A',
 				devicePrice: r.devicePrice ? `₦${r.devicePrice.toLocaleString()}` : 'N/A',
-				loanStatus: r.loanStatus || 'N/A'	
+				loanStatus: r.loanStatus || 'N/A',
+				updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleString() : 'N/A'
 			})),
 		[raw]
 	);
