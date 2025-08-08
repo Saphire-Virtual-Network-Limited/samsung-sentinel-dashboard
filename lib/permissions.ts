@@ -129,6 +129,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
+    canTriggerDeviceActions: true,
     // Collection officer has no special permissions
     // All permissions default to false
   },
