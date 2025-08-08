@@ -168,6 +168,10 @@ export default function CollectionSingleCustomerPage() {
   const pathname = usePathname();
   // Get the role from the URL path (e.g., /access/dev/customers -> dev)
   const role = pathname.split("/")[2];
+  
+  // Debug logging for role extraction
+  console.log("Pathname:", pathname);
+  console.log("Extracted role:", role);
 
   const { userResponse } = useAuth();
   const userEmail = userResponse?.data?.email || "";
@@ -560,7 +564,7 @@ export default function CollectionSingleCustomerPage() {
 
 
   // Device action configuration
-  const deviceActions = [
+  const allDeviceActions = [
     {
       label: "Lock Device",
       value: "lock_device",
@@ -580,6 +584,15 @@ export default function CollectionSingleCustomerPage() {
       color: "warning",
     },
   ];
+
+  // Filter device actions based on user role
+  const deviceActions = role === "collection-officer" 
+    ? allDeviceActions.filter(action => action.value === "lock_device")
+    : allDeviceActions;
+
+  // Debug logging
+  console.log("Current role:", role);
+  console.log("Available device actions:", deviceActions.map(a => a.label));
 
   // Unified device action handler
   const handleDeviceAction = async (action: string, imei: string) => {
@@ -1050,7 +1063,11 @@ export default function CollectionSingleCustomerPage() {
             {/* locking and unlocking device*/}
 
             {/* Device Activity Actions*/}
-            {hasPermission(role, "canTriggerDeviceActions", userEmail) && (
+            {(() => {
+              const hasDevicePermission = hasPermission(role, "canTriggerDeviceActions", userEmail);
+              console.log("Has device permission:", hasDevicePermission);
+              return hasDevicePermission;
+            })() && (
               <InfoCard
                 title="Device Activity Actions"
                 icon={<Smartphone className="w-5 h-5 text-default-600" />}
