@@ -60,6 +60,7 @@ export interface PermissionConfig {
   verifyMobiflex: boolean;
   viewAgentPerformanceData: boolean;
   updateScanPartner: boolean;
+  canApproveStore: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -92,6 +93,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     viewCommissionDetails: true,
     viewAgentPerformanceData: true,
     updateScanPartner: true,
+    canApproveStore: true,
     // Admin has no special permissions by default
     // All permissions default to false
   },
@@ -112,7 +114,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     updateScanPartner: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
-
+    // canApproveStore: true,
     updateGuarantorStatus: true,
     updateAddressStatus: true,
     viewLoanDetails: true,
@@ -215,17 +217,18 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateLastPoint: true,
     canUpdateLoanStatus: true,
     canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
+    canDeleteCustomers: true,
     canViewOverDuePayments: true,
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
     canCreate: true,
-    // canSync: true,
-    // canEdit: true,
+    canSync: true,
+    canEdit: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
     createDashboardUser: true,
     canChangeDashboardUserPassword: true,
+    canApproveStore: true,
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
@@ -237,11 +240,12 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewCommunicationLog: true,
     canViewDeviceActivityLog: true,
     canCreate: true,
-    // canSync: true,
-    // canEdit: true,
+    canSync: true,
+    canEdit: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
     createDashboardUser: true,
+    canApproveStore: true,
   },
   // "seyi@sapphirevirtual.com": {
   //   canUpdateWalletBalance: true,
@@ -259,12 +263,15 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
   //   canAssignAgent: true,
   // },
   "olayinka@sapphirevirtual.com": {
-    canCreate: true,
+    // canCreate: true,
     // canEdit: true,
     canAssignAgent: true,
   },
   "richard@sapphirevirtual.com": {
     canAssignAgent: true,
+  },
+  "ajayi@sapphirevirtual.com": {
+    canApproveStore: true,
   },
 };
 
@@ -296,7 +303,7 @@ function getDefaultPermissions(): PermissionConfig {
     viewCommissionDetails: false,
     updateScanPartner: false,
     viewAgentPerformanceData: false,
-
+    canApproveStore: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -389,6 +396,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "verifyMobiflex",
     "viewAgentPerformanceData",
     "updateScanPartner",
+    "canApproveStore",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',

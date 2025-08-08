@@ -19,7 +19,7 @@ import DeviceSummaryView from "./devices/deviceSummary";
 import SingleRefereeView from "./verify-Referee/singleRefView";
 import SingleCustomer from "./customer/singleCustomer";
 import StoreSummaryPage from "./finance/storeSummary";
-import { singleStoreView } from "./finance/singleStoreView";
+import singleStoreView from "./finance/singleStoreView";
 import UtilizationView from "./loans/utilization";
 import AllCustomerRefereesPage from "./verify-Referee/allCustomerRef";
 import UniqueEngageView from "./reports/uniqueEngage";
@@ -53,6 +53,9 @@ import CreateStorePage from "./finance/createStore";
 import StoreForm from "./finance/StoreForm";
 import DeviceForm from "./devices/deviceForm";
 import LowDownpayment from "./loans/lowDowpayment";
+import AllStoresPending from "./audit/allStorespending";
+import AllStoresSuspended from "./audit/allStoreSuspended";
+import StoreSummaryAudit from "./audit/storeSummaryAudit";
 export {
   MBEPage,
   SingleMBEPage,
@@ -79,7 +82,6 @@ export {
   SingleRefereeView,
   SingleCustomer,
   StoreSummaryPage,
-  singleStoreView,
   UtilizationView,
   AllCustomerRefereesPage,
   UniqueEngageView,
@@ -109,4 +111,8 @@ export {
   DeviceForm,
   LowDownpayment,
   SettingsView,
+  AllStoresPending,
+  AllStoresSuspended,
+  singleStoreView,
+  StoreSummaryAudit,
 };

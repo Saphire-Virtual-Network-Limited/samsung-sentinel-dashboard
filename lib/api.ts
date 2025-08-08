@@ -349,6 +349,10 @@ export async function getAllStores() {
 	return apiCall("/admin/stores/record", "GET");
 }
 
+export async function getStoreRecordById(storeId: string) {
+	return apiCall(`/admin/stores/record/${storeId}`, "GET");
+}
+
 export async function getUnpaidStores(startDate?: string, endDate?: string) {
 	const query =
 		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
@@ -360,6 +364,18 @@ export async function getPaidStores(startDate?: string, endDate?: string) {
 		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/stores/paid${query}`, "GET");
 }
+
+export async function getStoresbyStatus(status: string) {
+	return apiCall(`/admin/stores/status?status=${status}`, "GET");
+}
+
+export async function AuditApprovalforStoreDetails(storeId: string, status: string) {
+	return apiCall(`/admin/stores/${storeId}/status`, "PATCH", { status });
+}
+
+
+
+
 
 //** Referees */
 
