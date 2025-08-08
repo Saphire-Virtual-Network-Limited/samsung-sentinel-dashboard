@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllStores, showToast, syncStores, useAuth } from "@/lib";
+import { getStoresbyStatus, showToast, syncStores, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Chip } from "@heroui/react";
@@ -90,7 +90,7 @@ type StoreRecord = {
   storeId: string;
 };
 
-export default function AllStoresView() {
+export default function AllStoresPending() {
 
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
@@ -133,7 +133,7 @@ export default function AllStoresView() {
 	try {
 		const response = await syncStores();
 		showToast({ type: "success",message: "Stores synced successfully",duration: 3000 });
-		mutate(["stores-records"]);
+		mutate(["stores-records-pending"]);
 	} catch (error: any) {
 		console.error("Error syncing stores:", error);
 		showToast({ type: "error",message: error.message ||"Error syncing stores",duration: 3000 });
@@ -144,8 +144,8 @@ export default function AllStoresView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		["stores-records"],
-		() => getAllStores()
+		["stores-records-pending"],
+		() => getStoresbyStatus("PENDING")
 			.then((r) => {
 				if (!r.data || r.data.length === 0) {
 					setHasNoRecords(true);

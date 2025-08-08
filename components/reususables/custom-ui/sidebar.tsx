@@ -901,6 +901,89 @@ export function AppSidebar() {
     },
   ];
 
+  const auditItems: MenuItem[] = [
+    {
+      title: "Dashboard",
+      icon: Home,
+      url: "/access/audit/",
+      id: "audit-dashboard",
+    },
+    {
+      icon: Store,
+      title: "Stores",
+      url: "/access/audit/stores",
+      id: "audit-stores",
+    },
+    {
+      icon: CreditCard,
+      title: "Loans",
+      url: "/access/audit/loans",
+      id: "audit-loans",
+    },
+    {
+      icon: Store,
+      title: "Customers",
+      url: "/access/audit/customers",
+      id: "audit-customers",
+    },
+    {
+      icon: ChartBar,
+      title: "Reports",
+      id: "audit-reports",
+      subItems: [
+        {
+          title: "Sales",
+          subItems: [
+            {
+              title: "Overview",
+              url: "/access/audit/reports/sales/overview",
+            },
+            { title: "MBE Report", url: "/access/audit/reports/sales/mbe" },
+            {
+              title: "Samsung Report",
+              url: "/access/audit/reports/sales/samsung",
+            },
+            {
+              title: "Xiaomi Report",
+              url: "/access/audit/reports/sales/xiaomi",
+            },
+            { title: "Oppo Report", url: "/access/audit/reports/sales/oppo" },
+            {
+              title: "Sentinel",
+              url: "/access/audit/reports/sales/sentinel",
+            },
+            {
+              title: "Mobiflex Report",
+              url: "/access/audit/reports/mobiflex",
+            },
+          ],
+        },
+        { title: "Drop-offs", url: "/access/audit/reports/drop-offs" },
+        { title: "Tracker", url: "/access/audit/reports/tracker" },
+      ],
+    },
+    {
+      icon: IoBusiness,
+      title: "Staff",
+      url: "/access/audit/staff",
+      id: "audit-staff",
+      subItems: [
+        {
+          title: "Mobiflex Sales Agent",
+          url: "/access/audit/staff/agents",
+        },
+        {
+          title: "MBE",
+          url: "/access/audit/staff/mbe",
+        },
+        {
+          title: "SCAN Partners",
+          url: "/access/audit/staff/scan-partners",
+        },
+      ],
+    },
+  ];
+
   const supportItems: MenuItem[] = [
     {
       title: "Dashboard",
@@ -1051,13 +1134,14 @@ export function AppSidebar() {
         return salesItems;
       case "FINANCE":
         return financeItems;
+      case "AUDIT":
+        return auditItems;
       case "SUPPORT":
         return supportItems;
       case "COLLECTION_ADMIN":
         return collectionAdminItems;
       case "COLLECTION_OFFICER":
         return collectionOfficerItems;
-
       case "SCAN_PARTNER":
         return scanParterItems;
       default:

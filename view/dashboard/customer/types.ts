@@ -86,6 +86,8 @@ export type CustomerRecord = {
     phoneApproved: string;
     generalStatus: string;
     generalComment: string;
+    refName2: string;
+    refName3: string;
     createdAt: string;
     updatedAt: string;
     status2Comment: string | null;

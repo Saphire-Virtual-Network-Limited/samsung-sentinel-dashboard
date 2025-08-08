@@ -108,6 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             return currentPath.startsWith("/access/dev");
           case "FINANCE":
             return currentPath.startsWith("/access/finance");
+          case "AUDIT":
+            return currentPath.startsWith("/access/audit");
           case "VERIFICATION":
           case "VERIFICATION_OFFICER":
             return currentPath.startsWith("/access/verify");
@@ -149,6 +151,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             break;
           case "FINANCE":
             router.replace("/access/finance");
+            break;
+          case "AUDIT":
+            router.replace("/access/audit");
             break;
           case "VERIFICATION":
           case "VERIFICATION_OFFICER":
