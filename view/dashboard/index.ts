@@ -111,8 +111,10 @@ export {
   DeviceForm,
   LowDownpayment,
   SettingsView,
+
   AllStoresPending,
   AllStoresSuspended,
   singleStoreView,
   StoreSummaryAudit,
+
 };

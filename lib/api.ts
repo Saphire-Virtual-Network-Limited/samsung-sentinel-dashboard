@@ -347,6 +347,7 @@ export async function verifyCustomerReferenceNumber(
 
 export async function getAllStores() {
 	return apiCall("/admin/stores/record", "GET");
+
 }
 
 export async function getStoreRecordById(storeId: string) {
@@ -893,6 +894,7 @@ export async function createDevice(createDevice: createDevice) {
 		formData.append("deviceImage", createDevice.deviceImage);
 	}
 
+
 	// Add all other fields
 	Object.keys(createDevice).forEach((key) => {
 		if (
@@ -902,6 +904,19 @@ export async function createDevice(createDevice: createDevice) {
 			formData.append(key, String(createDevice[key as keyof createDevice]));
 		}
 	});
+
+
+
+	// Add all other fields
+	Object.keys(createDevice).forEach((key) => {
+		if (
+			key !== "deviceImage" &&
+			createDevice[key as keyof createDevice] !== undefined
+		) {
+			formData.append(key, String(createDevice[key as keyof createDevice]));
+		}
+	});
+
 
 	return apiCall("/admin/device/create", "POST", formData);
 }
@@ -942,10 +957,19 @@ export async function updateDevice(
 ) {
 	const formData = new FormData();
 
+
 	// Add file if it exists
 	if (updateDevice.deviceImage) {
 		formData.append("deviceImage", updateDevice.deviceImage);
 	}
+
+
+
+	// Add file if it exists
+	if (updateDevice.deviceImage) {
+		formData.append("deviceImage", updateDevice.deviceImage);
+	}
+
 
 	// Add all other fields
 	Object.keys(updateDevice).forEach((key) => {

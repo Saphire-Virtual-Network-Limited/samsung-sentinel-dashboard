@@ -228,7 +228,9 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canAssignAgent: true,
     createDashboardUser: true,
     canChangeDashboardUserPassword: true,
+
     canApproveStore: true,
+
   },
   "greatnessabolade@gmail.com": {
     canUpdateWalletBalance: true,
@@ -245,7 +247,9 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
     createDashboardUser: true,
+
     canApproveStore: true,
+
   },
   // "seyi@sapphirevirtual.com": {
   //   canUpdateWalletBalance: true,
