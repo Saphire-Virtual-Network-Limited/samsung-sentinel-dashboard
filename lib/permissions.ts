@@ -229,8 +229,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canAssignAgent: true,
     createDashboardUser: true,
     canChangeDashboardUserPassword: true,
-
     canApproveStore: true,
+
 
   },
   "greatnessabolade@gmail.com": {
