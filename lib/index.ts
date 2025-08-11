@@ -11,6 +11,19 @@ export * from "./globalContext";
 export * from "./helper";
 import InternetStatus from "./internetCheck";
 
-import { formatDate, sortData, filterData, statusColorMap, getCurrentYear } from "./helper";
+import {
+	formatDate,
+	sortData,
+	filterData,
+	statusColorMap,
+	getCurrentYear,
+} from "./helper";
 
-export { formatDate, sortData, filterData, statusColorMap, InternetStatus, getCurrentYear };
+export {
+	formatDate,
+	sortData,
+	filterData,
+	statusColorMap,
+	InternetStatus,
+	getCurrentYear,
+};

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardBody, Select, SelectItem } from "@heroui/react";
+import { Card, CardBody, Select, SelectItem, Button } from "@heroui/react";
 import Link from "next/link";
 import {
 	BarChart3,
@@ -110,7 +110,13 @@ const MobiflexDailyDashCard = () => {
 			true
 		),
 		formatMetric(
-			"Top Agent Loans",
+			"Total Sales Count",
+			formatDisplayNumber(leaderboardData?.summary?.totalLoans || 0),
+			"0",
+			"#"
+		),
+		formatMetric(
+			"Top Agent Sales",
 			formatDisplayNumber(leaderboardData?.summary?.topAgent?.loanCount || 0),
 			"0",
 			"#"
@@ -133,14 +139,14 @@ const MobiflexDailyDashCard = () => {
 					isCurrency: false,
 				},
 				{
-					label: "Top Agent Loans",
-					value: leaderboardData?.summary?.topAgent?.loanCount || 0,
+					label: "Total Sales",
+					value: leaderboardData?.summary?.totalLoans || 0,
 					isCurrency: false,
 				},
 				{
-					label: "Top Agent Commission",
-					value: leaderboardData?.summary?.topAgent?.totalCommission || 0,
-					isCurrency: true,
+					label: "Top Agent Sales",
+					value: leaderboardData?.summary?.topAgent?.loanCount || 0,
+					isCurrency: false,
 				},
 				{
 					label: "Agent Commission",
@@ -163,9 +169,9 @@ const MobiflexDailyDashCard = () => {
 					isCurrency: true,
 				},
 				{
-					label: "Agent Commission",
-					value: leaderboardData?.summary?.totalAgentCommission || 0,
-					isCurrency: true,
+					label: "Total Sales",
+					value: leaderboardData?.summary?.totalLoans || 0,
+					isCurrency: false,
 				},
 				{
 					label: "Average Commission",
@@ -181,14 +187,14 @@ const MobiflexDailyDashCard = () => {
 					isCurrency: true,
 				},
 				{
-					label: "Top Agent Commission",
-					value: leaderboardData?.summary?.topAgent?.totalCommission || 0,
+					label: "Agent Commission",
+					value: leaderboardData?.summary?.totalAgentCommission || 0,
 					isCurrency: true,
 				},
 			],
 		},
 		loans: {
-			name: "Partner Metrics",
+			name: "Sales & Partner Metrics",
 			color: "from-purple-500 to-purple-600",
 			bgColor: "bg-purple-50",
 			borderColor: "border-purple-200",
@@ -196,17 +202,17 @@ const MobiflexDailyDashCard = () => {
 			url: "/access/admin/reports/mobiflex/partners",
 			metrics: [
 				{
-					label: "Total Loans",
+					label: "Total Sales",
 					value: leaderboardData?.summary?.totalLoans || 0,
 					isCurrency: false,
 				},
 				{
-					label: "Top Agent Loans",
-					value: leaderboardData?.summary?.topAgent?.loanCount || 0,
+					label: "Total Partners",
+					value: partnerData?.summary?.totalPartners || 0,
 					isCurrency: false,
 				},
 				{
-					label: "Average per Agent",
+					label: "Avg Sales per Agent",
 					value:
 						leaderboardData?.totalAgents && leaderboardData?.totalAgents > 0
 							? Math.round(
@@ -217,9 +223,9 @@ const MobiflexDailyDashCard = () => {
 					isCurrency: false,
 				},
 				{
-					label: "Loan Performance",
-					value: leaderboardData?.summary?.totalLoans || 0,
-					isCurrency: false,
+					label: "Partner Commission",
+					value: partnerData?.summary?.grandTotalPartnerCommission || 0,
+					isCurrency: true,
 				},
 			],
 		},
@@ -310,6 +316,7 @@ const MobiflexDailyDashCard = () => {
 						: partner.partnerName,
 				commission: partner.totalCommission,
 				agents: partner.agentCount,
+				sales: partner.commissionCount,
 				color: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // Random color
 			})) || [];
 
@@ -332,6 +339,9 @@ const MobiflexDailyDashCard = () => {
 							<p className="text-sm text-green-600">
 								Agents: {formatDisplayNumber(payload[1].value)}
 							</p>
+							<p className="text-sm text-purple-600">
+								Sales: {formatDisplayNumber(payload[2].value)}
+							</p>
 						</div>
 					</div>
 				);
@@ -351,7 +361,7 @@ const MobiflexDailyDashCard = () => {
 						Top Scan Partners Performance
 					</h3>
 					<p className="text-sm text-gray-600">
-						Commission and agent count by partner
+						Commission, agents, and sales count by partner
 					</p>
 				</div>
 				<CardBody className="p-0">
@@ -367,6 +377,7 @@ const MobiflexDailyDashCard = () => {
 							<Legend />
 							<Bar dataKey="commission" fill="#3b82f6" name="Commission (₦)" />
 							<Bar dataKey="agents" fill="#22c55e" name="Agents" />
+							<Bar dataKey="sales" fill="#a855f7" name="Sales" />
 						</BarChart>
 					</ResponsiveContainer>
 				</CardBody>
@@ -384,7 +395,7 @@ const MobiflexDailyDashCard = () => {
 					partnerCommission: partner.totalPartnerCommission,
 					agentCommission: partner.totalAgentCommission,
 					agentCount: partner.agentCount,
-					commissionCount: partner.commissionCount,
+					salesCount: partner.commissionCount,
 					averageCommissionPerAgent: partner.averageCommissionPerAgent,
 				};
 			}) || [];
@@ -398,10 +409,11 @@ const MobiflexDailyDashCard = () => {
 							GeneralSans_SemiBold.className
 						)}
 					>
-						Partner Performance & Commission Breakdown
+						Partner Performance & Sales Analytics
 					</h3>
 					<p className="text-sm text-gray-600">
-						Detailed view of partner vs agent commission distribution
+						Detailed view of partner commission distribution and sales
+						performance
 					</p>
 				</div>
 				<CardBody className="p-0">
@@ -420,6 +432,9 @@ const MobiflexDailyDashCard = () => {
 									</th>
 									<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
 										Agent Commission
+									</th>
+									<th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+										Sales Count
 									</th>
 									<th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
 										Agents
@@ -454,6 +469,11 @@ const MobiflexDailyDashCard = () => {
 											<div className="text-sm text-green-600 font-medium">
 												₦{formatDisplayNumber(partner.agentCommission)}
 											</div>
+										</td>
+										<td className="px-4 py-3 whitespace-nowrap text-center">
+											<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+												{formatDisplayNumber(partner.salesCount)}
+											</span>
 										</td>
 										<td className="px-4 py-3 whitespace-nowrap text-center">
 											<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -493,6 +513,13 @@ const MobiflexDailyDashCard = () => {
 											{formatDisplayNumber(
 												partnerData?.summary?.grandTotalAgentCommission || 0
 											)}
+										</td>
+										<td className="px-4 py-3 text-center">
+											<span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-200 text-orange-900">
+												{formatDisplayNumber(
+													partnerData?.summary?.totalCommissions || 0
+												)}
+											</span>
 										</td>
 										<td className="px-4 py-3 text-center">
 											<span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-200 text-purple-900">
@@ -535,7 +562,7 @@ const MobiflexDailyDashCard = () => {
 						? `${agent.firstName} ${agent.lastName}`.substring(0, 20) + "..."
 						: `${agent.firstName} ${agent.lastName}`,
 				commission: agent.totalCommission,
-				loans: agent.loanCount,
+				sales: agent.loanCount,
 				color: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // Random color
 			})) || [];
 
@@ -556,7 +583,7 @@ const MobiflexDailyDashCard = () => {
 								Commission: ₦{formatDisplayNumber(payload[0].value)}
 							</p>
 							<p className="text-sm text-green-600">
-								Loans: {formatDisplayNumber(payload[1].value)}
+								Sales: {formatDisplayNumber(payload[1].value)}
 							</p>
 						</div>
 					</div>
@@ -577,7 +604,7 @@ const MobiflexDailyDashCard = () => {
 						Top Agents Performance
 					</h3>
 					<p className="text-sm text-gray-600">
-						Commission and loan count by agent
+						Commission and sales count by agent
 					</p>
 				</div>
 				<CardBody className="p-0">
@@ -592,7 +619,7 @@ const MobiflexDailyDashCard = () => {
 							<Tooltip content={<CustomTooltip />} />
 							<Legend />
 							<Bar dataKey="commission" fill="#8b5cf6" name="Commission (₦)" />
-							<Bar dataKey="loans" fill="#f59e0b" name="Loans" />
+							<Bar dataKey="sales" fill="#f59e0b" name="Sales" />
 						</BarChart>
 					</ResponsiveContainer>
 				</CardBody>

@@ -17,17 +17,33 @@ export interface RegionStatsResponse {
 }
 
 export const useMobiflexRegionStats = (
-	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd"
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
+	start_date?: string,
+	end_date?: string,
+	sortBy?: "loans" | "commission",
+	limit?: number
 ) => {
 	const fetcher = async () => {
-		const response = await getMobiflexRegionStats(period, {
-			useCache: true,
-			cacheTTL: 5 * 60 * 1000, // 5 minutes
-		});
+		const response = await getMobiflexRegionStats(
+			period,
+			start_date,
+			end_date,
+			sortBy,
+			limit,
+			{
+				useCache: true,
+				cacheTTL: 5 * 60 * 1000, // 5 minutes
+			}
+		);
 		return response.data as RegionStatsData;
 	};
 
-	return useSWR(`mobiflex-region-stats-${period || "default"}`, fetcher, {
+	// Create a cache key that includes all parameters
+	const cacheKey = `mobiflex-region-stats-${period || "default"}-${
+		start_date || "no-start"
+	}-${end_date || "no-end"}-${sortBy || "default"}-${limit || "unlimited"}`;
+
+	return useSWR(cacheKey, fetcher, {
 		refreshInterval: 5 * 60 * 1000, // 5 minutes
 		errorRetryCount: 3,
 		revalidateOnFocus: false,
