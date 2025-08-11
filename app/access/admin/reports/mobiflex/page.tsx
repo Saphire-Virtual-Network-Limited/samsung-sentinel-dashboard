@@ -2,7 +2,7 @@ import MobiflexReportsView from "@/view/dashboard/reports/mobiflex/mobiflexSumma
 import React from "react";
 
 const MobiflexReportsPage = () => {
-  return <MobiflexReportsView />;
+	return <MobiflexReportsView />;
 };
 
 export default MobiflexReportsPage;
