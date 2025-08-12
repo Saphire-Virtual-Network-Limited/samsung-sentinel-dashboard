@@ -616,7 +616,10 @@ export default function CollectionSingleCustomerPage() {
           successMessage = "Device locked successfully";
           break;
         case "unlock_device":
-          response = await unlockDevice(imei, dueDate, dueTime);
+          // Format date as DD/MM/YYYY and convert time to 24hr format minus 1 hour
+          const formattedDate = formatDateForEndpoint(dueDate);
+          const formattedTime = formatTimeForEndpoint(dueTime);
+          response = await unlockDevice(imei, formattedDate, formattedTime);
           successMessage = "Device unlocked successfully";
           break;
         case "release_device":
@@ -639,7 +642,6 @@ export default function CollectionSingleCustomerPage() {
       setDueDate("");
       setDueTime("");
       // Refresh the page
-      window.location.reload();
     } catch (error: any) {
       console.log(error);
       showToast({
@@ -650,6 +652,39 @@ export default function CollectionSingleCustomerPage() {
     } finally {
       setIsButtonLoading(false);
     }
+  };
+
+  // Helper function to format date as DD/MM/YYYY
+  const formatDateForEndpoint = (dateString: string): string => {
+    if (!dateString) return "";
+    
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper function to convert time to 24hr format and subtract 1 hour
+  const formatTimeForEndpoint = (timeString: string): string => {
+    if (!timeString) return "";
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    // Convert to 24hr format (already in 24hr format from input type="time")
+    // Subtract 1 hour
+    let adjustedHours = hours - 1;
+    
+    // Handle negative hours (wrap to previous day)
+    if (adjustedHours < 0) {
+      adjustedHours = 23;
+    }
+    
+    const formattedHours = adjustedHours.toString().padStart(2, '0');
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    
+    return `${formattedHours}:${formattedMinutes}`;
   };
 
   // Handle action selection and modal opening
