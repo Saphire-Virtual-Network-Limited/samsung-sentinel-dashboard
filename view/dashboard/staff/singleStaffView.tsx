@@ -307,7 +307,7 @@ const fetchAgent = async (agentId: string) => {
 const fetchAgentDevices = async (
 	agentId: string,
 	acceptedDate?: string
-): Promise<DeviceItem[]> => {
+): Promise<DeviceResponse["data"]> => {
 	if (!agentId) {
 		throw new Error("Agent ID is required");
 	}
@@ -316,10 +316,10 @@ const fetchAgentDevices = async (
 			mbeId: agentId,
 			acceptedDate: acceptedDate || new Date().toISOString().split("T")[0], // Default to today
 		});
-		return response?.data?.devices || [];
+		return response?.data || { devices: [], acceptedDate: "", expiryDate: "" };
 	} catch (error) {
 		console.error("Error fetching agent devices:", error);
-		return [];
+		return { devices: [], acceptedDate: "", expiryDate: "" };
 	}
 };
 
@@ -580,6 +580,10 @@ export default function AgentSinglePage() {
 		new Date().toISOString().split("T")[0]
 	);
 	const [selectedDevice, setSelectedDevice] = useState<DeviceItem | null>(null);
+	const [deviceMetadata, setDeviceMetadata] = useState<{
+		acceptedDate: string;
+		expiryDate: string;
+	} | null>(null);
 
 	// Store assignment states
 	const [isAssigningStore, setIsAssigningStore] = useState(false);
@@ -649,7 +653,7 @@ export default function AgentSinglePage() {
 
 	// Use SWR for agent devices
 	const {
-		data: devices,
+		data: deviceData,
 		error: devicesError,
 		isLoading: devicesLoading,
 		mutate: mutateDevices,
@@ -660,8 +664,17 @@ export default function AgentSinglePage() {
 			revalidateOnFocus: false,
 			revalidateOnReconnect: true,
 			dedupingInterval: 60000,
+			onSuccess: (data) => {
+				setDeviceMetadata({
+					acceptedDate: data.acceptedDate,
+					expiryDate: data.expiryDate,
+				});
+			},
 		}
 	);
+
+	// Extract devices array from deviceData
+	const devices = deviceData?.devices || [];
 
 	// Use SWR for agent performance data
 	const {
@@ -2748,28 +2761,49 @@ export default function AgentSinglePage() {
 			</Modal>
 
 			{/* Device Details Modal */}
-			<Modal isOpen={isDeviceModalOpen} onClose={onDeviceModalClose} size="2xl">
+			<Modal
+				isOpen={isDeviceModalOpen}
+				onClose={onDeviceModalClose}
+				size="5xl"
+				scrollBehavior="inside"
+				className="mx-2"
+			>
 				<ModalContent>
-					<ModalHeader>Device Details</ModalHeader>
-					<ModalBody>
+					<ModalHeader className="flex flex-col gap-1">
+						<h2 className="text-xl font-bold">Device Details</h2>
+						{deviceMetadata && (
+							<div className="flex flex-col sm:flex-row gap-2 text-sm text-default-600">
+								<span>
+									Received:{" "}
+									{new Date(deviceMetadata.acceptedDate).toLocaleDateString()}
+								</span>
+								<span className="hidden sm:inline">•</span>
+								<span>
+									Expires:{" "}
+									{new Date(deviceMetadata.expiryDate).toLocaleDateString()}
+								</span>
+							</div>
+						)}
+					</ModalHeader>
+					<ModalBody className="px-4 pb-4">
 						{selectedDevice && (
 							<div className="space-y-6">
 								{/* Device Image and Basic Info */}
-								<div className="flex items-start gap-4">
+								<div className="flex flex-col sm:flex-row items-start gap-4">
 									{selectedDevice.imageLink ? (
 										<Image
 											src={selectedDevice.imageLink}
 											alt={selectedDevice.deviceName}
 											width={120}
 											height={120}
-											className="rounded-lg object-cover"
+											className="rounded-lg object-cover mx-auto sm:mx-0"
 										/>
 									) : (
-										<div className="w-30 h-30 bg-default-200 rounded-lg flex items-center justify-center">
+										<div className="w-30 h-30 bg-default-200 rounded-lg flex items-center justify-center mx-auto sm:mx-0">
 											<Smartphone className="w-8 h-8 text-default-400" />
 										</div>
 									)}
-									<div className="flex-1">
+									<div className="flex-1 text-center sm:text-left">
 										<h3 className="text-xl font-bold text-default-900 mb-1">
 											{selectedDevice.deviceName}
 										</h3>
@@ -2794,7 +2828,7 @@ export default function AgentSinglePage() {
 								{/* Device Specifications */}
 								<div>
 									<h4 className="font-semibold mb-3">Specifications</h4>
-									<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 										<div className="bg-default-50 p-3 rounded-lg">
 											<p className="text-xs text-default-500 mb-1">RAM</p>
 											<p className="font-semibold">
@@ -2835,7 +2869,7 @@ export default function AgentSinglePage() {
 								{/* Pricing Information */}
 								<div>
 									<h4 className="font-semibold mb-3">Pricing Information</h4>
-									<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 										<div className="bg-success-50 p-3 rounded-lg">
 											<p className="text-xs text-success-600 mb-1">
 												Device Price
@@ -2871,21 +2905,21 @@ export default function AgentSinglePage() {
 								<div>
 									<h4 className="font-semibold mb-3">ERP Information</h4>
 									<div className="space-y-3">
-										<div className="flex items-center justify-between py-2 border-b border-default-100">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 											<span className="text-sm text-default-600">
 												ERP Item Code
 											</span>
-											<span className="font-medium">
+											<span className="font-medium break-all">
 												{selectedDevice.erpItemCode}
 											</span>
 										</div>
-										<div className="flex items-center justify-between py-2 border-b border-default-100">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 											<span className="text-sm text-default-600">ERP Name</span>
-											<span className="font-medium">
+											<span className="font-medium break-all">
 												{selectedDevice.erpName}
 											</span>
 										</div>
-										<div className="flex items-center justify-between py-2 border-b border-default-100">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 											<span className="text-sm text-default-600">
 												Serial Number
 											</span>
@@ -2900,7 +2934,7 @@ export default function AgentSinglePage() {
 								<div>
 									<h4 className="font-semibold mb-3">Technical Information</h4>
 									<div className="space-y-3">
-										<div className="flex items-center justify-between py-2 border-b border-default-100">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 											<span className="text-sm text-default-600">
 												Device ID
 											</span>
@@ -2909,16 +2943,16 @@ export default function AgentSinglePage() {
 											</Snippet>
 										</div>
 										{selectedDevice.oldDeviceId && (
-											<div className="flex items-center justify-between py-2 border-b border-default-100">
+											<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 												<span className="text-sm text-default-600">
 													Old Device ID
 												</span>
-												<span className="font-mono text-sm">
+												<span className="font-mono text-sm break-all">
 													{selectedDevice.oldDeviceId}
 												</span>
 											</div>
 										)}
-										<div className="flex items-center justify-between py-2 border-b border-default-100">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-default-100 gap-2">
 											<span className="text-sm text-default-600">
 												Created At
 											</span>
@@ -2935,7 +2969,7 @@ export default function AgentSinglePage() {
 												)}
 											</span>
 										</div>
-										<div className="flex items-center justify-between py-2">
+										<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-2">
 											<span className="text-sm text-default-600">
 												Updated At
 											</span>
@@ -2954,11 +2988,54 @@ export default function AgentSinglePage() {
 										</div>
 									</div>
 								</div>
+
+								{/* Device Assignment Dates */}
+								{deviceMetadata && (
+									<div>
+										<h4 className="font-semibold mb-3">
+											Assignment Information
+										</h4>
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+											<div className="bg-blue-50 p-3 rounded-lg">
+												<p className="text-xs text-blue-600 mb-1">
+													Date Received
+												</p>
+												<p className="font-semibold text-blue-800">
+													{new Date(
+														deviceMetadata.acceptedDate
+													).toLocaleDateString("en-US", {
+														year: "numeric",
+														month: "long",
+														day: "numeric",
+													})}
+												</p>
+											</div>
+											<div className="bg-orange-50 p-3 rounded-lg">
+												<p className="text-xs text-orange-600 mb-1">
+													Expiry Date
+												</p>
+												<p className="font-semibold text-orange-800">
+													{new Date(
+														deviceMetadata.expiryDate
+													).toLocaleDateString("en-US", {
+														year: "numeric",
+														month: "long",
+														day: "numeric",
+													})}
+												</p>
+											</div>
+										</div>
+									</div>
+								)}
 							</div>
 						)}
 					</ModalBody>
-					<ModalFooter>
-						<Button variant="flat" onPress={onDeviceModalClose}>
+					<ModalFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+						<Button
+							variant="flat"
+							onPress={onDeviceModalClose}
+							className="w-full sm:w-auto"
+						>
 							Close
 						</Button>
 					</ModalFooter>

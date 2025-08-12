@@ -87,6 +87,7 @@ export interface GenericTableProps<T> {
 	// Rows per page controls
 	rowsPerPageOptions?: number[]; // Available options for rows per page
 	defaultRowsPerPage?: number; // Default number of rows per page
+	showRowsPerPageSelector?: boolean; // Whether to show the rows per page selector
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
@@ -132,6 +133,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		showColumnSelector = true,
 		rowsPerPageOptions = [5, 10, 15, 20, 25, 30, 50, 70, 80, 100],
 		defaultRowsPerPage = 10,
+		showRowsPerPageSelector = false,
 	} = props;
 
 	// Column visibility state
@@ -338,26 +340,30 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 				onChange={onPageChange}
 			/>
 			<div className="hidden sm:flex w-[30%] justify-end gap-2 items-center">
-				<Dropdown>
-					<DropdownTrigger>
-						<Button size="sm" variant="flat" endContent={<ChevronDownIcon />}>
-							{rowsPerPage} rows
-						</Button>
-					</DropdownTrigger>
-					<DropdownMenu
-						disallowEmptySelection
-						selectedKeys={new Set([rowsPerPage.toString()])}
-						selectionMode="single"
-						onSelectionChange={(keys) => {
-							const selectedKey = Array.from(keys)[0] as string;
-							setRowsPerPage(Number(selectedKey));
-						}}
-					>
-						{rowsPerPageOptions.map((option) => (
-							<DropdownItem key={option.toString()}>{option} rows</DropdownItem>
-						))}
-					</DropdownMenu>
-				</Dropdown>
+				{showRowsPerPageSelector && (
+					<Dropdown>
+						<DropdownTrigger>
+							<Button size="sm" variant="flat" endContent={<ChevronDownIcon />}>
+								{rowsPerPage} rows
+							</Button>
+						</DropdownTrigger>
+						<DropdownMenu
+							disallowEmptySelection
+							selectedKeys={new Set([rowsPerPage.toString()])}
+							selectionMode="single"
+							onSelectionChange={(keys) => {
+								const selectedKey = Array.from(keys)[0] as string;
+								setRowsPerPage(Number(selectedKey));
+							}}
+						>
+							{rowsPerPageOptions.map((option) => (
+								<DropdownItem key={option.toString()}>
+									{option} rows
+								</DropdownItem>
+							))}
+						</DropdownMenu>
+					</Dropdown>
+				)}
 				<Button
 					isDisabled={page <= 1}
 					size="sm"
@@ -440,7 +446,12 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 						? `${
 								(item as any).id ||
 								(item as any).loanId ||
-								(item as any)[displayedColumns[1].uid]
+								(item as any).customerId ||
+								(item as any).deviceId ||
+								(item as any).newDeviceId ||
+								(item as any).loanRecordId ||
+								(item as any).commissionId ||
+								`row-${rowIndex}-${JSON.stringify(item).slice(0, 50)}`
 						  }`
 						: `skeleton-${rowIndex}`;
 					return (
