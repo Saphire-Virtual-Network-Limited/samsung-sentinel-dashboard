@@ -1,94 +1,94 @@
 import useSWR from "swr";
 import {
-  getMobiflexScanPartnerStatsById,
-  getMobiflexPartnerApprovedAgents,
-  PartnerSpecificData,
-  PartnerAgentStatusData,
+	getMobiflexScanPartnerStatsById,
+	getMobiflexPartnerApprovedAgents,
+	PartnerSpecificData,
+	PartnerAgentStatusData,
 } from "@/lib/api";
 
 // Re-export types for convenience
 export type { PartnerSpecificData, PartnerAgentStatusData };
 
 export interface ScanPartnerSalesData {
-  partnerStats: PartnerSpecificData | null;
-  approvedAgents: PartnerAgentStatusData | null;
-  isLoading: boolean;
-  error: any;
+	partnerStats: PartnerSpecificData | null;
+	approvedAgents: PartnerAgentStatusData | null;
+	isLoading: boolean;
+	error: any;
 }
 
 /**
  * Hook to fetch comprehensive sales data for a specific scan partner
  */
 export const useScanPartnerSales = (
-  partnerId: string | null,
-  period?: "daily" | "weekly" | "monthly" | "yearly"
+	partnerId: string | null,
+	period?: "daily" | "weekly" | "monthly" | "yearly" | "mtd",
+	start_date?: string,
+	end_date?: string
 ): ScanPartnerSalesData => {
-  // Fetch partner stats with period filter
-  const {
-    data: partnerStats,
-    error: statsError,
-    isLoading: isStatsLoading,
-  } = useSWR(
-    partnerId ? `scan-partner-stats-${partnerId}-${period || "default"}` : null,
-    () =>
-      partnerId
-        ? getMobiflexScanPartnerStatsById(partnerId, period).then((r) => r.data)
-        : null,
-    {
-      refreshInterval: 5 * 60 * 1000, // 5 minutes
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
-      shouldRetryOnError: true,
-    }
-  );
+	// Create cache keys that include all parameters
+	const statsCacheKey = partnerId
+		? `scan-partner-stats-${partnerId}-${period || "default"}-${
+				start_date || "no-start"
+		  }-${end_date || "no-end"}`
+		: null;
+	const agentsCacheKey = partnerId
+		? `scan-partner-approved-agents-${partnerId}-${period || "default"}-${
+				start_date || "no-start"
+		  }-${end_date || "no-end"}`
+		: null;
 
-  // Fetch approved agents data (not period-dependent)
-  const {
-    data: approvedAgents,
-    error: agentsError,
-    isLoading: isAgentsLoading,
-  } = useSWR(
-    partnerId ? `scan-partner-approved-agents-${partnerId}` : null,
-    () =>
-      partnerId
-        ? getMobiflexPartnerApprovedAgents(partnerId).then((r) => r.data)
-        : null,
-    {
-      refreshInterval: 5 * 60 * 1000,
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000,
-      shouldRetryOnError: true,
-    }
-  );
+	// Fetch partner stats with period and date range filters
+	const {
+		data: partnerStats,
+		error: statsError,
+		isLoading: isStatsLoading,
+	} = useSWR(
+		statsCacheKey,
+		() =>
+			partnerId
+				? getMobiflexScanPartnerStatsById(
+						partnerId,
+						period,
+						start_date,
+						end_date
+				  ).then((r) => r.data)
+				: null,
+		{
+			refreshInterval: 5 * 60 * 1000, // 5 minutes
+			revalidateOnFocus: false,
+			dedupingInterval: 2 * 60 * 1000, // 2 minutes
+			shouldRetryOnError: true,
+		}
+	);
 
-  return {
-    partnerStats: partnerStats || null,
-    approvedAgents: approvedAgents || null,
-    isLoading: isStatsLoading || isAgentsLoading,
-    error: statsError || agentsError,
-  };
-};
+	// Fetch approved agents data with period and date range filters
+	const {
+		data: approvedAgents,
+		error: agentsError,
+		isLoading: isAgentsLoading,
+	} = useSWR(
+		agentsCacheKey,
+		() =>
+			partnerId
+				? getMobiflexPartnerApprovedAgents(
+						partnerId,
+						period,
+						start_date,
+						end_date
+				  ).then((r) => r.data)
+				: null,
+		{
+			refreshInterval: 5 * 60 * 1000,
+			revalidateOnFocus: false,
+			dedupingInterval: 2 * 60 * 1000,
+			shouldRetryOnError: true,
+		}
+	);
 
-/**
- * Hook to get sales summary data for multiple scan partners
- */
-export const useScanPartnerSalesSummary = (
-  period?: "daily" | "weekly" | "monthly" | "yearly"
-) => {
-  return useSWR(
-    `scan-partner-sales-summary-${period || "default"}`,
-    async () => {
-      // This could be expanded to fetch aggregated data across all partners
-      // For now, we'll use the existing partner stats endpoint
-      const response = await fetch(
-        `/api/mobiflex/partner-stats?period=${period || "monthly"}`
-      );
-      return response.json();
-    },
-    {
-      refreshInterval: 5 * 60 * 1000,
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000,
-    }
-  );
+	return {
+		partnerStats: partnerStats || null,
+		approvedAgents: approvedAgents || null,
+		isLoading: isStatsLoading || isAgentsLoading,
+		error: statsError || agentsError,
+	};
 };
