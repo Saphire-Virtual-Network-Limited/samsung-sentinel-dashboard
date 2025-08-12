@@ -2,14 +2,37 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllLoanRecord, capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getAllCustomerRecord } from "@/lib";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
+import {
+	getAllLoanRecord,
+	capitalize,
+	calculateAge,
+	showToast,
+	verifyCustomerReferenceNumber,
+	getAllCustomerRecord,
+} from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import {
+	Button,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
+	Chip,
+	SortDescriptor,
+	ChipProps,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	useDisclosure,
+} from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-
 
 const columns: ColumnDef[] = [
 	{ name: "Customer ID", uid: "customerId", sortable: true },
@@ -26,7 +49,7 @@ const columns: ColumnDef[] = [
 ];
 
 const statusOptions = [
-    { name: "Enrolled", uid: "enrolled" },
+	{ name: "Enrolled", uid: "enrolled" },
 	{ name: "Pending", uid: "pending" },
 	{ name: "Approved", uid: "approved" },
 	{ name: "Rejected", uid: "rejected" },
@@ -39,7 +62,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 	enrolled: "warning",
 	defaulted: "danger",
-};  
+};
 
 type LoanRecord = {
 	customerId: string;
@@ -160,28 +183,31 @@ export default function LoansView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["loan-records", startDate, endDate] : "loan-records",
-		() => getAllLoanRecord(startDate, endDate)
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
+		startDate && endDate
+			? ["loan-records", startDate, endDate]
+			: "loan-records",
+		() =>
+			getAllLoanRecord(startDate, endDate)
+				.then((r) => {
+					if (!r.data || r.data.length === 0) {
+						setHasNoRecords(true);
+						return [];
+					}
+					setHasNoRecords(false);
+					return r.data;
+				})
+				.catch((error) => {
+					console.error("Error fetching loan records:", error);
 					setHasNoRecords(true);
 					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch((error) => {
-				console.error("Error fetching loan records:", error);
-				setHasNoRecords(true);
-				return [];
-			}),
+				}),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
-			revalidateIfStale: true
+			revalidateIfStale: true,
 		}
 	);
 
@@ -195,13 +221,23 @@ export default function LoansView() {
 				loanRecordId: r.LoanRecord?.[0]?.loanRecordId,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				age: calculateAge(r.dob),
-				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-				duration: r.LoanRecord?.[0]?.duration ? `${r.LoanRecord[0].duration} months` : 'N/A',
+				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
+					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+					: "N/A",
+				duration: r.LoanRecord?.[0]?.duration
+					? `${r.LoanRecord[0].duration} months`
+					: "N/A",
 				status: r.status,
-				loanAmount: r.LoanRecord?.[0]?.loanAmount ? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
-				downPayment: r.LoanRecord?.[0]?.downPayment ? `₦${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
-				devicePrice: r.LoanRecord?.[0]?.devicePrice ? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
-				loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A'
+				loanAmount: r.LoanRecord?.[0]?.loanAmount
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}`
+					: "N/A",
+				downPayment: r.LoanRecord?.[0]?.downPayment
+					? `₦${r.LoanRecord[0].downPayment.toLocaleString()}`
+					: "N/A",
+				devicePrice: r.LoanRecord?.[0]?.devicePrice
+					? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}`
+					: "N/A",
+				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
 			})),
 		[raw]
 	);
@@ -210,22 +246,25 @@ export default function LoansView() {
 		let list = [...customers];
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => 
-				c.fullName.toLowerCase().includes(f) || 
-				c.firstName.toLowerCase().includes(f) ||
-				c.lastName.toLowerCase().includes(f) ||
-				c.email.toLowerCase().includes(f) ||
-				c.bvn.toLowerCase().includes(f) ||
-				c.loanRecordId.toLowerCase().includes(f) ||
-				c.bvnPhoneNumber.toLowerCase().includes(f) ||
-				c.mainPhoneNumber.toLowerCase().includes(f) ||
-				c.mbeId.toLowerCase().includes(f) ||
-				c.channel.toLowerCase().includes(f) ||
-				c.regBy.toLowerCase().includes(f)
+			list = list.filter(
+				(c) =>
+					(c.fullName || "").toLowerCase().includes(f) ||
+					(c.firstName || "").toLowerCase().includes(f) ||
+					(c.lastName || "").toLowerCase().includes(f) ||
+					(c.email || "").toLowerCase().includes(f) ||
+					(c.bvn || "").toLowerCase().includes(f) ||
+					(c.loanRecordId || "").toLowerCase().includes(f) ||
+					(c.bvnPhoneNumber || "").toLowerCase().includes(f) ||
+					(c.mainPhoneNumber || "").toLowerCase().includes(f) ||
+					(c.mbeId || "").toLowerCase().includes(f) ||
+					(c.channel || "").toLowerCase().includes(f) ||
+					(typeof c.regBy === "string" ? c.regBy : String(c.regBy || ""))
+						.toLowerCase()
+						.includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));
+			list = list.filter((c) => statusFilter.has(c.status || ""));
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -238,8 +277,8 @@ export default function LoansView() {
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || '');
-			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || '');
+			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || "");
+			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || "");
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
@@ -249,8 +288,12 @@ export default function LoansView() {
 	const exportFn = async (data: LoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Loans");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
+		ws.columns = columns
+			.filter((c) => c.uid !== "actions")
+			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		data.forEach((r) =>
+			ws.addRow({ ...r, status: capitalize(r.status || "") })
+		);
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "All_Loan_Records.xlsx");
 	};
@@ -269,17 +312,12 @@ export default function LoansView() {
 				<div className="flex justify-end">
 					<Dropdown>
 						<DropdownTrigger>
-							<Button
-								isIconOnly
-								size="sm"
-								variant="light">
+							<Button isIconOnly size="sm" variant="light">
 								<EllipsisVertical className="text-default-300" />
 							</Button>
 						</DropdownTrigger>
 						<DropdownMenu>
-							<DropdownItem
-								key="view"
-								onPress={() => openModal("view", row)}>
+							<DropdownItem key="view" onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
 						</DropdownMenu>
@@ -291,10 +329,11 @@ export default function LoansView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.status || '']}
+					color={statusColorMap[row.status || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.status || '')}
+					variant="flat"
+				>
+					{capitalize(row.status || "")}
 				</Chip>
 			);
 		}
@@ -302,72 +341,100 @@ export default function LoansView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.loanStatus?.toLowerCase() || '']}
+					color={statusColorMap[row.loanStatus?.toLowerCase() || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.loanStatus || '')}
+					variant="flat"
+				>
+					{capitalize(row.loanStatus || "")}
 				</Chip>
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;
+			return (
+				<p
+					className="capitalize cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					{row.fullName}
+				</p>
+			);
 		}
 		// Ensure we're converting any value to a string before rendering
 		const cellValue = (row as any)[key];
 		if (cellValue === null || cellValue === undefined) {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</p>;
+			return (
+				<p
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					N/A
+				</p>
+			);
 		}
-		if (typeof cellValue === 'object') {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</p>;
+		if (typeof cellValue === "object") {
+			return (
+				<p
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					View Details
+				</p>
+			);
 		}
-		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</p>;
+		return (
+			<p
+				className="text-small cursor-pointer"
+				onClick={() => openModal("view", row)}
+			>
+				{String(cellValue)}
+			</p>
+		);
 	};
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
-			
-		{isLoading ? (
-			<TableSkeleton columns={columns.length} rows={10} />
-		) : (
-			<GenericTable<LoanRecord>
-				columns={columns}
-				data={sorted}
-				allCount={filtered.length}
-				exportData={filtered}
-				isLoading={isLoading}
-				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={false}
-				sortDescriptor={sortDescriptor}
-				onSortChange={setSortDescriptor}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={hasNoRecords}
-				onDateFilterChange={handleDateFilter}
-				initialStartDate={startDate}
-				initialEndDate={endDate}
-				defaultDateRange={{ days: 2 }}
-			/>
-		)}
-			
+			<div className="mb-4 flex justify-center md:justify-end"></div>
+
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} rows={10} />
+			) : (
+				<GenericTable<LoanRecord>
+					columns={columns}
+					data={sorted}
+					allCount={filtered.length}
+					exportData={filtered}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={(v) => {
+						setFilterValue(v);
+						setPage(1);
+					}}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={false}
+					sortDescriptor={sortDescriptor}
+					onSortChange={setSortDescriptor}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+					defaultDateRange={{ days: 2 }}
+				/>
+			)}
 
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
 				// size="2xl"
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -377,34 +444,43 @@ export default function LoansView() {
 									<div className="space-y-4">
 										{/* Personal Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Personal Information
+											</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												{Object.entries(selectedItem).map(([key, value]) => {
 													// Skip LoanRecord as it's handled separately
-													if (key === 'LoanRecord') return null;
-													
+													if (key === "LoanRecord") return null;
+
 													// Handle null/undefined values
 													if (value === null || value === undefined) {
 														return (
 															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">N/A</p>
 															</div>
 														);
 													}
 
 													// Handle objects
-													if (typeof value === 'object') {
+													if (typeof value === "object") {
 														return (
 															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">View Details</p>
 															</div>
 														);
 													}
 
 													// Handle dates
-													if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+													if (
+														key.toLowerCase().includes("date") ||
+														key.toLowerCase().includes("at")
+													) {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
@@ -416,8 +492,8 @@ export default function LoansView() {
 													}
 
 													// Handle boolean values
-													if (typeof value === 'boolean') {
-														value = value ? 'Yes' : 'No';
+													if (typeof value === "boolean") {
+														value = value ? "Yes" : "No";
 													}
 
 													return (
@@ -431,120 +507,154 @@ export default function LoansView() {
 										</div>
 
 										{/* Loan Information */}
-										{selectedItem.LoanRecord && selectedItem.LoanRecord.length > 0 && (
-											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Loan Information</h3>
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.LoanRecord[0]).map(([key, value]) => {
-														// Skip store and device as they're handled separately
-														if (key === 'store' || key === 'device') return null;
+										{selectedItem.LoanRecord &&
+											selectedItem.LoanRecord.length > 0 && (
+												<div className="bg-default-50 p-4 rounded-lg">
+													<h3 className="text-lg font-semibold mb-3">
+														Loan Information
+													</h3>
+													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+														{Object.entries(selectedItem.LoanRecord[0]).map(
+															([key, value]) => {
+																// Skip store and device as they're handled separately
+																if (key === "store" || key === "device")
+																	return null;
 
-														// Handle null/undefined values
-														if (value === null || value === undefined) {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
-																</div>
-															);
-														}
-
-														// Handle objects
-														if (typeof value === 'object') {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">View Details</p>
-																</div>
-															);
-														}
-
-														// Handle dates
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
-															try {
-																const date = new Date(value as string);
-																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
+																// Handle null/undefined values
+																if (value === null || value === undefined) {
+																	return (
+																		<div key={key}>
+																			<p className="text-sm text-default-500">
+																				{key}
+																			</p>
+																			<p className="font-medium">N/A</p>
+																		</div>
+																	);
 																}
-															} catch (e) {
-																// If date parsing fails, use the original value
+
+																// Handle objects
+																if (typeof value === "object") {
+																	return (
+																		<div key={key}>
+																			<p className="text-sm text-default-500">
+																				{key}
+																			</p>
+																			<p className="font-medium">
+																				View Details
+																			</p>
+																		</div>
+																	);
+																}
+
+																// Handle dates
+																if (
+																	key.toLowerCase().includes("date") ||
+																	key.toLowerCase().includes("at")
+																) {
+																	try {
+																		const date = new Date(value as string);
+																		if (!isNaN(date.getTime())) {
+																			value = date.toLocaleString();
+																		}
+																	} catch (e) {
+																		// If date parsing fails, use the original value
+																	}
+																}
+
+																// Handle boolean values
+																if (typeof value === "boolean") {
+																	value = value ? "Yes" : "No";
+																}
+
+																// Format currency values
+																if (
+																	typeof value === "number" &&
+																	(key.toLowerCase().includes("amount") ||
+																		key.toLowerCase().includes("price") ||
+																		key.toLowerCase().includes("payment"))
+																) {
+																	value = `₦${Number(value).toLocaleString()}`;
+																}
+
+																return (
+																	<div key={key}>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">
+																			{String(value)}
+																		</p>
+																	</div>
+																);
 															}
-														}
-
-														// Handle boolean values
-														if (typeof value === 'boolean') {
-															value = value ? 'Yes' : 'No';
-														}
-
-														// Format currency values
-														if (typeof value === 'number' && 
-															(key.toLowerCase().includes('amount') || 
-															 key.toLowerCase().includes('price') || 
-															 key.toLowerCase().includes('payment'))) {
-															value = `₦${Number(value).toLocaleString()}`;
-														}
-
-														return (
-															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+														)}
+													</div>
 												</div>
-											</div>
-										)}
+											)}
 
 										{/* Store Information */}
 										{selectedItem.LoanRecord?.[0]?.store && (
 											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Store Information</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Store Information
+												</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.LoanRecord[0].store).map(([key, value]) => {
-														// Handle null/undefined values
-														if (value === null || value === undefined) {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
-																</div>
-															);
-														}
-
-														// Handle objects
-														if (typeof value === 'object') {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">View Details</p>
-																</div>
-															);
-														}
-
-														// Handle dates
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
-															try {
-																const date = new Date(value as string);
-																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
-																}
-															} catch (e) {
-																// If date parsing fails, use the original value
+													{Object.entries(selectedItem.LoanRecord[0].store).map(
+														([key, value]) => {
+															// Handle null/undefined values
+															if (value === null || value === undefined) {
+																return (
+																	<div key={key}>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">N/A</p>
+																	</div>
+																);
 															}
-														}
 
-														// Handle boolean values
-														if (typeof value === 'boolean') {
-															value = value ? 'Yes' : 'No';
-														}
+															// Handle objects
+															if (typeof value === "object") {
+																return (
+																	<div key={key}>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">View Details</p>
+																	</div>
+																);
+															}
 
-														return (
-															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+															// Handle dates
+															if (
+																key.toLowerCase().includes("date") ||
+																key.toLowerCase().includes("at")
+															) {
+																try {
+																	const date = new Date(value as string);
+																	if (!isNaN(date.getTime())) {
+																		value = date.toLocaleString();
+																	}
+																} catch (e) {
+																	// If date parsing fails, use the original value
+																}
+															}
+
+															// Handle boolean values
+															if (typeof value === "boolean") {
+																value = value ? "Yes" : "No";
+															}
+
+															return (
+																<div key={key}>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
+																	<p className="font-medium">{String(value)}</p>
+																</div>
+															);
+														}
+													)}
 												</div>
 											</div>
 										)}
@@ -552,31 +662,42 @@ export default function LoansView() {
 										{/* Device Information */}
 										{selectedItem.LoanRecord?.[0]?.device && (
 											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Device Information
+												</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.LoanRecord[0].device).map(([key, value]) => {
+													{Object.entries(
+														selectedItem.LoanRecord[0].device
+													).map(([key, value]) => {
 														// Handle null/undefined values
 														if (value === null || value === undefined) {
 															return (
 																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
 																	<p className="font-medium">N/A</p>
 																</div>
 															);
 														}
 
 														// Handle objects
-														if (typeof value === 'object') {
+														if (typeof value === "object") {
 															return (
 																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
 																	<p className="font-medium">View Details</p>
 																</div>
 															);
 														}
 
 														// Handle dates
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+														if (
+															key.toLowerCase().includes("date") ||
+															key.toLowerCase().includes("at")
+														) {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
@@ -588,20 +709,24 @@ export default function LoansView() {
 														}
 
 														// Handle boolean values
-														if (typeof value === 'boolean') {
-															value = value ? 'Yes' : 'No';
+														if (typeof value === "boolean") {
+															value = value ? "Yes" : "No";
 														}
 
 														// Format currency values
-														if (typeof value === 'number' && 
-															(key.toLowerCase().includes('price') || 
-															 key.toLowerCase().includes('amount'))) {
+														if (
+															typeof value === "number" &&
+															(key.toLowerCase().includes("price") ||
+																key.toLowerCase().includes("amount"))
+														) {
 															value = `₦${Number(value).toLocaleString()}`;
 														}
 
 														return (
 															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">{String(value)}</p>
 															</div>
 														);
@@ -613,10 +738,7 @@ export default function LoansView() {
 								)}
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onClose}>
+								<Button color="danger" variant="light" onPress={onClose}>
 									Close
 								</Button>
 							</ModalFooter>

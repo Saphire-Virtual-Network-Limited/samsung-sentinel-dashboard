@@ -61,6 +61,10 @@ type CustomerRecord = {
 		phone3?: string;
 		phone4?: string;
 		phone5?: string;
+		refName2?: string;
+		refName3?: string;
+		refName4?: string;
+		refName5?: string;
 		houseNumber?: string;
 		streetAddress?: string;
 		nearestBusStop?: string;
@@ -83,7 +87,38 @@ type CustomerRecord = {
 		channel?: string;
 		phone2Status?: string;
 		phone3Status?: string;
-		updated_by?: string;
+		updated_by?: {
+			adminid: string;
+			password: string;
+			userid: string;
+			mbeId?: string;
+			inviteStatus: string;
+			user?: {
+				userId: string;
+				firstName: string;
+				lastName: string;
+				email: string;
+				dob?: string;
+				gender?: string;
+				role: string;
+				referralCode?: string;
+				telephoneNumber: string;
+				profile_picture?: string;
+				otp?: string;
+				tokenVersion: number;
+				accountStatus: string;
+				isActive: boolean;
+				otpExpiry?: string;
+				createdAt: string;
+				updatedAt: string;
+				accountType: string;
+				companyName?: string;
+				companyAddress?: string;
+				companyState?: string;
+				companyCity?: string;
+				companyLGA?: string;
+			};
+		};
 		updated_by_id?: string;
 	}>;
 	LoanRecord?: Array<{
@@ -199,21 +234,25 @@ export default function SingleRefereeView({
 				id: 1,
 				label: "Referee 1",
 				value: customer?.CustomerKYC?.[0]?.phone2,
+				name: customer?.CustomerKYC?.[0]?.refName2,
 			},
 			{
 				id: 2,
 				label: "Referee 2",
 				value: customer?.CustomerKYC?.[0]?.phone3,
+				name: customer?.CustomerKYC?.[0]?.refName3,
 			},
 			{
 				id: 3,
 				label: "Referee 3",
 				value: customer?.CustomerKYC?.[0]?.phone4,
+				name: customer?.CustomerKYC?.[0]?.refName4,
 			},
 			{
 				id: 4,
 				label: "Referee 4",
 				value: customer?.CustomerKYC?.[0]?.phone5,
+				name: customer?.CustomerKYC?.[0]?.refName5,
 			},
 		];
 
@@ -222,7 +261,9 @@ export default function SingleRefereeView({
 			.filter((phone) => phone.value)
 			.map((phone) => ({
 				key: `phone-${phone.id}-${phone.value}`,
-				label: `${phone.label} - ${phone.value}`, // Combine label and value in the display text
+				label: `${phone.label}${phone.name ? ` (${phone.name})` : ""} - ${
+					phone.value
+				}`, // Include name if available
 				value: phone.value as string,
 			}));
 	}, [customer?.CustomerKYC]);
@@ -717,24 +758,44 @@ export default function SingleRefereeView({
 								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 									<div className="bg-default-50 rounded-lg p-4">
 										<p>Referee 1</p>
+										{customer.CustomerKYC?.[0]?.refName2 && (
+											<div className="text-sm text-default-600 mb-1">
+												{customer.CustomerKYC[0].refName2}
+											</div>
+										)}
 										<div className="font-medium text-default-900">
 											{customer.CustomerKYC?.[0]?.phone2 || "N/A"}
 										</div>
 									</div>
 									<div className="bg-default-50 rounded-lg p-4">
 										<p>Referee 2</p>
+										{customer.CustomerKYC?.[0]?.refName3 && (
+											<div className="text-sm text-default-600 mb-1">
+												{customer.CustomerKYC[0].refName3}
+											</div>
+										)}
 										<div className="font-medium text-default-900">
 											{customer.CustomerKYC?.[0]?.phone3 || "N/A"}
 										</div>
 									</div>
 									<div className="bg-default-50 rounded-lg p-4">
 										<p>Referee 3</p>
+										{customer.CustomerKYC?.[0]?.refName4 && (
+											<div className="text-sm text-default-600 mb-1">
+												{customer.CustomerKYC[0].refName4}
+											</div>
+										)}
 										<div className="font-medium text-default-900">
 											{customer.CustomerKYC?.[0]?.phone4 || "N/A"}
 										</div>
 									</div>
 									<div className="bg-default-50 rounded-lg p-4">
 										<p>Referee 4</p>
+										{customer.CustomerKYC?.[0]?.refName5 && (
+											<div className="text-sm text-default-600 mb-1">
+												{customer.CustomerKYC[0].refName5}
+											</div>
+										)}
 										<div className="font-medium text-default-900">
 											{customer.CustomerKYC?.[0]?.phone5 || "N/A"}
 										</div>
@@ -761,31 +822,34 @@ export default function SingleRefereeView({
 									)}
 
 								{/* Updated By Information */}
-								{
+								{customer.CustomerKYC?.[0]?.updated_by && (
 									<div className="bg-blue-50 rounded-lg p-4 mt-4">
 										<p className="text-blue-700 font-medium mb-2">
 											Last Updated By
 										</p>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 											<div>
 												<div className="text-sm text-blue-600 mb-1">
 													Updated By
 												</div>
 												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.updated_by || "N/A"}
+													{customer.CustomerKYC[0].updated_by.user?.firstName &&
+													customer.CustomerKYC[0].updated_by.user?.lastName
+														? `${customer.CustomerKYC[0].updated_by.user.firstName} ${customer.CustomerKYC[0].updated_by.user.lastName}`
+														: customer.CustomerKYC[0].updated_by.adminid ||
+														  "N/A"}
 												</div>
 											</div>
 											<div>
-												<div className="text-sm text-blue-600 mb-1">
-													Updated By ID
-												</div>
+												<div className="text-sm text-blue-600 mb-1">Email</div>
 												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.updated_by_id || "N/A"}
+													{customer.CustomerKYC[0].updated_by.user?.email ||
+														"N/A"}
 												</div>
 											</div>
 										</div>
 									</div>
-								}
+								)}
 							</div>
 						</div>
 
