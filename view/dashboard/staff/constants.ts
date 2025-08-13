@@ -3,42 +3,55 @@ import { ChipProps } from "@heroui/react";
 import { AccountStatus } from "./types";
 
 export const columns: ColumnDef[] = [
-  { name: "Name", uid: "fullName", sortable: true },
-  { name: "Title", uid: "title", sortable: true },
-  { name: "Status", uid: "accountStatus", sortable: true },
-  { name: "Email", uid: "email", sortable: true },
-  { name: "BVN", uid: "bvn", sortable: true },
-  { name: "Contact No.", uid: "bvnPhoneNumber", sortable: true },
-  { name: "Age", uid: "age", sortable: true },
-  { name: "State", uid: "state", sortable: true },
-  { name: "City", uid: "city", sortable: true },
-  { name: "Actions", uid: "actions" },
+	{ name: "Name", uid: "fullName", sortable: true },
+	{ name: "Title", uid: "title", sortable: true },
+	{ name: "Status", uid: "accountStatus", sortable: true },
+	{ name: "Email", uid: "email", sortable: true },
+	{ name: "BVN", uid: "bvn", sortable: true },
+	{ name: "Contact No.", uid: "bvnPhoneNumber", sortable: true },
+	{ name: "Age", uid: "age", sortable: true },
+	{ name: "State", uid: "state", sortable: true },
+	{ name: "City", uid: "city", sortable: true },
+	{ name: "Actions", uid: "actions" },
+];
+
+// New columns specifically for the verify route
+export const verifyColumns: ColumnDef[] = [
+	{ name: "Full Name", uid: "fullName", sortable: true },
+	{ name: "Email", uid: "email", sortable: true },
+	{ name: "BVN", uid: "bvn", sortable: true },
+	{ name: "Phone", uid: "phone", sortable: true },
+	{ name: "Guarantor 1 Status", uid: "guarantor1Status", sortable: true },
+	{ name: "Guarantor 1 Comment", uid: "guarantor1Comment", sortable: false },
+	{ name: "Guarantor 2 Status", uid: "guarantor2Status", sortable: true },
+	{ name: "Guarantor 2 Comment", uid: "guarantor2Comment", sortable: false },
+	{ name: "Actions", uid: "actions" },
 ];
 
 export const statusOptions = [
-  { name: "KYC 1", uid: AccountStatus.KYC_1 },
-  { name: "KYC 2", uid: AccountStatus.KYC_2 },
-  { name: "ACTIVE", uid: AccountStatus.ACTIVE },
-  { name: "PENDING", uid: AccountStatus.PENDING },
-  { name: "VERIFIED", uid: AccountStatus.VERIFIED },
-  { name: "APPROVED", uid: AccountStatus.APPROVED },
-  { name: "REJECTED", uid: AccountStatus.REJECTED },
-  // Add guarantor status options
-  { name: "Guarantor Pending", uid: "pending" },
-  { name: "Guarantor Approved", uid: "approved" },
-  { name: "Guarantor Rejected", uid: "rejected" },
+	{ name: "KYC 1", uid: AccountStatus.KYC_1 },
+	{ name: "KYC 2", uid: AccountStatus.KYC_2 },
+	{ name: "ACTIVE", uid: AccountStatus.ACTIVE },
+	{ name: "PENDING", uid: AccountStatus.PENDING },
+	{ name: "VERIFIED", uid: AccountStatus.VERIFIED },
+	{ name: "APPROVED", uid: AccountStatus.APPROVED },
+	{ name: "REJECTED", uid: AccountStatus.REJECTED },
+	// Add guarantor status options
+	{ name: "Guarantor Pending", uid: "pending" },
+	{ name: "Guarantor Approved", uid: "approved" },
+	{ name: "Guarantor Rejected", uid: "rejected" },
 ];
 
 export const statusColorMap: Record<string, ChipProps["color"]> = {
-  KYC_1: "default",
-  KYC_2: "primary",
-  ACTIVE: "danger",
-  PENDING: "warning",
-  VERIFIED: "success",
-  APPROVED: "success",
-  REJECTED: "danger",
-  // Add guarantor status colors
-  pending: "warning",
-  approved: "success",
-  rejected: "danger",
+	KYC_1: "default",
+	KYC_2: "primary",
+	ACTIVE: "danger",
+	PENDING: "warning",
+	VERIFIED: "success",
+	APPROVED: "success",
+	REJECTED: "danger",
+	// Add guarantor status colors
+	pending: "warning",
+	approved: "success",
+	rejected: "danger",
 };
