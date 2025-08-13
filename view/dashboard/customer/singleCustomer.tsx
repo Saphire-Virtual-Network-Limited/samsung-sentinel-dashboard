@@ -651,7 +651,10 @@ export default function CollectionSingleCustomerPage() {
 					successMessage = "Device locked successfully";
 					break;
 				case "unlock_device":
-					response = await unlockDevice(imei, dueDate, dueTime);
+					// Format date as DD/MM/YYYY and convert time to 24hr format minus 1 hour
+					const formattedDate = formatDateForEndpoint(dueDate);
+					const formattedTime = formatTimeForEndpoint(dueTime);
+					response = await unlockDevice(imei, formattedDate, formattedTime);
 					successMessage = "Device unlocked successfully";
 					break;
 				case "release_device":
@@ -685,6 +688,39 @@ export default function CollectionSingleCustomerPage() {
 		} finally {
 			setIsButtonLoading(false);
 		}
+	};
+
+	// Helper function to format date as DD/MM/YYYY
+	const formatDateForEndpoint = (dateString: string): string => {
+		if (!dateString) return "";
+
+		const date = new Date(dateString);
+		const day = date.getDate().toString().padStart(2, "0");
+		const month = (date.getMonth() + 1).toString().padStart(2, "0");
+		const year = date.getFullYear();
+
+		return `${day}/${month}/${year}`;
+	};
+
+	// Helper function to convert time to 24hr format and subtract 1 hour
+	const formatTimeForEndpoint = (timeString: string): string => {
+		if (!timeString) return "";
+
+		const [hours, minutes] = timeString.split(":").map(Number);
+
+		// Convert to 24hr format (already in 24hr format from input type="time")
+		// Subtract 1 hour
+		let adjustedHours = hours - 1;
+
+		// Handle negative hours (wrap to previous day)
+		if (adjustedHours < 0) {
+			adjustedHours = 23;
+		}
+
+		const formattedHours = adjustedHours.toString().padStart(2, "0");
+		const formattedMinutes = minutes.toString().padStart(2, "0");
+
+		return `${formattedHours}:${formattedMinutes}`;
 	};
 
 	// Handle action selection and modal opening
@@ -970,58 +1006,46 @@ export default function CollectionSingleCustomerPage() {
 
 									<div>
 										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-											<div className="space-y-2">
-												<div className="text-sm text-default-500">
-													Referee 1
-												</div>
-												{customer.CustomerKYC?.[0]?.refName2 && (
-													<div className="text-sm text-default-600 font-medium">
-														{customer.CustomerKYC[0].refName2}
-													</div>
-												)}
-												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.phone2 || "N/A"}
-												</div>
-											</div>
-											<div className="space-y-2">
-												<div className="text-sm text-default-500">
-													Referee 2
-												</div>
-												{customer.CustomerKYC?.[0]?.refName3 && (
-													<div className="text-sm text-default-600 font-medium">
-														{customer.CustomerKYC[0].refName3}
-													</div>
-												)}
-												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.phone3 || "N/A"}
-												</div>
-											</div>
-											<div className="space-y-2">
-												<div className="text-sm text-default-500">
-													Referee 3
-												</div>
-												{customer.CustomerKYC?.[0]?.refName4 && (
-													<div className="text-sm text-default-600 font-medium">
-														{customer.CustomerKYC[0].refName4}
-													</div>
-												)}
-												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.phone4 || "N/A"}
-												</div>
-											</div>
-											<div className="space-y-2">
-												<div className="text-sm text-default-500">
-													Referee 4
-												</div>
-												{customer.CustomerKYC?.[0]?.refName5 && (
-													<div className="text-sm text-default-600 font-medium">
-														{customer.CustomerKYC[0].refName5}
-													</div>
-												)}
-												<div className="font-medium text-default-900">
-													{customer.CustomerKYC?.[0]?.phone5 || "N/A"}
-												</div>
-											</div>
+											<InfoField
+												label="Referee 1"
+												value={
+													customer.CustomerKYC?.[0]?.refName2
+														? `${customer.CustomerKYC[0].refName2} - ${
+																customer.CustomerKYC?.[0]?.phone2 || "N/A"
+														  }`
+														: customer.CustomerKYC?.[0]?.phone2 || "N/A"
+												}
+											/>
+											<InfoField
+												label="Referee 2"
+												value={
+													customer.CustomerKYC?.[0]?.refName3
+														? `${customer.CustomerKYC[0].refName3} - ${
+																customer.CustomerKYC?.[0]?.phone3 || "N/A"
+														  }`
+														: customer.CustomerKYC?.[0]?.phone3 || "N/A"
+												}
+											/>
+											<InfoField
+												label="Referee 3"
+												value={
+													customer.CustomerKYC?.[0]?.refName4
+														? `${customer.CustomerKYC[0].refName4} - ${
+																customer.CustomerKYC?.[0]?.phone4 || "N/A"
+														  }`
+														: customer.CustomerKYC?.[0]?.phone4 || "N/A"
+												}
+											/>
+											<InfoField
+												label="Referee 4"
+												value={
+													customer.CustomerKYC?.[0]?.refName5
+														? `${customer.CustomerKYC[0].refName5} - ${
+																customer.CustomerKYC?.[0]?.phone5 || "N/A"
+														  }`
+														: customer.CustomerKYC?.[0]?.phone5 || "N/A"
+												}
+											/>
 										</div>
 										{customer.CustomerKYC?.[0]?.phoneApproved && (
 											<div className="bg-green-50 rounded-lg p-4 mt-4">
