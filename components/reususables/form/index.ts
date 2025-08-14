@@ -6,5 +6,16 @@ import InputFile from "./InputFile";
 import DateFormField from "./dateInput";
 import OtpField from "./otpField";
 import InputFileBoxField from "./inputFileBoxField";
+import AutoCompleteField from "./AutoCompleteField";
 
-export { PasswordField, FormField, SelectField, TextAreaField, InputFile, DateFormField, OtpField, InputFileBoxField };
+export {
+	PasswordField,
+	FormField,
+	SelectField,
+	TextAreaField,
+	InputFile,
+	DateFormField,
+	OtpField,
+	InputFileBoxField,
+	AutoCompleteField,
+};

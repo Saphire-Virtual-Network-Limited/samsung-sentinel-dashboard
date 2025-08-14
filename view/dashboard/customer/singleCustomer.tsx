@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { Button, Chip, Snippet } from "@heroui/react";
+import { Button, Chip, Snippet, DateInput } from "@heroui/react";
+import { parseDateTime, now, CalendarDateTime } from "@internationalized/date";
+import useSWR from "swr";
 import {
 	ArrowLeft,
 	ChevronDown,
@@ -15,6 +17,7 @@ import {
 	MapPin,
 	Clock,
 	Search,
+	Plus,
 } from "lucide-react";
 import {
 	getCustomerRecordById,
@@ -31,14 +34,22 @@ import {
 	assignCustomersToMBE,
 	getMBEWithCustomerForRelay,
 	searchGlobalCustomer,
+	getVfdBanks,
+	injectPaymentHistory,
+	InjectPaymentHistoryData,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
 	PaymentReceipt,
 	CustomerSearch,
 	CommunicationLog,
+	ConfirmationModal,
 } from "@/components/reususables/custom-ui";
-import { FormField, SelectField } from "@/components/reususables";
+import {
+	FormField,
+	SelectField,
+	AutoCompleteField,
+} from "@/components/reususables";
 import { CustomerRecord } from "./types";
 import {
 	Modal,
@@ -182,6 +193,424 @@ const EmptyState = ({
 	</div>
 );
 
+// Memoized Inject Payment Modal Component - Self-contained state
+const InjectPaymentModal = React.memo(
+	({
+		isOpen,
+		onClose,
+		vfdBanks,
+		onSubmit,
+		parseLocalDateTime,
+		customer,
+	}: {
+		isOpen: boolean;
+		onClose: () => void;
+		vfdBanks: any[];
+		onSubmit: (paymentData: InjectPaymentHistoryData) => void;
+		parseLocalDateTime: (dateTime: string) => any;
+		customer: CustomerRecord | null;
+	}) => {
+		// Internal state - isolated from parent component
+		const [internalPaymentData, setInternalPaymentData] =
+			useState<InjectPaymentHistoryData>(() => {
+				const now = new Date();
+				const year = now.getFullYear();
+				const month = String(now.getMonth() + 1).padStart(2, "0");
+				const day = String(now.getDate()).padStart(2, "0");
+				const hours = String(now.getHours()).padStart(2, "0");
+				const minutes = String(now.getMinutes()).padStart(2, "0");
+				const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+				// Find matching VFD bank for customer's virtual account bank
+				let defaultReceiverBank = "";
+				if (customer?.Wallet?.bankName && vfdBanks.length > 0) {
+					const matchingBank = vfdBanks.find(
+						(bank) =>
+							bank.name
+								?.toLowerCase()
+								.includes(customer.Wallet!.bankName.toLowerCase()) ||
+							customer
+								.Wallet!.bankName.toLowerCase()
+								.includes(bank.name?.toLowerCase())
+					);
+					if (matchingBank) {
+						defaultReceiverBank = matchingBank.name;
+					}
+				}
+
+				return {
+					amount: "",
+					paymentType: "CREDIT",
+					paymentReference: "",
+					paymentDescription: "",
+					paid_at: currentDateTime,
+					senderAccount: "",
+					senderBank: "",
+					receiverAccount: customer?.Wallet?.accountNumber || "",
+					receiverBank: defaultReceiverBank,
+				};
+			});
+
+		// Error state for visual feedback
+		const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+		// Reset form when modal closes
+		React.useEffect(() => {
+			if (!isOpen) {
+				const now = new Date();
+				const year = now.getFullYear();
+				const month = String(now.getMonth() + 1).padStart(2, "0");
+				const day = String(now.getDate()).padStart(2, "0");
+				const hours = String(now.getHours()).padStart(2, "0");
+				const minutes = String(now.getMinutes()).padStart(2, "0");
+				const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+				// Find matching VFD bank for customer's virtual account bank
+				let defaultReceiverBank = "";
+				if (customer?.Wallet?.bankName && vfdBanks.length > 0) {
+					const matchingBank = vfdBanks.find(
+						(bank) =>
+							bank.name
+								?.toLowerCase()
+								.includes(customer.Wallet!.bankName.toLowerCase()) ||
+							customer
+								.Wallet!.bankName.toLowerCase()
+								.includes(bank.name?.toLowerCase())
+					);
+					if (matchingBank) {
+						defaultReceiverBank = matchingBank.name;
+					}
+				}
+
+				setInternalPaymentData({
+					amount: "",
+					paymentType: "CREDIT",
+					paymentReference: "",
+					paymentDescription: "",
+					paid_at: currentDateTime,
+					senderAccount: "",
+					senderBank: "",
+					receiverAccount: customer?.Wallet?.accountNumber || "",
+					receiverBank: defaultReceiverBank,
+				});
+				setFieldErrors({});
+			}
+		}, [isOpen, customer, vfdBanks]);
+
+		// Internal handlers - no parent re-renders
+		const handleInternalPaymentDataChange = React.useCallback(
+			(field: keyof InjectPaymentHistoryData, value: any) => {
+				setInternalPaymentData((prev) => ({
+					...prev,
+					[field]: value,
+				}));
+				// Clear field error when user starts typing
+				if (fieldErrors[field]) {
+					setFieldErrors((prev) => ({
+						...prev,
+						[field]: "",
+					}));
+				}
+			},
+			[fieldErrors]
+		);
+
+		// Internal amount handler
+		const handleInternalAmountChange = React.useCallback(
+			(value: string) => {
+				if (value === "") {
+					handleInternalPaymentDataChange("amount", "");
+					return;
+				}
+
+				const sanitizedValue = value.replace(/[^0-9.]/g, "");
+				const parts = sanitizedValue.split(".");
+				const formattedValue =
+					parts.length > 2
+						? parts[0] + "." + parts.slice(1).join("")
+						: sanitizedValue;
+
+				handleInternalPaymentDataChange("amount", formattedValue);
+			},
+			[handleInternalPaymentDataChange]
+		);
+
+		// Internal date handler
+		const handleInternalDateChange = React.useCallback(
+			(value: any) => {
+				if (value && "hour" in value && "minute" in value) {
+					const year = value.year;
+					const month = String(value.month).padStart(2, "0");
+					const day = String(value.day).padStart(2, "0");
+					const hour = String(value.hour).padStart(2, "0");
+					const minute = String(value.minute).padStart(2, "0");
+					const localFormat = `${year}-${month}-${day}T${hour}:${minute}`;
+					handleInternalPaymentDataChange("paid_at", localFormat);
+				} else {
+					handleInternalPaymentDataChange("paid_at", "");
+				}
+			},
+			[handleInternalPaymentDataChange]
+		);
+
+		// Form submission handler
+		const handleFormSubmit = React.useCallback(() => {
+			const errors: Record<string, string> = {};
+
+			// Validate amount
+			const amountNumber = parseFloat(internalPaymentData.amount);
+			if (
+				!internalPaymentData.amount ||
+				internalPaymentData.amount.trim() === "" ||
+				isNaN(amountNumber) ||
+				amountNumber <= 0
+			) {
+				errors.amount = "Please enter a valid amount greater than 0";
+			}
+
+			// Validate payment reference
+			if (!internalPaymentData.paymentReference.trim()) {
+				errors.paymentReference = "Please enter a payment reference";
+			}
+
+			// Validate payment description
+			if (!internalPaymentData.paymentDescription.trim()) {
+				errors.paymentDescription = "Please enter a payment description";
+			}
+
+			// Validate payment date
+			if (!internalPaymentData.paid_at) {
+				errors.paid_at = "Please select payment date and time";
+			}
+
+			// Validate sender account
+			if (!internalPaymentData.senderAccount.trim()) {
+				errors.senderAccount = "Please enter sender account number";
+			}
+
+			// Validate sender bank
+			if (!internalPaymentData.senderBank.trim()) {
+				errors.senderBank = "Please select sender bank";
+			}
+
+			// Validate receiver account
+			if (!internalPaymentData.receiverAccount.trim()) {
+				errors.receiverAccount = "Please enter receiver account number";
+			}
+
+			// Validate receiver bank
+			if (!internalPaymentData.receiverBank.trim()) {
+				errors.receiverBank = "Please select receiver bank";
+			}
+
+			// If there are errors, set them and show toast
+			if (Object.keys(errors).length > 0) {
+				setFieldErrors(errors);
+				showToast({
+					type: "error",
+					message: "Please fill in all required fields correctly",
+					duration: 5000,
+				});
+				return;
+			}
+
+			// If all validations pass, submit the form
+			setFieldErrors({});
+			onSubmit(internalPaymentData);
+		}, [internalPaymentData, onSubmit]);
+
+		// Transform banks data for AutoCompleteField
+		const bankOptions = React.useMemo(
+			() =>
+				vfdBanks?.map((bank) => ({
+					label: bank.name,
+					value: bank.name,
+				})) || [],
+			[vfdBanks]
+		);
+
+		return (
+			<Modal isOpen={isOpen} onClose={onClose} size="3xl">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Inject Payment History</ModalHeader>
+							<ModalBody>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<FormField
+										label="Amount"
+										htmlFor="amount"
+										id="amount"
+										type="text"
+										placeholder="Enter amount (e.g., 1000.50)"
+										value={internalPaymentData.amount}
+										onChange={handleInternalAmountChange}
+										size="sm"
+										isInvalid={!!fieldErrors.amount}
+										errorMessage={fieldErrors.amount}
+										required
+									/>
+
+									<div className="space-y-2">
+										<label className="block text-sm font-medium text-default-700">
+											Payment Type *
+										</label>
+										<select
+											className="w-full px-3 py-2 border border-default-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+											value={internalPaymentData.paymentType}
+											onChange={(e) =>
+												handleInternalPaymentDataChange(
+													"paymentType",
+													e.target.value
+												)
+											}
+										>
+											<option value="CREDIT">CREDIT</option>
+											<option value="DEBIT">DEBIT</option>
+										</select>
+									</div>
+
+									<FormField
+										label="Payment Reference"
+										htmlFor="paymentReference"
+										id="paymentReference"
+										type="text"
+										placeholder="Enter payment reference"
+										value={internalPaymentData.paymentReference}
+										onChange={(value) =>
+											handleInternalPaymentDataChange("paymentReference", value)
+										}
+										size="sm"
+										isInvalid={!!fieldErrors.paymentReference}
+										errorMessage={fieldErrors.paymentReference}
+										required
+									/>
+
+									<FormField
+										label="Payment Description"
+										htmlFor="paymentDescription"
+										id="paymentDescription"
+										type="text"
+										placeholder="Enter payment description"
+										value={internalPaymentData.paymentDescription}
+										onChange={(value) =>
+											handleInternalPaymentDataChange(
+												"paymentDescription",
+												value
+											)
+										}
+										size="sm"
+										isInvalid={!!fieldErrors.paymentDescription}
+										errorMessage={fieldErrors.paymentDescription}
+										required
+									/>
+
+									<div className="space-y-2">
+										<label className="block text-sm font-medium text-default-700">
+											Payment Date & Time *
+										</label>
+										<DateInput
+											aria-label="Payment Date and Time"
+											granularity="minute"
+											value={parseLocalDateTime(internalPaymentData.paid_at)}
+											onChange={handleInternalDateChange}
+											isRequired
+											size="sm"
+											className="w-full"
+											isInvalid={!!fieldErrors.paid_at}
+										/>
+										{fieldErrors.paid_at && (
+											<div className="text-red-500 text-xs">
+												{fieldErrors.paid_at}
+											</div>
+										)}
+									</div>
+
+									<FormField
+										label="Sender Account Number"
+										htmlFor="senderAccount"
+										id="senderAccount"
+										type="text"
+										placeholder="Enter sender account number"
+										value={internalPaymentData.senderAccount}
+										onChange={(value) =>
+											handleInternalPaymentDataChange("senderAccount", value)
+										}
+										size="sm"
+										isInvalid={!!fieldErrors.senderAccount}
+										errorMessage={fieldErrors.senderAccount}
+										required
+									/>
+
+									<AutoCompleteField
+										label="Sender Bank"
+										htmlFor="senderBank"
+										id="senderBank"
+										placeholder="Select Sender Bank"
+										value={internalPaymentData.senderBank}
+										onChange={(value: string) =>
+											handleInternalPaymentDataChange("senderBank", value)
+										}
+										options={bankOptions}
+										isInvalid={!!fieldErrors.senderBank}
+										errorMessage={fieldErrors.senderBank}
+										required
+									/>
+
+									<FormField
+										label="Receiver Account Number"
+										htmlFor="receiverAccount"
+										id="receiverAccount"
+										type="text"
+										placeholder="Enter receiver account number"
+										value={internalPaymentData.receiverAccount}
+										onChange={(value) =>
+											handleInternalPaymentDataChange("receiverAccount", value)
+										}
+										size="sm"
+										isInvalid={!!fieldErrors.receiverAccount}
+										errorMessage={fieldErrors.receiverAccount}
+										required
+									/>
+
+									<AutoCompleteField
+										label="Receiver Bank"
+										htmlFor="receiverBank"
+										id="receiverBank"
+										placeholder="Select Receiver Bank"
+										value={internalPaymentData.receiverBank}
+										onChange={(value: string) =>
+											handleInternalPaymentDataChange("receiverBank", value)
+										}
+										options={bankOptions}
+										isInvalid={!!fieldErrors.receiverBank}
+										errorMessage={fieldErrors.receiverBank}
+										required
+									/>
+								</div>
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="primary"
+									variant="solid"
+									onPress={handleFormSubmit}
+								>
+									Inject Payment
+								</Button>
+								<Button color="danger" variant="light" onPress={onClose}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+		);
+	}
+);
+
+InjectPaymentModal.displayName = "InjectPaymentModal";
+
 export default function CollectionSingleCustomerPage() {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -228,6 +657,8 @@ export default function CollectionSingleCustomerPage() {
 	} | null>(null);
 	const [dueDate, setDueDate] = useState<string>("");
 	const [dueTime, setDueTime] = useState<string>("");
+	const [currentPaymentData, setCurrentPaymentData] =
+		useState<InjectPaymentHistoryData | null>(null);
 
 	const {
 		isOpen: isUpdateWallet,
@@ -280,6 +711,47 @@ export default function CollectionSingleCustomerPage() {
 		onClose: onSubmitToRelayClose,
 	} = useDisclosure();
 
+	// Inject Payment History modals
+	const {
+		isOpen: isInjectPayment,
+		onOpen: onInjectPayment,
+		onClose: onInjectPaymentClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isConfirmInjectPayment,
+		onOpen: onConfirmInjectPayment,
+		onClose: onConfirmInjectPaymentClose,
+	} = useDisclosure();
+
+	const [isInjectingPayment, setIsInjectingPayment] = useState(false);
+
+	// VFD Banks interface (copied from scanPartnerDetailView)
+	interface VfdBank {
+		id: number;
+		code: string;
+		name: string;
+		logo: string;
+		created: string;
+	}
+
+	// Fetch VFD Banks
+	const fetchVfdBanks = async (): Promise<VfdBank[]> => {
+		try {
+			const response = await getVfdBanks();
+			return response.data?.data?.bank || [];
+		} catch (error) {
+			console.error("Error fetching VFD banks:", error);
+			return [];
+		}
+	};
+
+	const { data: vfdBanks = [] } = useSWR("vfd-banks", fetchVfdBanks, {
+		revalidateOnFocus: false,
+		revalidateOnReconnect: true,
+		dedupingInterval: 300000, // Cache for 5 minutes
+	});
+
 	useEffect(() => {
 		const fetchCustomer = async () => {
 			if (!params.id) {
@@ -313,6 +785,29 @@ export default function CollectionSingleCustomerPage() {
 
 		fetchCustomer();
 	}, [params.id]);
+
+	// Helper function to convert datetime-local format to CalendarDateTime
+	const parseLocalDateTime = useCallback((localDateTime: string) => {
+		if (!localDateTime) return null;
+		try {
+			// Convert YYYY-MM-DDTHH:mm to proper format for parseDateTime
+			// Remove any trailing Z or milliseconds if present
+			const cleanDateTime = localDateTime
+				.replace(/\.000Z$/, "")
+				.replace(/Z$/, "");
+
+			// Ensure the format is YYYY-MM-DDTHH:mm:ss
+			const formattedDateTime =
+				cleanDateTime.includes(":") && cleanDateTime.split(":").length === 2
+					? cleanDateTime + ":00"
+					: cleanDateTime;
+
+			return parseDateTime(formattedDateTime);
+		} catch (error) {
+			// Silently return null to prevent console spam
+			return null;
+		}
+	}, []);
 
 	if (isLoading) {
 		return (
@@ -795,6 +1290,108 @@ export default function CollectionSingleCustomerPage() {
 			});
 		} finally {
 			setIsButtonLoading(false);
+		}
+	};
+
+	// Inject Payment History Handlers
+	const handleOpenInjectPaymentModal = () => {
+		// Reset form data with current date/time as default
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = String(now.getMonth() + 1).padStart(2, "0");
+		const day = String(now.getDate()).padStart(2, "0");
+		const hours = String(now.getHours()).padStart(2, "0");
+		const minutes = String(now.getMinutes()).padStart(2, "0");
+		const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+		onInjectPayment();
+	};
+
+	const handleInjectPaymentSubmit = (paymentData: InjectPaymentHistoryData) => {
+		setCurrentPaymentData(paymentData);
+		onInjectPaymentClose();
+		onConfirmInjectPayment();
+	};
+
+	const handleConfirmInjectPayment = async () => {
+		if (!customer?.customerId || !currentPaymentData) return;
+
+		setIsInjectingPayment(true);
+		try {
+			// Convert datetime-local format to ISO string for API
+			const apiPaymentData = {
+				...currentPaymentData,
+				paid_at: new Date(currentPaymentData.paid_at).toISOString(),
+			};
+
+			const response = await injectPaymentHistory(
+				customer.customerId,
+				apiPaymentData
+			);
+
+			showToast({
+				type: "success",
+				message: "Payment history injected successfully",
+				duration: 5000,
+			});
+
+			// Add the new transaction to the frontend optimistically
+			if (customer.TransactionHistory) {
+				const amountNumber = parseFloat(currentPaymentData.amount);
+				const prevBalance = Number(
+					customer.TransactionHistory[0]?.newBalance || 0
+				);
+
+				const newTransaction = {
+					transactionHistoryId: `temp-${Date.now()}`,
+					amount: amountNumber,
+					paymentType: currentPaymentData.paymentType,
+					prevBalance: prevBalance,
+					newBalance:
+						currentPaymentData.paymentType === "CREDIT"
+							? prevBalance + amountNumber
+							: prevBalance - amountNumber,
+					paymentReference: currentPaymentData.paymentReference,
+					extRef: currentPaymentData.paymentReference,
+					currency: "NGN",
+					channel: "MANUAL_INJECTION",
+					charge: 0,
+					chargeNarration: "",
+					senderBank: currentPaymentData.senderBank,
+					senderAccount: currentPaymentData.senderAccount,
+					recieverBank: currentPaymentData.receiverBank,
+					recieverAccount: currentPaymentData.receiverAccount,
+					paymentDescription: currentPaymentData.paymentDescription,
+					paid_at: currentPaymentData.paid_at,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					userid: customer.customerId,
+					customersCustomerId: customer.customerId,
+				};
+
+				setCustomer((prev) =>
+					prev
+						? {
+								...prev,
+								TransactionHistory: [
+									newTransaction,
+									...(prev.TransactionHistory || []),
+								],
+						  }
+						: null
+				);
+			}
+
+			onConfirmInjectPaymentClose();
+		} catch (error: any) {
+			console.error("Error injecting payment history:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Failed to inject payment history",
+				duration: 5000,
+			});
+		} finally {
+			setIsInjectingPayment(false);
 		}
 	};
 
@@ -2331,6 +2928,22 @@ export default function CollectionSingleCustomerPage() {
 							defaultExpanded={true}
 						>
 							<div className="p-4">
+								{/* Transaction Header with Inject Button */}
+								<div className="flex justify-between items-center mb-4">
+									<h3 className="text-lg font-semibold text-default-700">
+										Payment Transactions
+									</h3>
+									<Button
+										color="primary"
+										variant="solid"
+										size="sm"
+										startContent={<Plus className="w-4 h-4" />}
+										onPress={handleOpenInjectPaymentModal}
+									>
+										Inject Transaction
+									</Button>
+								</div>
+
 								<div className="overflow-x-auto rounded-lg border border-default-200">
 									<table className="w-full">
 										<thead>
@@ -2378,7 +2991,8 @@ export default function CollectionSingleCustomerPage() {
 														className="hover:bg-default-50 transition-colors duration-150 ease-in-out"
 													>
 														<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-default-900">
-															{transaction.amount !== undefined
+															{transaction.amount !== undefined &&
+															transaction.amount !== null
 																? `${
 																		transaction.currency
 																  } ${transaction.amount.toLocaleString()}`
@@ -2413,7 +3027,8 @@ export default function CollectionSingleCustomerPage() {
 															{transaction.currency || "N/A"}
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-															{transaction.charge !== undefined
+															{transaction.charge !== undefined &&
+															transaction.charge !== null
 																? `${
 																		transaction.currency
 																  } ${transaction.charge.toLocaleString()}`
@@ -2954,11 +3569,12 @@ export default function CollectionSingleCustomerPage() {
 											return;
 										}
 
-										deviceActionData &&
+										if (deviceActionData) {
 											handleDeviceAction(
 												deviceActionData.action,
 												deviceActionData.imei
 											);
+										}
 									}}
 									isLoading={isButtonLoading}
 								>
@@ -3250,6 +3866,37 @@ export default function CollectionSingleCustomerPage() {
 					)}
 				</ModalContent>
 			</Modal>
+
+			{/* Inject Payment History Modal */}
+			<InjectPaymentModal
+				isOpen={isInjectPayment}
+				onClose={onInjectPaymentClose}
+				vfdBanks={vfdBanks || []}
+				onSubmit={handleInjectPaymentSubmit}
+				parseLocalDateTime={parseLocalDateTime}
+				customer={customer}
+			/>
+
+			{/* Confirmation Modal for Inject Payment */}
+			<ConfirmationModal
+				isOpen={isConfirmInjectPayment}
+				onClose={onConfirmInjectPaymentClose}
+				onConfirm={handleConfirmInjectPayment}
+				title="Confirm Payment Injection"
+				description={`Are you sure you want to inject a ${
+					currentPaymentData?.paymentType || "CREDIT"
+				} payment of ₦${
+					currentPaymentData?.amount
+						? parseFloat(currentPaymentData.amount).toLocaleString()
+						: "0"
+				} for ${customer?.firstName} ${
+					customer?.lastName
+				}? This action cannot be undone.`}
+				confirmText="Inject Payment"
+				cancelText="Cancel"
+				isLoading={isInjectingPayment}
+				variant="warning"
+			/>
 		</div>
 	);
 }
