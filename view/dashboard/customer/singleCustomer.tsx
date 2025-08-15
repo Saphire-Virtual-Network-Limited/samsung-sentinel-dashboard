@@ -2928,6 +2928,7 @@ export default function CollectionSingleCustomerPage() {
 							defaultExpanded={true}
 						>
 							<div className="p-4">
+
 								{/* Transaction Header with Inject Button */}
 								<div className="flex justify-between items-center mb-4">
 									<h3 className="text-lg font-semibold text-default-700">
@@ -2943,6 +2944,7 @@ export default function CollectionSingleCustomerPage() {
 										Inject Transaction
 									</Button>
 								</div>
+
 
 								<div className="overflow-x-auto rounded-lg border border-default-200">
 									<table className="w-full">
