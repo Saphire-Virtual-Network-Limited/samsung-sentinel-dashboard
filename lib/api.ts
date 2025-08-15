@@ -845,8 +845,8 @@ export async function unlockDevice(
 	});
 }
 
-export async function releaseDevice(imei?: string) {
-	return apiCall("/admin/device/release", "POST", { imei });
+export async function releaseDevice(imei?: string, reason?: string) {
+	return apiCall("/admin/locks/release/single", "POST", { imei, reason });
 }
 
 // ============================================================================

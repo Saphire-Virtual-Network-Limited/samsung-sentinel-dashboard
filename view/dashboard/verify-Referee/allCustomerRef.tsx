@@ -15,10 +15,9 @@ import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "Referee No.", uid: "phone2" },
 	{ name: "Status", uid: "generalStatus" },
+	{ name: "Date", uid: "updatedAt", sortable: true },
 	{ name: "Actions", uid: "actions"},
 ];
 
@@ -77,6 +76,7 @@ type UnapprovedRefereeRecord = {
 		channel: string;
 		phone2Status: string;
 		phone3Status: string;
+		updated_by: string | null;
 	}>;
 	LoanRecord?: Array<{
 		loanRecordId: string;
@@ -167,6 +167,8 @@ type UnapprovedRefereeRecord = {
 		}
 	);
 
+	console.log(raw);
+
 	useEffect(() => {
 		mutate(["all-referees", startDate, endDate]);
 	}, [startDate, endDate]);
@@ -180,7 +182,13 @@ type UnapprovedRefereeRecord = {
 				email: r.email,
 				generalStatus: r.CustomerKYC?.[0]?.generalStatus || 'pending' || "approved" || "rejected",
 				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || 'pending' || "approved" || "rejected"],
-				phone2: r.CustomerKYC?.[0]?.phone2 || 'N/A',
+				updatedAt: new Date(r.updatedAt).toLocaleDateString('en-US', {
+					year: 'numeric',
+					month: 'short', 
+					day: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}),
 				age: calculateAge(r.dob),
 			})),
 		[raw]
