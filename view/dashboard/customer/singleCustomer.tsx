@@ -2331,6 +2331,7 @@ export default function CollectionSingleCustomerPage() {
 							defaultExpanded={true}
 						>
 							<div className="p-4">
+
 								<div className="overflow-x-auto rounded-lg border border-default-200">
 									<table className="w-full">
 										<thead>

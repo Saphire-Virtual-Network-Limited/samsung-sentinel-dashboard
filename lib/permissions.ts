@@ -61,6 +61,7 @@ export interface PermissionConfig {
   viewAgentPerformanceData: boolean;
   updateScanPartner: boolean;
   canApproveStore: boolean;
+  canInjectTransaction: boolean;
   // Example of how to add a new permission:
   // canManageReports: boolean;
   //   canViewSensitiveData: boolean;
@@ -120,10 +121,12 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     viewLoanDetails: true,
     viewCommissionDetails: true,
     viewAgentPerformanceData: true,
+    canInjectTransaction: true,
   },
 
   "collection-admin": {
     canTriggerDeviceActions: true,
+    canInjectTransaction: true,
   },
   "collection-officer": {
     canViewOverDuePayments: true,
@@ -146,6 +149,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canChangeDashboardUserPassword: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
+    canInjectTransaction: true,
   },
   developer: {
     canUpdateWalletBalance: true,
@@ -160,6 +164,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
     canChangeDashboardUserPassword: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
+    canInjectTransaction: true,
   },
   finance: {
     // Finance has no special permissions
@@ -208,6 +213,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canViewDeviceActivityLog: true,
     canUpdateDeviceImei: true,
     canAssignAgent: true,
+    canInjectTransaction: true,
   },
   "babatunde@sapphirevirtual.com": {
     verifyMobiflex: true,
@@ -230,7 +236,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     createDashboardUser: true,
     canChangeDashboardUserPassword: true,
     canApproveStore: true,
-
+    canInjectTransaction: true,
 
   },
   "greatnessabolade@gmail.com": {
@@ -248,7 +254,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
     canUpdateDeviceImei: true,
     canAssignAgent: true,
     createDashboardUser: true,
-
+    canInjectTransaction: true,
     canApproveStore: true,
 
   },
@@ -319,6 +325,7 @@ function getDefaultPermissions(): PermissionConfig {
     updateScanPartner: false,
     viewAgentPerformanceData: false,
     canApproveStore: false,
+    canInjectTransaction: false,
     // Example of how to add a new permission:
     // canManageReports: false,
   };
@@ -412,6 +419,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
     "viewAgentPerformanceData",
     "updateScanPartner",
     "canApproveStore",
+    "canInjectTransaction",
     // 'canViewSensitiveData',
     // 'canManageCustomers',
     // 'canManageLoans',
