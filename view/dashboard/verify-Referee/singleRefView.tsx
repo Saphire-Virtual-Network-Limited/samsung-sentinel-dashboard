@@ -819,7 +819,8 @@ export default function SingleRefereeView({
 												{customer.CustomerKYC?.[0]?.generalComment}
 											</div>
 										</div>
-									)}
+									)
+								}
 
 								{/* Updated By Information */}
 								{customer.CustomerKYC?.[0]?.updated_by && (
