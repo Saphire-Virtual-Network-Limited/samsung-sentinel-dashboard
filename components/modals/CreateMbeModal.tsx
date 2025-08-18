@@ -12,7 +12,9 @@ import {
 	Select,
 	SelectItem,
 	Switch,
+	DateInput,
 } from "@heroui/react";
+import { parseDate, CalendarDate } from "@internationalized/date";
 import { toast } from "sonner";
 import { createMbeRecord } from "@/lib/api";
 import { Eye, EyeOff } from "lucide-react";
@@ -33,7 +35,8 @@ interface CreateMbeData {
 	bvn: string;
 	bvnPhoneNumber: string;
 	channel: string;
-	dob: string;
+	dob: string; // Keep as string for API
+	dobValue?: CalendarDate; // Add for DateInput component
 	email: string;
 	password?: string;
 	role: string;
@@ -98,6 +101,7 @@ export default function CreateMbeModal({
 		bvnPhoneNumber: "",
 		channel: "Mobiflex",
 		dob: "",
+		dobValue: undefined,
 		email: "",
 		password: "",
 		role: "MBE",
@@ -168,12 +172,36 @@ export default function CreateMbeModal({
 
 	const handleInputChange = (
 		field: keyof CreateMbeData,
-		value: string | boolean
+		value: string | boolean | CalendarDate
 	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 		// Clear error when user starts typing
 		if (errors[field]) {
 			setErrors((prev) => ({ ...prev, [field]: "" }));
+		}
+	};
+
+	const handleDateChange = (date: CalendarDate | null) => {
+		if (date) {
+			const dateString = `${date.year}-${String(date.month).padStart(
+				2,
+				"0"
+			)}-${String(date.day).padStart(2, "0")}`;
+			setFormData((prev) => ({
+				...prev,
+				dobValue: date,
+				dob: dateString,
+			}));
+			// Clear error when date is selected
+			if (errors.dob) {
+				setErrors((prev) => ({ ...prev, dob: "" }));
+			}
+		} else {
+			setFormData((prev) => ({
+				...prev,
+				dobValue: undefined,
+				dob: "",
+			}));
 		}
 	};
 
@@ -200,7 +228,7 @@ export default function CreateMbeModal({
 				channel: "Mobiflex", // Default Mobiflex
 				dob: formData.dob,
 				email: formData.email,
-				isActive: formData.isActive ? "true" : "false", // Convert boolean to string
+				isActive: formData.isActive || false, // Send as boolean
 				role: "MBE", // Always MBE
 				// Include password only if provided (it's optional)
 				...(formData.password ? { password: formData.password } : {}),
@@ -230,6 +258,7 @@ export default function CreateMbeModal({
 				bvnPhoneNumber: "",
 				channel: "Mobiflex",
 				dob: "",
+				dobValue: undefined,
 				email: "",
 				password: "",
 				role: "MBE",
@@ -350,14 +379,15 @@ export default function CreateMbeModal({
 								</SelectItem>
 							))}
 						</Select>
-						<Input
+						<DateInput
 							label="Date of Birth"
-							type="date"
-							value={formData.dob}
-							onValueChange={(value) => handleInputChange("dob", value)}
+							placeholderValue={new CalendarDate(2000, 1, 1)}
+							value={formData.dobValue}
+							onChange={handleDateChange}
 							isInvalid={!!errors.dob}
 							errorMessage={errors.dob}
 							isRequired
+							description="Must be at least 18 years old"
 						/>
 						<Input
 							label="Password (Optional)"
