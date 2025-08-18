@@ -280,7 +280,6 @@ export function AppSidebar() {
       id: "admin-users",
       url: "/access/admin/users/",
     },
-
     {
       icon: Package2Icon,
       title: "Inventory",
@@ -290,6 +289,12 @@ export function AppSidebar() {
         { title: "TVs", url: "/access/admin/inventory/tvs" },
         { title: "Solar", url: "/access/admin/inventory/solar" },
       ],
+    },
+    {
+      icon: Package2Icon,
+      title: "PowerFlex",
+      id: "admin-powerflex",
+      url: "/access/admin/powerflex",
     },
   ];
 
@@ -766,6 +771,12 @@ export function AppSidebar() {
       title: "Sentinel",
       url: "/access/dev/sales",
       id: "developer-sales",
+    },
+    {
+      icon: ChartBar,
+      title: "PowerFlex",
+      url: "/access/dev/powerflex",
+      id: "developer-powerflex",
     },
   ];
 
