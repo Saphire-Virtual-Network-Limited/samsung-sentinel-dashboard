@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import { toast } from "sonner";
 import { createMbeRecord } from "@/lib/api";
+import { Eye, EyeOff } from "lucide-react";
 
 interface CreateMbeModalProps {
 	isOpen: boolean;
@@ -101,6 +102,10 @@ export default function CreateMbeModal({
 	});
 
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+	const togglePasswordVisibility = () =>
+		setIsPasswordVisible(!isPasswordVisible);
 
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
@@ -349,11 +354,25 @@ export default function CreateMbeModal({
 						/>
 						<Input
 							label="Password (Optional)"
-							type="password"
+							type={isPasswordVisible ? "text" : "password"}
 							placeholder="Enter password (optional)"
 							value={formData.password}
 							onValueChange={(value) => handleInputChange("password", value)}
 							description="If not provided, a default password will be generated"
+							endContent={
+								<button
+									className="focus:outline-none"
+									type="button"
+									onClick={togglePasswordVisibility}
+									aria-label="toggle password visibility"
+								>
+									{isPasswordVisible ? (
+										<EyeOff className="w-4 h-4 text-default-400 pointer-events-none" />
+									) : (
+										<Eye className="w-4 h-4 text-default-400 pointer-events-none" />
+									)}
+								</button>
+							}
 						/>
 					</div>
 

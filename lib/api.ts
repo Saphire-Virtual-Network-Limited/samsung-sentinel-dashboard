@@ -657,7 +657,7 @@ export async function createMbeRecord(
 	},
 	options?: ApiCallOptions
 ) {
-	return apiCall(`/v1/admin/mbe/create`, "POST", data, options);
+	return apiCall(`/admin/mbe/create`, "POST", data, options);
 }
 
 // ============================================================================
