@@ -37,6 +37,7 @@ import {
 	getVfdBanks,
 	injectPaymentHistory,
 	InjectPaymentHistoryData,
+	getDeviceLocksLogs,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -751,6 +752,32 @@ export default function CollectionSingleCustomerPage() {
 		revalidateOnReconnect: true,
 		dedupingInterval: 300000, // Cache for 5 minutes
 	});
+
+	// Fetch Device Locks Logs
+	const fetchDeviceLocksLogs = async () => {
+		try {
+			const imei = customer?.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei;
+			if (!imei || imei === "N/A") return [];
+
+			const response = await getDeviceLocksLogs(imei);
+			return response.data || [];
+		} catch (error) {
+			console.error("Error fetching device locks logs:", error);
+			return [];
+		}
+	};
+
+	const { data: deviceLocksLogs = [], isLoading: isLoadingDeviceLogs } = useSWR(
+		customer?.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei
+			? `device-locks-logs-${customer.LoanRecord[0].DeviceOnLoan[0].imei}`
+			: null,
+		fetchDeviceLocksLogs,
+		{
+			revalidateOnFocus: false,
+			revalidateOnReconnect: true,
+			dedupingInterval: 60000, // Cache for 1 minute
+		}
+	);
 
 	useEffect(() => {
 		const fetchCustomer = async () => {
@@ -2931,9 +2958,7 @@ export default function CollectionSingleCustomerPage() {
 
 								{/* Transaction Header with Inject Button */}
 								<div className="flex justify-between items-center mb-4">
-									<h3 className="text-lg font-semibold text-default-700">
-										Payment Transactions
-									</h3>
+									<h3 className="text-lg font-semibold text-default-700"></h3>
 									<Button
 										color="primary"
 										variant="solid"
@@ -3220,13 +3245,13 @@ export default function CollectionSingleCustomerPage() {
 													scope="col"
 													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
 												>
-													Type
+													Status
 												</th>
 												<th
 													scope="col"
 													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
 												>
-													Updated By
+													Performed By
 												</th>
 												<th
 													scope="col"
@@ -3237,29 +3262,91 @@ export default function CollectionSingleCustomerPage() {
 											</tr>
 										</thead>
 										<tbody className="bg-white divide-y divide-default-200">
-											<tr>
-												<td colSpan={4} className="px-6 py-12 text-center">
-													<EmptyState
-														title="No Device Activity Logs"
-														description="There are no activities to display at this time."
-														icon={
-															<svg
-																className="w-12 h-12 mb-4 text-default-300"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
+											{isLoadingDeviceLogs ? (
+												<tr>
+													<td colSpan={5} className="px-6 py-12 text-center">
+														<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
+														<p className="mt-2 text-sm text-default-500">
+															Loading device activity logs...
+														</p>
+													</td>
+												</tr>
+											) : deviceLocksLogs && deviceLocksLogs.length > 0 ? (
+												deviceLocksLogs.map((log: any, index: number) => (
+													<tr
+														key={log.id || index}
+														className="hover:bg-default-50"
+													>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
+															{index + 1}
+														</td>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
+															<Chip
+																color={
+																	log.action === "LOCKED"
+																		? "danger"
+																		: log.action === "UNLOCKED"
+																		? "success"
+																		: log.action === "RELEASED"
+																		? "warning"
+																		: "default"
+																}
+																variant="flat"
+																size="sm"
 															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={2}
-																	d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-																/>
-															</svg>
-														}
-													/>
-												</td>
-											</tr>
+																{log.action || "N/A"}
+															</Chip>
+														</td>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
+															<Chip
+																color={
+																	log.status === "SUCCESS"
+																		? "success"
+																		: log.status === "FAILED"
+																		? "danger"
+																		: "default"
+																}
+																variant="flat"
+																size="sm"
+															>
+																{log.status || "N/A"}
+															</Chip>
+														</td>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
+															{log.performed_by || "System"}
+														</td>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-500">
+															{log.createdAt
+																? new Date(log.createdAt).toLocaleString()
+																: "N/A"}
+														</td>
+													</tr>
+												))
+											) : (
+												<tr>
+													<td colSpan={5} className="px-6 py-12 text-center">
+														<EmptyState
+															title="No Device Activity Logs"
+															description="There are no activities to display at this time."
+															icon={
+																<svg
+																	className="w-12 h-12 mb-4 text-default-300"
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																>
+																	<path
+																		strokeLinecap="round"
+																		strokeLinejoin="round"
+																		strokeWidth={2}
+																		d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+																	/>
+																</svg>
+															}
+														/>
+													</td>
+												</tr>
+											)}
 										</tbody>
 									</table>
 								</div>
