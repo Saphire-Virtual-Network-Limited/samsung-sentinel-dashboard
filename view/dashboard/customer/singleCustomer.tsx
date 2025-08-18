@@ -3243,13 +3243,13 @@ export default function CollectionSingleCustomerPage() {
 													scope="col"
 													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
 												>
-													Type
+													Status
 												</th>
 												<th
 													scope="col"
 													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
 												>
-													Updated By
+													Performed By
 												</th>
 												<th
 													scope="col"
@@ -3279,33 +3279,43 @@ export default function CollectionSingleCustomerPage() {
 															{index + 1}
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
-															{log.action || "N/A"}
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
 															<Chip
 																color={
-																	log.type === "LOCK"
+																	log.action === "LOCKED"
 																		? "danger"
-																		: log.type === "UNLOCK"
+																		: log.action === "UNLOCKED"
 																		? "success"
-																		: log.type === "RELEASE"
+																		: log.action === "RELEASED"
 																		? "warning"
 																		: "default"
 																}
 																variant="flat"
 																size="sm"
 															>
-																{log.type || "N/A"}
+																{log.action || "N/A"}
 															</Chip>
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
-															{log.updatedBy || log.updated_by || "System"}
+															<Chip
+																color={
+																	log.status === "SUCCESS"
+																		? "success"
+																		: log.status === "FAILED"
+																		? "danger"
+																		: "default"
+																}
+																variant="flat"
+																size="sm"
+															>
+																{log.status || "N/A"}
+															</Chip>
+														</td>
+														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-900">
+															{log.performed_by || "System"}
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-500">
-															{log.createdAt || log.created_at
-																? new Date(
-																		log.createdAt || log.created_at
-																  ).toLocaleString()
+															{log.createdAt
+																? new Date(log.createdAt).toLocaleString()
 																: "N/A"}
 														</td>
 													</tr>
