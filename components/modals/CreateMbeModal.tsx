@@ -11,6 +11,7 @@ import {
 	Input,
 	Select,
 	SelectItem,
+	Switch,
 } from "@heroui/react";
 import { toast } from "sonner";
 import { createMbeRecord } from "@/lib/api";
@@ -36,6 +37,7 @@ interface CreateMbeData {
 	email: string;
 	password?: string;
 	role: string;
+	isActive?: boolean;
 }
 
 // Nigerian states
@@ -99,6 +101,7 @@ export default function CreateMbeModal({
 		email: "",
 		password: "",
 		role: "MBE",
+		isActive: true,
 	});
 
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -163,7 +166,10 @@ export default function CreateMbeModal({
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleInputChange = (field: keyof CreateMbeData, value: string) => {
+	const handleInputChange = (
+		field: keyof CreateMbeData,
+		value: string | boolean
+	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 		// Clear error when user starts typing
 		if (errors[field]) {
@@ -194,7 +200,7 @@ export default function CreateMbeModal({
 				channel: "Mobiflex", // Default Mobiflex
 				dob: formData.dob,
 				email: formData.email,
-				isActive: "", // As per API spec
+				isActive: formData.isActive ? "true" : "false", // Convert boolean to string
 				role: "MBE", // Always MBE
 				// Include password only if provided (it's optional)
 				...(formData.password ? { password: formData.password } : {}),
@@ -227,6 +233,7 @@ export default function CreateMbeModal({
 				email: "",
 				password: "",
 				role: "MBE",
+				isActive: true,
 			});
 		} catch (error) {
 			console.error("Error creating MBE:", error);
@@ -395,6 +402,23 @@ export default function CreateMbeModal({
 							isReadOnly
 							description="Fixed: MBE for all MBEs"
 						/>
+					</div>
+
+					<div className="flex items-center gap-4 mt-4 p-4 bg-default-50 rounded-lg">
+						<Switch
+							isSelected={formData.isActive}
+							onValueChange={(value) => handleInputChange("isActive", value)}
+							color="success"
+							size="md"
+						/>
+						<div className="flex flex-col">
+							<span className="text-sm font-medium text-default-700">
+								Active Status
+							</span>
+							<span className="text-xs text-default-500">
+								Toggle to set MBE as active or inactive
+							</span>
+						</div>
 					</div>
 				</ModalBody>
 				<ModalFooter>
