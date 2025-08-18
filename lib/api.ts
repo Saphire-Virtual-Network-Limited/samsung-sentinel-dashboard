@@ -1149,6 +1149,15 @@ export async function deleteCommunicationLog(id: string) {
 	return apiCall(`/admin/communication-log/delete/${id}`, "DELETE");
 }
 
+//get device locks logs with optional imei filter
+export async function getDeviceLocksLogs(
+	imei?: string,
+	options?: ApiCallOptions
+) {
+	const query = imei ? `?imei=${imei}` : "";
+	return apiCall(`/admin/locks/logs${query}`, "GET", undefined, options);
+}
+
 //get all downpayment lower than 20%
 export async function getAllDownpaymentLowerThan20(
 	includeRelations: boolean = true
