@@ -533,7 +533,7 @@ export async function assignAgentToStore(data: AssignAgentStore) {
 
 // Update agent store assignment
 export async function updateAgentStore(data: AssignAgentStore) {
-	return apiCall("/admin/mbe/update-store", "PUT", data);
+	return apiCall("/admin/mbe/update-store", "POST", data);
 }
 
 // Get available stores for an agent
@@ -636,6 +636,28 @@ export async function updateScanPartner(
 		{ mbeId, userId },
 		options
 	);
+}
+
+export async function createMbeRecord(
+	data: {
+		title: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		state: string;
+		username: string;
+		bvn: string;
+		bvnPhoneNumber: string;
+		channel: string;
+		dob: string;
+		email: string;
+		isActive: string;
+		password?: string;
+		role: string;
+	},
+	options?: ApiCallOptions
+) {
+	return apiCall(`/v1/admin/mbe/create`, "POST", data, options);
 }
 
 // ============================================================================

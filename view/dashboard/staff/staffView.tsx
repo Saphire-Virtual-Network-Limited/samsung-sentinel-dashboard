@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import { getAllAgentRecord, capitalize, calculateAge } from "@/lib";
+import {
+	getAllAgentRecord,
+	capitalize,
+	calculateAge,
+	GeneralSans_Meduim,
+} from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import {
@@ -18,6 +23,9 @@ import {
 	Chip,
 	SortDescriptor,
 	ChipProps,
+	Tabs,
+	Tab,
+	cn,
 } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
@@ -28,6 +36,7 @@ import {
 	verifyColumns,
 	statusColorMap,
 } from "./constants";
+import CreateMbeModal from "@/components/modals/CreateMbeModal";
 
 export default function SalesUsersPage() {
 	const router = useRouter();
@@ -47,6 +56,13 @@ export default function SalesUsersPage() {
 	const [guarantorStatusFilter, setGuarantorStatusFilter] = useState<
 		string | null
 	>(null);
+
+	// State for active tab
+	const [activeTab, setActiveTab] = useState<string>("agents");
+
+	// State for create MBE modal
+	const [isCreateMbeModalOpen, setIsCreateMbeModalOpen] = useState(false);
+	const [isCreatingMbe, setIsCreatingMbe] = useState(false);
 
 	// Extract search params and update filters
 	useEffect(() => {
@@ -96,7 +112,11 @@ export default function SalesUsersPage() {
 	};
 	const MOBIFLEX_APP_KEY = process.env.NEXT_PUBLIC_MOBIFLEX_APP_KEY;
 	// Fetch data based on date filter
-	const { data: raw = [], isLoading } = useSWR(
+	const {
+		data: raw = [],
+		isLoading,
+		mutate,
+	} = useSWR(
 		startDate && endDate
 			? ["sales-agent-records", startDate, endDate]
 			: "sales-agent-records",
@@ -126,6 +146,24 @@ export default function SalesUsersPage() {
 			revalidateIfStale: true,
 		}
 	);
+
+	// Handle create MBE modal
+	const handleCreateMbe = () => {
+		setIsCreateMbeModalOpen(true);
+	};
+
+	const handleCreateMbeSuccess = () => {
+		// Refresh the data after successful creation
+		mutate();
+		setIsCreateMbeModalOpen(false);
+	};
+
+	// Create button configuration for MBEs tab
+	const createMbeButton = {
+		text: "Create MBE",
+		onClick: handleCreateMbe,
+		isLoading: isCreatingMbe,
+	};
 
 	console.log(raw);
 
@@ -162,6 +200,29 @@ export default function SalesUsersPage() {
 		}
 
 		let list = [...salesStaff];
+
+		// Filter by tab selection first
+		if (activeTab === "agents") {
+			// Filter out MBEs - assuming MBE titles contain "mbe" or specific patterns
+			list = list.filter((agent: AgentRecord) => {
+				const title = agent.title?.toLowerCase() || "";
+				return (
+					!title.includes("mbe") &&
+					!title.includes("mobiflex_mbe") &&
+					!title.includes("micro_business_entrepreneur")
+				);
+			});
+		} else if (activeTab === "mbes") {
+			// Filter for MBEs only
+			list = list.filter((agent: AgentRecord) => {
+				const title = agent.title?.toLowerCase() || "";
+				return (
+					title.includes("mbe") ||
+					title.includes("mobiflex_mbe") ||
+					title.includes("micro_business_entrepreneur")
+				);
+			});
+		}
 
 		// Filter by guarantor status with priority-based logic
 		if (guarantorStatusFilter) {
@@ -223,9 +284,34 @@ export default function SalesUsersPage() {
 		}
 
 		return list;
-	}, [salesStaff, filterValue, statusFilter, guarantorStatusFilter]);
+	}, [salesStaff, filterValue, statusFilter, guarantorStatusFilter, activeTab]);
 
 	const pages = Math.ceil(filtered.length / rowsPerPage) || 1;
+
+	// Calculate counts for each tab
+	const agentCount = useMemo(() => {
+		if (!salesStaff || !Array.isArray(salesStaff)) return 0;
+		return salesStaff.filter((agent: AgentRecord) => {
+			const title = agent.title?.toLowerCase() || "";
+			return (
+				!title.includes("mbe") &&
+				!title.includes("mobiflex_mbe") &&
+				!title.includes("micro_business_entrepreneur")
+			);
+		}).length;
+	}, [salesStaff]);
+
+	const mbeCount = useMemo(() => {
+		if (!salesStaff || !Array.isArray(salesStaff)) return 0;
+		return salesStaff.filter((agent: AgentRecord) => {
+			const title = agent.title?.toLowerCase() || "";
+			return (
+				title.includes("mbe") ||
+				title.includes("mobiflex_mbe") ||
+				title.includes("micro_business_entrepreneur")
+			);
+		}).length;
+	}, [salesStaff]);
 	const paged = useMemo(() => {
 		const start = (page - 1) * rowsPerPage;
 		return filtered.slice(start, start + rowsPerPage);
@@ -241,37 +327,44 @@ export default function SalesUsersPage() {
 	}, [paged, sortDescriptor]);
 
 	// Export all filtered
-	const exportFn = async (data: AgentRecord[]) => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet(
-			isVerifyRoute ? "Agent Verification Records" : "Customers"
-		);
-		ws.columns = tableColumns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+	const exportFn = useCallback(
+		async (data: AgentRecord[]) => {
+			const wb = new ExcelJS.Workbook();
+			const tabName = activeTab === "agents" ? "Agents" : "MBEs";
+			const ws = wb.addWorksheet(
+				isVerifyRoute ? `${tabName} Verification Records` : tabName
+			);
+			ws.columns = tableColumns
+				.filter((c) => c.uid !== "actions")
+				.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 
-		data.forEach((r) => {
-			const rowData: any = { ...r, status: capitalize(r.accountStatus || "") };
-			// Add guarantor data for verify route
-			if (isVerifyRoute) {
-				const guarantors = r.MbeGuarantor || [];
-				const guarantor1 = guarantors[0] || null;
-				const guarantor2 = guarantors[1] || null;
+			data.forEach((r) => {
+				const rowData: any = {
+					...r,
+					status: capitalize(r.accountStatus || ""),
+				};
+				// Add guarantor data for verify route
+				if (isVerifyRoute) {
+					const guarantors = r.MbeGuarantor || [];
+					const guarantor1 = guarantors[0] || null;
+					const guarantor2 = guarantors[1] || null;
 
-				rowData.guarantor1Status = guarantor1?.guarantorStatus || "N/A";
-				rowData.guarantor1Comment = guarantor1?.comment || "No comment";
-				rowData.guarantor2Status = guarantor2?.guarantorStatus || "N/A";
-				rowData.guarantor2Comment = guarantor2?.comment || "No comment";
-			}
-			ws.addRow(rowData);
-		});
+					rowData.guarantor1Status = guarantor1?.guarantorStatus || "N/A";
+					rowData.guarantor1Comment = guarantor1?.comment || "No comment";
+					rowData.guarantor2Status = guarantor2?.guarantorStatus || "N/A";
+					rowData.guarantor2Comment = guarantor2?.comment || "No comment";
+				}
+				ws.addRow(rowData);
+			});
 
-		const buf = await wb.xlsx.writeBuffer();
-		const fileName = isVerifyRoute
-			? "Agent_Verification_Records.xlsx"
-			: "Customer_Records.xlsx";
-		saveAs(new Blob([buf]), fileName);
-	};
+			const buf = await wb.xlsx.writeBuffer();
+			const fileName = isVerifyRoute
+				? `${tabName}_Verification_Records.xlsx`
+				: `${tabName}_Records.xlsx`;
+			saveAs(new Blob([buf]), fileName);
+		},
+		[activeTab, isVerifyRoute, tableColumns]
+	);
 
 	// Render each cell, including actions dropdown:
 	const renderCell = (row: AgentRecord, key: string) => {
@@ -361,38 +454,122 @@ export default function SalesUsersPage() {
 		<>
 			<div className="mb-4 flex justify-center md:justify-end"></div>
 
-			{isLoading ? (
-				<TableSkeleton columns={tableColumns.length} rows={10} />
-			) : (
-				<GenericTable<AgentRecord>
-					columns={tableColumns}
-					data={sorted}
-					allCount={filtered.length}
-					exportData={filtered}
-					isLoading={isLoading}
-					filterValue={filterValue}
-					onFilterChange={(v) => {
-						setFilterValue(v);
-						setPage(1);
+			<div className="flex w-full flex-col">
+				<Tabs
+					selectedKey={activeTab}
+					onSelectionChange={(key) => {
+						setActiveTab(key as string);
+						setPage(1); // Reset to first page when switching tabs
 					}}
-					statusOptions={statusOptions}
-					statusFilter={statusFilter}
-					onStatusChange={handleStatusFilterChange}
-					statusColorMap={statusColorMap}
-					showStatus={!isVerifyRoute} // Hide status filter for verify route since we show guarantor status
-					sortDescriptor={sortDescriptor}
-					onSortChange={setSortDescriptor}
-					page={page}
-					pages={pages}
-					onPageChange={setPage}
-					exportFn={exportFn}
-					renderCell={renderCell}
-					hasNoRecords={hasNoRecords}
-					onDateFilterChange={handleDateFilter}
-					initialStartDate={startDate}
-					initialEndDate={endDate}
-				/>
-			)}
+					aria-label="Staff Categories"
+					size="lg"
+					radius="lg"
+					color="primary"
+					className={cn("pb-5", GeneralSans_Meduim.className)}
+					classNames={{
+						tab: "lg:p-4 text-sm lg:text-base",
+					}}
+				>
+					<Tab
+						key="agents"
+						title={
+							<div className="flex items-center space-x-2">
+								<span>Agents</span>
+								<Chip size="sm" variant="faded">
+									{agentCount}
+								</Chip>
+							</div>
+						}
+						className="lg:p-4 text-base"
+					>
+						{isLoading ? (
+							<TableSkeleton columns={tableColumns.length} rows={10} />
+						) : (
+							<GenericTable<AgentRecord>
+								columns={tableColumns}
+								data={sorted}
+								allCount={filtered.length}
+								exportData={filtered}
+								isLoading={isLoading}
+								filterValue={filterValue}
+								onFilterChange={(v) => {
+									setFilterValue(v);
+									setPage(1);
+								}}
+								statusOptions={statusOptions}
+								statusFilter={statusFilter}
+								onStatusChange={handleStatusFilterChange}
+								statusColorMap={statusColorMap}
+								showStatus={!isVerifyRoute} // Hide status filter for verify route since we show guarantor status
+								sortDescriptor={sortDescriptor}
+								onSortChange={setSortDescriptor}
+								page={page}
+								pages={pages}
+								onPageChange={setPage}
+								exportFn={exportFn}
+								renderCell={renderCell}
+								hasNoRecords={hasNoRecords}
+								onDateFilterChange={handleDateFilter}
+								initialStartDate={startDate}
+								initialEndDate={endDate}
+							/>
+						)}
+					</Tab>
+					<Tab
+						key="mbes"
+						title={
+							<div className="flex items-center space-x-2">
+								<span>MBEs</span>
+								<Chip size="sm" variant="faded">
+									{mbeCount}
+								</Chip>
+							</div>
+						}
+						className="lg:p-4 text-base"
+					>
+						{isLoading ? (
+							<TableSkeleton columns={tableColumns.length} rows={10} />
+						) : (
+							<GenericTable<AgentRecord>
+								columns={tableColumns}
+								data={sorted}
+								allCount={filtered.length}
+								exportData={filtered}
+								isLoading={isLoading}
+								filterValue={filterValue}
+								onFilterChange={(v) => {
+									setFilterValue(v);
+									setPage(1);
+								}}
+								statusOptions={statusOptions}
+								statusFilter={statusFilter}
+								onStatusChange={handleStatusFilterChange}
+								statusColorMap={statusColorMap}
+								showStatus={!isVerifyRoute} // Hide status filter for verify route since we show guarantor status
+								sortDescriptor={sortDescriptor}
+								onSortChange={setSortDescriptor}
+								page={page}
+								pages={pages}
+								onPageChange={setPage}
+								exportFn={exportFn}
+								renderCell={renderCell}
+								hasNoRecords={hasNoRecords}
+								onDateFilterChange={handleDateFilter}
+								initialStartDate={startDate}
+								initialEndDate={endDate}
+								createButton={createMbeButton}
+							/>
+						)}
+					</Tab>
+				</Tabs>
+			</div>
+
+			{/* Create MBE Modal */}
+			<CreateMbeModal
+				isOpen={isCreateMbeModalOpen}
+				onClose={() => setIsCreateMbeModalOpen(false)}
+				onSuccess={handleCreateMbeSuccess}
+			/>
 		</>
 	);
 }

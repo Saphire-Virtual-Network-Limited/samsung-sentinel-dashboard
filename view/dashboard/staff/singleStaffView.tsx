@@ -591,6 +591,15 @@ export default function AgentSinglePage() {
 	const [selectedStore, setSelectedStore] = useState<any>(null);
 	const [storeSearchValue, setStoreSearchValue] = useState("");
 
+	// Handle store search input change
+	const handleStoreSearchChange = (value: string) => {
+		setStoreSearchValue(value);
+		// Clear selection when user is typing to search
+		if (value && selectedStore) {
+			setSelectedStore(null);
+		}
+	};
+
 	const [currentScanPartnerDetails, setCurrentScanPartnerDetails] =
 		useState<any>(null);
 
@@ -1105,8 +1114,6 @@ export default function AgentSinglePage() {
 			const result = mainStore?.storeNew
 				? await updateAgentStore(data)
 				: await assignAgentToStore(data);
-
-			if (result?.status === "success") {
 				showToast({
 					type: "success",
 					message: mainStore?.storeNew
@@ -1119,13 +1126,7 @@ export default function AgentSinglePage() {
 				mutate();
 				onStoreModalClose();
 				setSelectedStore(null);
-			} else {
-				showToast({
-					type: "error",
-					message: result.message || "Failed to assign store",
-					duration: 5000,
-				});
-			}
+	
 		} catch (error: any) {
 			console.error("Error assigning store:", error);
 			showToast({
@@ -1141,19 +1142,22 @@ export default function AgentSinglePage() {
 		}
 	};
 
-	// Filter stores based on search
+	// Filter stores based on search with enhanced filtering
 	const filteredStores = useMemo(() => {
 		if (!processedStoresData) return [];
 
-		if (!storeSearchValue) return processedStoresData;
+		if (!storeSearchValue || storeSearchValue.trim() === "")
+			return processedStoresData;
 
-		const searchTerm = storeSearchValue.toLowerCase();
+		const searchTerm = storeSearchValue.toLowerCase().trim();
 		return processedStoresData.filter(
 			(store: any) =>
 				store.storeName?.toLowerCase().includes(searchTerm) ||
 				store.address?.toLowerCase().includes(searchTerm) ||
 				store.city?.toLowerCase().includes(searchTerm) ||
-				store.state?.toLowerCase().includes(searchTerm)
+				store.state?.toLowerCase().includes(searchTerm) ||
+				store.storeId?.toLowerCase().includes(searchTerm) ||
+				store.partner?.toLowerCase().includes(searchTerm)
 		);
 	}, [processedStoresData, storeSearchValue]);
 
@@ -2630,8 +2634,8 @@ export default function AgentSinglePage() {
 								</label>
 								<Autocomplete
 									placeholder="Search for a store..."
-									value={storeSearchValue}
-									onValueChange={setStoreSearchValue}
+									inputValue={storeSearchValue}
+									onInputChange={handleStoreSearchChange}
 									selectedKey={selectedStore?.storeId || ""}
 									onSelectionChange={(key) => {
 										if (key) {
@@ -2644,9 +2648,13 @@ export default function AgentSinglePage() {
 									className="w-full"
 									variant="bordered"
 									size="lg"
+									allowsCustomValue={true}
+									menuTrigger="input"
+									items={filteredStores}
+									defaultFilter={() => true} // Disable internal filtering since we handle it
 									startContent={<Store className="w-4 h-4 text-default-400" />}
 								>
-									{filteredStores.map((store: any) => (
+									{(store: any) => (
 										<AutocompleteItem
 											key={store.storeId}
 											value={store.storeId}
@@ -2665,7 +2673,7 @@ export default function AgentSinglePage() {
 												</span>
 											</div>
 										</AutocompleteItem>
-									))}
+									)}
 								</Autocomplete>
 								{filteredStores.length === 0 && (
 									<p className="text-sm text-default-500 mt-2">
