@@ -781,8 +781,8 @@ export async function getMBEwithCustomer(
 // CANCEL/DELETE BILL
 // ============================================================================
 
-export async function deleteCustomer(customerId: string) {
-	return apiCall(`/admin/customers/delete-customer/${customerId}`, "DELETE");
+export async function deleteCustomer(customerId: string, reason: string) {
+	return apiCall(`/admin/customers/delete-customer/${customerId}?reason=${reason}`, "DELETE");
 }
 
 // Update customer LastPoint
