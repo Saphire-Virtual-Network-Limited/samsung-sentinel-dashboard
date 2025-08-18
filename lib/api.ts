@@ -533,7 +533,7 @@ export async function assignAgentToStore(data: AssignAgentStore) {
 
 // Update agent store assignment
 export async function updateAgentStore(data: AssignAgentStore) {
-	return apiCall("/admin/mbe/update-store", "PUT", data);
+	return apiCall("/admin/mbe/update-store", "POST", data);
 }
 
 // Get available stores for an agent
@@ -636,6 +636,28 @@ export async function updateScanPartner(
 		{ mbeId, userId },
 		options
 	);
+}
+
+export async function createMbeRecord(
+	data: {
+		title: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		state: string;
+		username: string;
+		bvn: string;
+		bvnPhoneNumber: string;
+		channel: string;
+		dob: string;
+		email: string;
+		isActive: string;
+		password?: string;
+		role: string;
+	},
+	options?: ApiCallOptions
+) {
+	return apiCall(`/admin/mbe/create`, "POST", data, options);
 }
 
 // ============================================================================
@@ -1125,6 +1147,15 @@ export async function updateCommunication(
 //delete communication log by customer id
 export async function deleteCommunicationLog(id: string) {
 	return apiCall(`/admin/communication-log/delete/${id}`, "DELETE");
+}
+
+//get device locks logs with optional imei filter
+export async function getDeviceLocksLogs(
+	imei?: string,
+	options?: ApiCallOptions
+) {
+	const query = imei ? `?imei=${imei}` : "";
+	return apiCall(`/admin/locks/logs${query}`, "GET", undefined, options);
 }
 
 //get all downpayment lower than 20%

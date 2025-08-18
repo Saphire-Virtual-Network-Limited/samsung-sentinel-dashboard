@@ -35,293 +35,293 @@
 
 // Role-based permissions configuration
 export interface PermissionConfig {
-  canUpdateWalletBalance: boolean;
-  canUpdateLastPoint: boolean;
-  canUpdateLoanStatus: boolean;
-  canTriggerDeviceActions: boolean;
-  canDeleteCustomers: boolean;
-  canViewOverDuePayments: boolean;
-  canViewDeviceActivityLog: boolean;
-  canViewCommunicationLog: boolean;
-  suspendDashboardUser: boolean;
-  canChangeDashboardUserPassword: boolean;
-  canCreate: boolean;
-  canSync: boolean;
-  canEdit: boolean;
-  createDashboardUser: boolean;
+	canUpdateWalletBalance: boolean;
+	canUpdateLastPoint: boolean;
+	canUpdateLoanStatus: boolean;
+	canTriggerDeviceActions: boolean;
+	canDeleteCustomers: boolean;
+	canViewOverDuePayments: boolean;
+	canViewDeviceActivityLog: boolean;
+	canViewCommunicationLog: boolean;
+	suspendDashboardUser: boolean;
+	canChangeDashboardUserPassword: boolean;
+	canCreate: boolean;
+	canSync: boolean;
+	canEdit: boolean;
+	createDashboardUser: boolean;
 
-  canUpdateDeviceImei: boolean;
-  canAssignAgent: boolean;
+	canUpdateDeviceImei: boolean;
+	canAssignAgent: boolean;
 
-  updateGuarantorStatus: boolean;
-  updateAddressStatus: boolean;
-  viewLoanDetails: boolean;
-  viewCommissionDetails: boolean;
-  verifyMobiflex: boolean;
-  viewAgentPerformanceData: boolean;
-  updateScanPartner: boolean;
-  canApproveStore: boolean;
-  // Example of how to add a new permission:
-  // canManageReports: boolean;
-  //   canViewSensitiveData: boolean;
-  //   canManageCustomers: boolean;
-  //   canManageLoans: boolean;
-  //   canManageDevices: boolean;
-  //   canViewReports: boolean;
-  //   canManageStaff: boolean;
-  //   canManageStores: boolean;
+	updateGuarantorStatus: boolean;
+	updateAddressStatus: boolean;
+	viewLoanDetails: boolean;
+	viewCommissionDetails: boolean;
+	verifyMobiflex: boolean;
+	viewAgentPerformanceData: boolean;
+	updateScanPartner: boolean;
+	canApproveStore: boolean;
+	// Example of how to add a new permission:
+	// canManageReports: boolean;
+	//   canViewSensitiveData: boolean;
+	//   canManageCustomers: boolean;
+	//   canManageLoans: boolean;
+	//   canManageDevices: boolean;
+	//   canViewReports: boolean;
+	//   canManageStaff: boolean;
+	//   canManageStores: boolean;
 }
 
 // Define which roles have access to which features
 // Only specify permissions that are GRANTED (true)
 // All other permissions default to false
 const rolePermissions: Record<string, Partial<PermissionConfig>> = {
-  admin: {
-    // canUpdateWalletBalance: true,
-    // canUpdateLastPoint: true,
-    // canUpdateLoanStatus: true,
-    // canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    // canViewOverDuePayments: true,
-    // canViewDeviceActivityLog: true,
-    // canViewCommunicationLog: true,
-    createDashboardUser: true,
-    suspendDashboardUser: true,
-    updateGuarantorStatus: true,
-    updateAddressStatus: true,
-    viewLoanDetails: true,
-    viewCommissionDetails: true,
-    viewAgentPerformanceData: true,
-    updateScanPartner: true,
-    canApproveStore: true,
-    // Admin has no special permissions by default
-    // All permissions default to false
-  },
-  "sub-admin": {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    // canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewDeviceActivityLog: true,
-    canViewCommunicationLog: true,
-    suspendDashboardUser: true,
-    createDashboardUser: true,
-    // canCreate: true,
-    // canSync: true,
-    // canEdit: true,
-    updateScanPartner: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-    // canApproveStore: true,
-    updateGuarantorStatus: true,
-    updateAddressStatus: true,
-    viewLoanDetails: true,
-    viewCommissionDetails: true,
-    viewAgentPerformanceData: true,
-  },
+	admin: {
+		// canUpdateWalletBalance: true,
+		// canUpdateLastPoint: true,
+		// canUpdateLoanStatus: true,
+		// canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		// canViewOverDuePayments: true,
+		// canViewDeviceActivityLog: true,
+		// canViewCommunicationLog: true,
+		createDashboardUser: true,
+		suspendDashboardUser: true,
+		updateGuarantorStatus: true,
+		updateAddressStatus: true,
+		viewLoanDetails: true,
+		viewCommissionDetails: true,
+		viewAgentPerformanceData: true,
+		updateScanPartner: true,
+		canApproveStore: true,
+		// Admin has no special permissions by default
+		// All permissions default to false
+	},
+	"sub-admin": {
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		// canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		suspendDashboardUser: true,
+		createDashboardUser: true,
+		// canCreate: true,
+		// canSync: true,
+		// canEdit: true,
+		updateScanPartner: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+		// canApproveStore: true,
+		updateGuarantorStatus: true,
+		updateAddressStatus: true,
+		viewLoanDetails: true,
+		viewCommissionDetails: true,
+		viewAgentPerformanceData: true,
+	},
 
-  "collection-admin": {
-    canTriggerDeviceActions: true,
-  },
-  "collection-officer": {
-    canViewOverDuePayments: true,
-    canViewCommunicationLog: true,
-    canViewDeviceActivityLog: true,
-    canTriggerDeviceActions: true,
-    // Collection officer has no special permissions
-    // All permissions default to false
-  },
-  dev: {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewDeviceActivityLog: true,
-    canViewCommunicationLog: true,
-    suspendDashboardUser: true,
-    canChangeDashboardUserPassword: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-  },
-  developer: {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewDeviceActivityLog: true,
-    canViewCommunicationLog: true,
-    suspendDashboardUser: true,
-    canChangeDashboardUserPassword: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-  },
-  finance: {
-    // Finance has no special permissions
-    // All permissions default to false
-  },
-  hr: {
-    // HR has no special permissions
-    // All permissions default to false
-  },
-  inventory: {
-    // Inventory has no special permissions
-    // All permissions default to false
-  },
-  sales: {
-    // Sales has no special permissions
-    // All permissions default to false
-  },
-  "scan-partner": {
-    // Scan partner has no special permissions
-    // All permissions default to false
-  },
-  support: {
-    // Support has no special permissions
-    // All permissions default to false
-  },
-  verify: {
-    // Verify has no special permissions
-    // All permissions default to false
-  },
-  "verification-officer": {
-    updateGuarantorStatus: true,
-    updateAddressStatus: true,
-  },
+	"collection-admin": {
+		canTriggerDeviceActions: true,
+	},
+	"collection-officer": {
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canTriggerDeviceActions: true,
+		// Collection officer has no special permissions
+		// All permissions default to false
+	},
+	dev: {
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		suspendDashboardUser: true,
+		canChangeDashboardUserPassword: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+	},
+	developer: {
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		suspendDashboardUser: true,
+		canChangeDashboardUserPassword: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+	},
+	finance: {
+		// Finance has no special permissions
+		// All permissions default to false
+	},
+	hr: {
+		// HR has no special permissions
+		// All permissions default to false
+	},
+	inventory: {
+		// Inventory has no special permissions
+		// All permissions default to false
+	},
+	sales: {
+		// Sales has no special permissions
+		// All permissions default to false
+	},
+	"scan-partner": {
+		// Scan partner has no special permissions
+		// All permissions default to false
+	},
+	support: {
+		// Support has no special permissions
+		// All permissions default to false
+	},
+	verify: {
+		// Verify has no special permissions
+		// All permissions default to false
+	},
+	"verification-officer": {
+		updateGuarantorStatus: true,
+		updateAddressStatus: true,
+	},
 };
 
 // Special user overrides (for specific users who need additional permissions)
 const userOverrides: Record<string, Partial<PermissionConfig>> = {
-  "timilehin@sapphirevirtual.com": {
-    canUpdateWalletBalance: true,
-    // canUpdateLastPoint: true,
-    // canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewCommunicationLog: true,
-    canViewDeviceActivityLog: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-  },
-  "babatunde@sapphirevirtual.com": {
-    verifyMobiflex: true,
-  },
+	"timilehin@sapphirevirtual.com": {
+		canUpdateWalletBalance: true,
+		// canUpdateLastPoint: true,
+		// canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+	},
+	"babatunde@sapphirevirtual.com": {
+		verifyMobiflex: true,
+	},
 
-  "topeyemi33@gmail.com": {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewCommunicationLog: true,
-    canViewDeviceActivityLog: true,
-    canCreate: true,
-    canSync: true,
-    canEdit: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-    createDashboardUser: true,
-    canChangeDashboardUserPassword: true,
-    canApproveStore: true,
+	"topeyemi33@gmail.com": {
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canCreate: true,
+		canSync: true,
+		canEdit: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+		createDashboardUser: true,
+		canChangeDashboardUserPassword: true,
+		canApproveStore: true,
+	},
+	"ebunifeoluwa@sapphirevirtual.com": {
+		canCreate: true,
+	},
+	"greatnessabolade@gmail.com": {
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		// canDeleteCustomers: true,
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canCreate: true,
+		canSync: true,
+		canEdit: true,
+		canUpdateDeviceImei: true,
+		canAssignAgent: true,
+		createDashboardUser: true,
 
-
-  },
-  "greatnessabolade@gmail.com": {
-    canUpdateWalletBalance: true,
-    canUpdateLastPoint: true,
-    canUpdateLoanStatus: true,
-    canTriggerDeviceActions: true,
-    // canDeleteCustomers: true,
-    canViewOverDuePayments: true,
-    canViewCommunicationLog: true,
-    canViewDeviceActivityLog: true,
-    canCreate: true,
-    canSync: true,
-    canEdit: true,
-    canUpdateDeviceImei: true,
-    canAssignAgent: true,
-    createDashboardUser: true,
-
-    canApproveStore: true,
-
-  },
-  // "seyi@sapphirevirtual.com": {
-  //   canUpdateWalletBalance: true,
-  //   canUpdateLastPoint: true,
-  //   canUpdateLoanStatus: true,
-  //   canTriggerDeviceActions: true,
-  //   canDeleteCustomers: true,
-  //   canViewOverDuePayments: true,
-  //   canViewCommunicationLog: true,
-  //   canViewDeviceActivityLog: true,
-  //   canCreate: true,
-  //   canSync: true,
-  //   canEdit: true,
-  //   canUpdateDeviceImei: true,
-  //   canAssignAgent: true,
-  // },
-  "olayinka@sapphirevirtual.com": {
-    // canCreate: true,
-    // canEdit: true,
-    canAssignAgent: true,
-  },
-  "richard@sapphirevirtual.com": {
-    canAssignAgent: true,
-  },
-  "ajayi@sapphirevirtual.com": {
-    canApproveStore: true,
-  },
-  "omosegbon@sapphirevirtual.com": {
-    canViewDeviceActivityLog: true,
-    canViewCommunicationLog: true,
-    canTriggerDeviceActions: true,
-  },
-  "william@sapphirevirtual.com": {
-    canViewDeviceActivityLog: true,
-    canViewCommunicationLog: true,
-    canTriggerDeviceActions: true,
-  },
+		canApproveStore: true,
+	},
+	// "seyi@sapphirevirtual.com": {
+	//   canUpdateWalletBalance: true,
+	//   canUpdateLastPoint: true,
+	//   canUpdateLoanStatus: true,
+	//   canTriggerDeviceActions: true,
+	//   canDeleteCustomers: true,
+	//   canViewOverDuePayments: true,
+	//   canViewCommunicationLog: true,
+	//   canViewDeviceActivityLog: true,
+	//   canCreate: true,
+	//   canSync: true,
+	//   canEdit: true,
+	//   canUpdateDeviceImei: true,
+	//   canAssignAgent: true,
+	// },
+	"olayinka@sapphirevirtual.com": {
+		// canCreate: true,
+		// canEdit: true,
+		canAssignAgent: true,
+	},
+	"richard@sapphirevirtual.com": {
+		canAssignAgent: true,
+	},
+	"ajayi@sapphirevirtual.com": {
+		canApproveStore: true,
+	},
+	"omosegbon@sapphirevirtual.com": {
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		canTriggerDeviceActions: true,
+	},
+	"william@sapphirevirtual.com": {
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		canTriggerDeviceActions: true,
+	},
 };
 
 /**
  * Get the default permissions (all false)
  */
 function getDefaultPermissions(): PermissionConfig {
-  return {
-    canUpdateWalletBalance: false,
-    canUpdateLastPoint: false,
-    canUpdateLoanStatus: false,
-    canTriggerDeviceActions: false,
-    canDeleteCustomers: false,
-    canViewOverDuePayments: false,
-    canViewDeviceActivityLog: false,
-    canViewCommunicationLog: false,
-    suspendDashboardUser: false,
-    canChangeDashboardUserPassword: false,
-    canCreate: false,
-    canSync: false,
-    canEdit: false,
-    verifyMobiflex: false,
-    createDashboardUser: false,
-    canUpdateDeviceImei: false,
-    canAssignAgent: false,
-    updateGuarantorStatus: false,
-    updateAddressStatus: false,
-    viewLoanDetails: false,
-    viewCommissionDetails: false,
-    updateScanPartner: false,
-    viewAgentPerformanceData: false,
-    canApproveStore: false,
-    // Example of how to add a new permission:
-    // canManageReports: false,
-  };
+	return {
+		canUpdateWalletBalance: false,
+		canUpdateLastPoint: false,
+		canUpdateLoanStatus: false,
+		canTriggerDeviceActions: false,
+		canDeleteCustomers: false,
+		canViewOverDuePayments: false,
+		canViewDeviceActivityLog: false,
+		canViewCommunicationLog: false,
+		suspendDashboardUser: false,
+		canChangeDashboardUserPassword: false,
+		canCreate: false,
+		canSync: false,
+		canEdit: false,
+		verifyMobiflex: false,
+		createDashboardUser: false,
+		canUpdateDeviceImei: false,
+		canAssignAgent: false,
+		updateGuarantorStatus: false,
+		updateAddressStatus: false,
+		viewLoanDetails: false,
+		viewCommissionDetails: false,
+		updateScanPartner: false,
+		viewAgentPerformanceData: false,
+		canApproveStore: false,
+		// Example of how to add a new permission:
+		// canManageReports: false,
+	};
 }
 
 /**
@@ -331,30 +331,30 @@ function getDefaultPermissions(): PermissionConfig {
  * @returns PermissionConfig object
  */
 export function getPermissions(
-  role: string,
-  userEmail?: string
+	role: string,
+	userEmail?: string
 ): PermissionConfig {
-  // Start with default permissions (all false)
-  const defaultPermissions = getDefaultPermissions();
+	// Start with default permissions (all false)
+	const defaultPermissions = getDefaultPermissions();
 
-  // Get base permissions for the role (only granted permissions)
-  const roleGrantedPermissions = rolePermissions[role] || {};
+	// Get base permissions for the role (only granted permissions)
+	const roleGrantedPermissions = rolePermissions[role] || {};
 
-  // Merge default permissions with role permissions
-  const basePermissions = {
-    ...defaultPermissions,
-    ...roleGrantedPermissions,
-  };
+	// Merge default permissions with role permissions
+	const basePermissions = {
+		...defaultPermissions,
+		...roleGrantedPermissions,
+	};
 
-  // Apply user-specific overrides if they exist
-  if (userEmail && userOverrides[userEmail]) {
-    return {
-      ...basePermissions,
-      ...userOverrides[userEmail],
-    };
-  }
+	// Apply user-specific overrides if they exist
+	if (userEmail && userOverrides[userEmail]) {
+		return {
+			...basePermissions,
+			...userOverrides[userEmail],
+		};
+	}
 
-  return basePermissions;
+	return basePermissions;
 }
 
 /**
@@ -365,12 +365,12 @@ export function getPermissions(
  * @returns boolean
  */
 export function hasPermission(
-  role: string,
-  permission: keyof PermissionConfig,
-  userEmail?: string
+	role: string,
+	permission: keyof PermissionConfig,
+	userEmail?: string
 ): boolean {
-  const permissions = getPermissions(role, userEmail);
-  return permissions[permission] || false;
+	const permissions = getPermissions(role, userEmail);
+	return permissions[permission] || false;
 }
 
 /**
@@ -378,7 +378,7 @@ export function hasPermission(
  * @returns Array of role names
  */
 export function getAvailableRoles(): string[] {
-  return Object.keys(rolePermissions);
+	return Object.keys(rolePermissions);
 }
 
 /**
@@ -386,40 +386,40 @@ export function getAvailableRoles(): string[] {
  * @returns Array of permission names
  */
 export function getAvailablePermissions(): (keyof PermissionConfig)[] {
-  return [
-    "canUpdateWalletBalance",
-    "canUpdateLastPoint",
-    "canUpdateLoanStatus",
-    "canTriggerDeviceActions",
-    "canDeleteCustomers",
-    "canViewOverDuePayments",
-    "canViewDeviceActivityLog",
-    "canViewCommunicationLog",
-    "suspendDashboardUser",
-    "canChangeDashboardUserPassword",
-    "canCreate",
-    "canSync",
-    "canEdit",
+	return [
+		"canUpdateWalletBalance",
+		"canUpdateLastPoint",
+		"canUpdateLoanStatus",
+		"canTriggerDeviceActions",
+		"canDeleteCustomers",
+		"canViewOverDuePayments",
+		"canViewDeviceActivityLog",
+		"canViewCommunicationLog",
+		"suspendDashboardUser",
+		"canChangeDashboardUserPassword",
+		"canCreate",
+		"canSync",
+		"canEdit",
 
-    "canUpdateDeviceImei",
-    "canAssignAgent",
+		"canUpdateDeviceImei",
+		"canAssignAgent",
 
-    "updateGuarantorStatus",
-    "updateAddressStatus",
-    "viewLoanDetails",
-    "viewCommissionDetails",
-    "verifyMobiflex",
-    "viewAgentPerformanceData",
-    "updateScanPartner",
-    "canApproveStore",
-    // 'canViewSensitiveData',
-    // 'canManageCustomers',
-    // 'canManageLoans',
-    // 'canManageDevices',
-    // 'canViewReports',
-    // 'canManageStaff',
-    // 'canManageStores',
-  ];
+		"updateGuarantorStatus",
+		"updateAddressStatus",
+		"viewLoanDetails",
+		"viewCommissionDetails",
+		"verifyMobiflex",
+		"viewAgentPerformanceData",
+		"updateScanPartner",
+		"canApproveStore",
+		// 'canViewSensitiveData',
+		// 'canManageCustomers',
+		// 'canManageLoans',
+		// 'canManageDevices',
+		// 'canViewReports',
+		// 'canManageStaff',
+		// 'canManageStores',
+	];
 }
 
 /**
@@ -428,7 +428,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
  * @returns Object with all permissions and their values
  */
 export function getRolePermissions(role: string): PermissionConfig {
-  return getPermissions(role);
+	return getPermissions(role);
 }
 
 /**
@@ -437,7 +437,7 @@ export function getRolePermissions(role: string): PermissionConfig {
  * @returns boolean
  */
 export function roleExists(role: string): boolean {
-  return role in rolePermissions;
+	return role in rolePermissions;
 }
 
 /**
@@ -446,9 +446,9 @@ export function roleExists(role: string): boolean {
  * @returns Array of role names that have this permission
  */
 export function getRolesWithPermission(
-  permission: keyof PermissionConfig
+	permission: keyof PermissionConfig
 ): string[] {
-  return getAvailableRoles().filter((role) => hasPermission(role, permission));
+	return getAvailableRoles().filter((role) => hasPermission(role, permission));
 }
 
 /**
@@ -457,14 +457,14 @@ export function getRolesWithPermission(
  * @param userEmail - Optional user email for overrides
  */
 export function debugRolePermissions(role: string, userEmail?: string): void {
-  const permissions = getPermissions(role, userEmail);
-  console.log(`Permissions for role "${role}":`, permissions);
+	const permissions = getPermissions(role, userEmail);
+	console.log(`Permissions for role "${role}":`, permissions);
 
-  const grantedPermissions = Object.entries(permissions)
-    .filter(([_, value]) => value === true)
-    .map(([key, _]) => key);
+	const grantedPermissions = Object.entries(permissions)
+		.filter(([_, value]) => value === true)
+		.map(([key, _]) => key);
 
-  console.log(`Granted permissions:`, grantedPermissions);
+	console.log(`Granted permissions:`, grantedPermissions);
 }
 
 /**
