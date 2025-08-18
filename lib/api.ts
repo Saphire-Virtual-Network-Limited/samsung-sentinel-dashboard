@@ -651,7 +651,7 @@ export async function createMbeRecord(
 		channel: string;
 		dob: string;
 		email: string;
-		isActive: string;
+		isActive: boolean;
 		password?: string;
 		role: string;
 	},
