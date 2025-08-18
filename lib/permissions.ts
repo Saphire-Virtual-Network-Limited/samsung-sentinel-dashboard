@@ -278,6 +278,16 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	"ajayi@sapphirevirtual.com": {
 		canApproveStore: true,
 	},
+	"omosegbon@sapphirevirtual.com": {
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		canTriggerDeviceActions: true,
+	},
+	"william@sapphirevirtual.com": {
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
+		canTriggerDeviceActions: true,
+	},
 };
 
 /**
