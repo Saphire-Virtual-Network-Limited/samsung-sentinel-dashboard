@@ -61,6 +61,7 @@ export interface PermissionConfig {
 	viewAgentPerformanceData: boolean;
 	updateScanPartner: boolean;
 	canApproveStore: boolean;
+	canInjectTransaction: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -120,13 +121,19 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		viewLoanDetails: true,
 		viewCommissionDetails: true,
 		viewAgentPerformanceData: true,
+		canInjectTransaction: true,
 	},
 
 	"collection-admin": {
 		canTriggerDeviceActions: true,
+		canInjectTransaction: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canViewOverDuePayments: true,
+
 	},
 	"collection-officer": {
-		canViewOverDuePayments: true,
+		// canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canTriggerDeviceActions: true,
@@ -146,6 +153,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canChangeDashboardUserPassword: true,
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
+		canInjectTransaction: true,
 	},
 	developer: {
 		canUpdateWalletBalance: true,
@@ -160,6 +168,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canChangeDashboardUserPassword: true,
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
+		canInjectTransaction: true,
 	},
 	finance: {
 		// Finance has no special permissions
@@ -199,15 +208,16 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	"timilehin@sapphirevirtual.com": {
 		canUpdateWalletBalance: true,
-		// canUpdateLastPoint: true,
-		// canUpdateLoanStatus: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
-		// canDeleteCustomers: true,
+		canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
+		canInjectTransaction: true,
 	},
 	"babatunde@sapphirevirtual.com": {
 		verifyMobiflex: true,
@@ -230,6 +240,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		createDashboardUser: true,
 		canChangeDashboardUserPassword: true,
 		canApproveStore: true,
+		canInjectTransaction: true,
 	},
 	"ebunifeoluwa@sapphirevirtual.com": {
 		canCreate: true,
@@ -239,7 +250,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLastPoint: true,
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
-		// canDeleteCustomers: true,
+		canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
@@ -249,7 +260,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		createDashboardUser: true,
-
+		canInjectTransaction: true,
 		canApproveStore: true,
 	},
 	// "seyi@sapphirevirtual.com": {
@@ -268,8 +279,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	//   canAssignAgent: true,
 	// },
 	"olayinka@sapphirevirtual.com": {
-		// canCreate: true,
-		// canEdit: true,
+		canCreate: true,
+		canEdit: true,
 		canAssignAgent: true,
 	},
 	"richard@sapphirevirtual.com": {
@@ -319,6 +330,7 @@ function getDefaultPermissions(): PermissionConfig {
 		updateScanPartner: false,
 		viewAgentPerformanceData: false,
 		canApproveStore: false,
+		canInjectTransaction: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};
@@ -412,6 +424,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
 		"viewAgentPerformanceData",
 		"updateScanPartner",
 		"canApproveStore",
+		"canInjectTransaction",
 		// 'canViewSensitiveData',
 		// 'canManageCustomers',
 		// 'canManageLoans',

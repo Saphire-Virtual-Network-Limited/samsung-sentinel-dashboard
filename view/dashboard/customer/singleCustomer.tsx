@@ -18,6 +18,7 @@ import {
 	Clock,
 	Search,
 	Plus,
+	RefreshCw,
 } from "lucide-react";
 import {
 	getCustomerRecordById,
@@ -38,6 +39,7 @@ import {
 	injectPaymentHistory,
 	InjectPaymentHistoryData,
 	getDeviceLocksLogs,
+	deleteCustomerMandateAndUpdateLastPoint,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -725,7 +727,21 @@ export default function CollectionSingleCustomerPage() {
 		onClose: onConfirmInjectPaymentClose,
 	} = useDisclosure();
 
+	// Regenerate Mandate modal
+	const {
+		isOpen: isRegenerateMandate,
+		onOpen: onRegenerateMandate,
+		onClose: onRegenerateMandateClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isRegenerateMandateSuccess,
+		onOpen: onRegenerateMandateSuccess,
+		onClose: onRegenerateMandateSuccessClose,
+	} = useDisclosure();
+
 	const [isInjectingPayment, setIsInjectingPayment] = useState(false);
+	const [isRegeneratingMandate, setIsRegeneratingMandate] = useState(false);
 
 	// VFD Banks interface (copied from scanPartnerDetailView)
 	interface VfdBank {
@@ -1419,6 +1435,37 @@ export default function CollectionSingleCustomerPage() {
 			});
 		} finally {
 			setIsInjectingPayment(false);
+		}
+	};
+
+	const handleRegenerateMandate = async () => {
+		if (!customer?.customerId) return;
+
+		setIsRegeneratingMandate(true);
+		try {
+			await deleteCustomerMandateAndUpdateLastPoint(
+				customer.customerId,
+				"Loan Data Submission"
+			);
+
+			showToast({
+				type: "success",
+				message: "Customer mandate regenerated successfully",
+				duration: 5000,
+			});
+
+			onRegenerateMandateClose();
+			onRegenerateMandateSuccess();
+		} catch (error: any) {
+			console.error("Error regenerating mandate:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Failed to regenerate mandate",
+				duration: 5000,
+			});
+		} finally {
+			setIsRegeneratingMandate(false);
+			onRegenerateMandateClose();
 		}
 	};
 
@@ -2834,6 +2881,22 @@ export default function CollectionSingleCustomerPage() {
 										</div>
 									))}
 								</div>
+
+								{/* Regenerate Mandate Button */}
+								{hasPermission(role, "canUpdateLastPoint", userEmail) && (
+									<div className="mt-6 pt-4 border-t border-default-200">
+										<Button
+											color="warning"
+											variant="flat"
+											size="sm"
+											onClick={onRegenerateMandate}
+											startContent={<RefreshCw className="w-4 h-4" />}
+											isLoading={isRegeneratingMandate}
+										>
+											Regenerate Mandate
+										</Button>
+									</div>
+								)}
 							</div>
 						</InfoCard>
 
@@ -3983,6 +4046,31 @@ export default function CollectionSingleCustomerPage() {
 				cancelText="Cancel"
 				isLoading={isInjectingPayment}
 				variant="warning"
+			/>
+
+			{/* Confirmation Modal for Regenerate Mandate */}
+			<ConfirmationModal
+				isOpen={isRegenerateMandate}
+				onClose={onRegenerateMandateClose}
+				onConfirm={handleRegenerateMandate}
+				title="Regenerate Customer Mandate"
+				description={`Are you sure you want to regenerate the mandate for ${customer?.firstName} ${customer?.lastName}? This will delete the current mandate and update the customer's last point to "Loan Data Submission". This action cannot be undone.`}
+				confirmText="Regenerate Mandate"
+				cancelText="Cancel"
+				isLoading={isRegeneratingMandate}
+				variant="warning"
+			/>
+
+			{/* Success Modal for Regenerate Mandate */}
+			<ConfirmationModal
+				isOpen={isRegenerateMandateSuccess}
+				onClose={onRegenerateMandateSuccessClose}
+				onConfirm={onRegenerateMandateSuccessClose}
+				title="Mandate Regenerated Successfully"
+				description={`The mandate for ${customer?.firstName} ${customer?.lastName} has been successfully regenerated. Please inform the agent to restart their enrollment process to see the changes.`}
+				confirmText="Got It"
+				cancelText=""
+				variant="success"
 			/>
 		</div>
 	);
