@@ -661,6 +661,259 @@ export async function createMbeRecord(
 }
 
 // ============================================================================
+// MBE RECONCILIATION & AGENT MANAGEMENT
+// ============================================================================
+
+export interface ReconciliationAgent {
+	mbeId: string;
+	name: string;
+	phone: string;
+	email: string;
+}
+
+export interface ReconciliationAssignedMbe {
+	mbeId: string;
+	name: string;
+	phone: string;
+	email: string;
+}
+
+export interface TransferItem {
+	qty: number;
+	item_code: string;
+	serial_nos: string[];
+}
+
+export interface ReconciliationRecord {
+	reconciliationId: string;
+	agent: ReconciliationAgent;
+	assignedMbe: ReconciliationAssignedMbe;
+	targetWarehouse: string;
+	transferItems: TransferItem[];
+	status: "PENDING" | "COMPLETED" | "FAILED" | "CANCELLED";
+	erpTransferId: string | null;
+	erpResponse: any | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ReconciliationPagination {
+	currentPage: number;
+	totalPages: number;
+	totalItems: number;
+	itemsPerPage: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+}
+
+export interface ReconciliationFilters {
+	mbeId: string | null;
+	agentId: string | null;
+	date: string | null;
+}
+
+export interface ReconciliationHistoryData {
+	data: ReconciliationRecord[];
+	pagination: ReconciliationPagination;
+	filters: ReconciliationFilters;
+}
+
+export interface ReconciliationHistoryResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: ReconciliationHistoryData;
+	responseTime: string;
+}
+
+export interface ReconciliationHistoryParams {
+	mbeId?: string;
+	agentId?: string;
+	date?: string;
+	page?: number;
+	limit?: number;
+}
+
+export async function getReconciliationHistory(
+	params: ReconciliationHistoryParams = {},
+	options?: ApiCallOptions
+): Promise<ReconciliationHistoryResponse> {
+	const queryParams = new URLSearchParams();
+
+	if (params.mbeId) queryParams.append("mbeId", params.mbeId);
+	if (params.agentId) queryParams.append("agentId", params.agentId);
+	if (params.date) queryParams.append("date", params.date);
+	if (params.page) queryParams.append("page", params.page.toString());
+	if (params.limit) queryParams.append("limit", params.limit.toString());
+
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	return apiCall(
+		`/admin/mbe/reconciliation/history${query}`,
+		"GET",
+		undefined,
+		options
+	);
+}
+
+export interface ReconciliationStatusBreakdown {
+	pending: string;
+	approved: string;
+	rejected: string;
+	completed: string;
+}
+
+export interface ReconciliationStatsData {
+	total: number;
+	pending: number;
+	approved: number;
+	rejected: number;
+	completed: number;
+	statusBreakdown: ReconciliationStatusBreakdown;
+}
+
+export interface ReconciliationStatsResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: ReconciliationStatsData;
+	responseTime: string;
+}
+
+export interface ReconciliationStatsParams {
+	mbeId?: string;
+	agentId?: string;
+	startDate?: string;
+	endDate?: string;
+}
+
+export async function getReconciliationStats(
+	params: ReconciliationStatsParams = {},
+	options?: ApiCallOptions
+): Promise<ReconciliationStatsResponse> {
+	const queryParams = new URLSearchParams();
+
+	if (params.mbeId) queryParams.append("mbeId", params.mbeId);
+	if (params.agentId) queryParams.append("agentId", params.agentId);
+	if (params.startDate) queryParams.append("startDate", params.startDate);
+	if (params.endDate) queryParams.append("endDate", params.endDate);
+
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	return apiCall(
+		`/admin/mbe/reconciliation/stats${query}`,
+		"GET",
+		undefined,
+		options
+	);
+}
+
+export interface MbeInfo {
+	mbeId: string;
+	firstname: string;
+	lastname: string;
+	phone: string;
+	email: string;
+	role: "MOBIFLEX_MBE" | string;
+	accountStatus:
+		| "PENDING"
+		| "APPROVED"
+		| "REJECTED"
+		| "ACTIVE"
+		| "INACTIVE"
+		| string;
+	isActive: boolean;
+}
+
+export interface AssignedAgent {
+	agentId: string;
+	firstname: string;
+	lastname: string;
+	phone: string;
+	email: string;
+	role: string;
+	accountStatus: string;
+	isActive: boolean;
+	assignedAt?: string;
+}
+
+export interface MbeWithAgents {
+	mbe: MbeInfo;
+	agents: AssignedAgent[];
+	totalAgents: number;
+}
+
+export interface MbeAssignedAgentsPagination {
+	currentPage: number;
+	totalPages: number;
+	totalItems: number;
+	itemsPerPage: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+}
+
+export interface MbeAssignedAgentsData {
+	data: MbeWithAgents[];
+	pagination: MbeAssignedAgentsPagination;
+}
+
+export interface MbeAssignedAgentsResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: MbeAssignedAgentsData;
+	responseTime: string;
+}
+
+export interface MbeAssignedAgentsParams {
+	mbeId?: string;
+	page?: number;
+	limit?: number;
+}
+
+export async function getMbeAssignedAgents(
+	params: MbeAssignedAgentsParams = {},
+	options?: ApiCallOptions
+): Promise<MbeAssignedAgentsResponse> {
+	const queryParams = new URLSearchParams();
+
+	if (params.mbeId) queryParams.append("mbeId", params.mbeId);
+	if (params.page) queryParams.append("page", params.page.toString());
+	if (params.limit) queryParams.append("limit", params.limit.toString());
+
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	return apiCall(
+		`/admin/mbe/mbe-assigned/agents${query}`,
+		"GET",
+		undefined,
+		options
+	);
+}
+
+export async function changeAgentMbeAssignment(
+	agentId: string,
+	newMbeId: string,
+	options?: ApiCallOptions
+) {
+	return apiCall(
+		`/admin/mbe/admin/agent/${agentId}/change-mbe`,
+		"PUT",
+		{ newMbeId },
+		options
+	);
+}
+
+export async function unlinkAgentFromMbe(
+	agentId: string,
+	options?: ApiCallOptions
+) {
+	return apiCall(
+		`/admin/mbe/agent/${agentId}/unlink-mbe`,
+		"PUT",
+		undefined,
+		options
+	);
+}
+
+// ============================================================================
 // SCAN PARTNERS
 // ============================================================================
 export async function getAllScanPartners(
@@ -793,6 +1046,17 @@ export async function updateCustomerLastPoint(
 ) {
 	return apiCall(
 		`/admin/customers/update-last-point?customerId=${customerId}&lastPoint=${lastPoint}`,
+		"PUT"
+	);
+}
+
+// Delete Customer Mandate And Update Last Point
+export async function deleteCustomerMandateAndUpdateLastPoint(
+	customerId: string,
+	lastPoint: string
+) {
+	return apiCall(
+		`/admin/customers/customer-mandate-fix?customerId=${customerId}&lastPoint=${lastPoint}`,
 		"PUT"
 	);
 }
