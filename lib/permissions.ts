@@ -94,7 +94,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		viewCommissionDetails: true,
 		viewAgentPerformanceData: true,
 		updateScanPartner: true,
-		canApproveStore: true,
+		
 		// Admin has no special permissions by default
 		// All permissions default to false
 	},
