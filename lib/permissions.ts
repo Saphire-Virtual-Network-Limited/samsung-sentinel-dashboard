@@ -133,7 +133,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 
 	},
 	"collection-officer": {
-		canViewOverDuePayments: true,
+		// canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canTriggerDeviceActions: true,

@@ -1054,6 +1054,16 @@ export async function updateDevice(
 	return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
 }
 
+//deactivate device
+export async function deactivateDevice(deviceId: string, reason: string) {
+	return apiCall(`/admin/device/deactivate/${deviceId}`, "PUT", { reason });
+}
+
+//deactivate device
+export async function activateDevice(deviceId: string) {
+	return apiCall(`/admin/device/reactivate/${deviceId}`, "PUT");
+}
+
 //fetch all vfd banks
 export async function getAllVfdBanks() {
 	return apiCall("/payments/bank-list", "GET");
