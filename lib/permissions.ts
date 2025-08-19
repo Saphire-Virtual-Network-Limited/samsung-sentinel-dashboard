@@ -127,9 +127,13 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 	"collection-admin": {
 		canTriggerDeviceActions: true,
 		canInjectTransaction: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canViewOverDuePayments: true,
+
 	},
 	"collection-officer": {
-		canViewOverDuePayments: true,
+		// canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canTriggerDeviceActions: true,
@@ -204,10 +208,10 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	"timilehin@sapphirevirtual.com": {
 		canUpdateWalletBalance: true,
-		// canUpdateLastPoint: true,
-		// canUpdateLoanStatus: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
-		// canDeleteCustomers: true,
+		canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
@@ -246,7 +250,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLastPoint: true,
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
-		// canDeleteCustomers: true,
+		canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
@@ -275,8 +279,8 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	//   canAssignAgent: true,
 	// },
 	"olayinka@sapphirevirtual.com": {
-		// canCreate: true,
-		// canEdit: true,
+		canCreate: true,
+		canEdit: true,
 		canAssignAgent: true,
 	},
 	"richard@sapphirevirtual.com": {

@@ -3,14 +3,15 @@
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllDevices, useAuth } from "@/lib";
+import { activateDevice, deactivateDevice, getAllDevices, showToast, useAuth } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Input } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { usePathname } from "next/navigation";
 import { hasPermission } from "@/lib/permissions";
+import { capitalize } from "@/utils/helpers";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "deviceName", sortable: true },
@@ -21,19 +22,18 @@ const columns: ColumnDef[] = [
 	{ name: "SLD", uid: "SLD", sortable: true },
 
 	{ name: "Price", uid: "price", sortable: true },
+	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Actions", uid: "actions"},
 ];
 
 const statusOptions = [
-	{ name: "Pending", uid: "pending" },
-	{ name: "Paid", uid: "paid" },
-	{ name: "Unpaid", uid: "unpaid" },
+	{ name: "ACTIVE", uid: "ACTIVE" },
+	{ name: "SUSPENDED", uid: "SUSPENDED" },
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
-	pending: "warning",
-	paid: "success",
-	unpaid: "danger",
+	ACTIVE: "success",
+	SUSPENDED: "danger",
 };
 
 type DeviceRecord = {
@@ -55,6 +55,7 @@ type DeviceRecord = {
   deviceType: string;
   deviceCamera: string[];
   android_go: string;
+  status: "ACTIVE" | "SUSPENDED";
 };
 
 export default function AllDevicesView() {
@@ -67,9 +68,34 @@ export default function AllDevicesView() {
 	const userEmail = userResponse?.data?.email || "";
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | "edit" | null>(null);
+	const [modalMode, setModalMode] = useState<"view" | "edit" | "deactivate" | null>(null);
 	const [selectedItem, setSelectedItem] = useState<DeviceRecord | null>(null);
+	const [reason, setReason] = useState("");
 
+	const {
+		isOpen: isDeactivateDevice,
+		onOpen: onDeactivateDevice,
+		onClose: onDeactivateDeviceClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isActivateDevice,
+		onOpen: onActivateDevice,
+		onClose: onActivateDeviceClose,
+	} = useDisclosure();
+
+	// Reset reason when modal closes
+	const handleDeactivateDeviceClose = () => {
+		setReason("");
+		setSelectedItem(null);
+		onDeactivateDeviceClose();
+	};
+
+	// Reset when activate modal closes
+	const handleActivateDeviceClose = () => {
+		setSelectedItem(null);
+		onActivateDeviceClose();
+	};
 
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -119,6 +145,8 @@ export default function AllDevicesView() {
 		}
 	);
 
+	console.log("Raw data:", raw);
+
 	const customers = useMemo(
 		() =>
 			  raw.map((r: DeviceRecord) => ({
@@ -130,6 +158,7 @@ export default function AllDevicesView() {
 				sentiProtect: r.sentiprotect ? `₦${r.sentiprotect.toLocaleString()}` : '',
 				SAP: r.SAP ? `₦${r.SAP.toLocaleString()}` : '',
 				SLD: r.SLD ? `₦${r.SLD.toLocaleString()}` : '',
+				status: r.status || 'ACTIVE', // Default to active if no status
 			})),
 		[raw]
 	);
@@ -147,6 +176,7 @@ export default function AllDevicesView() {
 				const price = (c.price || '').toLowerCase();
 				const SAP = (c.SAP || '').toLowerCase();
 				const SLD = (c.SLD || '').toLowerCase();
+				const status = (c.status || 'ACTIVE').toLowerCase();
 				
 				return deviceName.includes(f) || 
 					   deviceId.includes(f) ||
@@ -155,11 +185,12 @@ export default function AllDevicesView() {
 					   deviceType.includes(f) || 
 					   price.includes(f) || 
 					   SAP.includes(f) || 
-					   SLD.includes(f);
+					   SLD.includes(f) ||
+					   status.includes(f);
 			});
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));	
+			list = list.filter((c) => statusFilter.has(c.status || 'ACTIVE'));	
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -184,13 +215,13 @@ export default function AllDevicesView() {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Devices");
 		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r }));	
+		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Devices_Records.xlsx");
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view" | "edit", row: DeviceRecord) => {
+	const openModal = (mode: "view" | "edit" | "deactivate", row: DeviceRecord) => {
 		setModalMode(mode);
 		setSelectedItem(row);
 		if (mode === "edit") {
@@ -198,7 +229,65 @@ export default function AllDevicesView() {
 			const editUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
 			window.open(editUrl, '_blank');
 		} else {
-			onOpen();
+			onDeactivateDevice();
+		}
+	};
+
+	const handleDeactivateDevice = async () => {
+		if (!selectedItem || !reason.trim()) {
+			showToast({
+				type: "error",
+				message: "Please provide a reason for deactivation",
+				duration: 5000,
+			});
+			return;
+		}
+
+		try {
+			const response = await deactivateDevice(selectedItem.newDeviceId, reason);
+			showToast({
+				type: "success", 
+				message: "Device deactivated successfully",
+				duration: 5000,
+			});
+			handleDeactivateDeviceClose();
+		} catch (error: any) {
+			console.error("Error deactivating device:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Failed to deactivate device", 
+				duration: 5000
+			});
+		}
+	};
+
+
+
+	const handleActivateDevice = async (deviceId: string) => {
+		if (!selectedItem) {
+			showToast({	
+				type: "error",
+				message: "No device selected",
+				duration: 5000,
+			});
+			return;
+		}
+
+		try {
+			const response = await activateDevice(selectedItem.newDeviceId);
+			showToast({
+				type: "success", 
+				message: "Device activated successfully",
+				duration: 5000,
+			});
+			handleActivateDeviceClose();
+		} catch (error: any) {
+			console.error("Error activating device:", error);
+			showToast({
+				type: "error",
+				message: error.message || "Failed to activate device", 
+				duration: 5000,
+			});
 		}
 	};
 
@@ -229,6 +318,25 @@ export default function AllDevicesView() {
 									Edit
 								</DropdownItem>
 							) : null}
+							{row.status === "ACTIVE" ? (
+								<DropdownItem
+									key={`${row.newDeviceId}-deactivate`}
+									onPress={() => {
+										setSelectedItem(row);
+										onDeactivateDevice();
+									}}>
+									Deactivate
+								</DropdownItem>
+							) : (
+								<DropdownItem
+									key={`${row.newDeviceId}-activate`}
+									onPress={() => {
+										setSelectedItem(row);
+										onActivateDevice();
+									}}>
+									Activate
+								</DropdownItem>
+							)}
 						</DropdownMenu>
 					</Dropdown>
 				</div>
@@ -238,6 +346,22 @@ export default function AllDevicesView() {
 		if (key === "deviceName") {
 			return <p key={`${row.newDeviceId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.deviceName || ''}</p>;	
 		}
+		
+		if (key === "status") {
+			const statusColor = row.status === "ACTIVE" ? "text-success" : "text-danger";
+			return (
+				<Chip
+					key={`${row.newDeviceId}-status`}
+					color={row.status === "ACTIVE" ? "success" : "danger"}
+					variant="flat"
+					size="sm"
+					className="capitalize"
+				>
+					{row.status || 'N/A'}
+				</Chip>
+			);
+		}
+		
 		return <p key={`${row.newDeviceId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
 	};
 
@@ -264,7 +388,7 @@ export default function AllDevicesView() {
 					statusFilter={statusFilter}
 					onStatusChange={setStatusFilter}
 					statusColorMap={statusColorMap}
-					showStatus={false}
+					showStatus={true}
 					sortDescriptor={sortDescriptor}
 					onSortChange={setSortDescriptor}
 					page={page}
@@ -367,6 +491,142 @@ export default function AllDevicesView() {
 									variant="light"
 									onPress={onClose}>
 									Close
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			<Modal
+				isOpen={isDeactivateDevice}
+				onClose={handleDeactivateDeviceClose}
+				className="m-4 max-w-[600px]">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Deactivate Device</ModalHeader>
+							<ModalBody>
+								{selectedItem && (
+									<div className="space-y-4">
+										{/* Device Information */}
+										<div className="bg-default-50 p-4 rounded-lg">
+											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+											<div className="space-y-3">
+												<div>
+													<p className="text-sm text-default-500">Device Name</p>
+													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Device ID</p>
+													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Manufacturer</p>
+													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Device Type</p>
+													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
+												</div>
+											</div>
+										</div>
+										
+										{/* Reason Input */}
+										<div>
+											<p className="text-sm text-default-500 mb-2">Reason for Deactivation *</p>
+											<Input
+												placeholder="Enter reason for deactivation"
+												value={reason}
+												onChange={(e) => setReason(e.target.value)}
+												className="w-full"
+											/>
+										</div>
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="danger"
+									variant="solid"
+									onPress={handleDeactivateDevice}
+									isDisabled={!reason.trim()}>
+									Confirm
+								</Button>
+								
+								<Button
+									color="default"
+									variant="light"
+									onPress={handleDeactivateDeviceClose}>
+									Cancel
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Activate Device Modal */}
+			<Modal
+				isOpen={isActivateDevice}
+				onClose={handleActivateDeviceClose}
+				className="m-4 max-w-[600px]">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Activate Device</ModalHeader>
+							<ModalBody>
+								{selectedItem && (
+									<div className="space-y-4">
+										{/* Device Information */}
+										<div className="bg-default-50 p-4 rounded-lg">
+											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+											<div className="space-y-3">
+												<div>
+													<p className="text-sm text-default-500">Device Name</p>
+													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Device ID</p>
+													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Manufacturer</p>
+													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Device Type</p>
+													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
+												</div>
+												<div>
+													<p className="text-sm text-default-500">Current Status</p>
+													<p className="font-medium capitalize">{selectedItem.status || 'N/A'}</p>
+												</div>
+											</div>
+										</div>
+										
+										{/* Confirmation Message */}
+										<div className="bg-blue-50 p-4 rounded-lg">
+											<p className="text-sm text-blue-700">
+												Are you sure you want to activate this device? This will make it available for use again.
+											</p>
+										</div>
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter className="flex gap-2">
+								<Button
+									color="success"
+									variant="solid"
+									onPress={() => handleActivateDevice(selectedItem?.newDeviceId || '')}>
+									Activate Device
+								</Button>
+							
+								<Button
+									color="default"
+									variant="light"
+									onPress={handleActivateDeviceClose}>
+									Cancel
 								</Button>
 							</ModalFooter>
 						</>

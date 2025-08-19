@@ -24,7 +24,8 @@ import {
   DropdownMenu,
   DropdownItem,
   Chip,
-  SortDescriptor
+  SortDescriptor,
+  Input
 } from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
@@ -56,10 +57,12 @@ export default function CustomerPage() {
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerRecord | null>(null);
   const {
-    isOpen: isCancelBill,
-    onOpen: onCancelBill,
-    onClose: onCancelBillClose,
+    isOpen: isReasonModal,
+    onOpen: onReasonModal,
+    onClose: onReasonModalClose,
   } = useDisclosure();
+
+  const [reason, setReason] = useState("");
 
   // --- table state ---
   const [filterValue, setFilterValue] = useState("");
@@ -184,16 +187,25 @@ export default function CustomerPage() {
   };
 
   const handleCancelBill = async (customerId: string) => {
-    try {
+      if (!reason) {
+        showToast({
+          type: "error",
+          message: "Please enter a reason for cancellation",
+          duration: 3000,
+        });
+        return;
+      }
+        try {
       setIsButtonLoading(true);
-      const response = await deleteCustomer(customerId);
+      const response = await deleteCustomer(customerId, reason);
       showToast({
         type: "success",
         message: "Bill cancelled successfully",
         duration: 3000,
       });
-      console.log(response);
-      onCancelBillClose();
+      onReasonModalClose();
+      setReason("");
+      setSelectedCustomer(null);
     } catch (error: any) {
       console.error("Error cancelling bill:", error);
       showToast({ type: "error", message: error.message, duration: 8000 });
@@ -239,7 +251,7 @@ export default function CustomerPage() {
                 <DropdownItem
                   key="cancelBill"
                   onPress={() => {
-                    onCancelBill();
+                    onReasonModal();
                     setSelectedCustomer(row);
                   }}
                 >
@@ -325,16 +337,22 @@ export default function CustomerPage() {
         />
       )}
 
-      <Modal isOpen={isCancelBill} onClose={onCancelBillClose} size="lg">
+      {/* Cancel Bill Modal */}
+      <Modal isOpen={isReasonModal} onClose={onReasonModalClose} size="lg">
         <ModalContent>
           {() => (
             <>
-              <ModalHeader>Confirm Customer Bill Cancellation</ModalHeader>
+              <ModalHeader>Cancel Customer Bill</ModalHeader>
               <ModalBody>
-                <p className="text-md text-default-500">
-                  Are you sure you want to cancel this customer&apos;s bill?
-                  This action cannot be undone.
+                <p className="text-md text-default-500 mb-4">
+                  Please provide a reason for cancelling this customer&apos;s bill. This action cannot be undone.
                 </p>
+                <Input
+                  label="Reason"
+                  placeholder="Enter reason for cancellation"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
 
                 {selectedCustomer && (
                   <div className="mt-4">
@@ -353,20 +371,22 @@ export default function CustomerPage() {
                 <Button
                   color="success"
                   variant="solid"
-                  onPress={() =>
-                    selectedCustomer &&
-                    handleCancelBill(selectedCustomer.customerId)
-                  }
+                  onPress={() => {
+                    if (selectedCustomer) {
+                      handleCancelBill(selectedCustomer.customerId);
+                    }
+                  }}
                   isLoading={isButtonLoading}
                 >
-                  Confirm
+                  Submit
                 </Button>
                 <Button
                   color="danger"
                   variant="light"
                   onPress={() => {
-                    onCancelBillClose();
+                    onReasonModalClose();
                     setSelectedCustomer(null);
+                    setReason("");
                   }}
                 >
                   Cancel

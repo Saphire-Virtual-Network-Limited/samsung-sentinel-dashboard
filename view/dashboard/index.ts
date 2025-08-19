@@ -56,6 +56,7 @@ import LowDownpayment from "./loans/lowDowpayment";
 import AllStoresPending from "./audit/allStorespending";
 import AllStoresSuspended from "./audit/allStoreSuspended";
 import StoreSummaryAudit from "./audit/storeSummaryAudit";
+import ManualPowerflexView from "./powerflex/manualView";
 export {
   MBEPage,
   SingleMBEPage,
@@ -116,5 +117,5 @@ export {
   AllStoresSuspended,
   singleStoreView,
   StoreSummaryAudit,
-
+  ManualPowerflexView,
 };

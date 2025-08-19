@@ -1034,8 +1034,8 @@ export async function getMBEwithCustomer(
 // CANCEL/DELETE BILL
 // ============================================================================
 
-export async function deleteCustomer(customerId: string) {
-	return apiCall(`/admin/customers/delete-customer/${customerId}`, "DELETE");
+export async function deleteCustomer(customerId: string, reason: string) {
+	return apiCall(`/admin/customers/delete-customer/${customerId}?reason=${reason}`, "DELETE");
 }
 
 // Update customer LastPoint
@@ -1316,6 +1316,16 @@ export async function updateDevice(
 	});
 
 	return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
+}
+
+//deactivate device
+export async function deactivateDevice(deviceId: string, reason: string) {
+	return apiCall(`/admin/device/deactivate/${deviceId}`, "PUT", { reason });
+}
+
+//deactivate device
+export async function activateDevice(deviceId: string) {
+	return apiCall(`/admin/device/reactivate/${deviceId}`, "PUT");
 }
 
 //fetch all vfd banks
