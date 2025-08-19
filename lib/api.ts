@@ -841,18 +841,16 @@ export interface MbeWithAgents {
 	totalAgents: number;
 }
 
-export interface MbeAssignedAgentsPagination {
-	currentPage: number;
-	totalPages: number;
-	totalItems: number;
-	itemsPerPage: number;
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-}
-
 export interface MbeAssignedAgentsData {
-	data: MbeWithAgents[];
-	pagination: MbeAssignedAgentsPagination;
+	mbe: {
+		mbeId: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		email: string;
+	};
+	agents: MbeWithAgents[];
+	totalAgents: number;
 }
 
 export interface MbeAssignedAgentsResponse {
@@ -1035,7 +1033,10 @@ export async function getMBEwithCustomer(
 // ============================================================================
 
 export async function deleteCustomer(customerId: string, reason: string) {
-	return apiCall(`/admin/customers/delete-customer/${customerId}?reason=${reason}`, "DELETE");
+	return apiCall(
+		`/admin/customers/delete-customer/${customerId}?reason=${reason}`,
+		"DELETE"
+	);
 }
 
 // Update customer LastPoint

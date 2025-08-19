@@ -69,6 +69,8 @@ export interface AgentRecord {
 	storesNew?: mainStoreNew;
 	customersCount: number;
 	userId?: string;
+	mbeManaged?: boolean;
+	assignedMbeId?: string;
 }
 
 export interface Meta {
