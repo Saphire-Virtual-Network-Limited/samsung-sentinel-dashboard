@@ -970,7 +970,7 @@ export default function AgentSinglePage() {
 					console.log("MBE Data loaded:", { stats, history, assignedAgents });
 					setReconciliationStats(stats);
 					setReconciliationHistory(history);
-					setMbeAssignedAgents(assignedAgents?.data?.agents || []);
+					setMbeAssignedAgents(assignedAgents?.agents || []);
 					setIsLoadingMbeData(false);
 				})
 				.catch((error) => {
@@ -1014,6 +1014,7 @@ export default function AgentSinglePage() {
 				reconciliationDateFilter
 			)
 				.then((history) => {
+					console.log("Regular Agent Reconciliation History:", history);
 					setReconciliationHistory(history);
 					setIsLoadingMbeData(false);
 				})
@@ -1891,31 +1892,38 @@ export default function AgentSinglePage() {
 									<GenericTable
 										columns={[
 											{
-												label: "Name",
+												name: "Name",
+												uid: "name",
 												sortable: true,
 											},
 											{
-												label: "Email",
+												name: "Email",
+												uid: "email",
 												sortable: true,
 											},
 											{
-												label: "Phone",
+												name: "Phone",
+												uid: "phone",
 												sortable: true,
 											},
 											{
-												label: "Agent ID",
+												name: "Agent ID",
+												uid: "agentId",
 												sortable: true,
 											},
 											{
-												label: "Status",
+												name: "Status",
+												uid: "status",
 												sortable: true,
 											},
 											{
-												label: "Active",
+												name: "Active",
+												uid: "active",
 												sortable: true,
 											},
 											{
-												label: "Actions",
+												name: "Actions",
+												uid: "actions",
 												sortable: false,
 											},
 										]}
@@ -1948,7 +1956,7 @@ export default function AgentSinglePage() {
 										}}
 										renderCell={(agent: any, columnKey: string) => {
 											switch (columnKey) {
-												case "Name":
+												case "name":
 													return (
 														<div className="flex items-center gap-3">
 															<div>
@@ -1963,19 +1971,19 @@ export default function AgentSinglePage() {
 															</div>
 														</div>
 													);
-												case "Email":
+												case "email":
 													return agent.email;
-												case "Phone":
+												case "phone":
 													return agent.phone;
-												case "Agent ID":
+												case "agentId":
 													return (
 														<Snippet size="sm" symbol="">
 															{agent.mbeId}
 														</Snippet>
 													);
-												case "Status":
+												case "status":
 													return <StatusChip status={agent.accountStatus} />;
-												case "Active":
+												case "active":
 													return (
 														<Chip
 															size="sm"
@@ -1985,7 +1993,7 @@ export default function AgentSinglePage() {
 															{agent.isActive ? "Active" : "Inactive"}
 														</Chip>
 													);
-												case "Actions":
+												case "actions":
 													return (
 														<Dropdown>
 															<DropdownTrigger>
@@ -1998,7 +2006,7 @@ export default function AgentSinglePage() {
 																	key="view"
 																	onPress={() =>
 																		router.push(
-																			`/access/${role}/staff/${agent.mbeId}`
+																			`/access/${role}/staff/agents/${agent.mbeId}`
 																		)
 																	}
 																	startContent={<Eye className="w-4 h-4" />}
@@ -2332,31 +2340,38 @@ export default function AgentSinglePage() {
 										<GenericTable
 											columns={[
 												{
-													label: "ID",
+													name: "ID",
+													uid: "id",
 													sortable: true,
 												},
 												{
-													label: "Agent",
+													name: "Agent",
+													uid: "agent",
 													sortable: true,
 												},
 												{
-													label: "Target Warehouse",
+													name: "Target Warehouse",
+													uid: "targetWarehouse",
 													sortable: true,
 												},
 												{
-													label: "Items",
+													name: "Items",
+													uid: "items",
 													sortable: true,
 												},
 												{
-													label: "Status",
+													name: "Status",
+													uid: "status",
 													sortable: true,
 												},
 												{
-													label: "Date",
+													name: "Date",
+													uid: "date",
 													sortable: true,
 												},
 												{
-													label: "Actions",
+													name: "Actions",
+													uid: "actions",
 													sortable: false,
 												},
 											]}
@@ -2380,25 +2395,25 @@ export default function AgentSinglePage() {
 											showStatus={true}
 											renderCell={(record: any, columnKey: string) => {
 												switch (columnKey) {
-													case "ID":
+													case "id":
 														return (
 															<Snippet size="sm" symbol="">
 																{record.reconciliationId}
 															</Snippet>
 														);
-													case "Agent":
+													case "agent":
 														return record.agent?.name || "N/A";
-													case "Target Warehouse":
+													case "targetWarehouse":
 														return record.targetWarehouse || "N/A";
-													case "Items":
+													case "items":
 														return record.transferItems?.length || 0;
-													case "Status":
+													case "status":
 														return <StatusChip status={record.status} />;
-													case "Date":
+													case "date":
 														return new Date(
 															record.createdAt
 														).toLocaleDateString();
-													case "Actions":
+													case "actions":
 														return (
 															<Dropdown>
 																<DropdownTrigger>
