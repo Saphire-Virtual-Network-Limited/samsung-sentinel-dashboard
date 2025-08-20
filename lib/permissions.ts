@@ -62,6 +62,8 @@ export interface PermissionConfig {
 	updateScanPartner: boolean;
 	canApproveStore: boolean;
 	canInjectTransaction: boolean;
+	canChangeMbeAssignment: boolean;
+	canViewReconciliationHistory: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -95,6 +97,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		viewAgentPerformanceData: true,
 		updateScanPartner: true,
 		canApproveStore: true,
+		canChangeMbeAssignment: true,
+		canViewReconciliationHistory: true,
 		// Admin has no special permissions by default
 		// All permissions default to false
 	},
@@ -122,6 +126,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		viewCommissionDetails: true,
 		viewAgentPerformanceData: true,
 		canInjectTransaction: true,
+		canChangeMbeAssignment: true,
+		canViewReconciliationHistory: true,
 	},
 
 	"collection-admin": {
@@ -130,7 +136,6 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canViewOverDuePayments: true,
-
 	},
 	"collection-officer": {
 		// canViewOverDuePayments: true,
@@ -331,6 +336,8 @@ function getDefaultPermissions(): PermissionConfig {
 		viewAgentPerformanceData: false,
 		canApproveStore: false,
 		canInjectTransaction: false,
+		canChangeMbeAssignment: false,
+		canViewReconciliationHistory: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};

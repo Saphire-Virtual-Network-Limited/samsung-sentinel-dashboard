@@ -38,6 +38,7 @@ import {
 	ImagePreviewModal,
 	SelectionWithPreview,
 	ReasonSelection,
+	DateFilter,
 } from "@/components/reususables/custom-ui";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
@@ -75,9 +76,11 @@ import {
 	CardBody,
 	Pagination,
 	DateInput,
+	DatePicker,
 	Autocomplete,
 	AutocompleteItem,
 } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 import {
 	ArrowLeft,
 	CreditCard,
@@ -1456,6 +1459,15 @@ export default function AgentSinglePage() {
 
 	// MBE-specific handlers
 	const handleChangeMbeAssignment = async () => {
+		if (!hasPermission(role, "canChangeMbeAssignment")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
+		
 		if (!agent?.mbeId || !selectedMbeForAgent) return;
 
 		try {
@@ -1483,6 +1495,15 @@ export default function AgentSinglePage() {
 	};
 
 	const handleUnlinkMbe = async () => {
+		if (!hasPermission(role, "canChangeMbeAssignment")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
+		
 		if (!agent?.mbeId) return;
 
 		try {
@@ -1517,6 +1538,14 @@ export default function AgentSinglePage() {
 	};
 
 	const handleViewReconciliationDetails = (reconciliation: any) => {
+		if (!hasPermission(role, "canViewReconciliationHistory")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
 		setSelectedReconciliation(reconciliation);
 		onReconciliationDetailsModalOpen();
 	};
@@ -2038,86 +2067,98 @@ export default function AgentSinglePage() {
 							</InfoCard>
 
 							{/* Reconciliation History */}
-							<InfoCard
-								title="Reconciliation History"
-								icon={<Clock className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={true}
-							>
-								<div className="space-y-4">
-									{/* Filter Status */}
-									{selectedAgentFilter && (
-										<div className="flex items-center justify-between bg-primary-50 p-3 rounded-lg">
-											<span className="text-sm text-primary-700">
-												🔍 Showing reconciliation history for selected agent
-											</span>
-											<Button
-												size="sm"
-												variant="flat"
-												color="default"
-												onPress={() => {
-													setSelectedAgentFilter(null);
-													setReconciliationPage(1);
+							{hasPermission(role, "canViewReconciliationHistory") && (
+								<InfoCard
+									title="Reconciliation History"
+									icon={<Clock className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={true}
+								>
+									<div className="space-y-4">
+										{/* Filter Status */}
+										{selectedAgentFilter && (
+											<div className="flex items-center justify-between bg-primary-50 p-3 rounded-lg">
+												<span className="text-sm text-primary-700">
+													🔍 Showing reconciliation history for selected agent
+												</span>
+												<Button
+													size="sm"
+													variant="flat"
+													color="default"
+													onPress={() => {
+														setSelectedAgentFilter(null);
+														setReconciliationPage(1);
+													}}
+												>
+													Clear Filter
+												</Button>
+											</div>
+										)}
+
+										{/* Date Filter */}
+										<div className="flex gap-2 items-end">
+											<DatePicker
+												label="Filter by Date"
+												value={
+													reconciliationDateFilter
+														? parseDate(reconciliationDateFilter)
+														: null
+												}
+												onChange={(date) => {
+													if (date) {
+														const dateString = date.toString();
+														handleReconciliationDateFilter(dateString);
+													} else {
+														handleReconciliationDateFilter("");
+													}
 												}}
+												className="max-w-[200px]"
+												size="sm"
+											/>
+											<Button
+												variant="flat"
+												size="sm"
+												onPress={() => handleReconciliationDateFilter("")}
 											>
-												Clear Filter
+												Clear
 											</Button>
 										</div>
-									)}
 
-									{/* Date Filter */}
-									<div className="flex gap-2">
-										<input
-											type="date"
-											value={reconciliationDateFilter}
-											onChange={(e) =>
-												handleReconciliationDateFilter(e.target.value)
-											}
-											className="px-3 py-2 border border-default-200 rounded-lg"
-										/>
-										<Button
-											variant="flat"
-											size="sm"
-											onPress={() => handleReconciliationDateFilter("")}
-										>
-											Clear
-										</Button>
+										{/* Reconciliation History Table */}
+										{reconciliationHistory?.data ? (
+											<GenericTable
+												columns={reconciliationColumns}
+												data={reconciliationHistory.data || []}
+												allCount={
+													reconciliationHistory.pagination?.totalItems || 0
+												}
+												exportData={reconciliationHistory.data || []}
+												isLoading={isLoadingMbeData}
+												filterValue={reconciliationFilterValue}
+												onFilterChange={setReconciliationFilterValue}
+												sortDescriptor={reconciliationSortDescriptor}
+												onSortChange={setReconciliationSortDescriptor}
+												page={reconciliationHistory.pagination?.currentPage || 1}
+												pages={reconciliationHistory.pagination?.totalPages || 1}
+												onPageChange={(page) => setReconciliationPage(page)}
+												exportFn={exportReconciliationData}
+												renderCell={renderReconciliationCell}
+												hasNoRecords={
+													(reconciliationHistory?.data?.length || 0) === 0
+												}
+												searchPlaceholder="Search reconciliation records..."
+												showRowsPerPageSelector={false}
+												rowsPerPageOptions={[10]}
+												defaultRowsPerPage={10}
+											/>
+										) : (
+											<div className="text-center py-8 text-default-500">
+												No reconciliation history available
+											</div>
+										)}
 									</div>
-
-									{/* Reconciliation History Table */}
-									{reconciliationHistory?.data ? (
-										<GenericTable
-											columns={reconciliationColumns}
-											data={reconciliationHistory.data || []}
-											allCount={
-												reconciliationHistory.pagination?.totalRecords || 0
-											}
-											exportData={reconciliationHistory.data || []}
-											isLoading={isLoadingMbeData}
-											filterValue={reconciliationFilterValue}
-											onFilterChange={setReconciliationFilterValue}
-											sortDescriptor={reconciliationSortDescriptor}
-											onSortChange={setReconciliationSortDescriptor}
-											page={reconciliationHistory.pagination?.currentPage || 1}
-											pages={reconciliationHistory.pagination?.totalPages || 1}
-											onPageChange={(page) => setReconciliationPage(page)}
-											exportFn={exportReconciliationData}
-											renderCell={renderReconciliationCell}
-											hasNoRecords={
-												(reconciliationHistory?.data?.length || 0) === 0
-											}
-											searchPlaceholder="Search reconciliation records..."
-											showRowsPerPageSelector={false}
-											rowsPerPageOptions={[10]}
-											defaultRowsPerPage={10}
-										/>
-									) : (
-										<div className="text-center py-8 text-default-500">
-											No reconciliation history available
-										</div>
-									)}
-								</div>
-							</InfoCard>
+								</InfoCard>
+							)}
 						</div>
 					</div>
 				) : (
@@ -2140,24 +2181,30 @@ export default function AgentSinglePage() {
 											label="Current MBE"
 											value={agent.assignedMbeId || "Not specified"}
 											endComponent={
-												<div className="flex gap-2">
-													<Button
-														size="sm"
-														variant="flat"
-														color="warning"
-														onPress={onChangeMbeModalOpen}
-													>
-														Change MBE
-													</Button>
-													<Button
-														size="sm"
-														variant="flat"
-														color="danger"
-														onPress={onUnlinkMbeModalOpen}
-													>
-														Unlink MBE
-													</Button>
-												</div>
+												hasPermission(role, "canChangeMbeAssignment") ? (
+													<div className="flex gap-2">
+														<Button
+															size="sm"
+															variant="flat"
+															color="warning"
+															onPress={onChangeMbeModalOpen}
+														>
+															Change MBE
+														</Button>
+														<Button
+															size="sm"
+															variant="flat"
+															color="danger"
+															onPress={onUnlinkMbeModalOpen}
+														>
+															Unlink MBE
+														</Button>
+													</div>
+												) : (
+													<div className="text-sm text-default-500">
+														Admin access required
+													</div>
+												)
 											}
 										/>
 									) : (
@@ -2317,173 +2364,173 @@ export default function AgentSinglePage() {
 							)}
 
 							{/* Reconciliation History for all agents */}
-							<InfoCard
-								title="Reconciliation History"
-								icon={<Clock className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<div className="space-y-4">
-									{/* Date Filter */}
-									<div className="flex gap-2">
-										<input
-											type="date"
-											value={reconciliationDateFilter}
-											onChange={(e) =>
-												handleReconciliationDateFilter(e.target.value)
-											}
-											className="px-3 py-2 border border-default-200 rounded-lg"
-										/>
-										<Button
-											variant="flat"
-											size="sm"
-											onPress={() => handleReconciliationDateFilter("")}
-										>
-											Clear
-										</Button>
-									</div>
-
-									{/* Reconciliation Table */}
-									{reconciliationHistory?.data?.length > 0 ||
-									(Array.isArray(reconciliationHistory) &&
-										reconciliationHistory.length > 0) ? (
-										<GenericTable
-											columns={[
-												{
-													name: "ID",
-													uid: "id",
-													sortable: true,
-												},
-												{
-													name: "Agent",
-													uid: "agent",
-													sortable: true,
-												},
-												{
-													name: "Target Warehouse",
-													uid: "targetWarehouse",
-													sortable: true,
-												},
-												{
-													name: "Items",
-													uid: "items",
-													sortable: true,
-												},
-												{
-													name: "Status",
-													uid: "status",
-													sortable: true,
-												},
-												{
-													name: "Date",
-													uid: "date",
-													sortable: true,
-												},
-												{
-													name: "Actions",
-													uid: "actions",
-													sortable: false,
-												},
-											]}
-											data={
-												reconciliationHistory?.data ||
-												reconciliationHistory ||
-												[]
-											}
-											allCount={
-												reconciliationHistory?.data?.length ||
-												reconciliationHistory?.length ||
-												0
-											}
-											exportData={
-												reconciliationHistory?.data ||
-												reconciliationHistory ||
-												[]
-											}
-											isLoading={false}
-											filterValue=""
-											onFilterChange={() => {}}
-											sortDescriptor={{
-												column: "date",
-												direction: "descending",
-											}}
-											onSortChange={() => {}}
-											page={reconciliationPage}
-											pages={reconciliationHistory?.pagination?.totalPages || 1}
-											onPageChange={handleReconciliationPageChange}
-											exportFn={async () => {}}
-											statusOptions={[
-												{ name: "All", uid: "all" },
-												{ name: "Pending", uid: "pending" },
-												{ name: "Completed", uid: "completed" },
-												{ name: "Rejected", uid: "rejected" },
-											]}
-											statusFilter={new Set(["all"])}
-											onStatusChange={() => {}}
-											statusColorMap={{
-												pending: "warning",
-												completed: "success",
-												rejected: "danger",
-											}}
-											showStatus={true}
-											renderCell={(record: any, columnKey: string) => {
-												switch (columnKey) {
-													case "id":
-														return (
-															<Snippet size="sm" symbol="">
-																{record.reconciliationId}
-															</Snippet>
-														);
-													case "agent":
-														return record.agent?.name || "N/A";
-													case "targetWarehouse":
-														return record.targetWarehouse || "N/A";
-													case "items":
-														return record.transferItems?.length || 0;
-													case "status":
-														return <StatusChip status={record.status} />;
-													case "date":
-														return new Date(
-															record.createdAt
-														).toLocaleDateString();
-													case "actions":
-														return (
-															<Dropdown>
-																<DropdownTrigger>
-																	<Button variant="light" size="sm" isIconOnly>
-																		<MoreVertical className="w-4 h-4" />
-																	</Button>
-																</DropdownTrigger>
-																<DropdownMenu>
-																	<DropdownItem
-																		key="view"
-																		onPress={() =>
-																			handleViewReconciliationDetails(record)
-																		}
-																		startContent={<Eye className="w-4 h-4" />}
-																	>
-																		View Details
-																	</DropdownItem>
-																</DropdownMenu>
-															</Dropdown>
-														);
-													default:
-														return null;
+							{hasPermission(role, "canViewReconciliationHistory") && (
+								<InfoCard
+									title="Reconciliation History"
+									icon={<Clock className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="space-y-4">
+										{/* Date Filter */}
+										<div className="flex gap-2 items-end">
+											<DatePicker
+												label="Filter by Date"
+												value={
+													reconciliationDateFilter
+														? parseDate(reconciliationDateFilter)
+														: null
 												}
-											}}
-											hasNoRecords={
-												(reconciliationHistory?.data?.length ||
-													reconciliationHistory?.length ||
-													0) === 0
-											}
-										/>
-									) : (
-										<div className="text-center py-8 text-default-500">
-											No reconciliation history available
+												onChange={(date) => {
+													if (date) {
+														const dateString = date.toString();
+														handleReconciliationDateFilter(dateString);
+													} else {
+														handleReconciliationDateFilter("");
+													}
+												}}
+												className="max-w-[200px]"
+												size="sm"
+											/>
+											<Button
+												variant="flat"
+												size="sm"
+												onPress={() => handleReconciliationDateFilter("")}
+											>
+												Clear
+											</Button>
 										</div>
-									)}
-								</div>
-							</InfoCard>
+
+										{/* Reconciliation Table */}
+										{reconciliationHistory?.data?.length > 0 ||
+										(Array.isArray(reconciliationHistory) &&
+											reconciliationHistory.length > 0) ? (
+											<GenericTable
+												columns={[
+													{
+														name: "ID",
+														uid: "id",
+														sortable: true,
+													},
+													{
+														name: "Agent",
+														uid: "agent",
+														sortable: true,
+													},
+													{
+														name: "Target Warehouse",
+														uid: "targetWarehouse",
+														sortable: true,
+													},
+													{
+														name: "Items",
+														uid: "items",
+														sortable: true,
+													},
+													{
+														name: "Status",
+														uid: "status",
+														sortable: true,
+													},
+													{
+														name: "Date",
+														uid: "date",
+														sortable: true,
+													},
+													{
+														name: "Actions",
+														uid: "actions",
+														sortable: false,
+													},
+												]}
+												data={reconciliationHistory?.data || []}
+												allCount={reconciliationHistory?.data?.length || 0}
+												exportData={reconciliationHistory?.data || []}
+												isLoading={false}
+												filterValue=""
+												onFilterChange={() => {}}
+												sortDescriptor={{
+													column: "date",
+													direction: "descending",
+												}}
+												onSortChange={() => {}}
+												page={reconciliationPage}
+												pages={reconciliationHistory?.pagination?.totalPages || 1}
+												onPageChange={handleReconciliationPageChange}
+												exportFn={async () => {}}
+												statusOptions={[
+													{ name: "All", uid: "all" },
+													{ name: "Pending", uid: "pending" },
+													{ name: "Completed", uid: "completed" },
+													{ name: "Rejected", uid: "rejected" },
+												]}
+												statusFilter={new Set(["all"])}
+												onStatusChange={() => {}}
+												statusColorMap={{
+													pending: "warning",
+													completed: "success",
+													rejected: "danger",
+												}}
+												showStatus={true}
+												renderCell={(record: any, columnKey: string) => {
+													switch (columnKey) {
+														case "id":
+															return (
+																<Snippet size="sm" symbol="">
+																	{record.reconciliationId}
+																</Snippet>
+															);
+														case "agent":
+															return record.agent?.name || "N/A";
+														case "targetWarehouse":
+															return record.targetWarehouse || "N/A";
+														case "items":
+															return record.transferItems?.length || 0;
+														case "status":
+															return <StatusChip status={record.status} />;
+														case "date":
+															return new Date(
+																record.createdAt
+															).toLocaleDateString();
+														case "actions":
+															return (
+																<Dropdown>
+																	<DropdownTrigger>
+																		<Button variant="light" size="sm" isIconOnly>
+																			<MoreVertical className="w-4 h-4" />
+																		</Button>
+																	</DropdownTrigger>
+																	<DropdownMenu>
+																		<DropdownItem
+																			key="view"
+																			onPress={() =>
+																				handleViewReconciliationDetails(record)
+																			}
+																			startContent={<Eye className="w-4 h-4" />}
+																		>
+																			View Details
+																		</DropdownItem>
+																	</DropdownMenu>
+																</Dropdown>
+															);
+														default:
+															return null;
+													}
+												}}
+												hasNoRecords={
+													(reconciliationHistory?.data?.length ||
+														reconciliationHistory?.length ||
+														0) === 0
+												}
+											/>
+										) : (
+											<div className="text-center py-8 text-default-500">
+												No reconciliation history available
+											</div>
+										)}
+									</div>
+								</InfoCard>
+							)}
 
 							{/* Performance Data */}
 							{canViewAgentPerformanceData && (
@@ -2684,13 +2731,19 @@ export default function AgentSinglePage() {
 												</Chip>
 											</div>
 											<div className="flex items-center gap-3">
-												<Input
-													type="date"
-													label="Date"
+												<DatePicker
+													label="Filter by Date"
+													value={deviceDate ? parseDate(deviceDate) : null}
+													onChange={(date) => {
+														if (date) {
+															const dateString = date.toString();
+															setDeviceDate(dateString);
+														} else {
+															setDeviceDate("");
+														}
+													}}
+													className="max-w-[200px]"
 													size="sm"
-													value={deviceDate}
-													onChange={(e) => setDeviceDate(e.target.value)}
-													className="w-auto"
 												/>
 												<ButtonGroup size="sm" variant="flat">
 													<Button
@@ -4112,14 +4165,24 @@ export default function AgentSinglePage() {
 						<ModalBody>
 							<div className="space-y-4">
 								{/* Date Filter */}
-								<div className="flex gap-2">
-									<input
-										type="date"
-										value={reconciliationDateFilter}
-										onChange={(e) =>
-											handleReconciliationDateFilter(e.target.value)
+								<div className="flex gap-2 items-end">
+									<DatePicker
+										label="Filter by Date"
+										value={
+											reconciliationDateFilter
+												? parseDate(reconciliationDateFilter)
+												: null
 										}
-										className="px-3 py-2 border border-default-200 rounded-lg"
+										onChange={(date) => {
+											if (date) {
+												const dateString = date.toString();
+												handleReconciliationDateFilter(dateString);
+											} else {
+												handleReconciliationDateFilter("");
+											}
+										}}
+										className="max-w-[200px]"
+										size="sm"
 									/>
 									<Button
 										variant="flat"
@@ -4223,12 +4286,13 @@ export default function AgentSinglePage() {
 			)}
 
 			{/* Reconciliation Details Modal */}
-			<Modal
-				isOpen={isReconciliationDetailsModalOpen}
-				onClose={handleCloseReconciliationDetails}
-				size="3xl"
-				scrollBehavior="inside"
-			>
+			{hasPermission(role, "canViewReconciliationHistory") && (
+				<Modal
+					isOpen={isReconciliationDetailsModalOpen}
+					onClose={handleCloseReconciliationDetails}
+					size="3xl"
+					scrollBehavior="inside"
+				>
 				<ModalContent>
 					<ModalHeader className="pb-3">
 						<div className="flex items-center justify-between w-full">
@@ -4495,6 +4559,7 @@ export default function AgentSinglePage() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+			)}
 		</div>
 	);
 }
