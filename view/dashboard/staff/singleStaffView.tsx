@@ -1556,7 +1556,14 @@ export default function AgentSinglePage() {
 									<p className="text-sm text-default-500">{agent.role}</p>
 								</div>
 							</div>
-							<StatusChip status={agent.accountStatus} />
+							<div className="flex flex-col items-end gap-2">
+								<StatusChip status={agent.accountStatus} />
+								{isMbeManaged && (
+									<Chip color="primary" size="sm">
+										MBE Managed
+									</Chip>
+								)}
+							</div>
 						</div>
 						{/* Action Buttons - Desktop */}
 						<div className="hidden md:flex items-center gap-3">
@@ -2005,40 +2012,6 @@ export default function AgentSinglePage() {
 							>
 								<div className="grid gap-4">
 									<InfoField label="Agent ID" value={agent.mbeId} copyable />
-									{/* MBE Management Section for MBE-managed agents */}
-									{isMbeManaged && (
-										<InfoField
-											label="MBE Managed"
-											value="Yes"
-											endComponent={
-												<div className="space-y-2">
-													<div className="flex items-center gap-2">
-														<Chip color="primary" size="sm">
-															MBE Managed
-														</Chip>
-													</div>
-													<div className="flex gap-2">
-														<Button
-															size="sm"
-															variant="flat"
-															color="warning"
-															onClick={onChangeMbeModalOpen}
-														>
-															Change MBE
-														</Button>
-														<Button
-															size="sm"
-															variant="flat"
-															color="danger"
-															onClick={onUnlinkMbeModalOpen}
-														>
-															Unlink MBE
-														</Button>
-													</div>
-												</div>
-											}
-										/>
-									)}
 									<InfoField
 										endComponent={
 											<div className="flex gap-2">
