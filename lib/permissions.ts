@@ -94,6 +94,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		viewCommissionDetails: true,
 		viewAgentPerformanceData: true,
 		updateScanPartner: true,
+		canCreate: true,
+		canEdit: true,
 		
 		// Admin has no special permissions by default
 		// All permissions default to false
@@ -109,9 +111,9 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewCommunicationLog: true,
 		suspendDashboardUser: true,
 		createDashboardUser: true,
-		// canCreate: true,
-		// canSync: true,
-		// canEdit: true,
+		canCreate: true,
+		canSync: true,
+		canEdit: true,
 		updateScanPartner: true,
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
