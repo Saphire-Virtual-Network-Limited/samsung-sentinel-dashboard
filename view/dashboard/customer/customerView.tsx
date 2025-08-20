@@ -121,11 +121,8 @@ export default function CustomerPage() {
         fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
         age: calculateAge(r.dob),
         bvnPhoneNumber: r.bvnPhoneNumber,
-
         createdAt: new Date(r.createdAt).toLocaleDateString('en-GB'),
         channel: r.channel,
-
-
       })),
     [raw]
   );
@@ -146,6 +143,7 @@ export default function CustomerPage() {
           (c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
           c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
           c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+          c.LoanRecord?.[0]?.loanStatus?.toLowerCase().includes(f) ||
           c.CustomerAccountDetails?.[0]?.accountNumber
             ?.toLowerCase()
             .includes(f)
