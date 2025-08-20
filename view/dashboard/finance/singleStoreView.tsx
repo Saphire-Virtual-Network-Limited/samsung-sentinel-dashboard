@@ -732,6 +732,22 @@ export default function SingleStoreView() {
                                   </div>
                                 </div>
 
+                                 {/* Account Number */}
+                                 <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <CreditCard className="w-4 h-4 text-orange-600" />
+                                    <span className="text-sm font-semibold text-orange-700">Account Number</span>
+                                  </div>
+                                  <div className="text-sm">
+                                    <div className="text-orange-800">
+                                      <strong>Previous:</strong> {log.previousData?.accountNumber || "N/A"}
+                                    </div>
+                                    <div className="text-orange-900 font-semibold">
+                                      <strong>New:</strong> {log.newData?.accountNumber || "N/A"}
+                                    </div>
+                                  </div>
+                                </div>
+
                                 {/* Bank Code */}
                                 <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
                                   <div className="flex items-center gap-2 mb-2">
