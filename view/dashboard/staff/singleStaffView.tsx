@@ -1931,7 +1931,7 @@ export default function AgentSinglePage() {
 										allCount={mbeAssignedAgents.length}
 										exportData={mbeAssignedAgents}
 										isLoading={isLoadingMbeData}
-										showCheckboxes={true}
+										selectionMode="multiple"
 										selectedKeys={
 											selectedAgentFilter
 												? new Set([selectedAgentFilter])
@@ -1954,6 +1954,14 @@ export default function AgentSinglePage() {
 												handleAgentSelection("", "");
 											}
 										}}
+										filterValue=""
+										onFilterChange={() => {}}
+										sortDescriptor={{ column: "name", direction: "ascending" }}
+										onSortChange={() => {}}
+										page={1}
+										pages={1}
+										onPageChange={() => {}}
+										exportFn={async () => {}}
 										renderCell={(agent: any, columnKey: string) => {
 											switch (columnKey) {
 												case "name":
@@ -2336,7 +2344,9 @@ export default function AgentSinglePage() {
 									</div>
 
 									{/* Reconciliation Table */}
-									{reconciliationHistory?.data?.length > 0 ? (
+									{reconciliationHistory?.data?.length > 0 ||
+									(Array.isArray(reconciliationHistory) &&
+										reconciliationHistory.length > 0) ? (
 										<GenericTable
 											columns={[
 												{
@@ -2375,10 +2385,33 @@ export default function AgentSinglePage() {
 													sortable: false,
 												},
 											]}
-											data={reconciliationHistory.data}
-											allCount={reconciliationHistory.data.length}
-											exportData={reconciliationHistory.data}
+											data={
+												reconciliationHistory?.data ||
+												reconciliationHistory ||
+												[]
+											}
+											allCount={
+												reconciliationHistory?.data?.length ||
+												reconciliationHistory?.length ||
+												0
+											}
+											exportData={
+												reconciliationHistory?.data ||
+												reconciliationHistory ||
+												[]
+											}
 											isLoading={false}
+											filterValue=""
+											onFilterChange={() => {}}
+											sortDescriptor={{
+												column: "date",
+												direction: "descending",
+											}}
+											onSortChange={() => {}}
+											page={reconciliationPage}
+											pages={reconciliationHistory?.pagination?.totalPages || 1}
+											onPageChange={handleReconciliationPageChange}
+											exportFn={async () => {}}
 											statusOptions={[
 												{ name: "All", uid: "all" },
 												{ name: "Pending", uid: "pending" },
@@ -2438,10 +2471,11 @@ export default function AgentSinglePage() {
 														return null;
 												}
 											}}
-											hasNoRecords={reconciliationHistory.data.length === 0}
-											page={reconciliationPage}
-											pages={reconciliationHistory?.pagination?.totalPages || 1}
-											onPageChange={handleReconciliationPageChange}
+											hasNoRecords={
+												(reconciliationHistory?.data?.length ||
+													reconciliationHistory?.length ||
+													0) === 0
+											}
 										/>
 									) : (
 										<div className="text-center py-8 text-default-500">
