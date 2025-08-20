@@ -917,9 +917,7 @@ export default function AgentSinglePage() {
 				return <div className="text-sm">{record.targetWarehouse || "N/A"}</div>;
 			case "items":
 				return (
-					<div className="text-sm">
-						{record.transferItems?.length || 0} item(s)
-					</div>
+					<div className="text-sm">{record.transferItems?.length || 0}</div>
 				);
 			case "createdAt":
 				return (
@@ -933,7 +931,7 @@ export default function AgentSinglePage() {
 						size="sm"
 						variant="flat"
 						color="primary"
-						onClick={() => handleViewReconciliationDetails(record)}
+						onPress={() => handleViewReconciliationDetails(record)}
 					>
 						View Details
 					</Button>
@@ -972,7 +970,7 @@ export default function AgentSinglePage() {
 					console.log("MBE Data loaded:", { stats, history, assignedAgents });
 					setReconciliationStats(stats);
 					setReconciliationHistory(history);
-					setMbeAssignedAgents(assignedAgents?.agents || []);
+					setMbeAssignedAgents(assignedAgents?.data?.agents || []);
 					setIsLoadingMbeData(false);
 				})
 				.catch((error) => {
@@ -1003,6 +1001,34 @@ export default function AgentSinglePage() {
 			});
 		}
 	}, [agent, isMbeManaged, reconciliationPage, reconciliationDateFilter]);
+
+	// Load reconciliation data for regular agents (non-MBE-managed)
+	useEffect(() => {
+		if (agent && !isMbe && !isMbeManaged) {
+			setIsLoadingMbeData(true);
+			// For regular agents, we might need to call a different API or pass empty mbeId
+			fetchAgentReconciliationHistory(
+				agent.mbeId,
+				"", // No MBE ID for regular agents
+				reconciliationPage,
+				reconciliationDateFilter
+			)
+				.then((history) => {
+					setReconciliationHistory(history);
+					setIsLoadingMbeData(false);
+				})
+				.catch((error) => {
+					console.error("Error loading agent reconciliation:", error);
+					setIsLoadingMbeData(false);
+				});
+		}
+	}, [
+		agent,
+		isMbe,
+		isMbeManaged,
+		reconciliationPage,
+		reconciliationDateFilter,
+	]);
 
 	// Load scan partners when modal opens
 	useEffect(() => {
@@ -1862,52 +1888,132 @@ export default function AgentSinglePage() {
 										</span>
 									</div>
 								) : mbeAssignedAgents && mbeAssignedAgents.length > 0 ? (
-									<div className="space-y-3">
-										{mbeAssignedAgents.map((assignedAgent: any) => (
-											<div
-												key={assignedAgent.mbeId}
-												className={`bg-default-50 rounded-lg p-4 cursor-pointer transition-all hover:bg-default-100 border-2 ${
-													selectedAgentFilter === assignedAgent.mbeId
-														? "border-primary-500 bg-primary-50"
-														: "border-transparent"
-												}`}
-												onClick={() =>
+									<GenericTable
+										columns={[
+											{
+												label: "Name",
+												sortable: true,
+											},
+											{
+												label: "Email",
+												sortable: true,
+											},
+											{
+												label: "Phone",
+												sortable: true,
+											},
+											{
+												label: "Agent ID",
+												sortable: true,
+											},
+											{
+												label: "Status",
+												sortable: true,
+											},
+											{
+												label: "Active",
+												sortable: true,
+											},
+											{
+												label: "Actions",
+												sortable: false,
+											},
+										]}
+										data={mbeAssignedAgents}
+										allCount={mbeAssignedAgents.length}
+										exportData={mbeAssignedAgents}
+										isLoading={isLoadingMbeData}
+										showCheckboxes={true}
+										selectedKeys={
+											selectedAgentFilter
+												? new Set([selectedAgentFilter])
+												: new Set()
+										}
+										onSelectionChange={(keys) => {
+											const selectedKey = Array.from(keys)[0];
+											if (selectedKey) {
+												const selectedAgent = mbeAssignedAgents.find(
+													(agent: any) => agent.mbeId === selectedKey
+												);
+												if (selectedAgent) {
 													handleAgentSelection(
-														assignedAgent.mbeId,
-														`${assignedAgent.firstname} ${assignedAgent.lastname}`
-													)
+														selectedAgent.mbeId,
+														`${selectedAgent.firstname} ${selectedAgent.lastname}`
+													);
 												}
-											>
-												<div className="flex items-center justify-between">
-													<div>
-														<div className="font-medium text-default-900">
-															{assignedAgent.firstname} {assignedAgent.lastname}
-															{selectedAgentFilter === assignedAgent.mbeId && (
-																<span className="ml-2 text-xs bg-primary-500 text-white px-2 py-1 rounded">
-																	Filtered
-																</span>
-															)}
+											} else {
+												// Clear selection
+												handleAgentSelection("", "");
+											}
+										}}
+										renderCell={(agent: any, columnKey: string) => {
+											switch (columnKey) {
+												case "Name":
+													return (
+														<div className="flex items-center gap-3">
+															<div>
+																<div className="font-medium">
+																	{agent.firstname} {agent.lastname}
+																</div>
+																{selectedAgentFilter === agent.mbeId && (
+																	<span className="text-xs bg-primary-500 text-white px-2 py-1 rounded">
+																		Filtered
+																	</span>
+																)}
+															</div>
 														</div>
-														<div className="text-sm text-default-500">
-															{assignedAgent.email}
-														</div>
-														<div className="text-sm text-default-500">
-															{assignedAgent.phone}
-														</div>
-													</div>
-													<div className="text-right">
-														<StatusChip status={assignedAgent.accountStatus} />
-														<div className="text-xs text-default-500 mt-1">
-															Agent ID: {assignedAgent.mbeId}
-														</div>
-														<div className="text-xs text-default-500">
-															{assignedAgent.isActive ? "Active" : "Inactive"}
-														</div>
-													</div>
-												</div>
-											</div>
-										))}
-									</div>
+													);
+												case "Email":
+													return agent.email;
+												case "Phone":
+													return agent.phone;
+												case "Agent ID":
+													return (
+														<Snippet size="sm" symbol="">
+															{agent.mbeId}
+														</Snippet>
+													);
+												case "Status":
+													return <StatusChip status={agent.accountStatus} />;
+												case "Active":
+													return (
+														<Chip
+															size="sm"
+															color={agent.isActive ? "success" : "danger"}
+															variant="flat"
+														>
+															{agent.isActive ? "Active" : "Inactive"}
+														</Chip>
+													);
+												case "Actions":
+													return (
+														<Dropdown>
+															<DropdownTrigger>
+																<Button variant="light" size="sm" isIconOnly>
+																	<MoreVertical className="w-4 h-4" />
+																</Button>
+															</DropdownTrigger>
+															<DropdownMenu>
+																<DropdownItem
+																	key="view"
+																	onPress={() =>
+																		router.push(
+																			`/access/${role}/staff/${agent.mbeId}`
+																		)
+																	}
+																	startContent={<Eye className="w-4 h-4" />}
+																>
+																	View Agent
+																</DropdownItem>
+															</DropdownMenu>
+														</Dropdown>
+													);
+												default:
+													return null;
+											}
+										}}
+										hasNoRecords={mbeAssignedAgents.length === 0}
+									/>
 								) : (
 									<div className="text-center py-8 text-default-500">
 										No agents assigned to this MBE
@@ -1933,7 +2039,7 @@ export default function AgentSinglePage() {
 												size="sm"
 												variant="flat"
 												color="default"
-												onClick={() => {
+												onPress={() => {
 													setSelectedAgentFilter(null);
 													setReconciliationPage(1);
 												}}
@@ -1956,7 +2062,7 @@ export default function AgentSinglePage() {
 										<Button
 											variant="flat"
 											size="sm"
-											onClick={() => handleReconciliationDateFilter("")}
+											onPress={() => handleReconciliationDateFilter("")}
 										>
 											Clear
 										</Button>
@@ -2012,6 +2118,48 @@ export default function AgentSinglePage() {
 							>
 								<div className="grid gap-4">
 									<InfoField label="Agent ID" value={agent.mbeId} copyable />
+									{/* MBE Management Section for MBE-managed agents */}
+									{isMbeManaged ? (
+										<InfoField
+											label="Current MBE"
+											value={agent.assignedMbeId || "Not specified"}
+											endComponent={
+												<div className="flex gap-2">
+													<Button
+														size="sm"
+														variant="flat"
+														color="warning"
+														onPress={onChangeMbeModalOpen}
+													>
+														Change MBE
+													</Button>
+													<Button
+														size="sm"
+														variant="flat"
+														color="danger"
+														onPress={onUnlinkMbeModalOpen}
+													>
+														Unlink MBE
+													</Button>
+												</div>
+											}
+										/>
+									) : (
+										<InfoField
+											label="MBE ID"
+											value=""
+											endComponent={
+												<Button
+													size="sm"
+													variant="flat"
+													color="primary"
+													onPress={onChangeMbeModalOpen}
+												>
+													Link MBE
+												</Button>
+											}
+										/>
+									)}
 									<InfoField
 										endComponent={
 											<div className="flex gap-2">
@@ -2152,129 +2300,141 @@ export default function AgentSinglePage() {
 								</InfoCard>
 							)}
 
-							{/* Reconciliation History for MBE-managed agents */}
-							{isMbeManaged && (
-								<InfoCard
-									title="Reconciliation History"
-									icon={<Clock className="w-5 h-5 text-default-600" />}
-									collapsible={true}
-									defaultExpanded={false}
-								>
-									<div className="space-y-4">
-										{/* Date Filter */}
-										<div className="flex gap-2">
-											<input
-												type="date"
-												value={reconciliationDateFilter}
-												onChange={(e) =>
-													handleReconciliationDateFilter(e.target.value)
-												}
-												className="px-3 py-2 border border-default-200 rounded-lg"
-											/>
-											<Button
-												variant="flat"
-												size="sm"
-												onClick={() => handleReconciliationDateFilter("")}
-											>
-												Clear
-											</Button>
-										</div>
-
-										{/* History List */}
-										{reconciliationHistory?.data?.length > 0 ? (
-											<div className="space-y-3">
-												{reconciliationHistory.data.map((record: any) => (
-													<div
-														key={record.reconciliationId}
-														className="bg-default-50 rounded-lg p-4"
-													>
-														<div className="flex justify-between items-start mb-2">
-															<div>
-																<div className="font-medium text-default-900">
-																	{record.agent?.name || "N/A"}
-																</div>
-																<div className="text-sm text-default-500">
-																	Agent: {record.agent?.email || "N/A"}
-																</div>
-															</div>
-															<div className="flex items-center gap-2">
-																<StatusChip status={record.status} />
-																<Button
-																	size="sm"
-																	variant="flat"
-																	color="primary"
-																	onClick={() =>
-																		handleViewReconciliationDetails(record)
-																	}
-																>
-																	View Details
-																</Button>
-															</div>
-														</div>
-														<div className="text-sm text-default-500">
-															<div>
-																Target: {record.targetWarehouse || "N/A"}
-															</div>
-															<div>
-																Items: {record.transferItems?.length || 0}{" "}
-																item(s)
-															</div>
-															<div>
-																Created:{" "}
-																{new Date(
-																	record.createdAt
-																).toLocaleDateString()}
-															</div>
-														</div>
-													</div>
-												))}
-											</div>
-										) : (
-											<div className="text-center py-8 text-default-500">
-												No reconciliation history available
-											</div>
-										)}
-
-										{/* Pagination */}
-										{reconciliationHistory?.pagination && (
-											<div className="flex justify-center gap-2">
-												<Button
-													size="sm"
-													variant="flat"
-													isDisabled={
-														!reconciliationHistory.pagination.hasPreviousPage
-													}
-													onClick={() =>
-														handleReconciliationPageChange(
-															reconciliationPage - 1
-														)
-													}
-												>
-													Previous
-												</Button>
-												<span className="px-3 py-2 text-sm">
-													Page {reconciliationHistory.pagination.currentPage} of{" "}
-													{reconciliationHistory.pagination.totalPages}
-												</span>
-												<Button
-													size="sm"
-													variant="flat"
-													isDisabled={
-														!reconciliationHistory.pagination.hasNextPage
-													}
-													onClick={() =>
-														handleReconciliationPageChange(
-															reconciliationPage + 1
-														)
-													}
-												>
-													Next
-												</Button>
-											</div>
-										)}
+							{/* Reconciliation History for all agents */}
+							<InfoCard
+								title="Reconciliation History"
+								icon={<Clock className="w-5 h-5 text-default-600" />}
+								collapsible={true}
+								defaultExpanded={false}
+							>
+								<div className="space-y-4">
+									{/* Date Filter */}
+									<div className="flex gap-2">
+										<input
+											type="date"
+											value={reconciliationDateFilter}
+											onChange={(e) =>
+												handleReconciliationDateFilter(e.target.value)
+											}
+											className="px-3 py-2 border border-default-200 rounded-lg"
+										/>
+										<Button
+											variant="flat"
+											size="sm"
+											onPress={() => handleReconciliationDateFilter("")}
+										>
+											Clear
+										</Button>
 									</div>
-								</InfoCard>
-							)}
+
+									{/* Reconciliation Table */}
+									{reconciliationHistory?.data?.length > 0 ? (
+										<GenericTable
+											columns={[
+												{
+													label: "ID",
+													sortable: true,
+												},
+												{
+													label: "Agent",
+													sortable: true,
+												},
+												{
+													label: "Target Warehouse",
+													sortable: true,
+												},
+												{
+													label: "Items",
+													sortable: true,
+												},
+												{
+													label: "Status",
+													sortable: true,
+												},
+												{
+													label: "Date",
+													sortable: true,
+												},
+												{
+													label: "Actions",
+													sortable: false,
+												},
+											]}
+											data={reconciliationHistory.data}
+											allCount={reconciliationHistory.data.length}
+											exportData={reconciliationHistory.data}
+											isLoading={false}
+											statusOptions={[
+												{ name: "All", uid: "all" },
+												{ name: "Pending", uid: "pending" },
+												{ name: "Completed", uid: "completed" },
+												{ name: "Rejected", uid: "rejected" },
+											]}
+											statusFilter={new Set(["all"])}
+											onStatusChange={() => {}}
+											statusColorMap={{
+												pending: "warning",
+												completed: "success",
+												rejected: "danger",
+											}}
+											showStatus={true}
+											renderCell={(record: any, columnKey: string) => {
+												switch (columnKey) {
+													case "ID":
+														return (
+															<Snippet size="sm" symbol="">
+																{record.reconciliationId}
+															</Snippet>
+														);
+													case "Agent":
+														return record.agent?.name || "N/A";
+													case "Target Warehouse":
+														return record.targetWarehouse || "N/A";
+													case "Items":
+														return record.transferItems?.length || 0;
+													case "Status":
+														return <StatusChip status={record.status} />;
+													case "Date":
+														return new Date(
+															record.createdAt
+														).toLocaleDateString();
+													case "Actions":
+														return (
+															<Dropdown>
+																<DropdownTrigger>
+																	<Button variant="light" size="sm" isIconOnly>
+																		<MoreVertical className="w-4 h-4" />
+																	</Button>
+																</DropdownTrigger>
+																<DropdownMenu>
+																	<DropdownItem
+																		key="view"
+																		onPress={() =>
+																			handleViewReconciliationDetails(record)
+																		}
+																		startContent={<Eye className="w-4 h-4" />}
+																	>
+																		View Details
+																	</DropdownItem>
+																</DropdownMenu>
+															</Dropdown>
+														);
+													default:
+														return null;
+												}
+											}}
+											hasNoRecords={reconciliationHistory.data.length === 0}
+											page={reconciliationPage}
+											pages={reconciliationHistory?.pagination?.totalPages || 1}
+											onPageChange={handleReconciliationPageChange}
+										/>
+									) : (
+										<div className="text-center py-8 text-default-500">
+											No reconciliation history available
+										</div>
+									)}
+								</div>
+							</InfoCard>
 
 							{/* Performance Data */}
 							{canViewAgentPerformanceData && (
@@ -3915,7 +4075,7 @@ export default function AgentSinglePage() {
 									<Button
 										variant="flat"
 										size="sm"
-										onClick={() => handleReconciliationDateFilter("")}
+										onPress={() => handleReconciliationDateFilter("")}
 									>
 										Clear
 									</Button>
@@ -3944,7 +4104,7 @@ export default function AgentSinglePage() {
 															size="sm"
 															variant="flat"
 															color="primary"
-															onClick={() =>
+															onPress={() =>
 																handleViewReconciliationDetails(record)
 															}
 														>
@@ -3980,7 +4140,7 @@ export default function AgentSinglePage() {
 											isDisabled={
 												!reconciliationHistory.pagination.hasPreviousPage
 											}
-											onClick={() =>
+											onPress={() =>
 												handleReconciliationPageChange(reconciliationPage - 1)
 											}
 										>
@@ -3994,7 +4154,7 @@ export default function AgentSinglePage() {
 											size="sm"
 											variant="flat"
 											isDisabled={!reconciliationHistory.pagination.hasNextPage}
-											onClick={() =>
+											onPress={() =>
 												handleReconciliationPageChange(reconciliationPage + 1)
 											}
 										>
