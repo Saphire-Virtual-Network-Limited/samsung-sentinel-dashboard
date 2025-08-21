@@ -1424,9 +1424,10 @@ export async function updateCustomerVirtualWalletBalance(
 // Create customer virtual wallet
 
 export async function createCustomerVirtualWallet(customerId: string) {
-	return apiCall(`/admin/customers/create-customer-wallet`, "POST", {
-		customerId,
-	});
+	return apiCall(
+		`/admin/customers/create-customer-wallet?customerId=${customerId}`,
+		"POST"
+	);
 }
 
 // Inject payment history into customer
@@ -2839,4 +2840,57 @@ export async function validateOldPassword(email: string, oldPassword: string) {
 // Update user profile function
 export async function updateUserProfile(userId: string, data: UpdateUserDto) {
 	return apiCall(`/admin/update/${userId}`, "PUT", data);
+}
+
+// single collection customer, Extract transaction data for a specific customer
+export async function getSingleCollectionCustomer(
+	customerId: string,
+	channel?: string
+) {
+	const query = channel ? `?channel=${channel}` : "";
+	return apiCall(`/collections/customer/${customerId}${query}`, "GET");
+}
+
+//Get loan repayment(excluding down payment and card tokenization)
+export async function getLoanRepayment(
+	customerId: string,
+	channel?: string,
+	startDate?: string,
+	endDate?: string
+) {
+	const query = channel ? `&channel=${channel}` : "";
+	const query2 = startDate ? `&startDate=${startDate}` : "";
+	const query3 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(
+		`/collections/loan-repayments?customerId=${customerId}${query}${query2}${query3}`,
+		"GET"
+	);
+}
+
+//Get all down Payment
+export async function getDownPayment(
+	customerId: string,
+	channel?: string,
+	startDate?: string,
+	endDate?: string
+) {
+	const query = channel ? `&channel=${channel}` : "";
+	const query2 = startDate ? `&startDate=${startDate}` : "";
+	const query3 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(
+		`/collections/down-payments?customerId=${customerId}${query}${query2}${query3}`,
+		"GET"
+	);
+}
+
+//Extract all transaction data across all customers
+export async function getTransactionData(
+	channel?: string,
+	startDate?: string,
+	endDate?: string
+) {
+	const query2 = startDate ? `&startDate=${startDate}` : "";
+	const query3 = endDate ? `&endDate=${endDate}` : "";
+	const query = channel ? `&channel=${channel}` : "";
+	return apiCall(`/collections/all?${query2}${query3}${query}`, "GET");
 }
