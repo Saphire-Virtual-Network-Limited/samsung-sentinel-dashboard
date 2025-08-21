@@ -3,8 +3,8 @@ import SingleCustomer from '@/view/dashboard/customer/singleCustomer'
 
 const SingleCustomerPage = () => {
   return (
-          <SingleCustomer />
-            
+    <SingleCustomer />
+
   )
 }
 
