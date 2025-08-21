@@ -301,13 +301,29 @@ const CommissionTable = () => {
 						? "Unmark Partner Paid"
 						: "Unmark Both Paid"
 				}
-				description={
-					modal.row
-						? modal.action === "mark"
-							? `Are you sure you want to mark this commission (${modal.row.commissionId}) as paid for ${modal.who}?`
-							: `Are you sure you want to unmark this commission (${modal.row.commissionId}) as paid for ${modal.who}?`
-						: ""
-				}
+				description={(() => {
+					if (!modal.row) return "";
+					const agentName = modal.row.agent;
+					const partnerName = modal.row.partner;
+					const agentAmount = modal.row.mbeCommission;
+					const partnerAmount = modal.row.partnerCommission;
+					if (modal.who === "agent") {
+						return `${
+							modal.action === "mark" ? "Mark" : "Unmark"
+						} commission for agent: ${agentName} (₦${agentAmount})?`;
+					}
+					if (modal.who === "partner") {
+						return `${
+							modal.action === "mark" ? "Mark" : "Unmark"
+						} commission for partner: ${partnerName} (₦${partnerAmount})?`;
+					}
+					if (modal.who === "both") {
+						return `${
+							modal.action === "mark" ? "Mark" : "Unmark"
+						} commission for agent: ${agentName} (₦${agentAmount}) and partner: ${partnerName} (₦${partnerAmount})?`;
+					}
+					return "";
+				})()}
 				confirmText={
 					modal.action === "mark" ? "Yes, Mark as Paid" : "Yes, Unmark as Paid"
 				}
