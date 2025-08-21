@@ -1,3 +1,54 @@
+// ============================================================================
+// COMMISSION PAYMENT MARK/UNMARK APIs
+// ============================================================================
+
+/**
+ * Mark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function markBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-both-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-both-paid/${commissionId}`, "PATCH");
+}
 import axios from "axios";
 import { cachedApiCall, generateCacheKey } from "./cache";
 
