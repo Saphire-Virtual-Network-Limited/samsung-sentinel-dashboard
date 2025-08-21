@@ -270,6 +270,10 @@ export function AppSidebar() {
             },
           ],
         },
+        {
+          title: "Commissions",
+          url: "/access/admin/reports/commissions",
+        },
         { title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
         { title: "Tracker", url: "/access/admin/reports/tracker" },
       ],
@@ -605,6 +609,10 @@ export function AppSidebar() {
                     url: "/access/sub-admin/reports/mobiflex",
                   },
                 ],
+              },
+              {
+                title: "Commissions",
+                url: "/access/sub-admin/reports/commissions",
               },
               {
                 title: "Drop-offs",
