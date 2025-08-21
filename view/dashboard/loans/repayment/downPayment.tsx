@@ -224,72 +224,6 @@ type DueLoanRecord = {
             imageUrl?: string | null;
             userId?: string | null;
         }
-		repaymentData?: {
-			totalTransactions?: number;
-			downPayments?: Array<{
-				transactionId?: string;
-				customerId?: string;
-				loanId?: string;
-				amount?: number;
-				channel?: string;
-				paymentReference?: string;
-				paymentDescription?: string;
-				createdAt?: string;
-				isDownPayment?: boolean;
-				isCardTokenization?: boolean;
-				isLoanRepayment?: boolean;
-				customerName?: string;
-				customerEmail?: string;
-			}>,
-			cardTokenizations?: Array<{
-				transactionId?: string;
-				customerId?: string;
-				loanId?: string;
-				amount?: number;
-				channel?: string;
-				paymentReference?: string;
-				paymentDescription?: string;
-				createdAt?: string;
-				isDownPayment?: boolean;
-				isCardTokenization?: boolean;
-				isLoanRepayment?: boolean;
-				customerName?: string;
-				customerEmail: string;
-			}>,
-			loanRepayments?: Array<{
-				transactionId?: string;
-				customerId?: string;
-				loanId?: string;
-				amount?: number;
-				channel?: string;
-				paymentReference?: string;
-				paymentDescription?: string;
-				createdAt?: string;
-				isDownPayment?: boolean;
-				isCardTokenization?: boolean;
-				isLoanRepayment?: boolean;
-				customerName?: string;
-				customerEmail?: string;
-				}
-			>,
-			summary?: {
-				totalDownPaymentAmount?: number;
-				totalRepaymentAmount?: number;
-				totalCardTokenizationAmount?: number;
-				repaymentCount?: number;
-				downPaymentCount?: number;
-				cardTokenizationCount?: number;
-				loanInfo?: {
-					totalLoanAmount?: number;
-					totalDownPayment?: number;
-					totalRepaid?: number;
-					remainingAmount?: number;
-					duration?: number;
-					monthlyRepayment?: number;
-					repaymentsLeft?: number;
-				}
-			}
-		}
     }>
 };
 
@@ -331,7 +265,7 @@ type TransformedDueLoanRecord = {
     store?: any;
 };
 
-export default function DueLoansView() {
+export default function DownPaymentView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
@@ -388,8 +322,6 @@ export default function DueLoansView() {
 		}
 	);
 
-	console.log(raw);
-
 	// Transform the data
 	const customers = useMemo(() => {
 		// Extract customers array from the response structure
@@ -415,13 +347,13 @@ export default function DueLoansView() {
                 endDate: loanRecord?.updatedAt ? new Date(new Date(loanRecord.updatedAt).setMonth(new Date(loanRecord.updatedAt).getMonth() + loanRecord.duration)).toLocaleDateString('en-GB') : 'N/A',
                 interest: "9.50%",
                 loanBalance: loanRecord?.loanAmount ? `₦${loanRecord.loanAmount.toLocaleString()}` : 'N/A',
-                AmountPaid: customer.repaymentData?.summary?.loanInfo?.totalRepaid ? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocaleString()}` : '0',
+                AmountPaid: "0",
                 totalAmount: loanRecord?.monthlyRepayment ? `₦${loanRecord.monthlyRepayment.toLocaleString()}` : 'N/A',
                 PrincipalRepaid: loanRecord?.monthlyRepayment && loanRecord?.interestAmount ? `₦${(loanRecord.monthlyRepayment - loanRecord.interestAmount).toLocaleString()}` : 'N/A',
                 interestRepaid: loanRecord?.interestAmount ? `₦${(loanRecord.interestAmount).toLocaleString()}` : 'N/A',
                 monthlyRepayment: loanRecord?.monthlyRepayment ? `₦${loanRecord.monthlyRepayment.toLocaleString()}` : 'N/A',
-                numberOfRepayments: customer.repaymentData?.summary?.repaymentCount || '0',
-                numberOfMissedRepayments: customer.repaymentData?.summary?.loanInfo?.repaymentsLeft || '0',
+                numberOfRepayments: "0",
+                numberOfMissedRepayments: "0",
                 DueDate: loanRecord?.updatedAt ? new Date(new Date(loanRecord.updatedAt).setMonth(new Date(loanRecord.updatedAt).getMonth() + 1)).toLocaleDateString('en-GB') : 'N/A',
                 Status: "Running",
                 deviceName: loanRecord?.deviceName || 'N/A',

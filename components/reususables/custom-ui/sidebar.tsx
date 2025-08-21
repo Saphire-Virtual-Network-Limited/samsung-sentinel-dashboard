@@ -1037,9 +1037,20 @@ export function AppSidebar() {
     },
     {
       title: "Loans",
-      icon: Home,
+      icon: CreditCard,
       url: "/access/collection-admin/loans",
       id: "collection-admin-loans",
+      subItems: [
+        {
+          title: "Loans",
+          url: "/access/collection-admin/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/collection-admin/loans/repayment",
+        },
+        
+      ],
     },
     {
       icon: CreditCard,
@@ -1101,6 +1112,22 @@ export function AppSidebar() {
       title: "Customers",
       url: "/access/collection-officer/customers",
       id: "collection-officer-customers",
+    },
+    {
+      title: "Loans",
+      icon: CreditCard,
+      url: "/access/collection-officer/loans",
+      id: "collection-officer-loans",
+      subItems: [
+        {
+          title: "Repayment",
+          url: "/access/collection-officer/loans/repayment",
+        },
+        {
+            title: "Loans",
+          url: "/access/collection-officer/loans/loans",
+        },
+      ],
     },
     {
       icon: CreditCard,

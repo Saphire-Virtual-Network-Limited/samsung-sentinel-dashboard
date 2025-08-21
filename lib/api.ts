@@ -2492,13 +2492,13 @@ export async function updateUserProfile(userId: string, data: UpdateUserDto) {
 }
 
 // single collection customer, Extract transaction data for a specific customer
-export async function getSingleCollectionCustomer(customerId: string, channel?: string) {
+export async function getSingleCollectionCustomerData(customerId: string, channel?: string) {
 	const query = channel ? `?channel=${channel}` : "";
 	return apiCall(`/collections/customer/${customerId}${query}`, "GET");
 }
 
 //Get loan repayment(excluding down payment and card tokenization)
-export async function getLoanRepayment(customerId: string, channel?: string, startDate?: string, endDate?: string) {
+export async function getLoanRepaymentData(customerId: string, channel?: string, startDate?: string, endDate?: string) {
 	const query = channel ? `&channel=${channel}` : "";
 	const query2 = startDate ? `&startDate=${startDate}` : "";
 	const query3 = endDate ? `&endDate=${endDate}` : "";
@@ -2506,7 +2506,7 @@ export async function getLoanRepayment(customerId: string, channel?: string, sta
 }
 
 //Get all down Payment
-export async function getDownPayment(customerId: string, channel?: string, startDate?: string, endDate?: string) {
+export async function getDownPaymentData(customerId: string, channel?: string, startDate?: string, endDate?: string) {
 	const query = channel ? `&channel=${channel}` : "";
 	const query2 = startDate ? `&startDate=${startDate}` : "";
 	const query3 = endDate ? `&endDate=${endDate}` : "";
