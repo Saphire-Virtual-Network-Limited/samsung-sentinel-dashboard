@@ -1,12 +1,11 @@
-import { SentinelSingleCustomerPage } from '@/view'
-import React from 'react'
+import { SentinelSingleCustomerPage } from "@/view"
 
+export default async function SingleCustomerPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
 
-const SingleCustomerPage = ({ params }: any) => {
-  return (<SentinelSingleCustomerPage sentinelCustomerId={params.id} />
-
-
-  )
+  return <SentinelSingleCustomerPage sentinelCustomerId={id} />
 }
-
-export default SingleCustomerPage

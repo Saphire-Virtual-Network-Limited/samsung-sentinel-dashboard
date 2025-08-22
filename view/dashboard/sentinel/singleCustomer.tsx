@@ -154,24 +154,10 @@ const EmptyState = ({
 );
 
 
-interface SentinelSingleViewProps {
-  sentinelCustomerId: string;
-}
-
-
-interface SentinelSingleViewProps {
-  sentinelCustomerId: string;
-}
-
-export const SentinelSingleCustomerPage: React.FC<SentinelSingleViewProps> = ({
+export const SentinelSingleCustomerPage: React.FC<{ sentinelCustomerId: string }> = ({
   sentinelCustomerId,
 }) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const role = pathname.split('/')[2];
-  const params = useParams();
-  const { userResponse } = useAuth();
-
 
   const {
     data: customer,
