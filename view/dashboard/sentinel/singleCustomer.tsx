@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import {
   getSentinelCustomerById,
+  SentinelCustomer,
   showToast,
   useAuth,
 } from "@/lib";
@@ -152,97 +153,44 @@ const EmptyState = ({
   </div>
 );
 
-// Types
-interface SentinelCustomerDevice {
-  sentinelCustomerDeviceId: string;
+
+interface SentinelSingleViewProps {
   sentinelCustomerId: string;
-  serialNumber: string;
-  deviceBrand: string;
-  deviceId: string;
-  deviceName: string;
-  devicePrice: string;
-  salesStoreId: string;
-  purchaseReceiptImagePublicId: string | null;
-  sentinelBlockformImagePublicId: string | null;
-  sentinelReceiptImagePublicId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deviceType: string | null;
-  purchaseReceiptImageUrl: string | null;
-  sentinelBlockformImageUrl: string | null;
-  sentinelReceiptImageUrl: string | null;
-  deviceOS: string;
-  paymentOption: string;
-  sentinelPackage: string;
-  enrolledAt: string | null;
-  enrollmentStatus: string | null;
-  isEnrolled: boolean;
 }
 
-interface SentinelCustomer {
+
+interface SentinelSingleViewProps {
   sentinelCustomerId: string;
-  createdAt: string;
-  updatedAt: string;
-  deviceEnrollmentId: string | null;
-  deviceId: string | null;
-  resendOtp: string | null;
-  resendOtpExpiry: string | null;
-  storeId: string | null;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  address: string;
-  country: string;
-  mbeId: string;
-  SentinelCustomerDevice: SentinelCustomerDevice[];
 }
 
-export function SentinelSingleCustomerPage() {
+export const SentinelSingleCustomerPage: React.FC<SentinelSingleViewProps> = ({
+  sentinelCustomerId,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const role = pathname.split('/')[2];
   const params = useParams();
   const { userResponse } = useAuth();
-  const userEmail = userResponse?.data?.email || "";
 
-  const [customer, setCustomer] = useState<SentinelCustomer | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch customer data
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      if (!params.id) {
-        setIsLoading(false);
-        return;
-      }
+  const {
+    data: customer,
+    error,
+    isLoading,
+  } = useSWR<SentinelCustomer>(
+    sentinelCustomerId ? `sentinel-customer-${sentinelCustomerId}` : null,
+    async () => {
+      if (!sentinelCustomerId) return null;
+      const response = await getSentinelCustomerById(sentinelCustomerId);
+      console.log("Sentinel Customer", response);
+      return response.data;
+    },
+    {
+      refreshInterval: 60000, // auto refresh every 60s
+      revalidateOnFocus: false,
+    }
+  );
 
-      try {
-        const response = await getSentinelCustomerById(params.id as string);
-        console.log("Customer Sentinel", response);
-        if (response && response.data) {
-          setCustomer(response.data);
-        } else {
-          showToast({
-            type: "error",
-            message: "Sentinel customer not found",
-            duration: 5000,
-          });
-        }
-      } catch (error: any) {
-        console.error("Error fetching sentinel customer:", error);
-        showToast({
-          type: "error",
-          message: error.message || "Failed to fetch sentinel customer data",
-          duration: 5000,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCustomer();
-  }, [params.id]);
 
   if (isLoading) {
     return (

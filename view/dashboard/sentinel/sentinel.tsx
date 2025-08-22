@@ -189,9 +189,11 @@ export function SentinelPage() {
 						</DropdownTrigger>
 						<DropdownMenu>
 							<DropdownItem
-								key="devices"
-								onPress={() => router.push(`/access/${role}/reports/sales/sentinel/${row.sentinelCustomerId}`)}>
-								View Devices
+								key="view"
+								onPress={() => router.push(`/access/${role}/reports/sales/sentinel/${row.sentinelCustomerId}`)}
+								className="cursor-pointer"
+							>
+								View
 							</DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
@@ -221,7 +223,16 @@ export function SentinelPage() {
 			);
 		}
 
-		return <div className="text-small">{row[key]}</div>;
+		return (
+			<div
+				className="text-small cursor-pointer"
+				onClick={() =>
+					router.push(`/access/${role}/reports/sales/sentinel/${row.sentinelCustomerId}`)
+				}
+			>
+				{(row as any)[key]}
+			</div>
+		);
 	};
 
 	return (

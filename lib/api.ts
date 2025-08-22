@@ -2607,10 +2607,7 @@ export async function getAllSentinelCustomers(
 }
 
 export async function getSentinelCustomerById(
-	sentinelCustomerId: string
+	id: string
 ): Promise<BaseApiResponse<any>> {
-	return apiCall(
-		`/admin/sentinel/sentinel-customer/${sentinelCustomerId}`,
-		"GET"
-	);
+	return apiCall(`/admin/sentinel/sentinel-customers/${id}`, "GET");
 }

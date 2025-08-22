@@ -2,8 +2,8 @@ import { SentinelSingleCustomerPage } from '@/view'
 import React from 'react'
 
 
-const SingleCustomerPage = () => {
-  return (<SentinelSingleCustomerPage />
+const SingleCustomerPage = ({ params }: any) => {
+  return (<SentinelSingleCustomerPage sentinelCustomerId={params.id} />
 
 
   )
