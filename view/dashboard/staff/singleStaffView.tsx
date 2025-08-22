@@ -14,6 +14,13 @@ import {
 	updateAgentStore,
 	getAgentAvailableStores,
 } from "@/lib";
+import {
+	getReconciliationHistory,
+	getReconciliationStats,
+	getMbeAssignedAgents,
+	changeAgentMbeAssignment,
+	unlinkAgentFromMbe,
+} from "@/lib/api";
 import { SelectField } from "@/components/reususables";
 import {
 	LoadingSpinner,
@@ -31,6 +38,7 @@ import {
 	ImagePreviewModal,
 	SelectionWithPreview,
 	ReasonSelection,
+	DateFilter,
 } from "@/components/reususables/custom-ui";
 import { useAuth } from "@/lib";
 import { getUserRole } from "@/lib";
@@ -68,9 +76,11 @@ import {
 	CardBody,
 	Pagination,
 	DateInput,
+	DatePicker,
 	Autocomplete,
 	AutocompleteItem,
 } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 import {
 	ArrowLeft,
 	CreditCard,
@@ -91,6 +101,7 @@ import {
 	Grid3X3,
 	List,
 	Eye,
+	BarChart,
 } from "lucide-react";
 import { IoBusiness } from "react-icons/io5";
 import { useParams, useRouter } from "next/navigation";
@@ -639,6 +650,45 @@ export default function AgentSinglePage() {
 	const [commissionFilterValue, setCommissionFilterValue] = useState("");
 	const [commissionPage, setCommissionPage] = useState(1);
 
+	// MBE-specific states
+	const [mbeAssignedAgents, setMbeAssignedAgents] = useState<any[]>([]);
+	const [reconciliationStats, setReconciliationStats] = useState<any>(null);
+	const [reconciliationHistory, setReconciliationHistory] = useState<any>(null);
+	const [reconciliationPage, setReconciliationPage] = useState(1);
+	const [reconciliationDateFilter, setReconciliationDateFilter] = useState("");
+	const [selectedAgentFilter, setSelectedAgentFilter] = useState<string | null>(
+		null
+	);
+	const [reconciliationFilterValue, setReconciliationFilterValue] =
+		useState("");
+	const [reconciliationSortDescriptor, setReconciliationSortDescriptor] =
+		useState<any>({
+			column: "createdAt",
+			direction: "descending",
+		});
+	const [isLoadingMbeData, setIsLoadingMbeData] = useState(false);
+	const [selectedMbeForAgent, setSelectedMbeForAgent] = useState<any>(null);
+	const [availableMbes, setAvailableMbes] = useState<any[]>([]);
+	const [selectedReconciliation, setSelectedReconciliation] =
+		useState<any>(null);
+
+	// MBE-related modals
+	const {
+		isOpen: isChangeMbeModalOpen,
+		onOpen: onChangeMbeModalOpen,
+		onClose: onChangeMbeModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isUnlinkMbeModalOpen,
+		onOpen: onUnlinkMbeModalOpen,
+		onClose: onUnlinkMbeModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isReconciliationDetailsModalOpen,
+		onOpen: onReconciliationDetailsModalOpen,
+		onClose: onReconciliationDetailsModalClose,
+	} = useDisclosure();
+
 	// Use SWR for data fetching
 	const userId = userResponse?.data?.userId;
 	const {
@@ -736,6 +786,253 @@ export default function AgentSinglePage() {
 		}
 		return storesData.data;
 	}, [storesData]);
+
+	// Determine if this agent is an MBE
+	const isMbe = useMemo(() => {
+		const isAnMbe = agent?.role === "MOBIFLEX_MBE";
+		console.log("MBE Detection:", { role: agent?.role, isMbe: isAnMbe });
+		return isAnMbe;
+	}, [agent?.role]);
+
+	// Determine if this agent is MBE-managed (managed by another MBE)
+	const isMbeManaged = useMemo(() => {
+		const isManaged =
+			agent?.mbeManaged === true &&
+			agent?.assignedMbeId &&
+			agent?.assignedMbeId !== agent?.mbeId;
+		console.log("MBE-Managed Detection:", {
+			mbeManaged: agent?.mbeManaged,
+			assignedMbeId: agent?.assignedMbeId,
+			ownMbeId: agent?.mbeId,
+			isMbeManaged: isManaged,
+		});
+		return isManaged;
+	}, [agent?.mbeManaged, agent?.assignedMbeId, agent?.mbeId]);
+
+	// MBE-specific data fetching functions
+	const fetchMbeReconciliationStats = async (mbeId: string) => {
+		try {
+			const response = await getReconciliationStats({ mbeId });
+			return response.data;
+		} catch (error) {
+			console.error("Error fetching reconciliation stats:", error);
+			return null;
+		}
+	};
+
+	const fetchMbeReconciliationHistory = async (
+		mbeId: string,
+		page: number = 1,
+		date?: string
+	) => {
+		try {
+			const response = await getReconciliationHistory({
+				mbeId,
+				page,
+				limit: 10,
+				date: date || undefined,
+			});
+			return response.data;
+		} catch (error) {
+			console.error("Error fetching reconciliation history:", error);
+			return null;
+		}
+	};
+
+	const fetchMbeAssignedAgents = async (mbeId: string) => {
+		try {
+			const response = await getMbeAssignedAgents({ mbeId });
+			console.log("MBE Assigned Agents Response:", response.data);
+			return response.data; // Return the full data object which contains mbe, agents, and totalAgents
+		} catch (error) {
+			console.error("Error fetching MBE assigned agents:", error);
+			return null;
+		}
+	};
+
+	const fetchAgentReconciliationHistory = async (
+		agentId: string,
+		assignedMbeId: string,
+		page: number = 1,
+		date?: string
+	) => {
+		try {
+			const response = await getReconciliationHistory({
+				agentId,
+				mbeId: assignedMbeId,
+				page,
+				limit: 10,
+				date: date || undefined,
+			});
+			return response.data;
+		} catch (error) {
+			console.error("Error fetching agent reconciliation history:", error);
+			return null;
+		}
+	};
+
+	// Handle agent selection for filtering reconciliation history
+	const handleAgentSelection = (agentId: string, agentName: string) => {
+		if (selectedAgentFilter === agentId) {
+			// If clicking the same agent, clear the filter
+			setSelectedAgentFilter(null);
+		} else {
+			// Set the selected agent filter
+			setSelectedAgentFilter(agentId);
+		}
+		// Reset pagination when changing filter
+		setReconciliationPage(1);
+	};
+
+	// Reconciliation Table Configuration
+	const reconciliationColumns: ColumnDef[] = [
+		{ name: "ID", uid: "reconciliationId", sortable: true },
+		{ name: "Agent", uid: "agent", sortable: true },
+		{ name: "Status", uid: "status", sortable: true },
+		{ name: "Target Warehouse", uid: "targetWarehouse", sortable: true },
+		{ name: "Items", uid: "items", sortable: false },
+		{ name: "Created", uid: "createdAt", sortable: true },
+		{ name: "Actions", uid: "actions", sortable: false },
+	];
+
+	const renderReconciliationCell = (record: any, columnKey: string) => {
+		switch (columnKey) {
+			case "reconciliationId":
+				return (
+					<div className="text-xs font-mono text-default-600">
+						{record.reconciliationId}
+					</div>
+				);
+			case "agent":
+				return (
+					<div>
+						<div className="text-sm font-medium">
+							{record.agent?.name || "N/A"}
+						</div>
+						<div className="text-xs text-default-500">
+							{record.agent?.email || "N/A"}
+						</div>
+					</div>
+				);
+			case "status":
+				return <StatusChip status={record.status} />;
+			case "targetWarehouse":
+				return <div className="text-sm">{record.targetWarehouse || "N/A"}</div>;
+			case "items":
+				return (
+					<div className="text-sm">{record.transferItems?.length || 0}</div>
+				);
+			case "createdAt":
+				return (
+					<div className="text-sm">
+						{new Date(record.createdAt).toLocaleDateString()}
+					</div>
+				);
+			case "actions":
+				return (
+					<Button
+						size="sm"
+						variant="flat"
+						color="primary"
+						onPress={() => handleViewReconciliationDetails(record)}
+					>
+						View Details
+					</Button>
+				);
+			default:
+				return record[columnKey];
+		}
+	};
+
+	const exportReconciliationData = (data: any[]) => {
+		// Export functionality placeholder
+		console.log("Exporting reconciliation data:", data);
+	};
+
+	// Load MBE-specific data when agent is loaded and is an MBE
+	useEffect(() => {
+		if (agent && isMbe) {
+			setIsLoadingMbeData(true);
+			Promise.all([
+				fetchMbeReconciliationStats(agent.mbeId),
+				selectedAgentFilter
+					? fetchAgentReconciliationHistory(
+							selectedAgentFilter,
+							agent.mbeId,
+							reconciliationPage,
+							reconciliationDateFilter
+					  )
+					: fetchMbeReconciliationHistory(
+							agent.mbeId,
+							reconciliationPage,
+							reconciliationDateFilter
+					  ),
+				fetchMbeAssignedAgents(agent.mbeId),
+			])
+				.then(([stats, history, assignedAgents]) => {
+					console.log("MBE Data loaded:", { stats, history, assignedAgents });
+					setReconciliationStats(stats);
+					setReconciliationHistory(history);
+					setMbeAssignedAgents(assignedAgents?.agents || []);
+					setIsLoadingMbeData(false);
+				})
+				.catch((error) => {
+					console.error("Error loading MBE data:", error);
+					setIsLoadingMbeData(false);
+				});
+		}
+	}, [
+		agent,
+		isMbe,
+		reconciliationPage,
+		reconciliationDateFilter,
+		selectedAgentFilter,
+	]);
+
+	// Load agent reconciliation data when agent is MBE-managed
+	useEffect(() => {
+		if (agent && isMbeManaged && agent.assignedMbeId) {
+			setIsLoadingMbeData(true);
+			fetchAgentReconciliationHistory(
+				agent.mbeId,
+				agent.assignedMbeId,
+				reconciliationPage,
+				reconciliationDateFilter
+			).then((history) => {
+				setReconciliationHistory(history);
+				setIsLoadingMbeData(false);
+			});
+		}
+	}, [agent, isMbeManaged, reconciliationPage, reconciliationDateFilter]);
+
+	// Load reconciliation data for regular agents (non-MBE-managed)
+	useEffect(() => {
+		if (agent && !isMbe && !isMbeManaged) {
+			setIsLoadingMbeData(true);
+			// For regular agents, we might need to call a different API or pass empty mbeId
+			fetchAgentReconciliationHistory(
+				agent.mbeId,
+				"", // No MBE ID for regular agents
+				reconciliationPage,
+				reconciliationDateFilter
+			)
+				.then((history) => {
+					console.log("Regular Agent Reconciliation History:", history);
+					setReconciliationHistory(history);
+					setIsLoadingMbeData(false);
+				})
+				.catch((error) => {
+					console.error("Error loading agent reconciliation:", error);
+					setIsLoadingMbeData(false);
+				});
+		}
+	}, [
+		agent,
+		isMbe,
+		isMbeManaged,
+		reconciliationPage,
+		reconciliationDateFilter,
+	]);
 
 	// Load scan partners when modal opens
 	useEffect(() => {
@@ -1114,19 +1411,18 @@ export default function AgentSinglePage() {
 			const result = mainStore?.storeNew
 				? await updateAgentStore(data)
 				: await assignAgentToStore(data);
-				showToast({
-					type: "success",
-					message: mainStore?.storeNew
-						? "Store assignment updated successfully!"
-						: "Agent assigned to store successfully!",
-					duration: 5000,
-				});
+			showToast({
+				type: "success",
+				message: mainStore?.storeNew
+					? "Store assignment updated successfully!"
+					: "Agent assigned to store successfully!",
+				duration: 5000,
+			});
 
-				// Refresh agent data
-				mutate();
-				onStoreModalClose();
-				setSelectedStore(null);
-	
+			// Refresh agent data
+			mutate();
+			onStoreModalClose();
+			setSelectedStore(null);
 		} catch (error: any) {
 			console.error("Error assigning store:", error);
 			showToast({
@@ -1160,6 +1456,104 @@ export default function AgentSinglePage() {
 				store.partner?.toLowerCase().includes(searchTerm)
 		);
 	}, [processedStoresData, storeSearchValue]);
+
+	// MBE-specific handlers
+	const handleChangeMbeAssignment = async () => {
+		if (!hasPermission(role, "canChangeMbeAssignment")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
+		
+		if (!agent?.mbeId || !selectedMbeForAgent) return;
+
+		try {
+			await changeAgentMbeAssignment(agent.mbeId, selectedMbeForAgent.mbeId);
+
+			showToast({
+				type: "success",
+				message: "MBE assignment changed successfully!",
+				duration: 5000,
+			});
+
+			// Refresh agent data
+			mutate();
+			onChangeMbeModalClose();
+			setSelectedMbeForAgent(null);
+		} catch (error: any) {
+			console.error("Error changing MBE assignment:", error);
+			showToast({
+				type: "error",
+				message:
+					error?.response?.data?.message || "Failed to change MBE assignment",
+				duration: 5000,
+			});
+		}
+	};
+
+	const handleUnlinkMbe = async () => {
+		if (!hasPermission(role, "canChangeMbeAssignment")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
+		
+		if (!agent?.mbeId) return;
+
+		try {
+			await unlinkAgentFromMbe(agent.mbeId);
+
+			showToast({
+				type: "success",
+				message: "Agent unlinked from MBE successfully!",
+				duration: 5000,
+			});
+
+			// Refresh agent data
+			mutate();
+			onUnlinkMbeModalClose();
+		} catch (error: any) {
+			console.error("Error unlinking MBE:", error);
+			showToast({
+				type: "error",
+				message: error?.response?.data?.message || "Failed to unlink MBE",
+				duration: 5000,
+			});
+		}
+	};
+
+	const handleReconciliationPageChange = (page: number) => {
+		setReconciliationPage(page);
+	};
+
+	const handleReconciliationDateFilter = (date: string) => {
+		setReconciliationDateFilter(date);
+		setReconciliationPage(1); // Reset to first page when filtering
+	};
+
+	const handleViewReconciliationDetails = (reconciliation: any) => {
+		if (!hasPermission(role, "canViewReconciliationHistory")) {
+			showToast({
+				type: "error",
+				message: "Access denied: Admin permission required",
+				duration: 3000,
+			});
+			return;
+		}
+		setSelectedReconciliation(reconciliation);
+		onReconciliationDetailsModalOpen();
+	};
+
+	const handleCloseReconciliationDetails = () => {
+		setSelectedReconciliation(null);
+		onReconciliationDetailsModalClose();
+	};
 
 	// Handle loading state
 	if (isLoading) return <LoadingSpinner />;
@@ -1218,7 +1612,14 @@ export default function AgentSinglePage() {
 									<p className="text-sm text-default-500">{agent.role}</p>
 								</div>
 							</div>
-							<StatusChip status={agent.accountStatus} />
+							<div className="flex flex-col items-end gap-2">
+								<StatusChip status={agent.accountStatus} />
+								{isMbeManaged && (
+									<Chip color="primary" size="sm">
+										MBE Managed
+									</Chip>
+								)}
+							</div>
 						</div>
 						{/* Action Buttons - Desktop */}
 						<div className="hidden md:flex items-center gap-3">
@@ -1383,970 +1784,1443 @@ export default function AgentSinglePage() {
 			/>
 
 			<div className="px-4 py-8">
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					{/* Left Column - Personal Information */}
-					<div className="lg:col-span-1 space-y-6">
-						{/* Personal Information */}
-						<InfoCard
-							title="Personal Information"
-							icon={<User className="w-5 h-5 text-default-600" />}
-							collapsible={true}
-							defaultExpanded={true}
-						>
-							<div className="grid gap-4">
-								<InfoField label="Agent ID" value={agent.mbeId} copyable />
-								<InfoField
-									endComponent={
-										<div className="flex gap-2">
-											{agent?.userId && (
-												<Button
-													variant="flat"
-													color="primary"
-													size="sm"
-													onPress={() => {
-														router.push(
-															`/access/${role}/staff/scan-partners/${agent.userId}`
-														);
-													}}
-													className="font-medium"
-												>
-													View Details
-												</Button>
-											)}
-											{canChangeScanPartner && (
-												<Button
-													variant="flat"
-													color={agent?.userId ? "warning" : "success"}
-													size="sm"
-													onPress={onScanPartnerModalOpen}
-													className="font-medium"
-												>
-													{agent?.userId ? "Change Partner" : "Assign Partner"}
-												</Button>
-											)}
-										</div>
-									}
-									label="SCAN Partner ID"
-									value={agent?.userId || "No partner assigned"}
-									copyable={!!agent?.userId}
-								/>
-								<InfoField
-									label="Full Name"
-									value={`${agent.firstname} ${agent.lastname}`.trim()}
-								/>
-								<InfoField label="Email" value={agent.email} />
-								<InfoField label="Phone" value={agent.phone} />
-								<InfoField label="BVN" value={agent.bvn} />
-								<InfoField label="BVN Phone" value={agent.bvnPhoneNumber} />
-								<InfoField label="Date of Birth" value={agent.dob} />
-								<InfoField label="Username" value={agent.username} />
-								<InfoField label="Channel" value={agent.channel} />
-								<InfoField
-									label="State"
-									value={agent.state || agent?.MbeKyc?.state}
-								/>
-								<InfoField
-									label="City"
-									value={agent.city || agent?.MbeKyc?.city}
-								/>
-								<InfoField
-									label="Active Status"
-									value={agent.isActive ? "Active" : "Inactive"}
-								/>
-								<InfoField
-									label="Created At"
-									value={
-										agent.createdAt
-											? new Date(agent.createdAt).toLocaleString()
-											: null
-									}
-								/>
-								<InfoField
-									label="Updated At"
-									value={
-										agent.updatedAt
-											? new Date(agent.updatedAt).toLocaleString()
-											: null
-									}
-								/>
-							</div>
-						</InfoCard>
-
-						{/* Statistics */}
-						<InfoCard
-							title="Statistics"
-							icon={<Users className="w-5 h-5 text-default-600" />}
-							collapsible={true}
-							defaultExpanded={false}
-						>
-							<div className="grid gap-4">
-								<InfoField
-									label="Customers Count"
-									value={agent.customersCount?.toString()}
-								/>
-								<InfoField
-									label="Has an Assigned Store"
-									value={mainStore ? "Yes" : "No"}
-								/>
-							</div>
-						</InfoCard>
-					</div>
-
-					{/* Right Column - Detailed Information */}
-					<div className="lg:col-span-2 space-y-6">
-						{/* Current Scan Partner Details */}
-						{agent?.userId && currentScanPartnerDetails && (
+				{isMbe ? (
+					// MBE-specific layout
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+						{/* Left Column - Personal Information and Store */}
+						<div className="lg:col-span-1 space-y-6">
+							{/* Personal Information */}
 							<InfoCard
-								title="Current Scan Partner"
-								icon={<IoBusiness className="w-5 h-5 text-default-600" />}
+								title="Personal Information"
+								icon={<User className="w-5 h-5 text-default-600" />}
 								collapsible={true}
-								defaultExpanded={false}
+								defaultExpanded={true}
 							>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+								<div className="grid gap-4">
+									<InfoField label="MBE ID" value={agent.mbeId} copyable />
+									<InfoField label="First Name" value={agent.firstname} />
+									<InfoField label="Last Name" value={agent.lastname} />
+									<InfoField label="Email" value={agent.email} copyable />
+									<InfoField label="Phone" value={agent.phone} copyable />
+									<InfoField label="Role" value={agent.role} />
 									<InfoField
-										label="Partner Name"
-										value={`${currentScanPartnerDetails.firstName || ""} ${
-											currentScanPartnerDetails.lastName || ""
-										}`.trim()}
+										label="Account Status"
+										value={agent.accountStatus || "N/A"}
+										endComponent={<StatusChip status={agent.accountStatus} />}
 									/>
 									<InfoField
-										label="Company"
-										value={currentScanPartnerDetails.companyName || "N/A"}
-									/>
-									<InfoField
-										label="Email"
-										value={currentScanPartnerDetails.email || "N/A"}
-									/>
-									<InfoField
-										label="Phone"
-										value={currentScanPartnerDetails.telephoneNumber || "N/A"}
-									/>
-									<InfoField
-										label="State"
-										value={currentScanPartnerDetails.companyState || "N/A"}
-									/>
-									<InfoField
-										label="City"
-										value={currentScanPartnerDetails.companyCity || "N/A"}
+										label="Active Status"
+										value={agent.isActive ? "Active" : "Inactive"}
 									/>
 								</div>
 							</InfoCard>
-						)}
-						{/* Performance Data */}
-						{canViewAgentPerformanceData && (
-							<InfoCard
-								title="Performance Data"
-								icon={<TrendingUp className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-								headerContent={
-									<ButtonGroup size="sm" variant="flat">
-										<Button
-											color={
-												performanceViewType === "loans" ? "primary" : "default"
-											}
-											onPress={() => setPerformanceViewType("loans")}
-											startContent={<CreditCard className="w-4 h-4" />}
-										>
-											Loans ({processedPerformanceData.loans.length})
-										</Button>
-										<Button
-											color={
-												performanceViewType === "commissions"
-													? "primary"
-													: "default"
-											}
-											onPress={() => setPerformanceViewType("commissions")}
-											startContent={<DollarSign className="w-4 h-4" />}
-										>
-											Commissions ({processedPerformanceData.commissions.length}
-											)
-										</Button>
-									</ButtonGroup>
-								}
-							>
-								{performanceLoading ? (
-									<div className="flex items-center justify-center py-8">
-										<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-									</div>
-								) : (
-									<>
-										{/* Loans View */}
-										{performanceViewType === "loans" && (
-											<>
-												{filteredLoans.length > 0 ? (
-													<div className="space-y-4">
-														<div className="flex items-center justify-between mb-4">
-															<p className="text-sm text-default-600">
-																Loan records for this agent
-															</p>
-															<Chip size="sm" variant="flat" color="primary">
-																{filteredLoans.length} Loan
-																{filteredLoans.length !== 1 ? "s" : ""}
-															</Chip>
-														</div>
-														<GenericTable<LoanRecord | any>
-															columns={loanColumns}
-															data={filteredLoans}
-															allCount={filteredLoans.length}
-															exportData={filteredLoans}
-															isLoading={performanceLoading}
-															filterValue={loanFilterValue}
-															onFilterChange={(value) => {
-																setLoanFilterValue(value);
-																setLoanPage(1);
-															}}
-															statusOptions={loanStatusOptions}
-															statusFilter={loanStatusFilter}
-															onStatusChange={setLoanStatusFilter}
-															statusColorMap={loanStatusColorMap}
-															showStatus={true}
-															sortDescriptor={{
-																column: "createdAt",
-																direction: "descending",
-															}}
-															onSortChange={() => {}}
-															page={loanPage}
-															pages={Math.ceil(filteredLoans.length / 10) || 1}
-															onPageChange={setLoanPage}
-															exportFn={
-																role == "scan-partner "
-																	? exportLoans
-																	: (data) => {
-																			console.log("exported");
-																	  }
-															}
-															renderCell={(loan, key) =>
-																renderLoanCell(loan, key, router, role)
-															}
-															hasNoRecords={filteredLoans.length === 0}
-														/>
-													</div>
-												) : (
-													<EmptyState
-														title="No Loans Found"
-														description="This agent has no loan records."
-														icon={
-															<CreditCard className="w-6 h-6 text-default-400" />
-														}
-													/>
-												)}
-											</>
-										)}
 
-										{/* Commissions View */}
-										{performanceViewType === "commissions" && (
-											<>
-												{filteredCommissions.length > 0 ? (
-													<div className="space-y-4">
-														<div className="flex items-center justify-between mb-4">
-															<p className="text-sm text-default-600">
-																Commission records for this agent
-															</p>
-															<Chip size="sm" variant="flat" color="primary">
-																{filteredCommissions.length} Commission
-																{filteredCommissions.length !== 1 ? "s" : ""}
-															</Chip>
-														</div>
-														<GenericTable<CommissionRecord | any>
-															columns={commissionColumns}
-															data={filteredCommissions}
-															allCount={filteredCommissions.length}
-															exportData={filteredCommissions}
-															isLoading={performanceLoading}
-															filterValue={commissionFilterValue}
-															onFilterChange={(value) => {
-																setCommissionFilterValue(value);
-																setCommissionPage(1);
-															}}
-															statusOptions={[]}
-															statusFilter={new Set()}
-															onStatusChange={() => {}}
-															statusColorMap={{}}
-															showStatus={false}
-															sortDescriptor={{
-																column: "date_created",
-																direction: "descending",
-															}}
-															onSortChange={() => {}}
-															page={commissionPage}
-															pages={
-																Math.ceil(filteredCommissions.length / 10) || 1
-															}
-															onPageChange={setCommissionPage}
-															exportFn={
-																role == "scan-partner "
-																	? exportCommissions
-																	: (data) => {
-																			console.log("exported");
-																	  }
-															}
-															renderCell={renderCommissionCell}
-															hasNoRecords={filteredCommissions.length === 0}
-														/>
-													</div>
-												) : (
-													<EmptyState
-														title="No Commissions Found"
-														description="This agent has no commission records."
-														icon={
-															<DollarSign className="w-6 h-6 text-default-400" />
-														}
-													/>
-												)}
-											</>
-										)}
-									</>
-								)}
-							</InfoCard>
-						)}
-
-						{/* Agent Devices */}
-						<InfoCard
-							title="Agent Devices"
-							icon={<Smartphone className="w-5 h-5 text-default-600" />}
-							collapsible={true}
-							defaultExpanded={false}
-						>
-							{devicesLoading ? (
-								<div className="flex items-center justify-center py-8">
-									<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-								</div>
-							) : devices && devices.length > 0 ? (
-								<div className="space-y-4">
-									{/* Controls */}
-									<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-										<div className="flex items-center gap-4">
-											<p className="text-sm text-default-600">
-												Devices assigned to this agent
-											</p>
-											<Chip size="sm" variant="flat" color="primary">
-												{devices.length} Device{devices.length !== 1 ? "s" : ""}
-											</Chip>
-										</div>
-										<div className="flex items-center gap-3">
-											<Input
-												type="date"
-												label="Date"
-												size="sm"
-												value={deviceDate}
-												onChange={(e) => setDeviceDate(e.target.value)}
-												className="w-auto"
-											/>
-											<ButtonGroup size="sm" variant="flat">
-												<Button
-													variant={deviceViewMode === "card" ? "solid" : "flat"}
-													color={
-														deviceViewMode === "card" ? "primary" : "default"
-													}
-													onPress={() => setDeviceViewMode("card")}
-													startContent={<Grid3X3 className="w-4 h-4" />}
-												>
-													Cards
-												</Button>
-												<Button
-													variant={
-														deviceViewMode === "table" ? "solid" : "flat"
-													}
-													color={
-														deviceViewMode === "table" ? "primary" : "default"
-													}
-													onPress={() => setDeviceViewMode("table")}
-													startContent={<List className="w-4 h-4" />}
-												>
-													Table
-												</Button>
-											</ButtonGroup>
-										</div>
-									</div>
-
-									{/* Content */}
-									{deviceViewMode === "card" ? (
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-											{devices.map((device, index) => (
-												<div
-													key={device.newDeviceId || index}
-													className="p-4 border border-default-200 rounded-lg hover:shadow-md transition-shadow"
-												>
-													<div className="flex items-center gap-3 mb-3">
-														{device.imageLink ? (
-															<Image
-																src={device.imageLink}
-																alt={device.deviceName}
-																width={50}
-																height={50}
-																className="rounded-lg object-cover"
-															/>
-														) : (
-															<div className="w-12 h-12 bg-default-200 rounded-lg flex items-center justify-center">
-																<Smartphone className="w-6 h-6 text-default-400" />
-															</div>
-														)}
-														<div className="flex-1">
-															<h4 className="font-semibold text-sm text-default-900">
-																{device.deviceName}
-															</h4>
-															<p className="text-xs text-default-500">
-																{device.deviceManufacturer}
-															</p>
-														</div>
-													</div>
-													<div className="space-y-2 text-xs">
-														<div className="flex justify-between">
-															<span className="text-default-500">Price:</span>
-															<span className="font-medium">
-																₦{device.price?.toLocaleString()}
-															</span>
-														</div>
-														<div className="flex justify-between">
-															<span className="text-default-500">RAM:</span>
-															<span>{device.deviceRam || "N/A"}</span>
-														</div>
-														<div className="flex justify-between">
-															<span className="text-default-500">Storage:</span>
-															<span>{device.deviceStorage || "N/A"}</span>
-														</div>
-														<div className="flex justify-between">
-															<span className="text-default-500">Serial:</span>
-															<span className="font-mono text-xs">
-																{device.erpSerialNo}
-															</span>
-														</div>
-													</div>
-													<Button
-														size="sm"
-														variant="flat"
-														color="primary"
-														className="w-full mt-3"
-														onPress={() => {
-															setSelectedDevice(device);
-															onDeviceModalOpen();
-														}}
-														startContent={<Eye className="w-3 h-3" />}
-													>
-														View Details
-													</Button>
-												</div>
-											))}
-										</div>
-									) : (
-										<div className="overflow-x-auto">
-											<Table aria-label="Agent devices table">
-												<TableHeader>
-													<TableColumn>DEVICE</TableColumn>
-													<TableColumn>MANUFACTURER</TableColumn>
-													<TableColumn>PRICE</TableColumn>
-													<TableColumn>SPECS</TableColumn>
-													<TableColumn>STATUS</TableColumn>
-													<TableColumn>ACTIONS</TableColumn>
-												</TableHeader>
-												<TableBody>
-													{devices.map((device, index) => (
-														<TableRow key={device.newDeviceId || index}>
-															<TableCell>
-																<div className="flex items-center gap-3">
-																	{device.imageLink ? (
-																		<Image
-																			src={device.imageLink}
-																			alt={device.deviceName}
-																			width={40}
-																			height={40}
-																			className="rounded object-cover"
-																		/>
-																	) : (
-																		<div className="w-10 h-10 bg-default-200 rounded flex items-center justify-center">
-																			<Smartphone className="w-5 h-5 text-default-400" />
-																		</div>
-																	)}
-																	<div>
-																		<p className="font-medium text-sm">
-																			{device.deviceName}
-																		</p>
-																		<p className="text-xs text-default-500">
-																			{device.deviceModelNumber}
-																		</p>
-																	</div>
-																</div>
-															</TableCell>
-															<TableCell>
-																<span className="capitalize">
-																	{device.deviceManufacturer}
-																</span>
-															</TableCell>
-															<TableCell>
-																<span className="font-medium">
-																	₦{device.price?.toLocaleString()}
-																</span>
-															</TableCell>
-															<TableCell>
-																<div className="text-xs">
-																	<p>{device.deviceRam} RAM</p>
-																	<p>{device.deviceStorage} Storage</p>
-																</div>
-															</TableCell>
-															<TableCell>
-																<Chip
-																	size="sm"
-																	color={
-																		device.devfinStatus ? "success" : "warning"
-																	}
-																	variant="flat"
-																>
-																	{device.devfinStatus ? "Active" : "Inactive"}
-																</Chip>
-															</TableCell>
-															<TableCell>
-																<Button
-																	size="sm"
-																	variant="flat"
-																	onPress={() => {
-																		setSelectedDevice(device);
-																		onDeviceModalOpen();
-																	}}
-																	startContent={<Eye className="w-3 h-3" />}
-																>
-																	View
-																</Button>
-															</TableCell>
-														</TableRow>
-													))}
-												</TableBody>
-											</Table>
-										</div>
-									)}
-								</div>
-							) : (
-								<EmptyState
-									title="No Devices Found"
-									description={`No devices found for ${deviceDate}. Try selecting a different date.`}
-									icon={<Smartphone className="w-6 h-6 text-default-400" />}
-								/>
-							)}
-						</InfoCard>
-
-						{/* Main Store Information */}
-						{mainStore?.storeNew ? (
-							<InfoCard
-								title="Assigned Store"
-								icon={<Store className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<div className="space-y-4">
-									<div className="flex items-start justify-between">
-										<div>
-											<h4 className="text-lg font-semibold text-default-900 mb-1">
-												{mainStore.storeNew.storeName}
-											</h4>
-											<div className="flex items-center gap-2 text-sm text-default-500">
-												<Button
-													as="a"
-													href={`https://www.google.com/maps?q=${mainStore.storeNew.latitude},${mainStore.storeNew.longitude}`}
-													target="_blank"
-													rel="noopener noreferrer"
-													variant="light"
-													size="sm"
-													className="gap-1 text-sm text-primary hover:underline pl-0"
-													startContent={<MapPin className="w-4 h-4" />}
-												>
-													{mainStore.storeNew.city}, {mainStore.storeNew.state}
-												</Button>
-											</div>
-										</div>
-										<div className="flex items-center gap-2">
-											<Chip
-												color={
-													mainStore.storeNew.isArchived ? "danger" : "success"
-												}
-												variant="flat"
-												size="sm"
-											>
-												{mainStore.storeNew.isArchived ? "Archived" : "Active"}
-											</Chip>
-											<Button
-												variant="flat"
-												color="warning"
-												size="sm"
-												onPress={onStoreModalOpen}
-												className="font-medium"
-											>
-												Change Store
-											</Button>
-										</div>
-									</div>
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{/* Store Information */}
+							{mainStore?.storeNew && (
+								<InfoCard
+									title="Store Assignment"
+									icon={<Store className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={true}
+								>
+									<div className="grid gap-4">
 										<InfoField
-											label="Store ID"
-											value={mainStore.storeNew.storeId}
-											copyable
+											label="Store Name"
+											value={mainStore.storeNew?.storeName || "N/A"}
 										/>
-										<InfoField
-											label="Store ERP ID"
-											value={mainStore.storeNew.storeErpId}
-											copyable
-										/>
-										<InfoField
-											label="Old Store ID"
-											value={mainStore.storeNew.storeOldId?.toString()}
-										/>
-										<InfoField
-											label="Partner"
-											value={mainStore.storeNew.partner}
-										/>
-										<InfoField
-											label="Channel"
-											value={mainStore.storeNew.channel}
-										/>
-										<InfoField
-											label="Cluster ID"
-											value={mainStore.storeNew.clusterId?.toString()}
-										/>
-										<InfoField
-											label="Region"
-											value={mainStore.storeNew.region}
-										/>
-									</div>
-									<div className="grid grid-cols-1 gap-4">
 										<InfoField
 											label="Address"
-											value={mainStore.storeNew.address}
-										/>
-									</div>
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										<InfoField
-											label="Phone Number"
-											value={mainStore.storeNew.phoneNumber}
+											value={mainStore.storeNew?.address || "N/A"}
 										/>
 										<InfoField
-											label="Email"
-											value={mainStore.storeNew.storeEmail}
+											label="City"
+											value={mainStore.storeNew?.city || "N/A"}
+										/>
+										<InfoField
+											label="State"
+											value={mainStore.storeNew?.state || "N/A"}
 										/>
 									</div>
-									<div className="bg-default-50 rounded-lg p-4">
-										<h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
-											<CreditCard className="w-4 h-4" />
-											Bank Details
-										</h5>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											<InfoField
-												label="Account Name"
-												value={mainStore.storeNew.accountName}
-											/>
-											<InfoField
-												label="Account Number"
-												value={mainStore.storeNew.accountNumber}
-												copyable
-											/>
-											<InfoField
-												label="Bank Name"
-												value={mainStore.storeNew.bankName}
-											/>
-											<InfoField
-												label="Bank Code"
-												value={mainStore.storeNew.bankCode}
-											/>
+								</InfoCard>
+							)}
+						</div>
+
+						{/* Right Column - MBE-specific content */}
+						<div className="lg:col-span-2 space-y-6">
+							{/* Reconciliation Statistics */}
+							<InfoCard
+								title="Reconciliation Statistics"
+								icon={<BarChart className="w-5 h-5 text-default-600" />}
+								collapsible={true}
+								defaultExpanded={true}
+							>
+								{reconciliationStats ? (
+									<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+										<div className="bg-default-50 rounded-lg p-4">
+											<div className="text-sm text-default-500 mb-1">Total</div>
+											<div className="text-2xl font-bold text-default-900">
+												{reconciliationStats.total}
+											</div>
+										</div>
+										<div className="bg-success-50 rounded-lg p-4">
+											<div className="text-sm text-success-600 mb-1">
+												Completed
+											</div>
+											<div className="text-2xl font-bold text-success-700">
+												{reconciliationStats.completed}
+											</div>
+											<div className="text-xs text-success-600">
+												{reconciliationStats.statusBreakdown?.completed}%
+											</div>
+										</div>
+										<div className="bg-warning-50 rounded-lg p-4">
+											<div className="text-sm text-warning-600 mb-1">
+												Pending
+											</div>
+											<div className="text-2xl font-bold text-warning-700">
+												{reconciliationStats.pending}
+											</div>
+											<div className="text-xs text-warning-600">
+												{reconciliationStats.statusBreakdown?.pending}%
+											</div>
+										</div>
+										<div className="bg-danger-50 rounded-lg p-4">
+											<div className="text-sm text-danger-600 mb-1">
+												Rejected
+											</div>
+											<div className="text-2xl font-bold text-danger-700">
+												{reconciliationStats.rejected}
+											</div>
+											<div className="text-xs text-danger-600">
+												{reconciliationStats.statusBreakdown?.rejected}%
+											</div>
 										</div>
 									</div>
-									<div className="bg-default-50 rounded-lg p-4">
-										<h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
-											<Clock className="w-4 h-4" />
-											Operating Hours
-										</h5>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											<InfoField
-												label="Opening Time"
-												value={mainStore.storeNew.storeOpen}
-											/>
-											<InfoField
-												label="Closing Time"
-												value={mainStore.storeNew.storeClose}
-											/>
-										</div>
+								) : (
+									<div className="text-center py-8 text-default-500">
+										No reconciliation statistics available
 									</div>
-									<div className="bg-default-50 rounded-lg p-4">
-										<div className="flex items-center justify-between mb-3">
-											<h5 className="font-semibold text-default-900 flex items-center gap-2">
-												<MapPin className="w-4 h-4" />
-												Location Details
-											</h5>
-											{mainStore.storeNew.latitude &&
-												mainStore.storeNew.longitude && (
+								)}
+							</InfoCard>
+
+							{/* Assigned Agents */}
+							<InfoCard
+								title="Assigned Agents"
+								icon={<Users className="w-5 h-5 text-default-600" />}
+								collapsible={true}
+								defaultExpanded={true}
+							>
+								{isLoadingMbeData ? (
+									<div className="flex items-center justify-center py-8">
+										<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+										<span className="ml-2 text-default-500">
+											Loading assigned agents...
+										</span>
+									</div>
+								) : mbeAssignedAgents && mbeAssignedAgents.length > 0 ? (
+									<GenericTable
+										columns={[
+											{
+												name: "Name",
+												uid: "name",
+												sortable: true,
+											},
+											{
+												name: "Email",
+												uid: "email",
+												sortable: true,
+											},
+											{
+												name: "Phone",
+												uid: "phone",
+												sortable: true,
+											},
+											{
+												name: "Agent ID",
+												uid: "agentId",
+												sortable: true,
+											},
+											{
+												name: "Status",
+												uid: "status",
+												sortable: true,
+											},
+											{
+												name: "Active",
+												uid: "active",
+												sortable: true,
+											},
+											{
+												name: "Actions",
+												uid: "actions",
+												sortable: false,
+											},
+										]}
+										data={mbeAssignedAgents}
+										allCount={mbeAssignedAgents.length}
+										exportData={mbeAssignedAgents}
+										isLoading={isLoadingMbeData}
+										selectionMode="multiple"
+										selectedKeys={
+											selectedAgentFilter
+												? new Set([selectedAgentFilter])
+												: new Set()
+										}
+										onSelectionChange={(keys) => {
+											const selectedKey = Array.from(keys)[0];
+											if (selectedKey) {
+												const selectedAgent = mbeAssignedAgents.find(
+													(agent: any) => agent.mbeId === selectedKey
+												);
+												if (selectedAgent) {
+													handleAgentSelection(
+														selectedAgent.mbeId,
+														`${selectedAgent.firstname} ${selectedAgent.lastname}`
+													);
+												}
+											} else {
+												// Clear selection
+												handleAgentSelection("", "");
+											}
+										}}
+										filterValue=""
+										onFilterChange={() => {}}
+										sortDescriptor={{ column: "name", direction: "ascending" }}
+										onSortChange={() => {}}
+										page={1}
+										pages={1}
+										onPageChange={() => {}}
+										exportFn={async () => {}}
+										renderCell={(agent: any, columnKey: string) => {
+											switch (columnKey) {
+												case "name":
+													return (
+														<div className="flex items-center gap-3">
+															<div>
+																<div className="font-medium">
+																	{agent.firstname} {agent.lastname}
+																</div>
+																{selectedAgentFilter === agent.mbeId && (
+																	<span className="text-xs bg-primary-500 text-white px-2 py-1 rounded">
+																		Filtered
+																	</span>
+																)}
+															</div>
+														</div>
+													);
+												case "email":
+													return agent.email;
+												case "phone":
+													return agent.phone;
+												case "agentId":
+													return (
+														<Snippet size="sm" symbol="">
+															{agent.mbeId}
+														</Snippet>
+													);
+												case "status":
+													return <StatusChip status={agent.accountStatus} />;
+												case "active":
+													return (
+														<Chip
+															size="sm"
+															color={agent.isActive ? "success" : "danger"}
+															variant="flat"
+														>
+															{agent.isActive ? "Active" : "Inactive"}
+														</Chip>
+													);
+												case "actions":
+													return (
+														<Dropdown>
+															<DropdownTrigger>
+																<Button variant="light" size="sm" isIconOnly>
+																	<MoreVertical className="w-4 h-4" />
+																</Button>
+															</DropdownTrigger>
+															<DropdownMenu>
+																<DropdownItem
+																	key="view"
+																	onPress={() =>
+																		router.push(
+																			`/access/${role}/staff/agents/${agent.mbeId}`
+																		)
+																	}
+																	startContent={<Eye className="w-4 h-4" />}
+																>
+																	View Agent
+																</DropdownItem>
+															</DropdownMenu>
+														</Dropdown>
+													);
+												default:
+													return null;
+											}
+										}}
+										hasNoRecords={mbeAssignedAgents.length === 0}
+									/>
+								) : (
+									<div className="text-center py-8 text-default-500">
+										No agents assigned to this MBE
+									</div>
+								)}
+							</InfoCard>
+
+							{/* Reconciliation History */}
+							{hasPermission(role, "canViewReconciliationHistory") && (
+								<InfoCard
+									title="Reconciliation History"
+									icon={<Clock className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={true}
+								>
+									<div className="space-y-4">
+										{/* Filter Status */}
+										{selectedAgentFilter && (
+											<div className="flex items-center justify-between bg-primary-50 p-3 rounded-lg">
+												<span className="text-sm text-primary-700">
+													🔍 Showing reconciliation history for selected agent
+												</span>
+												<Button
+													size="sm"
+													variant="flat"
+													color="default"
+													onPress={() => {
+														setSelectedAgentFilter(null);
+														setReconciliationPage(1);
+													}}
+												>
+													Clear Filter
+												</Button>
+											</div>
+										)}
+
+										{/* Date Filter */}
+										<div className="flex gap-2 items-end">
+											<DatePicker
+												label="Filter by Date"
+												value={
+													reconciliationDateFilter
+														? parseDate(reconciliationDateFilter)
+														: null
+												}
+												onChange={(date) => {
+													if (date) {
+														const dateString = date.toString();
+														handleReconciliationDateFilter(dateString);
+													} else {
+														handleReconciliationDateFilter("");
+													}
+												}}
+												className="max-w-[200px]"
+												size="sm"
+											/>
+											<Button
+												variant="flat"
+												size="sm"
+												onPress={() => handleReconciliationDateFilter("")}
+											>
+												Clear
+											</Button>
+										</div>
+
+										{/* Reconciliation History Table */}
+										{reconciliationHistory?.data ? (
+											<GenericTable
+												columns={reconciliationColumns}
+												data={reconciliationHistory.data || []}
+												allCount={
+													reconciliationHistory.pagination?.totalItems || 0
+												}
+												exportData={reconciliationHistory.data || []}
+												isLoading={isLoadingMbeData}
+												filterValue={reconciliationFilterValue}
+												onFilterChange={setReconciliationFilterValue}
+												sortDescriptor={reconciliationSortDescriptor}
+												onSortChange={setReconciliationSortDescriptor}
+												page={reconciliationHistory.pagination?.currentPage || 1}
+												pages={reconciliationHistory.pagination?.totalPages || 1}
+												onPageChange={(page) => setReconciliationPage(page)}
+												exportFn={exportReconciliationData}
+												renderCell={renderReconciliationCell}
+												hasNoRecords={
+													(reconciliationHistory?.data?.length || 0) === 0
+												}
+												searchPlaceholder="Search reconciliation records..."
+												showRowsPerPageSelector={false}
+												rowsPerPageOptions={[10]}
+												defaultRowsPerPage={10}
+											/>
+										) : (
+											<div className="text-center py-8 text-default-500">
+												No reconciliation history available
+											</div>
+										)}
+									</div>
+								</InfoCard>
+							)}
+						</div>
+					</div>
+				) : (
+					// Regular agent layout
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+						{/* Left Column - Personal Information */}
+						<div className="lg:col-span-1 space-y-6">
+							{/* Personal Information */}
+							<InfoCard
+								title="Personal Information"
+								icon={<User className="w-5 h-5 text-default-600" />}
+								collapsible={true}
+								defaultExpanded={true}
+							>
+								<div className="grid gap-4">
+									<InfoField label="Agent ID" value={agent.mbeId} copyable />
+									{/* MBE Management Section for MBE-managed agents */}
+									{isMbeManaged ? (
+										<InfoField
+											label="Current MBE"
+											value={agent.assignedMbeId || "Not specified"}
+											endComponent={
+												hasPermission(role, "canChangeMbeAssignment") ? (
+													<div className="flex gap-2">
+														<Button
+															size="sm"
+															variant="flat"
+															color="warning"
+															onPress={onChangeMbeModalOpen}
+														>
+															Change MBE
+														</Button>
+														<Button
+															size="sm"
+															variant="flat"
+															color="danger"
+															onPress={onUnlinkMbeModalOpen}
+														>
+															Unlink MBE
+														</Button>
+													</div>
+												) : (
+													<div className="text-sm text-default-500">
+														Admin access required
+													</div>
+												)
+											}
+										/>
+									) : (
+										<InfoField
+											label="MBE ID"
+											value=""
+											endComponent={
+												<Button
+													size="sm"
+													variant="flat"
+													color="primary"
+													onPress={onChangeMbeModalOpen}
+												>
+													Link MBE
+												</Button>
+											}
+										/>
+									)}
+									<InfoField
+										endComponent={
+											<div className="flex gap-2">
+												{agent?.userId && (
 													<Button
 														variant="flat"
 														color="primary"
 														size="sm"
-														startContent={<MapPin className="w-4 h-4" />}
 														onPress={() => {
-															const mapsUrl = `https://www.google.com/maps?q=${mainStore.storeNew.latitude},${mainStore.storeNew.longitude}`;
-															window.open(mapsUrl, "_blank");
+															router.push(
+																`/access/${role}/staff/scan-partners/${agent.userId}`
+															);
 														}}
 														className="font-medium"
 													>
-														View on Google Maps
+														View Details
 													</Button>
 												)}
-										</div>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											<InfoField
-												label="Latitude"
-												value={mainStore.storeNew.latitude?.toString()}
-											/>
-											<InfoField
-												label="Longitude"
-												value={mainStore.storeNew.longitude?.toString()}
-											/>
-											<InfoField
-												label="Created At"
-												value={
-													mainStore.storeNew.createdAt
-														? new Date(
-																mainStore.storeNew.createdAt
-														  ).toLocaleString()
-														: null
-												}
-											/>
-											<InfoField
-												label="Updated At"
-												value={
-													mainStore.storeNew.updatedAt
-														? new Date(
-																mainStore.storeNew.updatedAt
-														  ).toLocaleString()
-														: null
-												}
-											/>
-										</div>
-									</div>
-								</div>
-							</InfoCard>
-						) : (
-							<InfoCard
-								title="Assigned Store"
-								icon={<Store className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-								headerContent={
-									<Button
-										variant="flat"
-										color="success"
-										size="sm"
-										onPress={onStoreModalOpen}
-										className="font-medium"
-									>
-										Assign Store
-									</Button>
-								}
-							>
-								<EmptyState
-									title="No Store Assigned"
-									description="This agent has not been assigned to any store yet."
-									icon={<Store className="w-6 h-6 text-default-400" />}
-								/>
-							</InfoCard>
-						)}
-
-						{/* KYC Information */}
-						{kyc ? (
-							<InfoCard
-								title="KYC Information"
-								icon={<User className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<InfoField label="KYC ID" value={kyc.kycId} copyable />
-									<InfoField label="Gender" value={kyc.gender} />
-									<InfoField label="House Number" value={kyc.houseNumber} />
-									<InfoField label="Street Address" value={kyc.streetAddress} />
-									<InfoField label="Landmark" value={kyc.landMark} />
-									<InfoField
-										label="Local Government"
-										value={kyc.localGovernment}
+												{canChangeScanPartner && (
+													<Button
+														variant="flat"
+														color={agent?.userId ? "warning" : "success"}
+														size="sm"
+														onPress={onScanPartnerModalOpen}
+														className="font-medium"
+													>
+														{agent?.userId
+															? "Change Partner"
+															: "Assign Partner"}
+													</Button>
+												)}
+											</div>
+										}
+										label="SCAN Partner ID"
+										value={agent?.userId || "No partner assigned"}
+										copyable={!!agent?.userId}
 									/>
-									<InfoField label="State" value={kyc.state} />
-									<InfoField label="City" value={kyc.city} />
-									<InfoField label="Channel" value={kyc.channel} />
+									<InfoField
+										label="Full Name"
+										value={`${agent.firstname} ${agent.lastname}`.trim()}
+									/>
+									<InfoField label="Email" value={agent.email} />
+									<InfoField label="Phone" value={agent.phone} />
+									<InfoField label="BVN" value={agent.bvn} />
+									<InfoField label="BVN Phone" value={agent.bvnPhoneNumber} />
+									<InfoField label="Date of Birth" value={agent.dob} />
+									<InfoField label="Username" value={agent.username} />
+									<InfoField label="Channel" value={agent.channel} />
+									<InfoField
+										label="State"
+										value={agent.state || agent?.MbeKyc?.state}
+									/>
+									<InfoField
+										label="City"
+										value={agent.city || agent?.MbeKyc?.city}
+									/>
+									<InfoField
+										label="Active Status"
+										value={agent.isActive ? "Active" : "Inactive"}
+									/>
 									<InfoField
 										label="Created At"
 										value={
-											kyc.createdAt
-												? new Date(kyc.createdAt).toLocaleString()
+											agent.createdAt
+												? new Date(agent.createdAt).toLocaleString()
 												: null
 										}
 									/>
 									<InfoField
 										label="Updated At"
 										value={
-											kyc.updatedAt
-												? new Date(kyc.updatedAt).toLocaleString()
+											agent.updatedAt
+												? new Date(agent.updatedAt).toLocaleString()
 												: null
 										}
 									/>
 								</div>
-								<div className="mt-4">
-									<InfoField
-										label="Full Address"
-										value={kyc.fullAddress}
-										endComponent={
-											canUpdateAddressStatus &&
-											canChangeScanPartner && (
-												<div className="flex items-center gap-2">
-													<AddressStatusChip
-														status={kyc.addressStatus || "PENDING"}
-													/>
-													<Dropdown>
-														<DropdownTrigger>
-															<Button
-																variant="flat"
-																size="sm"
-																endContent={<ChevronDown className="w-4 h-4" />}
-																isDisabled={isUpdatingAddress === kyc.kycId}
-																isLoading={isUpdatingAddress === kyc.kycId}
-															>
-																Update Status
-															</Button>
-														</DropdownTrigger>
-														<DropdownMenu
-															aria-label="Address status actions"
-															onAction={(key) =>
-																handleAddressStatusUpdate(
-																	kyc.kycId,
-																	key as string
-																)
-															}
-														>
-															{addressStatusOptions.map((option) => (
-																<DropdownItem
-																	key={option.key}
-																	className={`text-${option.color}`}
-																	color={option.color as any}
-																>
-																	{option.label}
-																</DropdownItem>
-															))}
-														</DropdownMenu>
-													</Dropdown>
-												</div>
-											)
-										}
-									/>
-								</div>
 							</InfoCard>
-						) : (
-							<InfoCard
-								title="KYC Information"
-								icon={<User className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<EmptyState
-									title="No KYC Information"
-									description="This agent has not completed their KYC verification yet."
-									icon={<User className="w-6 h-6 text-default-400" />}
-								/>
-							</InfoCard>
-						)}
 
-						{/* Account Details */}
-						{accountDetails ? (
+							{/* Statistics */}
 							<InfoCard
-								title="Bank Account Details"
-								icon={<CreditCard className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<InfoField
-										label="Account Details ID"
-										value={accountDetails.mbeAccountDetailsId}
-										copyable
-									/>
-									<InfoField
-										label="Account Name"
-										value={accountDetails.accountName}
-									/>
-									<InfoField
-										label="Account Number"
-										value={accountDetails.accountNumber}
-										copyable
-									/>
-									<InfoField
-										label="Bank Name"
-										value={accountDetails.bankName}
-									/>
-									<InfoField
-										label="Bank Code"
-										value={accountDetails.bankCode}
-									/>
-									<InfoField
-										label="Recipient Code"
-										value={accountDetails.recipientCode}
-										copyable
-									/>
-									<InfoField
-										label="VFD Bank Code"
-										value={accountDetails.vfdBankCode}
-									/>
-									<InfoField
-										label="VFD Bank Name"
-										value={accountDetails.vfdBankName}
-									/>
-									<InfoField label="Channel" value={accountDetails.channel} />
-									<InfoField
-										label="Created At"
-										value={
-											accountDetails.createdAt
-												? new Date(accountDetails.createdAt).toLocaleString()
-												: null
-										}
-									/>
-									<InfoField
-										label="Updated At"
-										value={
-											accountDetails.updatedAt
-												? new Date(accountDetails.updatedAt).toLocaleString()
-												: null
-										}
-									/>
-								</div>
-							</InfoCard>
-						) : (
-							<InfoCard
-								title="Bank Account Details"
-								icon={<CreditCard className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<EmptyState
-									title="No Bank Account Details"
-									description="This agent has not provided their bank account information yet."
-									icon={<CreditCard className="w-6 h-6 text-default-400" />}
-								/>
-							</InfoCard>
-						)}
-
-						{/* Guarantors Information */}
-						{agent.MbeGuarantor && agent.MbeGuarantor.length > 0 ? (
-							<InfoCard
-								title="Guarantors Information"
+								title="Statistics"
 								icon={<Users className="w-5 h-5 text-default-600" />}
 								collapsible={true}
 								defaultExpanded={false}
 							>
-								<div className="space-y-6">
-									{canUpdateGuarantorStatus &&
-										agent.MbeGuarantor.map((guarantor, index) => (
-											<div
-												key={guarantor.guarantorid}
-												className="bg-default-50 rounded-lg p-4"
+								<div className="grid gap-4">
+									<InfoField
+										label="Customers Count"
+										value={agent.customersCount?.toString()}
+									/>
+									<InfoField
+										label="Has an Assigned Store"
+										value={mainStore ? "Yes" : "No"}
+									/>
+								</div>
+							</InfoCard>
+						</div>
+
+						{/* Right Column - Detailed Information */}
+						<div className="lg:col-span-2 space-y-6">
+							{/* Current Scan Partner Details */}
+							{agent?.userId && currentScanPartnerDetails && (
+								<InfoCard
+									title="Current Scan Partner"
+									icon={<IoBusiness className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+										<InfoField
+											label="Partner Name"
+											value={`${currentScanPartnerDetails.firstName || ""} ${
+												currentScanPartnerDetails.lastName || ""
+											}`.trim()}
+										/>
+										<InfoField
+											label="Company"
+											value={currentScanPartnerDetails.companyName || "N/A"}
+										/>
+										<InfoField
+											label="Email"
+											value={currentScanPartnerDetails.email || "N/A"}
+										/>
+										<InfoField
+											label="Phone"
+											value={currentScanPartnerDetails.telephoneNumber || "N/A"}
+										/>
+										<InfoField
+											label="State"
+											value={currentScanPartnerDetails.companyState || "N/A"}
+										/>
+										<InfoField
+											label="City"
+											value={currentScanPartnerDetails.companyCity || "N/A"}
+										/>
+									</div>
+								</InfoCard>
+							)}
+
+							{/* Reconciliation History for all agents */}
+							{hasPermission(role, "canViewReconciliationHistory") && (
+								<InfoCard
+									title="Reconciliation History"
+									icon={<Clock className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="space-y-4">
+										{/* Date Filter */}
+										<div className="flex gap-2 items-end">
+											<DatePicker
+												label="Filter by Date"
+												value={
+													reconciliationDateFilter
+														? parseDate(reconciliationDateFilter)
+														: null
+												}
+												onChange={(date) => {
+													if (date) {
+														const dateString = date.toString();
+														handleReconciliationDateFilter(dateString);
+													} else {
+														handleReconciliationDateFilter("");
+													}
+												}}
+												className="max-w-[200px]"
+												size="sm"
+											/>
+											<Button
+												variant="flat"
+												size="sm"
+												onPress={() => handleReconciliationDateFilter("")}
 											>
-												<div className="flex items-center justify-between mb-4">
-													<h4 className="font-semibold text-default-900">
-														Guarantor {index + 1}
-													</h4>
+												Clear
+											</Button>
+										</div>
+
+										{/* Reconciliation Table */}
+										{reconciliationHistory?.data?.length > 0 ||
+										(Array.isArray(reconciliationHistory) &&
+											reconciliationHistory.length > 0) ? (
+											<GenericTable
+												columns={[
+													{
+														name: "ID",
+														uid: "id",
+														sortable: true,
+													},
+													{
+														name: "Agent",
+														uid: "agent",
+														sortable: true,
+													},
+													{
+														name: "Target Warehouse",
+														uid: "targetWarehouse",
+														sortable: true,
+													},
+													{
+														name: "Items",
+														uid: "items",
+														sortable: true,
+													},
+													{
+														name: "Status",
+														uid: "status",
+														sortable: true,
+													},
+													{
+														name: "Date",
+														uid: "date",
+														sortable: true,
+													},
+													{
+														name: "Actions",
+														uid: "actions",
+														sortable: false,
+													},
+												]}
+												data={reconciliationHistory?.data || []}
+												allCount={reconciliationHistory?.data?.length || 0}
+												exportData={reconciliationHistory?.data || []}
+												isLoading={false}
+												filterValue=""
+												onFilterChange={() => {}}
+												sortDescriptor={{
+													column: "date",
+													direction: "descending",
+												}}
+												onSortChange={() => {}}
+												page={reconciliationPage}
+												pages={reconciliationHistory?.pagination?.totalPages || 1}
+												onPageChange={handleReconciliationPageChange}
+												exportFn={async () => {}}
+												statusOptions={[
+													{ name: "All", uid: "all" },
+													{ name: "Pending", uid: "pending" },
+													{ name: "Completed", uid: "completed" },
+													{ name: "Rejected", uid: "rejected" },
+												]}
+												statusFilter={new Set(["all"])}
+												onStatusChange={() => {}}
+												statusColorMap={{
+													pending: "warning",
+													completed: "success",
+													rejected: "danger",
+												}}
+												showStatus={true}
+												renderCell={(record: any, columnKey: string) => {
+													switch (columnKey) {
+														case "id":
+															return (
+																<Snippet size="sm" symbol="">
+																	{record.reconciliationId}
+																</Snippet>
+															);
+														case "agent":
+															return record.agent?.name || "N/A";
+														case "targetWarehouse":
+															return record.targetWarehouse || "N/A";
+														case "items":
+															return record.transferItems?.length || 0;
+														case "status":
+															return <StatusChip status={record.status} />;
+														case "date":
+															return new Date(
+																record.createdAt
+															).toLocaleDateString();
+														case "actions":
+															return (
+																<Dropdown>
+																	<DropdownTrigger>
+																		<Button variant="light" size="sm" isIconOnly>
+																			<MoreVertical className="w-4 h-4" />
+																		</Button>
+																	</DropdownTrigger>
+																	<DropdownMenu>
+																		<DropdownItem
+																			key="view"
+																			onPress={() =>
+																				handleViewReconciliationDetails(record)
+																			}
+																			startContent={<Eye className="w-4 h-4" />}
+																		>
+																			View Details
+																		</DropdownItem>
+																	</DropdownMenu>
+																</Dropdown>
+															);
+														default:
+															return null;
+													}
+												}}
+												hasNoRecords={
+													(reconciliationHistory?.data?.length ||
+														reconciliationHistory?.length ||
+														0) === 0
+												}
+											/>
+										) : (
+											<div className="text-center py-8 text-default-500">
+												No reconciliation history available
+											</div>
+										)}
+									</div>
+								</InfoCard>
+							)}
+
+							{/* Performance Data */}
+							{canViewAgentPerformanceData && (
+								<InfoCard
+									title="Performance Data"
+									icon={<TrendingUp className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+									headerContent={
+										<ButtonGroup size="sm" variant="flat">
+											<Button
+												color={
+													performanceViewType === "loans"
+														? "primary"
+														: "default"
+												}
+												onPress={() => setPerformanceViewType("loans")}
+												startContent={<CreditCard className="w-4 h-4" />}
+											>
+												Loans ({processedPerformanceData.loans.length})
+											</Button>
+											<Button
+												color={
+													performanceViewType === "commissions"
+														? "primary"
+														: "default"
+												}
+												onPress={() => setPerformanceViewType("commissions")}
+												startContent={<DollarSign className="w-4 h-4" />}
+											>
+												Commissions (
+												{processedPerformanceData.commissions.length})
+											</Button>
+										</ButtonGroup>
+									}
+								>
+									{performanceLoading ? (
+										<div className="flex items-center justify-center py-8">
+											<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+										</div>
+									) : (
+										<>
+											{/* Loans View */}
+											{performanceViewType === "loans" && (
+												<>
+													{filteredLoans.length > 0 ? (
+														<div className="space-y-4">
+															<div className="flex items-center justify-between mb-4">
+																<p className="text-sm text-default-600">
+																	Loan records for this agent
+																</p>
+																<Chip size="sm" variant="flat" color="primary">
+																	{filteredLoans.length} Loan
+																	{filteredLoans.length !== 1 ? "s" : ""}
+																</Chip>
+															</div>
+															<GenericTable<LoanRecord | any>
+																columns={loanColumns}
+																data={filteredLoans}
+																allCount={filteredLoans.length}
+																exportData={filteredLoans}
+																isLoading={performanceLoading}
+																filterValue={loanFilterValue}
+																onFilterChange={(value) => {
+																	setLoanFilterValue(value);
+																	setLoanPage(1);
+																}}
+																statusOptions={loanStatusOptions}
+																statusFilter={loanStatusFilter}
+																onStatusChange={setLoanStatusFilter}
+																statusColorMap={loanStatusColorMap}
+																showStatus={true}
+																sortDescriptor={{
+																	column: "createdAt",
+																	direction: "descending",
+																}}
+																onSortChange={() => {}}
+																page={loanPage}
+																pages={
+																	Math.ceil(filteredLoans.length / 10) || 1
+																}
+																onPageChange={setLoanPage}
+																exportFn={
+																	role == "scan-partner "
+																		? exportLoans
+																		: (data) => {
+																				console.log("exported");
+																		  }
+																}
+																renderCell={(loan, key) =>
+																	renderLoanCell(loan, key, router, role)
+																}
+																hasNoRecords={filteredLoans.length === 0}
+															/>
+														</div>
+													) : (
+														<EmptyState
+															title="No Loans Found"
+															description="This agent has no loan records."
+															icon={
+																<CreditCard className="w-6 h-6 text-default-400" />
+															}
+														/>
+													)}
+												</>
+											)}
+
+											{/* Commissions View */}
+											{performanceViewType === "commissions" && (
+												<>
+													{filteredCommissions.length > 0 ? (
+														<div className="space-y-4">
+															<div className="flex items-center justify-between mb-4">
+																<p className="text-sm text-default-600">
+																	Commission records for this agent
+																</p>
+																<Chip size="sm" variant="flat" color="primary">
+																	{filteredCommissions.length} Commission
+																	{filteredCommissions.length !== 1 ? "s" : ""}
+																</Chip>
+															</div>
+															<GenericTable<CommissionRecord | any>
+																columns={commissionColumns}
+																data={filteredCommissions}
+																allCount={filteredCommissions.length}
+																exportData={filteredCommissions}
+																isLoading={performanceLoading}
+																filterValue={commissionFilterValue}
+																onFilterChange={(value) => {
+																	setCommissionFilterValue(value);
+																	setCommissionPage(1);
+																}}
+																statusOptions={[]}
+																statusFilter={new Set()}
+																onStatusChange={() => {}}
+																statusColorMap={{}}
+																showStatus={false}
+																sortDescriptor={{
+																	column: "date_created",
+																	direction: "descending",
+																}}
+																onSortChange={() => {}}
+																page={commissionPage}
+																pages={
+																	Math.ceil(filteredCommissions.length / 10) ||
+																	1
+																}
+																onPageChange={setCommissionPage}
+																exportFn={
+																	role == "scan-partner "
+																		? exportCommissions
+																		: (data) => {
+																				console.log("exported");
+																		  }
+																}
+																renderCell={renderCommissionCell}
+																hasNoRecords={filteredCommissions.length === 0}
+															/>
+														</div>
+													) : (
+														<EmptyState
+															title="No Commissions Found"
+															description="This agent has no commission records."
+															icon={
+																<DollarSign className="w-6 h-6 text-default-400" />
+															}
+														/>
+													)}
+												</>
+											)}
+										</>
+									)}
+								</InfoCard>
+							)}
+
+							{/* Agent Devices */}
+							<InfoCard
+								title="Agent Devices"
+								icon={<Smartphone className="w-5 h-5 text-default-600" />}
+								collapsible={true}
+								defaultExpanded={false}
+							>
+								{devicesLoading ? (
+									<div className="flex items-center justify-center py-8">
+										<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+									</div>
+								) : devices && devices.length > 0 ? (
+									<div className="space-y-4">
+										{/* Controls */}
+										<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+											<div className="flex items-center gap-4">
+												<p className="text-sm text-default-600">
+													Devices assigned to this agent
+												</p>
+												<Chip size="sm" variant="flat" color="primary">
+													{devices.length} Device
+													{devices.length !== 1 ? "s" : ""}
+												</Chip>
+											</div>
+											<div className="flex items-center gap-3">
+												<DatePicker
+													label="Filter by Date"
+													value={deviceDate ? parseDate(deviceDate) : null}
+													onChange={(date) => {
+														if (date) {
+															const dateString = date.toString();
+															setDeviceDate(dateString);
+														} else {
+															setDeviceDate("");
+														}
+													}}
+													className="max-w-[200px]"
+													size="sm"
+												/>
+												<ButtonGroup size="sm" variant="flat">
+													<Button
+														variant={
+															deviceViewMode === "card" ? "solid" : "flat"
+														}
+														color={
+															deviceViewMode === "card" ? "primary" : "default"
+														}
+														onPress={() => setDeviceViewMode("card")}
+														startContent={<Grid3X3 className="w-4 h-4" />}
+													>
+														Cards
+													</Button>
+													<Button
+														variant={
+															deviceViewMode === "table" ? "solid" : "flat"
+														}
+														color={
+															deviceViewMode === "table" ? "primary" : "default"
+														}
+														onPress={() => setDeviceViewMode("table")}
+														startContent={<List className="w-4 h-4" />}
+													>
+														Table
+													</Button>
+												</ButtonGroup>
+											</div>
+										</div>
+
+										{/* Content */}
+										{deviceViewMode === "card" ? (
+											<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+												{devices.map((device, index) => (
+													<div
+														key={device.newDeviceId || index}
+														className="p-4 border border-default-200 rounded-lg hover:shadow-md transition-shadow"
+													>
+														<div className="flex items-center gap-3 mb-3">
+															{device.imageLink ? (
+																<Image
+																	src={device.imageLink}
+																	alt={device.deviceName}
+																	width={50}
+																	height={50}
+																	className="rounded-lg object-cover"
+																/>
+															) : (
+																<div className="w-12 h-12 bg-default-200 rounded-lg flex items-center justify-center">
+																	<Smartphone className="w-6 h-6 text-default-400" />
+																</div>
+															)}
+															<div className="flex-1">
+																<h4 className="font-semibold text-sm text-default-900">
+																	{device.deviceName}
+																</h4>
+																<p className="text-xs text-default-500">
+																	{device.deviceManufacturer}
+																</p>
+															</div>
+														</div>
+														<div className="space-y-2 text-xs">
+															<div className="flex justify-between">
+																<span className="text-default-500">Price:</span>
+																<span className="font-medium">
+																	₦{device.price?.toLocaleString()}
+																</span>
+															</div>
+															<div className="flex justify-between">
+																<span className="text-default-500">RAM:</span>
+																<span>{device.deviceRam || "N/A"}</span>
+															</div>
+															<div className="flex justify-between">
+																<span className="text-default-500">
+																	Storage:
+																</span>
+																<span>{device.deviceStorage || "N/A"}</span>
+															</div>
+															<div className="flex justify-between">
+																<span className="text-default-500">
+																	Serial:
+																</span>
+																<span className="font-mono text-xs">
+																	{device.erpSerialNo}
+																</span>
+															</div>
+														</div>
+														<Button
+															size="sm"
+															variant="flat"
+															color="primary"
+															className="w-full mt-3"
+															onPress={() => {
+																setSelectedDevice(device);
+																onDeviceModalOpen();
+															}}
+															startContent={<Eye className="w-3 h-3" />}
+														>
+															View Details
+														</Button>
+													</div>
+												))}
+											</div>
+										) : (
+											<div className="overflow-x-auto">
+												<Table aria-label="Agent devices table">
+													<TableHeader>
+														<TableColumn>DEVICE</TableColumn>
+														<TableColumn>MANUFACTURER</TableColumn>
+														<TableColumn>PRICE</TableColumn>
+														<TableColumn>SPECS</TableColumn>
+														<TableColumn>STATUS</TableColumn>
+														<TableColumn>ACTIONS</TableColumn>
+													</TableHeader>
+													<TableBody>
+														{devices.map((device, index) => (
+															<TableRow key={device.newDeviceId || index}>
+																<TableCell>
+																	<div className="flex items-center gap-3">
+																		{device.imageLink ? (
+																			<Image
+																				src={device.imageLink}
+																				alt={device.deviceName}
+																				width={40}
+																				height={40}
+																				className="rounded object-cover"
+																			/>
+																		) : (
+																			<div className="w-10 h-10 bg-default-200 rounded flex items-center justify-center">
+																				<Smartphone className="w-5 h-5 text-default-400" />
+																			</div>
+																		)}
+																		<div>
+																			<p className="font-medium text-sm">
+																				{device.deviceName}
+																			</p>
+																			<p className="text-xs text-default-500">
+																				{device.deviceModelNumber}
+																			</p>
+																		</div>
+																	</div>
+																</TableCell>
+																<TableCell>
+																	<span className="capitalize">
+																		{device.deviceManufacturer}
+																	</span>
+																</TableCell>
+																<TableCell>
+																	<span className="font-medium">
+																		₦{device.price?.toLocaleString()}
+																	</span>
+																</TableCell>
+																<TableCell>
+																	<div className="text-xs">
+																		<p>{device.deviceRam} RAM</p>
+																		<p>{device.deviceStorage} Storage</p>
+																	</div>
+																</TableCell>
+																<TableCell>
+																	<Chip
+																		size="sm"
+																		color={
+																			device.devfinStatus
+																				? "success"
+																				: "warning"
+																		}
+																		variant="flat"
+																	>
+																		{device.devfinStatus
+																			? "Active"
+																			: "Inactive"}
+																	</Chip>
+																</TableCell>
+																<TableCell>
+																	<Button
+																		size="sm"
+																		variant="flat"
+																		onPress={() => {
+																			setSelectedDevice(device);
+																			onDeviceModalOpen();
+																		}}
+																		startContent={<Eye className="w-3 h-3" />}
+																	>
+																		View
+																	</Button>
+																</TableCell>
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											</div>
+										)}
+									</div>
+								) : (
+									<EmptyState
+										title="No Devices Found"
+										description={`No devices found for ${deviceDate}. Try selecting a different date.`}
+										icon={<Smartphone className="w-6 h-6 text-default-400" />}
+									/>
+								)}
+							</InfoCard>
+
+							{/* Main Store Information */}
+							{mainStore?.storeNew ? (
+								<InfoCard
+									title="Assigned Store"
+									icon={<Store className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="space-y-4">
+										<div className="flex items-start justify-between">
+											<div>
+												<h4 className="text-lg font-semibold text-default-900 mb-1">
+													{mainStore.storeNew.storeName}
+												</h4>
+												<div className="flex items-center gap-2 text-sm text-default-500">
+													<Button
+														as="a"
+														href={`https://www.google.com/maps?q=${mainStore.storeNew.latitude},${mainStore.storeNew.longitude}`}
+														target="_blank"
+														rel="noopener noreferrer"
+														variant="light"
+														size="sm"
+														className="gap-1 text-sm text-primary hover:underline pl-0"
+														startContent={<MapPin className="w-4 h-4" />}
+													>
+														{mainStore.storeNew.city},{" "}
+														{mainStore.storeNew.state}
+													</Button>
+												</div>
+											</div>
+											<div className="flex items-center gap-2">
+												<Chip
+													color={
+														mainStore.storeNew.isArchived ? "danger" : "success"
+													}
+													variant="flat"
+													size="sm"
+												>
+													{mainStore.storeNew.isArchived
+														? "Archived"
+														: "Active"}
+												</Chip>
+												<Button
+													variant="flat"
+													color="warning"
+													size="sm"
+													onPress={onStoreModalOpen}
+													className="font-medium"
+												>
+													Change Store
+												</Button>
+											</div>
+										</div>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<InfoField
+												label="Store ID"
+												value={mainStore.storeNew.storeId}
+												copyable
+											/>
+											<InfoField
+												label="Store ERP ID"
+												value={mainStore.storeNew.storeErpId}
+												copyable
+											/>
+											<InfoField
+												label="Old Store ID"
+												value={mainStore.storeNew.storeOldId?.toString()}
+											/>
+											<InfoField
+												label="Partner"
+												value={mainStore.storeNew.partner}
+											/>
+											<InfoField
+												label="Channel"
+												value={mainStore.storeNew.channel}
+											/>
+											<InfoField
+												label="Cluster ID"
+												value={mainStore.storeNew.clusterId?.toString()}
+											/>
+											<InfoField
+												label="Region"
+												value={mainStore.storeNew.region}
+											/>
+										</div>
+										<div className="grid grid-cols-1 gap-4">
+											<InfoField
+												label="Address"
+												value={mainStore.storeNew.address}
+											/>
+										</div>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<InfoField
+												label="Phone Number"
+												value={mainStore.storeNew.phoneNumber}
+											/>
+											<InfoField
+												label="Email"
+												value={mainStore.storeNew.storeEmail}
+											/>
+										</div>
+										<div className="bg-default-50 rounded-lg p-4">
+											<h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
+												<CreditCard className="w-4 h-4" />
+												Bank Details
+											</h5>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<InfoField
+													label="Account Name"
+													value={mainStore.storeNew.accountName}
+												/>
+												<InfoField
+													label="Account Number"
+													value={mainStore.storeNew.accountNumber}
+													copyable
+												/>
+												<InfoField
+													label="Bank Name"
+													value={mainStore.storeNew.bankName}
+												/>
+												<InfoField
+													label="Bank Code"
+													value={mainStore.storeNew.bankCode}
+												/>
+											</div>
+										</div>
+										<div className="bg-default-50 rounded-lg p-4">
+											<h5 className="font-semibold text-default-900 mb-3 flex items-center gap-2">
+												<Clock className="w-4 h-4" />
+												Operating Hours
+											</h5>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<InfoField
+													label="Opening Time"
+													value={mainStore.storeNew.storeOpen}
+												/>
+												<InfoField
+													label="Closing Time"
+													value={mainStore.storeNew.storeClose}
+												/>
+											</div>
+										</div>
+										<div className="bg-default-50 rounded-lg p-4">
+											<div className="flex items-center justify-between mb-3">
+												<h5 className="font-semibold text-default-900 flex items-center gap-2">
+													<MapPin className="w-4 h-4" />
+													Location Details
+												</h5>
+												{mainStore.storeNew.latitude &&
+													mainStore.storeNew.longitude && (
+														<Button
+															variant="flat"
+															color="primary"
+															size="sm"
+															startContent={<MapPin className="w-4 h-4" />}
+															onPress={() => {
+																const mapsUrl = `https://www.google.com/maps?q=${mainStore.storeNew.latitude},${mainStore.storeNew.longitude}`;
+																window.open(mapsUrl, "_blank");
+															}}
+															className="font-medium"
+														>
+															View on Google Maps
+														</Button>
+													)}
+											</div>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<InfoField
+													label="Latitude"
+													value={mainStore.storeNew.latitude?.toString()}
+												/>
+												<InfoField
+													label="Longitude"
+													value={mainStore.storeNew.longitude?.toString()}
+												/>
+												<InfoField
+													label="Created At"
+													value={
+														mainStore.storeNew.createdAt
+															? new Date(
+																	mainStore.storeNew.createdAt
+															  ).toLocaleString()
+															: null
+													}
+												/>
+												<InfoField
+													label="Updated At"
+													value={
+														mainStore.storeNew.updatedAt
+															? new Date(
+																	mainStore.storeNew.updatedAt
+															  ).toLocaleString()
+															: null
+													}
+												/>
+											</div>
+										</div>
+									</div>
+								</InfoCard>
+							) : (
+								<InfoCard
+									title="Assigned Store"
+									icon={<Store className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+									headerContent={
+										<Button
+											variant="flat"
+											color="success"
+											size="sm"
+											onPress={onStoreModalOpen}
+											className="font-medium"
+										>
+											Assign Store
+										</Button>
+									}
+								>
+									<EmptyState
+										title="No Store Assigned"
+										description="This agent has not been assigned to any store yet."
+										icon={<Store className="w-6 h-6 text-default-400" />}
+									/>
+								</InfoCard>
+							)}
+
+							{/* KYC Information */}
+							{kyc ? (
+								<InfoCard
+									title="KYC Information"
+									icon={<User className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<InfoField label="KYC ID" value={kyc.kycId} copyable />
+										<InfoField label="Gender" value={kyc.gender} />
+										<InfoField label="House Number" value={kyc.houseNumber} />
+										<InfoField
+											label="Street Address"
+											value={kyc.streetAddress}
+										/>
+										<InfoField label="Landmark" value={kyc.landMark} />
+										<InfoField
+											label="Local Government"
+											value={kyc.localGovernment}
+										/>
+										<InfoField label="State" value={kyc.state} />
+										<InfoField label="City" value={kyc.city} />
+										<InfoField label="Channel" value={kyc.channel} />
+										<InfoField
+											label="Created At"
+											value={
+												kyc.createdAt
+													? new Date(kyc.createdAt).toLocaleString()
+													: null
+											}
+										/>
+										<InfoField
+											label="Updated At"
+											value={
+												kyc.updatedAt
+													? new Date(kyc.updatedAt).toLocaleString()
+													: null
+											}
+										/>
+									</div>
+									<div className="mt-4">
+										<InfoField
+											label="Full Address"
+											value={kyc.fullAddress}
+											endComponent={
+												canUpdateAddressStatus &&
+												canChangeScanPartner && (
 													<div className="flex items-center gap-2">
-														<GuarantorStatusChip
-															status={guarantor.guarantorStatus}
+														<AddressStatusChip
+															status={kyc.addressStatus || "PENDING"}
 														/>
 														<Dropdown>
 															<DropdownTrigger>
@@ -2356,36 +3230,22 @@ export default function AgentSinglePage() {
 																	endContent={
 																		<ChevronDown className="w-4 h-4" />
 																	}
-																	isDisabled={
-																		isUpdatingGuarantor ===
-																		guarantor.guarantorid
-																	}
-																	isLoading={
-																		isUpdatingGuarantor ===
-																		guarantor.guarantorid
-																	}
+																	isDisabled={isUpdatingAddress === kyc.kycId}
+																	isLoading={isUpdatingAddress === kyc.kycId}
 																>
 																	Update Status
 																</Button>
 															</DropdownTrigger>
 															<DropdownMenu
-																aria-label="Guarantor status actions"
-																onAction={(key) => {
-																	const action = key as string;
-																	if (action === "APPROVED") {
-																		handleGuarantorActionStart(
-																			guarantor,
-																			"approve"
-																		);
-																	} else if (action === "REJECTED") {
-																		handleGuarantorActionStart(
-																			guarantor,
-																			"reject"
-																		);
-																	}
-																}}
+																aria-label="Address status actions"
+																onAction={(key) =>
+																	handleAddressStatusUpdate(
+																		kyc.kycId,
+																		key as string
+																	)
+																}
 															>
-																{guarantorStatusOptions.map((option) => (
+																{addressStatusOptions.map((option) => (
 																	<DropdownItem
 																		key={option.key}
 																		className={`text-${option.color}`}
@@ -2397,74 +3257,249 @@ export default function AgentSinglePage() {
 															</DropdownMenu>
 														</Dropdown>
 													</div>
-												</div>
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													<InfoField
-														label="Guarantor ID"
-														value={guarantor.guarantorid}
-														copyable
-													/>
-													<InfoField
-														label="Name"
-														value={guarantor.guarantorName}
-													/>
-													<InfoField
-														label="Phone"
-														value={guarantor.guarantorPhone}
-													/>
-													<InfoField
-														label="Relationship"
-														value={guarantor.guarantorRelationship}
-													/>
-													<InfoField
-														label="Created At"
-														value={
-															guarantor.createdAt
-																? new Date(guarantor.createdAt).toLocaleString()
-																: null
-														}
-													/>
-													<InfoField
-														label="Updated At"
-														value={
-															guarantor.updatedAt
-																? new Date(guarantor.updatedAt).toLocaleString()
-																: null
-														}
-													/>
-													{guarantor.comment && (
+												)
+											}
+										/>
+									</div>
+								</InfoCard>
+							) : (
+								<InfoCard
+									title="KYC Information"
+									icon={<User className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<EmptyState
+										title="No KYC Information"
+										description="This agent has not completed their KYC verification yet."
+										icon={<User className="w-6 h-6 text-default-400" />}
+									/>
+								</InfoCard>
+							)}
+
+							{/* Account Details */}
+							{accountDetails ? (
+								<InfoCard
+									title="Bank Account Details"
+									icon={<CreditCard className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<InfoField
+											label="Account Details ID"
+											value={accountDetails.mbeAccountDetailsId}
+											copyable
+										/>
+										<InfoField
+											label="Account Name"
+											value={accountDetails.accountName}
+										/>
+										<InfoField
+											label="Account Number"
+											value={accountDetails.accountNumber}
+											copyable
+										/>
+										<InfoField
+											label="Bank Name"
+											value={accountDetails.bankName}
+										/>
+										<InfoField
+											label="Bank Code"
+											value={accountDetails.bankCode}
+										/>
+										<InfoField
+											label="Recipient Code"
+											value={accountDetails.recipientCode}
+											copyable
+										/>
+										<InfoField
+											label="VFD Bank Code"
+											value={accountDetails.vfdBankCode}
+										/>
+										<InfoField
+											label="VFD Bank Name"
+											value={accountDetails.vfdBankName}
+										/>
+										<InfoField label="Channel" value={accountDetails.channel} />
+										<InfoField
+											label="Created At"
+											value={
+												accountDetails.createdAt
+													? new Date(accountDetails.createdAt).toLocaleString()
+													: null
+											}
+										/>
+										<InfoField
+											label="Updated At"
+											value={
+												accountDetails.updatedAt
+													? new Date(accountDetails.updatedAt).toLocaleString()
+													: null
+											}
+										/>
+									</div>
+								</InfoCard>
+							) : (
+								<InfoCard
+									title="Bank Account Details"
+									icon={<CreditCard className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<EmptyState
+										title="No Bank Account Details"
+										description="This agent has not provided their bank account information yet."
+										icon={<CreditCard className="w-6 h-6 text-default-400" />}
+									/>
+								</InfoCard>
+							)}
+
+							{/* Guarantors Information */}
+							{agent.MbeGuarantor && agent.MbeGuarantor.length > 0 ? (
+								<InfoCard
+									title="Guarantors Information"
+									icon={<Users className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<div className="space-y-6">
+										{canUpdateGuarantorStatus &&
+											agent.MbeGuarantor.map((guarantor, index) => (
+												<div
+													key={guarantor.guarantorid}
+													className="bg-default-50 rounded-lg p-4"
+												>
+													<div className="flex items-center justify-between mb-4">
+														<h4 className="font-semibold text-default-900">
+															Guarantor {index + 1}
+														</h4>
+														<div className="flex items-center gap-2">
+															<GuarantorStatusChip
+																status={guarantor.guarantorStatus}
+															/>
+															<Dropdown>
+																<DropdownTrigger>
+																	<Button
+																		variant="flat"
+																		size="sm"
+																		endContent={
+																			<ChevronDown className="w-4 h-4" />
+																		}
+																		isDisabled={
+																			isUpdatingGuarantor ===
+																			guarantor.guarantorid
+																		}
+																		isLoading={
+																			isUpdatingGuarantor ===
+																			guarantor.guarantorid
+																		}
+																	>
+																		Update Status
+																	</Button>
+																</DropdownTrigger>
+																<DropdownMenu
+																	aria-label="Guarantor status actions"
+																	onAction={(key) => {
+																		const action = key as string;
+																		if (action === "APPROVED") {
+																			handleGuarantorActionStart(
+																				guarantor,
+																				"approve"
+																			);
+																		} else if (action === "REJECTED") {
+																			handleGuarantorActionStart(
+																				guarantor,
+																				"reject"
+																			);
+																		}
+																	}}
+																>
+																	{guarantorStatusOptions.map((option) => (
+																		<DropdownItem
+																			key={option.key}
+																			className={`text-${option.color}`}
+																			color={option.color as any}
+																		>
+																			{option.label}
+																		</DropdownItem>
+																	))}
+																</DropdownMenu>
+															</Dropdown>
+														</div>
+													</div>
+													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 														<InfoField
-															label="Comment/Reason"
-															value={guarantor.comment}
+															label="Guarantor ID"
+															value={guarantor.guarantorid}
+															copyable
 														/>
-													)}
+														<InfoField
+															label="Name"
+															value={guarantor.guarantorName}
+														/>
+														<InfoField
+															label="Phone"
+															value={guarantor.guarantorPhone}
+														/>
+														<InfoField
+															label="Relationship"
+															value={guarantor.guarantorRelationship}
+														/>
+														<InfoField
+															label="Created At"
+															value={
+																guarantor.createdAt
+																	? new Date(
+																			guarantor.createdAt
+																	  ).toLocaleString()
+																	: null
+															}
+														/>
+														<InfoField
+															label="Updated At"
+															value={
+																guarantor.updatedAt
+																	? new Date(
+																			guarantor.updatedAt
+																	  ).toLocaleString()
+																	: null
+															}
+														/>
+														{guarantor.comment && (
+															<InfoField
+																label="Comment/Reason"
+																value={guarantor.comment}
+															/>
+														)}
+													</div>
+													<div className="mt-4">
+														<InfoField
+															label="Address"
+															value={guarantor.guarantorAddress}
+														/>
+													</div>
 												</div>
-												<div className="mt-4">
-													<InfoField
-														label="Address"
-														value={guarantor.guarantorAddress}
-													/>
-												</div>
-											</div>
-										))}
-								</div>
-							</InfoCard>
-						) : (
-							<InfoCard
-								title="Guarantors Information"
-								icon={<Users className="w-5 h-5 text-default-600" />}
-								collapsible={true}
-								defaultExpanded={false}
-							>
-								<EmptyState
-									title="No Guarantors"
-									description="This agent has not provided any guarantor information yet."
-									icon={<Users className="w-6 h-6 text-default-400" />}
-								/>
-							</InfoCard>
-						)}
+											))}
+									</div>
+								</InfoCard>
+							) : (
+								<InfoCard
+									title="Guarantors Information"
+									icon={<Users className="w-5 h-5 text-default-600" />}
+									collapsible={true}
+									defaultExpanded={false}
+								>
+									<EmptyState
+										title="No Guarantors"
+										description="This agent has not provided any guarantor information yet."
+										icon={<Users className="w-6 h-6 text-default-400" />}
+									/>
+								</InfoCard>
+							)}
+						</div>
 					</div>
-				</div>
+				)}
 			</div>
 
 			{/* Scan Partner Change Modal */}
@@ -3049,6 +4084,482 @@ export default function AgentSinglePage() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+
+			{/* Change MBE Assignment Modal */}
+			<Modal isOpen={isChangeMbeModalOpen} onClose={onChangeMbeModalClose}>
+				<ModalContent>
+					<ModalHeader>Change MBE Assignment</ModalHeader>
+					<ModalBody>
+						<div className="space-y-4">
+							<p className="text-default-600">
+								Select a new MBE for {agent?.firstname} {agent?.lastname}
+							</p>
+							<Select
+								label="Select MBE"
+								placeholder="Choose an MBE"
+								value={selectedMbeForAgent?.mbeId || ""}
+								onChange={(e) => {
+									const selectedMbe = availableMbes.find(
+										(mbe) => mbe.mbeId === e.target.value
+									);
+									setSelectedMbeForAgent(selectedMbe);
+								}}
+							>
+								{availableMbes.map((mbe) => (
+									<SelectItem key={mbe.mbeId} value={mbe.mbeId}>
+										{mbe.firstname} {mbe.lastname} - {mbe.email}
+									</SelectItem>
+								))}
+							</Select>
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={onChangeMbeModalClose}>
+							Cancel
+						</Button>
+						<Button
+							color="primary"
+							onPress={handleChangeMbeAssignment}
+							isDisabled={!selectedMbeForAgent}
+						>
+							Change MBE
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Unlink MBE Modal */}
+			<Modal isOpen={isUnlinkMbeModalOpen} onClose={onUnlinkMbeModalClose}>
+				<ModalContent>
+					<ModalHeader>Unlink MBE</ModalHeader>
+					<ModalBody>
+						<div className="space-y-4">
+							<p className="text-default-600">
+								Are you sure you want to unlink {agent?.firstname}{" "}
+								{agent?.lastname} from their current MBE?
+							</p>
+							<div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+								<p className="text-warning-700 text-sm">
+									This action will remove the MBE management for this agent.
+									They will no longer be managed by an MBE.
+								</p>
+							</div>
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={onUnlinkMbeModalClose}>
+							Cancel
+						</Button>
+						<Button color="danger" onPress={handleUnlinkMbe}>
+							Unlink MBE
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* MBE-managed Agent Reconciliation History */}
+			{isMbeManaged && reconciliationHistory && (
+				<Modal isOpen={false} onClose={() => {}}>
+					<ModalContent>
+						<ModalHeader>Reconciliation History</ModalHeader>
+						<ModalBody>
+							<div className="space-y-4">
+								{/* Date Filter */}
+								<div className="flex gap-2 items-end">
+									<DatePicker
+										label="Filter by Date"
+										value={
+											reconciliationDateFilter
+												? parseDate(reconciliationDateFilter)
+												: null
+										}
+										onChange={(date) => {
+											if (date) {
+												const dateString = date.toString();
+												handleReconciliationDateFilter(dateString);
+											} else {
+												handleReconciliationDateFilter("");
+											}
+										}}
+										className="max-w-[200px]"
+										size="sm"
+									/>
+									<Button
+										variant="flat"
+										size="sm"
+										onPress={() => handleReconciliationDateFilter("")}
+									>
+										Clear
+									</Button>
+								</div>
+
+								{/* History List */}
+								{reconciliationHistory?.data?.length > 0 ? (
+									<div className="space-y-3">
+										{reconciliationHistory.data.map((record: any) => (
+											<div
+												key={record.reconciliationId}
+												className="bg-default-50 rounded-lg p-4"
+											>
+												<div className="flex justify-between items-start mb-2">
+													<div>
+														<div className="font-medium text-default-900">
+															{record.agent?.name || "N/A"}
+														</div>
+														<div className="text-sm text-default-500">
+															Agent: {record.agent?.email || "N/A"}
+														</div>
+													</div>
+													<div className="flex items-center gap-2">
+														<StatusChip status={record.status} />
+														<Button
+															size="sm"
+															variant="flat"
+															color="primary"
+															onPress={() =>
+																handleViewReconciliationDetails(record)
+															}
+														>
+															View Details
+														</Button>
+													</div>
+												</div>
+												<div className="text-sm text-default-500">
+													<div>Target: {record.targetWarehouse || "N/A"}</div>
+													<div>
+														Items: {record.transferItems?.length || 0} item(s)
+													</div>
+													<div>
+														Created:{" "}
+														{new Date(record.createdAt).toLocaleDateString()}
+													</div>
+												</div>
+											</div>
+										))}
+									</div>
+								) : (
+									<div className="text-center py-8 text-default-500">
+										No reconciliation history available
+									</div>
+								)}
+
+								{/* Pagination */}
+								{reconciliationHistory?.pagination && (
+									<div className="flex justify-center gap-2">
+										<Button
+											size="sm"
+											variant="flat"
+											isDisabled={
+												!reconciliationHistory.pagination.hasPreviousPage
+											}
+											onPress={() =>
+												handleReconciliationPageChange(reconciliationPage - 1)
+											}
+										>
+											Previous
+										</Button>
+										<span className="px-3 py-2 text-sm">
+											Page {reconciliationHistory.pagination.currentPage} of{" "}
+											{reconciliationHistory.pagination.totalPages}
+										</span>
+										<Button
+											size="sm"
+											variant="flat"
+											isDisabled={!reconciliationHistory.pagination.hasNextPage}
+											onPress={() =>
+												handleReconciliationPageChange(reconciliationPage + 1)
+											}
+										>
+											Next
+										</Button>
+									</div>
+								)}
+							</div>
+						</ModalBody>
+						<ModalFooter>
+							<Button variant="flat" onPress={() => {}}>
+								Close
+							</Button>
+						</ModalFooter>
+					</ModalContent>
+				</Modal>
+			)}
+
+			{/* Reconciliation Details Modal */}
+			{hasPermission(role, "canViewReconciliationHistory") && (
+				<Modal
+					isOpen={isReconciliationDetailsModalOpen}
+					onClose={handleCloseReconciliationDetails}
+					size="3xl"
+					scrollBehavior="inside"
+				>
+				<ModalContent>
+					<ModalHeader className="pb-3">
+						<div className="flex items-center justify-between w-full">
+							<div className="flex flex-col gap-1">
+								<h3 className="text-base font-semibold">
+									Reconciliation Details
+								</h3>
+								{selectedReconciliation && (
+									<p className="text-xs text-default-500">
+										ID: {selectedReconciliation.reconciliationId}
+									</p>
+								)}
+							</div>
+							{selectedReconciliation && (
+								<StatusChip status={selectedReconciliation.status} />
+							)}
+						</div>
+					</ModalHeader>
+					<ModalBody className="py-0">
+						{selectedReconciliation && (
+							<div className="space-y-4">
+								{/* Basic Information */}
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+									<div className="space-y-3">
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Target Warehouse
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{selectedReconciliation.targetWarehouse || "N/A"}
+											</p>
+										</div>
+										{selectedReconciliation.assignedMbe && (
+											<div>
+												<label className="text-xs font-medium text-default-600">
+													Assigned MBE
+												</label>
+												<p className="mt-1 text-xs text-default-900">
+													{selectedReconciliation.assignedMbe.name}
+												</p>
+												<p className="text-xs text-default-500">
+													{selectedReconciliation.assignedMbe.email}
+												</p>
+											</div>
+										)}
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Created Date
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{new Date(
+													selectedReconciliation.createdAt
+												).toLocaleString()}
+											</p>
+										</div>
+									</div>
+									<div className="space-y-3">
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Agent Name
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{selectedReconciliation.agent?.name || "N/A"}
+											</p>
+										</div>
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Agent Email
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{selectedReconciliation.agent?.email || "N/A"}
+											</p>
+										</div>
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Total Items
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{selectedReconciliation.transferItems?.length || 0}{" "}
+												item(s)
+											</p>
+										</div>
+									</div>
+								</div>
+
+								{/* Additional Information */}
+								{selectedReconciliation.description && (
+									<div>
+										<label className="text-xs font-medium text-default-600">
+											Description
+										</label>
+										<p className="mt-1 text-xs text-default-900">
+											{selectedReconciliation.description}
+										</p>
+									</div>
+								)}
+
+								{/* Transfer Items */}
+								{selectedReconciliation.transferItems &&
+									selectedReconciliation.transferItems.length > 0 && (
+										<div>
+											<label className="text-xs font-medium text-default-600 mb-2 block">
+												Transfer Items (
+												{selectedReconciliation.transferItems.length})
+											</label>
+											<div className="space-y-2 max-h-80 overflow-y-auto">
+												{selectedReconciliation.transferItems.map(
+													(item: any, index: number) => (
+														<div
+															key={index}
+															className="bg-default-50 rounded-lg p-3"
+														>
+															<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+																<div>
+																	<label className="text-xs font-medium text-default-500">
+																		Item Code
+																	</label>
+																	<p className="text-xs text-default-900 font-mono">
+																		{item.item_code || "N/A"}
+																	</p>
+																</div>
+																<div>
+																	<label className="text-xs font-medium text-default-500">
+																		Quantity
+																	</label>
+																	<p className="text-xs text-default-900">
+																		{item.qty || "N/A"}
+																	</p>
+																</div>
+																{item.serial_nos &&
+																	item.serial_nos.length > 0 && (
+																		<div className="md:col-span-2">
+																			<label className="text-xs font-medium text-default-500 mb-1 block">
+																				Serial Numbers ({item.serial_nos.length}
+																				)
+																			</label>
+																			<div className="flex flex-wrap gap-1">
+																				{item.serial_nos.map(
+																					(
+																						serialNo: string,
+																						serialIndex: number
+																					) => (
+																						<div
+																							key={serialIndex}
+																							className="flex items-center gap-1"
+																						>
+																							<Snippet
+																								hideSymbol
+																								size="sm"
+																								variant="flat"
+																								color="primary"
+																								className="text-xs"
+																							>
+																								{serialNo}
+																							</Snippet>
+																							<span className="text-xs text-default-400">
+																								#{serialIndex + 1}
+																							</span>
+																						</div>
+																					)
+																				)}
+																			</div>
+																		</div>
+																	)}
+															</div>
+														</div>
+													)
+												)}
+											</div>
+										</div>
+									)}
+
+								{/* Additional Metadata */}
+								{(selectedReconciliation.updatedAt ||
+									selectedReconciliation.erpResponse ||
+									selectedReconciliation.erpTransferId ||
+									selectedReconciliation.notes ||
+									selectedReconciliation.approvedBy) && (
+									<div>
+										<label className="text-xs font-medium text-default-600 mb-2 block">
+											Additional Information
+										</label>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+											{selectedReconciliation.updatedAt && (
+												<div>
+													<label className="text-xs font-medium text-default-500">
+														Last Updated
+													</label>
+													<p className="text-xs text-default-900">
+														{new Date(
+															selectedReconciliation.updatedAt
+														).toLocaleString()}
+													</p>
+												</div>
+											)}
+											{selectedReconciliation.erpTransferId && (
+												<div>
+													<label className="text-xs font-medium text-default-500">
+														ERP Transfer ID
+													</label>
+													<p className="text-xs text-default-900">
+														{selectedReconciliation.erpTransferId}
+													</p>
+												</div>
+											)}
+											{selectedReconciliation.erpResponse && (
+												<div className="md:col-span-2">
+													<label className="text-xs font-medium text-default-500">
+														ERP Response
+													</label>
+													<div className="mt-1 bg-success-50 rounded-lg p-2">
+														{selectedReconciliation.erpResponse.data
+															?.message && (
+															<p className="text-xs text-success-700 font-medium">
+																{
+																	selectedReconciliation.erpResponse.data
+																		.message
+																}
+															</p>
+														)}
+														{selectedReconciliation.erpResponse.data
+															?.stock_entry_id && (
+															<p className="text-xs text-success-600 mt-1">
+																Stock Entry ID:{" "}
+																{
+																	selectedReconciliation.erpResponse.data
+																		.stock_entry_id
+																}
+															</p>
+														)}
+													</div>
+												</div>
+											)}
+											{selectedReconciliation.approvedBy && (
+												<div>
+													<label className="text-xs font-medium text-default-500">
+														Approved By
+													</label>
+													<p className="text-xs text-default-900">
+														{selectedReconciliation.approvedBy}
+													</p>
+												</div>
+											)}
+											{selectedReconciliation.notes && (
+												<div className="md:col-span-2">
+													<label className="text-xs font-medium text-default-500">
+														Notes
+													</label>
+													<p className="text-xs text-default-900">
+														{selectedReconciliation.notes}
+													</p>
+												</div>
+											)}
+										</div>
+									</div>
+								)}
+							</div>
+						)}
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={handleCloseReconciliationDetails}>
+							Close
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+			)}
 		</div>
 	);
 }
