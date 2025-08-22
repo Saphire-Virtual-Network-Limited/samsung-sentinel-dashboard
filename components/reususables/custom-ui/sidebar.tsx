@@ -183,7 +183,7 @@ export function AppSidebar() {
           title: "Repayment",
           url: "/access/admin/loans/repayment",
         },
-        
+
       ],
     },
     {
@@ -267,7 +267,7 @@ export function AppSidebar() {
               url: "/access/admin/reports/sales/oppo",
             },
             {
-              title: "Sentinel",
+              title: "Sentinel Report",
               url: "/access/admin/reports/sales/sentinel",
             },
             {
@@ -315,349 +315,349 @@ export function AppSidebar() {
   const adminAndroidItems: MenuItem[] =
     selectedProduct === "Android"
       ? [
-          {
-            title: "Dashboard",
-            icon: Home,
-            url: "/access/admin/android/",
-            id: "admin-android-dashboard",
-          },
-          {
-            icon: ChartBar,
-            title: "Reports",
-            id: "admin-android-reports",
-            subItems: [
-              {
-                title: "Sales",
-                subItems: [
-                  {
-                    title: "All Activation Report",
-                    url: "/access/sales/reports/sales/overview",
-                  },
-                  {
-                    title: "Sentiflex Activation Report",
-                    url: "/access/sales/reports/sales/mbe",
-                  },
-                  {
-                    title: "Sentinel Activation Report",
-                    url: "/access/sales/reports/sales/samsung",
-                  },
-                ],
-              },
+        {
+          title: "Dashboard",
+          icon: Home,
+          url: "/access/admin/android/",
+          id: "admin-android-dashboard",
+        },
+        {
+          icon: ChartBar,
+          title: "Reports",
+          id: "admin-android-reports",
+          subItems: [
+            {
+              title: "Sales",
+              subItems: [
+                {
+                  title: "All Activation Report",
+                  url: "/access/sales/reports/sales/overview",
+                },
+                {
+                  title: "Sentiflex Activation Report",
+                  url: "/access/sales/reports/sales/mbe",
+                },
+                {
+                  title: "Sentinel Activation Report",
+                  url: "/access/sales/reports/sales/samsung",
+                },
+              ],
+            },
 
-              { title: "Tracker", url: "/access/sales/reports/tracker" },
-            ],
-          },
-          {
-            title: "Claims",
-            icon: BriefcaseBusiness,
-            url: "/access/sales/reports/drop-offs",
-            subItems: [
-              {
-                title: "All Device Claim Requests",
-                url: "/access/sales/reports/drop-offs",
-              },
-            ],
-          },
-          {
-            title: "Tools",
-            icon: Wrench,
-            url: "/access/sales/reports/drop-offs",
-          },
-          {
-            title: "Statistics",
-            icon: BarChart3,
-            url: "/access/sales/reports/drop-offs",
-          },
-        ]
+            { title: "Tracker", url: "/access/sales/reports/tracker" },
+          ],
+        },
+        {
+          title: "Claims",
+          icon: BriefcaseBusiness,
+          url: "/access/sales/reports/drop-offs",
+          subItems: [
+            {
+              title: "All Device Claim Requests",
+              url: "/access/sales/reports/drop-offs",
+            },
+          ],
+        },
+        {
+          title: "Tools",
+          icon: Wrench,
+          url: "/access/sales/reports/drop-offs",
+        },
+        {
+          title: "Statistics",
+          icon: BarChart3,
+          url: "/access/sales/reports/drop-offs",
+        },
+      ]
       : [];
 
   const adminRelayItems: MenuItem[] =
     selectedProduct === "Relay"
       ? [
-          {
-            title: "Dashboard",
-            icon: Home,
-            url: "/access/admin/relay/",
-            id: "admin-relay-dashboard",
-          },
-          {
-            icon: ChartBar,
-            title: "Reports",
-            id: "admin-relay-reports",
-            subItems: [
-              {
-                title: "Sales",
-                subItems: [
-                  {
-                    title: "All Sales Report",
-                    url: "/access/sales/reports/sales/overview",
-                  },
-                  {
-                    title: "MBE Sales Report",
-                    url: "/access/sales/reports/sales/mbe",
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            title: "Tools",
-            icon: Wrench,
-            url: "/access/sales/reports/drop-offs",
-            subItems: [
-              {
-                title: "Item Manager",
-                url: "/access/sales/reports/drop-offs",
-              },
-              {
-                title: "Active Sales User",
-                url: "/access/sales/reports/drop-offs",
-              },
-            ],
-          },
-          {
-            title: "Statistics",
-            icon: BarChart3,
-            url: "/access/sales/reports/drop-offs",
-            subItems: [
-              {
-                title: "Daily Analytics",
-                url: "/access/sales/reports/drop-offs",
-              },
-              {
-                title: "MTD Analytics",
-                url: "/access/sales/reports/drop-offs",
-              },
-            ],
-          },
-        ]
+        {
+          title: "Dashboard",
+          icon: Home,
+          url: "/access/admin/relay/",
+          id: "admin-relay-dashboard",
+        },
+        {
+          icon: ChartBar,
+          title: "Reports",
+          id: "admin-relay-reports",
+          subItems: [
+            {
+              title: "Sales",
+              subItems: [
+                {
+                  title: "All Sales Report",
+                  url: "/access/sales/reports/sales/overview",
+                },
+                {
+                  title: "MBE Sales Report",
+                  url: "/access/sales/reports/sales/mbe",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          title: "Tools",
+          icon: Wrench,
+          url: "/access/sales/reports/drop-offs",
+          subItems: [
+            {
+              title: "Item Manager",
+              url: "/access/sales/reports/drop-offs",
+            },
+            {
+              title: "Active Sales User",
+              url: "/access/sales/reports/drop-offs",
+            },
+          ],
+        },
+        {
+          title: "Statistics",
+          icon: BarChart3,
+          url: "/access/sales/reports/drop-offs",
+          subItems: [
+            {
+              title: "Daily Analytics",
+              url: "/access/sales/reports/drop-offs",
+            },
+            {
+              title: "MTD Analytics",
+              url: "/access/sales/reports/drop-offs",
+            },
+          ],
+        },
+      ]
       : [];
 
   const adminCreditflexItems: MenuItem[] =
     selectedProduct === "Creditflex"
       ? [
-          {
-            title: "Dashboard",
-            icon: LayoutDashboard,
-            url: `/access/${accessRole}/creditflex`,
-            id: `${accessRole}-creditflex-dashboard`,
-          },
-          {
-            icon: IdCard,
-            title: "Loan Management",
-            id: `${accessRole}-creditflex-loan-management`,
-            subItems: [
-              {
-                title: "All Loans",
-                url: `/access/${accessRole}/creditflex/all-loans`,
-              },
-              {
-                title: "Disbursed Loans",
-                url: `/access/${accessRole}/creditflex/all-loans?status=active`,
-              },
-            ],
-          },
-          {
-            title: "Loan Products",
-            icon: Receipt,
-            url: `/access/${accessRole}/creditflex/loan-products`,
-            id: `${accessRole}-creditflex-loan-products`,
-          },
-          {
-            title: "Invoice",
-            icon: Package,
-            url: `/access/${accessRole}/creditflex/invoices`,
-            id: `${accessRole}-creditflex-invoices`,
-          },
-          {
-            title: "Repayment",
-            icon: Package,
-            url: `/access/${accessRole}`, ///creditflex/repayments`,
-            id: `${accessRole}-creditflex-repayments`,
-          },
-          {
-            title: "Liquidation Request",
-            icon: Package,
-            url: `/access/${accessRole}`, ///creditflex/liquidation-requests`,
-            id: `${accessRole}-creditflex-liquidation-requests`,
-          },
-          {
-            title: "Top-Up Request",
-            icon: Package,
-            url: `/access/${accessRole}`, ///creditflex/topup-requests`,
-            id: `${accessRole}-creditflex-topup-requests`,
-          },
-          {
-            title: "Telesales Agents",
-            icon: Users,
-            url: `/access/${accessRole}/creditflex/telesales-agents`,
-            id: `${accessRole}-creditflex-telesales-agents`,
-          },
-          {
-            title: "Ambassadors",
-            icon: UserCheck,
-            id: `${accessRole}-creditflex-ambassadors`,
-            subItems: [
-              {
-                title: "All Ambassadors",
-                url: `/access/${accessRole}/creditflex/ambassadors`,
-              },
-              {
-                title: "Ambassador Leads",
-                url: `/access/${accessRole}/creditflex/ambassadors/leads`,
-              },
-              {
-                title: "Conversion Rates",
-                url: `/access/${accessRole}/creditflex/ambassadors/conversion-rates`,
-              },
-            ],
-          },
-        ]
+        {
+          title: "Dashboard",
+          icon: LayoutDashboard,
+          url: `/access/${accessRole}/creditflex`,
+          id: `${accessRole}-creditflex-dashboard`,
+        },
+        {
+          icon: IdCard,
+          title: "Loan Management",
+          id: `${accessRole}-creditflex-loan-management`,
+          subItems: [
+            {
+              title: "All Loans",
+              url: `/access/${accessRole}/creditflex/all-loans`,
+            },
+            {
+              title: "Disbursed Loans",
+              url: `/access/${accessRole}/creditflex/all-loans?status=active`,
+            },
+          ],
+        },
+        {
+          title: "Loan Products",
+          icon: Receipt,
+          url: `/access/${accessRole}/creditflex/loan-products`,
+          id: `${accessRole}-creditflex-loan-products`,
+        },
+        {
+          title: "Invoice",
+          icon: Package,
+          url: `/access/${accessRole}/creditflex/invoices`,
+          id: `${accessRole}-creditflex-invoices`,
+        },
+        {
+          title: "Repayment",
+          icon: Package,
+          url: `/access/${accessRole}`, ///creditflex/repayments`,
+          id: `${accessRole}-creditflex-repayments`,
+        },
+        {
+          title: "Liquidation Request",
+          icon: Package,
+          url: `/access/${accessRole}`, ///creditflex/liquidation-requests`,
+          id: `${accessRole}-creditflex-liquidation-requests`,
+        },
+        {
+          title: "Top-Up Request",
+          icon: Package,
+          url: `/access/${accessRole}`, ///creditflex/topup-requests`,
+          id: `${accessRole}-creditflex-topup-requests`,
+        },
+        {
+          title: "Telesales Agents",
+          icon: Users,
+          url: `/access/${accessRole}/creditflex/telesales-agents`,
+          id: `${accessRole}-creditflex-telesales-agents`,
+        },
+        {
+          title: "Ambassadors",
+          icon: UserCheck,
+          id: `${accessRole}-creditflex-ambassadors`,
+          subItems: [
+            {
+              title: "All Ambassadors",
+              url: `/access/${accessRole}/creditflex/ambassadors`,
+            },
+            {
+              title: "Ambassador Leads",
+              url: `/access/${accessRole}/creditflex/ambassadors/leads`,
+            },
+            {
+              title: "Conversion Rates",
+              url: `/access/${accessRole}/creditflex/ambassadors/conversion-rates`,
+            },
+          ],
+        },
+      ]
       : [];
 
   const subAdminItems: MenuItem[] =
     selectedProduct == "Creditflex"
       ? adminCreditflexItems
       : [
-          {
-            title: "Dashboard",
-            icon: Home,
-            url: "/access/sub-admin/",
-            id: "sub-admin-dashboard",
-          },
-          {
-            icon: CreditCard,
-            title: "Loans",
-            id: "sub-admin-loans",
-            subItems: [
-              {
-                title: "All Loans",
-                url: "/access/sub-admin/loans/loans",
-              },
-              {
-                title: "Repayment",
-                url: "/access/sub-admin/loans/repayment",
-              },
-            ],
-          },
-          {
-            icon: Users,
-            title: "Customers",
-            url: "/access/sub-admin/customers",
-            id: "sub-admin-customers",
-          },
-          {
-            icon: UserCheck,
-            title: "Verification",
-            id: "sub-admin-referees",
-            subItems: [
-              {
-                title: "Pending",
-                url: "/access/sub-admin/referees/unapproved-referees",
-              },
-              {
-                title: "Approved",
-                url: "/access/sub-admin/referees/approved-referees",
-              },
-              {
-                title: "Rejected",
-                url: "/access/sub-admin/referees/rejected-referees",
-              },
-            ],
-          },
-          {
-            icon: Store,
-            title: "Stores",
-            url: "/access/sub-admin/stores",
-            id: "sub-admin-stores",
-          },
-          {
-            icon: IoBusiness,
-            title: "Staff",
-            url: "/access/sub-admin/staff",
-            id: "sub-admin-staff",
-            subItems: [
-              {
-                title: "Mobiflex Sales Agent",
-                url: "/access/sub-admin/staff/agents",
-              },
-              {
-                title: "MBE",
-                url: "/access/sub-admin/staff/mbe",
-              },
-              {
-                title: "SCAN Partners",
-                url: "/access/sub-admin/staff/scan-partners",
-              },
-            ],
-          },
-          {
-            icon: ChartBar,
-            title: "Reports",
-            id: "sub-admin-reports",
-            subItems: [
-              {
-                title: "Sales",
-                subItems: [
-                  {
-                    title: "Overview",
-                    url: "/access/sub-admin/reports/sales/overview",
-                  },
-                  {
-                    title: "MBE Report",
-                    url: "/access/sub-admin/reports/sales/mbe",
-                  },
-                  {
-                    title: "Samsung Report",
-                    url: "/access/sub-admin/reports/sales/samsung",
-                  },
-                  {
-                    title: "Xiaomi Report",
-                    url: "/access/sub-admin/reports/sales/xiaomi",
-                  },
-                  {
-                    title: "Oppo Report",
-                    url: "/access/sub-admin/reports/sales/oppo",
-                  },
-                  {
-                    title: "Sentinel",
-                    url: "/access/sub-admin/reports/sales/sentinel",
-                  },
-                  {
-                    title: "Mobiflex Report",
-                    url: "/access/sub-admin/reports/mobiflex",
-                  },
-                ],
-              },
-              {
-                title: "Commissions",
-                url: "/access/sub-admin/reports/commissions",
-              },
-              {
-                title: "Drop-offs",
-                url: "/access/sub-admin/reports/drop-offs",
-              },
-              { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
-            ],
-          },
-          {
-            icon: Users2,
-            title: "Users",
-            id: "admin-users",
-            url: "/access/sub-admin/users/",
-          },
+        {
+          title: "Dashboard",
+          icon: Home,
+          url: "/access/sub-admin/",
+          id: "sub-admin-dashboard",
+        },
+        {
+          icon: CreditCard,
+          title: "Loans",
+          id: "sub-admin-loans",
+          subItems: [
+            {
+              title: "All Loans",
+              url: "/access/sub-admin/loans/loans",
+            },
+            {
+              title: "Repayment",
+              url: "/access/sub-admin/loans/repayment",
+            },
+          ],
+        },
+        {
+          icon: Users,
+          title: "Customers",
+          url: "/access/sub-admin/customers",
+          id: "sub-admin-customers",
+        },
+        {
+          icon: UserCheck,
+          title: "Verification",
+          id: "sub-admin-referees",
+          subItems: [
+            {
+              title: "Pending",
+              url: "/access/sub-admin/referees/unapproved-referees",
+            },
+            {
+              title: "Approved",
+              url: "/access/sub-admin/referees/approved-referees",
+            },
+            {
+              title: "Rejected",
+              url: "/access/sub-admin/referees/rejected-referees",
+            },
+          ],
+        },
+        {
+          icon: Store,
+          title: "Stores",
+          url: "/access/sub-admin/stores",
+          id: "sub-admin-stores",
+        },
+        {
+          icon: IoBusiness,
+          title: "Staff",
+          url: "/access/sub-admin/staff",
+          id: "sub-admin-staff",
+          subItems: [
+            {
+              title: "Mobiflex Sales Agent",
+              url: "/access/sub-admin/staff/agents",
+            },
+            {
+              title: "MBE",
+              url: "/access/sub-admin/staff/mbe",
+            },
+            {
+              title: "SCAN Partners",
+              url: "/access/sub-admin/staff/scan-partners",
+            },
+          ],
+        },
+        {
+          icon: ChartBar,
+          title: "Reports",
+          id: "sub-admin-reports",
+          subItems: [
+            {
+              title: "Sales",
+              subItems: [
+                {
+                  title: "Overview",
+                  url: "/access/sub-admin/reports/sales/overview",
+                },
+                {
+                  title: "MBE Report",
+                  url: "/access/sub-admin/reports/sales/mbe",
+                },
+                {
+                  title: "Samsung Report",
+                  url: "/access/sub-admin/reports/sales/samsung",
+                },
+                {
+                  title: "Xiaomi Report",
+                  url: "/access/sub-admin/reports/sales/xiaomi",
+                },
+                {
+                  title: "Oppo Report",
+                  url: "/access/sub-admin/reports/sales/oppo",
+                },
+                {
+                  title: "Sentinel Report",
+                  url: "/access/sub-admin/reports/sales/sentinel",
+                },
+                {
+                  title: "Mobiflex Report",
+                  url: "/access/sub-admin/reports/mobiflex",
+                },
+              ],
+            },
+            {
+              title: "Commissions",
+              url: "/access/sub-admin/reports/commissions",
+            },
+            {
+              title: "Drop-offs",
+              url: "/access/sub-admin/reports/drop-offs",
+            },
+            { title: "Tracker", url: "/access/sub-admin/reports/tracker" },
+          ],
+        },
+        {
+          icon: Users2,
+          title: "Users",
+          id: "admin-users",
+          url: "/access/sub-admin/users/",
+        },
 
-          {
-            icon: Package2Icon,
-            title: "Inventory",
-            id: "sub-admin-inventory",
-            subItems: [
-              { title: "Devices", url: "/access/sub-admin/inventory/devices" },
-              { title: "TVs", url: "/access/sub-admin/inventory/tvs" },
-              { title: "Solar", url: "/access/sub-admin/inventory/solar" },
-            ],
-          },
-        ];
+        {
+          icon: Package2Icon,
+          title: "Inventory",
+          id: "sub-admin-inventory",
+          subItems: [
+            { title: "Devices", url: "/access/sub-admin/inventory/devices" },
+            { title: "TVs", url: "/access/sub-admin/inventory/tvs" },
+            { title: "Solar", url: "/access/sub-admin/inventory/solar" },
+          ],
+        },
+      ];
 
   const adminItems: MenuItem[] =
     selectedProduct == "Creditflex"
@@ -708,7 +708,7 @@ export function AppSidebar() {
               url: "/access/sales/reports/sales/xiaomi",
             },
             { title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
-            { title: "Sentinel", url: "/access/sales/reports/sales/sentinel" },
+            { title: "Sentinel Report", url: "/access/sales/reports/sales/sentinel" },
             { title: "Mobiflex Report", url: "/access/sales/reports/mobiflex" },
           ],
         },
@@ -805,7 +805,7 @@ export function AppSidebar() {
     {
       icon: ChartBar,
       title: "Sentinel",
-      url: "/access/dev/sales",
+      url: "/access/dev/reports/sales/sentinel",
       id: "developer-sales",
     },
     {
@@ -881,7 +881,7 @@ export function AppSidebar() {
     {
       icon: CreditCard,
       title: "Loans",
-      id: "finance-loans", 
+      id: "finance-loans",
       subItems: [
         {
           title: "All Loans",
@@ -924,7 +924,7 @@ export function AppSidebar() {
             },
             { title: "Oppo Report", url: "/access/finance/reports/sales/oppo" },
             {
-              title: "Sentinel",
+              title: "Sentinel Report",
               url: "/access/finance/reports/sales/sentinel",
             },
             {
@@ -1016,7 +1016,7 @@ export function AppSidebar() {
             },
             { title: "Oppo Report", url: "/access/audit/reports/sales/oppo" },
             {
-              title: "Sentinel",
+              title: "Sentinel Report",
               url: "/access/audit/reports/sales/sentinel",
             },
             {
@@ -1105,7 +1105,7 @@ export function AppSidebar() {
           title: "Repayment",
           url: "/access/collection-admin/loans/repayment",
         },
-        
+
       ],
     },
     {
@@ -1180,7 +1180,7 @@ export function AppSidebar() {
           url: "/access/collection-officer/loans/repayment",
         },
         {
-            title: "Loans",
+          title: "Loans",
           url: "/access/collection-officer/loans/loans",
         },
       ],
@@ -1320,9 +1320,8 @@ export function AppSidebar() {
                           </span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 flex-shrink-0 sidebar-transition ${
-                            item.id && openMenus[item.id] ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 flex-shrink-0 sidebar-transition ${item.id && openMenus[item.id] ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </SidebarMenuButton>
@@ -1342,31 +1341,30 @@ export function AppSidebar() {
                                 >
                                   <span>{subItem.title}</span>
                                   <ChevronDown
-                                    className={`w-3 h-3 flex-shrink-0 sidebar-transition ${
-                                      openNestedMenus[
-                                        `${item.id}-${subItem.title}`
-                                      ]
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
+                                    className={`w-3 h-3 flex-shrink-0 sidebar-transition ${openNestedMenus[
+                                      `${item.id}-${subItem.title}`
+                                    ]
+                                      ? "rotate-180"
+                                      : ""
+                                      }`}
                                   />
                                 </button>
                                 {openNestedMenus[
                                   `${item.id}-${subItem.title}`
                                 ] && (
-                                  <div className="ml-4 flex flex-col gap-1 sm:gap-2">
-                                    {subItem.subItems.map((nestedItem) => (
-                                      <Link
-                                        key={nestedItem.title}
-                                        href={nestedItem.url || "#"}
-                                        onClick={handleLinkClick}
-                                        className="text-sm hover:text-gray-300 hover:bg-gray-800 py-2 px-3 sm:px-4 rounded-md sidebar-transition font-medium sidebar-focus"
-                                      >
-                                        {nestedItem.title}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                )}
+                                    <div className="ml-4 flex flex-col gap-1 sm:gap-2">
+                                      {subItem.subItems.map((nestedItem) => (
+                                        <Link
+                                          key={nestedItem.title}
+                                          href={nestedItem.url || "#"}
+                                          onClick={handleLinkClick}
+                                          className="text-sm hover:text-gray-300 hover:bg-gray-800 py-2 px-3 sm:px-4 rounded-md sidebar-transition font-medium sidebar-focus"
+                                        >
+                                          {nestedItem.title}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
                               </>
                             ) : (
                               <Link

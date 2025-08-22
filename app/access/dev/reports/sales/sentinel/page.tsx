@@ -1,10 +1,10 @@
-import { SentinelPage } from '@/view/dashboard'
+import { SentinelPage } from '@/view'
 import React from 'react'
 
 const SalesPage = () => {
   return (
     <div>
-        <SentinelPage />
+      <SentinelPage />
     </div>
   )
 }

@@ -2874,3 +2874,65 @@ export async function getTransactionData(startDate?: string, endDate?: string) {
 	const query2 = endDate ? `&endDate=${endDate}` : "";
 	return apiCall(`/collections/all${query1}${query2}`, "GET");
 }
+
+// SENTINEL INTEGRATION PART
+
+export interface SentinelCustomerDevice {
+	sentinelCustomerDeviceId: string;
+	sentinelCustomerId: string;
+	serialNumber: string;
+	deviceBrand: string;
+	deviceId: string;
+	deviceName: string;
+	devicePrice: string;
+	salesStoreId: string;
+	purchaseReceiptImagePublicId: string | null;
+	sentinelBlockformImagePublicId: string | null;
+	sentinelReceiptImagePublicId: string | null;
+	createdAt: string;
+	updatedAt: string;
+	deviceType: string | null;
+	purchaseReceiptImageUrl: string | null;
+	sentinelBlockformImageUrl: string | null;
+	sentinelReceiptImageUrl: string | null;
+	deviceOS: string;
+	paymentOption: string;
+	sentinelPackage: string;
+	enrolledAt: string | null;
+	enrollmentStatus: string | null;
+	isEnrolled: boolean;
+}
+
+export interface SentinelCustomer {
+	sentinelCustomerId: string;
+	createdAt: string;
+	updatedAt: string; // ISO date string
+	deviceEnrollmentId: string | null;
+	deviceId: string | null;
+	resendOtp: string | null;
+	resendOtpExpiry: string | null;
+	storeId: string | null;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phoneNumber: string;
+	address: string;
+	country: string;
+	mbeId: string;
+	SentinelCustomerDevice: SentinelCustomerDevice[];
+}
+
+export async function getAllSentinelCustomers(
+	startDate?: string,
+	endDate?: string
+) {
+	const query =
+		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/sentinel/sentinel-customers${query}`, "GET");
+}
+
+export async function getSentinelCustomerById(
+	id: string
+): Promise<BaseApiResponse<any>> {
+	return apiCall(`/admin/sentinel/sentinel-customers/${id}`, "GET");
+}
