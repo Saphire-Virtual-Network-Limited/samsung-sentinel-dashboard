@@ -620,7 +620,7 @@ export function AppSidebar() {
                   url: "/access/sub-admin/reports/sales/oppo",
                 },
                 {
-                  title: "Sentinel",
+                  title: "Sentinel Report",
                   url: "/access/sub-admin/reports/sales/sentinel",
                 },
                 {
