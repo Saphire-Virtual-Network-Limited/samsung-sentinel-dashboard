@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { DownPaymentView, LoanRepaymentView } from "@/view/dashboard";
+	import { DownPaymentView, LoanRepaymentView, AllTransactionView } from "@/view/dashboard";
 
 
 import React from "react";
@@ -18,6 +18,12 @@ const RepaymentSummariesView = () => {
 				classNames={{
 					tab: "lg:p-4 text-sm lg:text-base",
 				}}>
+					<Tab
+					key="Loan Repayment"
+					title="Loan Repayment"
+					className="lg:p-4 text-base">
+					<LoanRepaymentView />
+				</Tab>
 				<Tab
 					key="Down Payment"
 					title="Down Payment"
@@ -25,11 +31,12 @@ const RepaymentSummariesView = () => {
 					<DownPaymentView />	
 				</Tab>
 				<Tab
-					key="Loan Repayment"
-					title="Loan Repayment"
+					key="All Transaction"
+					title="All Transaction"
 					className="lg:p-4 text-base">
-					<LoanRepaymentView />
+					<AllTransactionView />	
 				</Tab>
+				
 			</Tabs>
 		</div>
 	);

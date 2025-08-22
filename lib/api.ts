@@ -2498,25 +2498,22 @@ export async function getSingleCollectionCustomerData(customerId: string, channe
 }
 
 //Get loan repayment(excluding down payment and card tokenization)
-export async function getLoanRepaymentData(customerId: string, channel?: string, startDate?: string, endDate?: string) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/loan-repayments?customerId=${customerId}${query}${query2}${query3}`, "GET");
+export async function getLoanRepaymentData( startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPaymentData(customerId: string, channel?: string, startDate?: string, endDate?: string) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/down-payments?customerId=${customerId}${query}${query2}${query3}`, "GET");
+export async function getDownPaymentData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(channel?: string, startDate?: string, endDate?: string) {
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	const query = channel ? `&channel=${channel}` : "";
-	return apiCall(`/collections/all?${query2}${query3}${query}`, "GET");
+export async function getTransactionData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/all${query1}${query2}`, "GET");
 }

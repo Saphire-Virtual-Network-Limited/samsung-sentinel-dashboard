@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getDownPaymentData } from "@/lib";
+import { getTransactionData } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
@@ -63,10 +63,24 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	running: "warning",
 };  
 
-type DownPaymentRecord = {
-	totalDownPayments: number,
+type AllTransactionRecord = {
+    totalTransactions: number,
     totalAmount: number,
-	downPayments: Array<{
+    breakdown: {
+      downPayments: {
+        count: number,
+        amount: number
+      },
+      loanRepayments: {
+        count: number,
+        amount: number
+      },
+      cardTokenizations: {
+        count: number,
+        amount: number
+      }
+    },
+	allTransactions: Array<{
 			transactionId: string,	
 			customerId: string,
 			loanId: string,
@@ -81,11 +95,6 @@ type DownPaymentRecord = {
 			customerName: string,
 			customerEmail: string
 		}>
-		summary: {
-			downPaymentCount: number,
-			totalAmountPaid: number,
-			averageDownPaymentAmount: number
-		}
 };
 
 type TransformedDueLoanRecord = {
@@ -104,7 +113,7 @@ type TransformedDueLoanRecord = {
 	customerEmail: string
 };
 
-export default function DownPaymentView() {
+export default function AllTransactionView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
@@ -144,10 +153,10 @@ export default function DownPaymentView() {
 
 	// Fetch data based on date filter - Fixed SWR settings to prevent data disappearing
 	const { data: raw = [], isLoading, error } = useSWR(
-		["down-payment-data", fromDate, toDate],
+		["all-transaction-data", fromDate, toDate],
 		() => {
 			console.log("Fetching data with params:", { fromDate, toDate });
-			return getDownPaymentData(fromDate, toDate)
+			    return getTransactionData(fromDate, toDate)
 				.then((r) => {
 					console.log("API response:", r);
 					if (!r.data || r.data.length === 0) {
@@ -160,7 +169,7 @@ export default function DownPaymentView() {
 					return r.data;
 				})
 				.catch((error) => {
-					console.error("Error fetching down payment data:", error);
+					console.error("Error fetching all transaction data:", error);
 					setHasNoRecords(true);
 					return [];
 				});
@@ -189,7 +198,7 @@ export default function DownPaymentView() {
 		
 		if (raw && typeof raw === 'object') {
 			// Extract from the correct path: data.repayments
-			customersData = raw.downPayments || [];
+			customersData = raw.allTransactions || [];
 		}
 		
 		console.log("Extracted customers data:", customersData);
@@ -277,11 +286,11 @@ export default function DownPaymentView() {
 	// Export all filtered data with full columns
 	const exportFn = async (data: TransformedDueLoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Down_Payments");	
+		const ws = wb.addWorksheet("All_Transactions");	
 		ws.columns = exportColumns.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 		data.forEach((r) => ws.addRow(r));		
 		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Down_Payments.xlsx");
+		saveAs(new Blob([buf]), "All_Transactions.xlsx");
 	};
 
 	// When action clicked:
@@ -354,13 +363,13 @@ export default function DownPaymentView() {
 						<div className="px-8 py-6 border-b border-gray-100/60">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center space-x-3">
-									<div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+									<div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
 										<svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 										</svg>
 									</div>
 									<div>
-										<h2 className="text-xl font-bold text-gray-900 tracking-tight">Down Payment Summary</h2>
+										<h2 className="text-xl font-bold text-gray-900 tracking-tight">Transaction Summary</h2>
 										<p className="text-sm text-gray-500 font-medium">Financial overview for selected period</p>
 									</div>
 								</div>
@@ -375,23 +384,21 @@ export default function DownPaymentView() {
 						
 						{/* Metrics Grid */}
 						<div className="px-8 py-8">
-							<div className="grid grid-cols-4 gap-8">
-								{/* Total Down Payments */}
+							<div className="grid grid-cols-5 gap-8">
+								{/* Total Transactions */}
 								<div className="group relative">
-									<div className="bg-gradient-to-br from-amber-50 to-amber-100/80 rounded-2xl p-6 border border-amber-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-amber-300/60">
-										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl mb-4 shadow-lg">
+									<div className="bg-gradient-to-br from-blue-50 to-blue-100/80 rounded-2xl p-6 border border-blue-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-blue-300/60">
+										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-lg">
 											<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 											</svg>
 										</div>
-										<p className="text-sm font-semibold text-amber-700 mb-2 tracking-wide">Total Down Payments</p>
-										<div className="min-h-[3rem] flex items-center justify-start mb-2">
-											<p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												{raw.totalDownPayments?.toLocaleString() || '0'}
-											</p>
-										</div>
-										<div className="w-full bg-amber-200/40 rounded-full h-1">
-											<div className="bg-gradient-to-r from-amber-500 to-amber-600 h-1 rounded-full" style={{width: '100%'}}></div>
+										<p className="text-sm font-semibold text-blue-700 mb-2 tracking-wide">Total Transactions</p>
+										<p className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">
+											{raw.totalTransactions?.toLocaleString() || '0'}
+										</p>
+										<div className="w-full bg-blue-200/40 rounded-full h-1">
+											<div className="bg-gradient-to-r from-blue-500 to-blue-600 h-1 rounded-full" style={{width: '100%'}}></div>
 										</div>
 									</div>
 								</div>
@@ -405,38 +412,37 @@ export default function DownPaymentView() {
 											</svg>
 										</div>
 										<p className="text-sm font-semibold text-emerald-700 mb-2 tracking-wide">Total Amount</p>
-										<div className="min-h-[3rem] flex items-center justify-start mb-2">
-											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												₦{raw.totalAmount?.toLocaleString() || '0'}
-											</p>
-										</div>
+										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
+											₦{raw.totalAmount?.toLocaleString() || '0'}
+										</p>
 										<div className="w-full bg-emerald-200/40 rounded-full h-1">
 											<div className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-1 rounded-full" style={{width: '100%'}}></div>
 										</div>
 									</div>
 								</div>
 
-								{/* Down Payment Count */}
+								{/* Down Payments */}
 								<div className="group relative">
-									<div className="bg-gradient-to-br from-blue-50 to-blue-100/80 rounded-2xl p-6 border border-blue-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-blue-300/60">
-										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-lg">
+									<div className="bg-gradient-to-br from-amber-50 to-amber-100/80 rounded-2xl p-6 border border-amber-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-amber-300/60">
+										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl mb-4 shadow-lg">
 											<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
 											</svg>
 										</div>
-										<p className="text-sm font-semibold text-blue-700 mb-2 tracking-wide">Down Payment Count</p>
-										<div className="min-h-[3rem] flex items-center justify-start mb-2">
-											<p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												{raw.summary?.downPaymentCount?.toLocaleString() || '0'}
-											</p>
-										</div>
-										<div className="w-full bg-blue-200/40 rounded-full h-1">
-											<div className="bg-gradient-to-r from-blue-500 to-blue-600 h-1 rounded-full" style={{width: '100%'}}></div>
+										<p className="text-sm font-semibold text-amber-700 mb-2 tracking-wide">Down Payments</p>
+										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
+											{raw.breakdown?.downPayments?.count?.toLocaleString() || '0'}
+										</p>
+										<p className="text-sm font-medium text-amber-600 mb-2">
+											₦{raw.breakdown?.downPayments?.amount?.toLocaleString() || '0'}
+										</p>
+										<div className="w-full bg-amber-200/40 rounded-full h-1">
+											<div className="bg-gradient-to-r from-amber-500 to-amber-600 h-1 rounded-full" style={{width: '100%'}}></div>
 										</div>
 									</div>
 								</div>
 
-								{/* Average Down Payment Amount */}
+								{/* Loan Repayments */}
 								<div className="group relative">
 									<div className="bg-gradient-to-br from-violet-50 to-violet-100/80 rounded-2xl p-6 border border-violet-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-violet-300/60">
 										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl mb-4 shadow-lg">
@@ -444,14 +450,36 @@ export default function DownPaymentView() {
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 											</svg>
 										</div>
-										<p className="text-sm font-semibold text-violet-700 mb-2 tracking-wide">Average Amount</p>
-										<div className="min-h-[3rem] flex items-center justify-start mb-2">
-											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												₦{raw.summary?.averageDownPaymentAmount?.toLocaleString() || '0'}
-											</p>
-										</div>
+										<p className="text-sm font-semibold text-violet-700 mb-2 tracking-wide">Loan Repayments</p>
+										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
+											{raw.breakdown?.loanRepayments?.count?.toLocaleString() || '0'}
+										</p>
+										<p className="text-sm font-medium text-violet-600 mb-2">
+											₦{raw.breakdown?.loanRepayments?.amount?.toLocaleString() || '0'}
+										</p>
 										<div className="w-full bg-violet-200/40 rounded-full h-1">
 											<div className="bg-gradient-to-r from-violet-500 to-violet-600 h-1 rounded-full" style={{width: '100%'}}></div>
+										</div>
+									</div>
+								</div>
+
+								{/* Card Tokenizations */}
+								<div className="group relative">
+									<div className="bg-gradient-to-br from-indigo-50 to-indigo-100/80 rounded-2xl p-6 border border-indigo-200/40 transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 group-hover:border-indigo-300/60">
+										<div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl mb-4 shadow-lg">
+											<svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+											</svg>
+										</div>
+										<p className="text-sm font-semibold text-indigo-700 mb-2 tracking-wide">Card Tokenizations</p>
+										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
+											{raw.breakdown?.cardTokenizations?.count?.toLocaleString() || '0'}
+										</p>
+										<p className="text-sm font-medium text-indigo-600 mb-2">
+											₦{raw.breakdown?.cardTokenizations?.amount?.toLocaleString() || '0'}
+										</p>
+										<div className="w-full bg-indigo-200/40 rounded-full h-1">
+											<div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-1 rounded-full" style={{width: '100%'}}></div>
 										</div>
 									</div>
 								</div>
