@@ -57,6 +57,10 @@ import AllStoresPending from "./audit/allStorespending";
 import AllStoresSuspended from "./audit/allStoreSuspended";
 import StoreSummaryAudit from "./audit/storeSummaryAudit";
 import ManualPowerflexView from "./powerflex/manualView";
+import DownPaymentView from "./loans/repayment/downPayment";
+import LoanRepaymentView from "./loans/repayment/loanRepayment";
+import RepaymentSummariesView from "./loans/repayment/summaries";
+import AllTransactionView from "./loans/repayment/allTransaction";
 import { SentinelSingleCustomerPage } from "./sentinel/singleCustomer";
 import SentinelSummaryView from "./sentinel/setinelSummary";
 
@@ -120,6 +124,10 @@ export {
 	singleStoreView,
 	StoreSummaryAudit,
 	ManualPowerflexView,
+	DownPaymentView,
+	LoanRepaymentView,
+	RepaymentSummariesView,
+	AllTransactionView,
 	SentinelSingleCustomerPage,
 	SentinelSummaryView,
 };

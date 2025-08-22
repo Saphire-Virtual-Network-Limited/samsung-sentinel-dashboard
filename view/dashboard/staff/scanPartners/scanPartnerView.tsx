@@ -15,6 +15,7 @@ import {
 	getMobiflexScanPartnerStatsById,
 	getMobiflexPartnerApprovedAgents,
 	getAllCustomerRecord,
+	getAllAgentsLoansAndCommissions,
 } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -253,6 +254,7 @@ export default function ScanPartnerPage() {
 	}, [paged, sortDescriptor]);
 
 	// Enhanced Export Function with Detailed Reports
+
 	const exportFn = async (data: ScanPartnerRecord[]) => {
 		try {
 			// Fetch detailed agent data from getScanPartnerAgents
@@ -262,6 +264,21 @@ export default function ScanPartnerPage() {
 			// Fetch Mobiflex sales data for comprehensive reporting
 			const salesDataResponse = await getMobiflexPartnerStats(salesPeriod);
 			const salesData = salesDataResponse?.data || null;
+
+			// Fetch all agents' loans and commissions for commission sheets
+			const allCommissionsResponse = await getAllAgentsLoansAndCommissions();
+			const allCommissionsData = allCommissionsResponse?.data || { agents: [] };
+			const commissionAgents = allCommissionsData.agents || [];
+			let customerRecords: any[] = [];
+
+			// Fetch customer records for IMEI/customer mapping
+			// ...customerRecords already declared above...
+			try {
+				const customerRecordsResponse = await getAllCustomerRecord();
+				customerRecords = customerRecordsResponse?.data || [];
+			} catch (error) {
+				customerRecords = [];
+			}
 
 			const wb = new ExcelJS.Workbook();
 
@@ -288,6 +305,935 @@ export default function ScanPartnerPage() {
 				);
 			});
 
+			// --- 1. Commission Sheet (All Commissions, with Bank Details and Device/Customer Mapping) ---
+			// Improved Commission Sheet with comprehensive scan partner and bank details
+			// --- 1. Commission Sheet (All Commissions, with Bank Details and Device/Customer Mapping) ---
+			// Improved Commission Sheet with comprehensive scan partner and bank details
+			const commissionWs = wb.addWorksheet("Commissions");
+			commissionWs.columns = [
+				{ header: "S/N", key: "sn", width: 8 },
+				// Scan Partner Details
+				{
+					header: "Scan Partner Company",
+					key: "scanPartnerCompany",
+					width: 25,
+				},
+				{ header: "Scan Partner Name", key: "scanPartnerName", width: 25 },
+				{ header: "Scan Partner User ID", key: "scanPartnerUserId", width: 25 },
+				{ header: "Scan Partner Phone", key: "scanPartnerPhone", width: 20 },
+				// Agent Details
+				{ header: "Agent Name", key: "agentName", width: 25 },
+				{ header: "Agent MBE ID", key: "mbeId", width: 20 },
+				{ header: "Agent Old ID", key: "agentOldId", width: 15 },
+				{ header: "Agent Email", key: "agentEmail", width: 30 },
+				{ header: "Agent Phone", key: "agentPhone", width: 20 },
+				{ header: "Agent BVN", key: "agentBvn", width: 15 },
+				{ header: "Agent Status", key: "agentStatus", width: 15 },
+				{ header: "Agent Active", key: "agentActive", width: 12 },
+				// Agent Bank Details
+				{ header: "Agent Account Name", key: "agentAccountName", width: 25 },
+				{
+					header: "Agent Account Number",
+					key: "agentAccountNumber",
+					width: 20,
+				},
+				{ header: "Agent Bank Name", key: "agentBankName", width: 25 },
+				{ header: "Agent Bank Code", key: "agentBankCode", width: 15 },
+				{
+					header: "Agent Recipient Code",
+					key: "agentRecipientCode",
+					width: 20,
+				},
+				{ header: "Agent VFD Bank Name", key: "agentVfdBankName", width: 25 },
+				{ header: "Agent VFD Bank Code", key: "agentVfdBankCode", width: 15 },
+				// Scan Partner Bank Details
+				{ header: "SP Account Name", key: "spAccountName", width: 25 },
+				{ header: "SP Account Number", key: "spAccountNumber", width: 20 },
+				{ header: "SP Bank Name", key: "spBankName", width: 25 },
+				{ header: "SP Bank Code", key: "spBankCode", width: 15 },
+				{ header: "SP VFD Bank Name", key: "spVfdBankName", width: 25 },
+				{ header: "SP VFD Bank Code", key: "spVfdBankCode", width: 15 },
+				// Loan & Device Details
+				{ header: "Loan Record ID", key: "loanRecordId", width: 20 },
+				{ header: "Device Name", key: "deviceName", width: 25 },
+				{ header: "IMEI", key: "imei", width: 18 },
+				{ header: "Device Status", key: "deviceStatus", width: 15 },
+				{ header: "Device Price", key: "devicePrice", width: 15 },
+				{ header: "Loan Amount", key: "loanAmount", width: 15 },
+				{ header: "Down Payment", key: "downPayment", width: 15 },
+				{ header: "Monthly Payment", key: "monthlyPayment", width: 15 },
+				{ header: "Duration (Months)", key: "duration", width: 15 },
+				// Customer Details
+				{ header: "Customer Name", key: "customerName", width: 25 },
+				{ header: "Customer ID", key: "customerId", width: 18 },
+				{ header: "Customer Phone", key: "customerPhone", width: 20 },
+				// Commission Details
+				{ header: "Total Commission", key: "totalCommission", width: 18 },
+				{ header: "Agent Commission", key: "agentCommission", width: 18 },
+				{ header: "Partner Commission", key: "partnerCommission", width: 18 },
+				{ header: "Split Percentage", key: "splitPercent", width: 15 },
+				{ header: "Agent Commission Paid", key: "agentPaid", width: 20 },
+				{ header: "Partner Commission Paid", key: "partnerPaid", width: 20 },
+				{ header: "Payment Status", key: "paymentStatus", width: 15 },
+				{ header: "Commission Date", key: "commissionDate", width: 18 },
+				{ header: "Last Updated", key: "lastUpdated", width: 18 },
+				// Location Details
+				{ header: "Agent State", key: "agentState", width: 15 },
+				{ header: "Agent City", key: "agentCity", width: 20 },
+				{ header: "SP Company State", key: "spCompanyState", width: 20 },
+				{ header: "SP Company City", key: "spCompanyCity", width: 20 },
+			];
+
+			// Build enhanced IMEI to customer mapping with comprehensive details
+			const enhancedImeiToCustomer = new Map();
+			for (const customer of customerRecords) {
+				const loanRecord = customer.LoanRecord?.[0];
+				const deviceOnLoan = loanRecord?.DeviceOnLoan?.[0];
+				const imei = deviceOnLoan?.imei;
+
+				if (imei) {
+					enhancedImeiToCustomer.set(imei, {
+						customerId: customer.customerId,
+						customerName:
+							customer.firstName && customer.lastName
+								? `${customer.firstName} ${customer.lastName}`
+								: "N/A",
+						customerPhone:
+							customer.bvnPhoneNumber || customer.mainPhoneNumber || "N/A",
+						deviceName:
+							loanRecord?.deviceName ||
+							deviceOnLoan?.device?.deviceName ||
+							"N/A",
+						devicePrice:
+							loanRecord?.devicePrice || deviceOnLoan?.device?.price || 0,
+						loanAmount: loanRecord?.loanAmount || 0,
+						downPayment: loanRecord?.downPayment || 0,
+						monthlyPayment: loanRecord?.monthlyRepayment || 0,
+						duration: loanRecord?.duration || 0,
+						deviceStatus: deviceOnLoan?.status || "N/A",
+					});
+				}
+			}
+
+			let commissionRowIndex = 1;
+
+			// Process each agent with their commissions
+			commissionAgents.forEach((agent: any) => {
+				// Get scan partner details from allAgentData
+				let scanPartnerData = null;
+				for (const spData of allAgentData) {
+					if (spData.agents?.some((a: any) => a.mbeId === agent.mbeId)) {
+						scanPartnerData = spData;
+						break;
+					}
+				}
+
+				// Get scan partner details
+				const scanPartner = scanPartnerData || agent?.scanPartner || {};
+				const scanPartnerAccount = scanPartner?.UserAccountDetails?.[0] || {};
+
+				// Get agent details from allAgentData for more complete info
+				let agentFromAllData = null;
+				if (scanPartnerData) {
+					agentFromAllData = scanPartnerData.agents?.find(
+						(a: any) => a.mbeId === agent.mbeId
+					);
+				}
+
+				// Get agent details - prioritize data from allAgentData if available
+				const agentAccount =
+					agentFromAllData?.MbeAccountDetails || agent?.MbeAccountDetails || {};
+				const agentKyc = agentFromAllData?.MbeKyc || agent?.MbeKyc || {};
+
+				// Process each commission for this agent
+				(agent.Commission || []).forEach((commission: any) => {
+					// Find loan record and device details
+					const loanRecord = agent.LoanRecord?.find(
+						(loan: any) => loan.loanRecordId === commission.deviceOnLoanId
+					);
+
+					// Get device and customer details from commission's devicesOnLoan or loan record
+					let deviceDetails = null;
+					let customerDetails = null;
+					let imei = "N/A";
+
+					// Try to get device details from commission's devicesOnLoan first
+					if (commission.devicesOnLoan) {
+						const deviceOnLoan = commission.devicesOnLoan;
+						imei = deviceOnLoan.imei || "N/A";
+						deviceDetails = {
+							deviceName: deviceOnLoan.device?.deviceName || "N/A",
+							devicePrice:
+								deviceOnLoan.device?.price || deviceOnLoan.devicePrice || 0,
+							deviceStatus: deviceOnLoan.status || "N/A",
+						};
+					}
+
+					// If not found, try from loan record
+					if (!deviceDetails && loanRecord) {
+						const deviceOnLoan = loanRecord.DeviceOnLoan?.[0];
+						if (deviceOnLoan) {
+							imei = deviceOnLoan.imei || loanRecord.deviceId || "N/A";
+							deviceDetails = {
+								deviceName:
+									loanRecord.deviceName ||
+									deviceOnLoan.device?.deviceName ||
+									"N/A",
+								devicePrice:
+									loanRecord.devicePrice || deviceOnLoan.device?.price || 0,
+								deviceStatus: deviceOnLoan.status || "N/A",
+							};
+						}
+					}
+
+					// Get customer details from enhanced mapping or loan record
+					if (imei && enhancedImeiToCustomer.has(imei)) {
+						customerDetails = enhancedImeiToCustomer.get(imei);
+					} else if (loanRecord?.customer) {
+						customerDetails = {
+							customerId: loanRecord.customer.customerId,
+							customerName:
+								`${loanRecord.customer.firstName || ""} ${
+									loanRecord.customer.lastName || ""
+								}`.trim() || "N/A",
+							customerPhone:
+								loanRecord.customer.bvnPhoneNumber ||
+								loanRecord.customer.mainPhoneNumber ||
+								"N/A",
+							deviceName: loanRecord.deviceName || "N/A",
+							devicePrice: loanRecord.devicePrice || 0,
+							loanAmount: loanRecord.loanAmount || 0,
+							downPayment: loanRecord.downPayment || 0,
+							monthlyPayment: loanRecord.monthlyRepayment || 0,
+							duration: loanRecord.duration || 0,
+							deviceStatus: "N/A",
+						};
+					}
+
+					// Build comprehensive row data
+					const rowData = {
+						sn: commissionRowIndex++,
+
+						// Scan Partner Details
+						scanPartnerCompany: scanPartner?.companyName || "N/A",
+						scanPartnerName:
+							scanPartner?.firstName && scanPartner?.lastName
+								? `${scanPartner.firstName} ${scanPartner.lastName}`
+								: "N/A",
+						scanPartnerUserId: scanPartner?.userId || "N/A",
+						scanPartnerPhone: scanPartner?.telephoneNumber || "N/A",
+
+						// Agent Details
+						agentName: `${agent.firstname || ""} ${
+							agent.lastname || ""
+						}`.trim(),
+						mbeId: agent.mbeId || "N/A",
+						agentOldId: agent.mbe_old_id || "N/A",
+						agentEmail: agent.email || "N/A",
+						agentPhone: agent.phone || "N/A",
+						agentBvn: agent.bvn || "N/A",
+						agentStatus: agent.accountStatus || "N/A",
+						agentActive: agent.isActive ? "Yes" : "No",
+
+						// Agent Bank Details
+						agentAccountName: agentAccount?.accountName || "N/A",
+						agentAccountNumber: agentAccount?.accountNumber || "N/A",
+						agentBankName: agentAccount?.bankName || "N/A",
+						agentBankCode: agentAccount?.bankCode || "N/A",
+						agentRecipientCode: agentAccount?.recipientCode || "N/A",
+						agentVfdBankName: agentAccount?.vfdBankName || "N/A",
+						agentVfdBankCode: agentAccount?.vfdBankCode || "N/A",
+
+						// Scan Partner Bank Details
+						spAccountName: scanPartnerAccount?.accountName || "N/A",
+						spAccountNumber: scanPartnerAccount?.accountNumber || "N/A",
+						spBankName: scanPartnerAccount?.bankName || "N/A",
+						spBankCode: scanPartnerAccount?.bankCode || "N/A",
+						spVfdBankName: scanPartnerAccount?.vfdBankName || "N/A",
+						spVfdBankCode: scanPartnerAccount?.vfdBankCode || "N/A",
+
+						// Loan & Device Details
+						loanRecordId: commission.deviceOnLoanId || "N/A",
+						deviceName:
+							deviceDetails?.deviceName || customerDetails?.deviceName || "N/A",
+						imei: imei,
+						deviceStatus:
+							deviceDetails?.deviceStatus ||
+							customerDetails?.deviceStatus ||
+							"N/A",
+						devicePrice:
+							(deviceDetails?.devicePrice ||
+								customerDetails?.devicePrice ||
+								0) > 0
+								? (
+										deviceDetails?.devicePrice ||
+										customerDetails?.devicePrice ||
+										0
+								  ).toLocaleString()
+								: "N/A",
+						loanAmount:
+							(customerDetails?.loanAmount || loanRecord?.loanAmount || 0) > 0
+								? (
+										customerDetails?.loanAmount ||
+										loanRecord?.loanAmount ||
+										0
+								  ).toLocaleString()
+								: "N/A",
+						downPayment:
+							(customerDetails?.downPayment || loanRecord?.downPayment || 0) > 0
+								? (
+										customerDetails?.downPayment ||
+										loanRecord?.downPayment ||
+										0
+								  ).toLocaleString()
+								: "N/A",
+						monthlyPayment:
+							(customerDetails?.monthlyPayment ||
+								loanRecord?.monthlyRepayment ||
+								0) > 0
+								? (
+										customerDetails?.monthlyPayment ||
+										loanRecord?.monthlyRepayment ||
+										0
+								  ).toLocaleString()
+								: "N/A",
+						duration:
+							customerDetails?.duration || loanRecord?.duration || "N/A",
+
+						// Customer Details (removed email as requested)
+						customerName: customerDetails?.customerName || "N/A",
+						customerId: customerDetails?.customerId || "N/A",
+						customerPhone: customerDetails?.customerPhone || "N/A",
+
+						// Commission Details
+						totalCommission: commission.commission
+							? commission.commission.toLocaleString()
+							: "0",
+						agentCommission: commission.mbeCommission
+							? commission.mbeCommission.toLocaleString()
+							: "0",
+						partnerCommission: commission.partnerCommission
+							? commission.partnerCommission.toLocaleString()
+							: "0",
+						splitPercent: commission.splitPercent
+							? `${commission.splitPercent}%`
+							: "N/A",
+						agentPaid: commission.agentPaid ? "Yes" : "No",
+						partnerPaid: commission.partnerPaid ? "Yes" : "No",
+						paymentStatus: commission.paymentStatus || "N/A",
+						commissionDate: commission.date_created
+							? new Date(commission.date_created).toLocaleDateString()
+							: "N/A",
+						lastUpdated: commission.updated_at
+							? new Date(commission.updated_at).toLocaleDateString()
+							: "N/A",
+
+						// Location Details
+						agentState:
+							agentKyc?.state ||
+							agentFromAllData?.state ||
+							agent.state ||
+							"N/A",
+						agentCity: agentKyc?.city || "N/A",
+						spCompanyState: scanPartner?.companyState || "N/A",
+						spCompanyCity: scanPartner?.companyCity || "N/A",
+					};
+
+					const row = commissionWs.addRow(rowData);
+
+					// Apply color coding based on scan partner
+					const color = scanPartnerColorMap.get(scanPartner?.userId);
+					if (color) {
+						row.eachCell((cell) => {
+							cell.fill = {
+								type: "pattern",
+								pattern: "solid",
+								fgColor: { argb: color },
+							};
+						});
+					}
+
+					// Apply conditional formatting for payment status
+					const paymentStatusCell = row.getCell("paymentStatus");
+					if (commission.paymentStatus === "PAID") {
+						paymentStatusCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FF90EE90" }, // Light green
+						};
+					} else if (commission.paymentStatus === "UNPAID") {
+						paymentStatusCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FFFFCCCB" }, // Light red
+						};
+					}
+
+					// Apply conditional formatting for agent/partner paid status
+					const agentPaidCell = row.getCell("agentPaid");
+					const partnerPaidCell = row.getCell("partnerPaid");
+
+					if (commission.agentPaid) {
+						agentPaidCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FF90EE90" }, // Light green
+						};
+					} else {
+						agentPaidCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FFFFCCCB" }, // Light red
+						};
+					}
+
+					if (commission.partnerPaid) {
+						partnerPaidCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FF90EE90" }, // Light green
+						};
+					} else {
+						partnerPaidCell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: "FFFFCCCB" }, // Light red
+						};
+					}
+				});
+			});
+			// Add autofilter with freeze panes
+			commissionWs.autoFilter = {
+				from: { row: 1, column: 1 },
+				to: { row: commissionRowIndex, column: commissionWs.columns.length },
+			};
+
+			// --- 2. Agent Commission Sheet (Enhanced) ---
+			const agentCommissionWs = wb.addWorksheet("Agent Commission");
+			agentCommissionWs.columns = [
+				{ header: "S/N", key: "sn", width: 8 },
+				{ header: "Agent Name", key: "agentName", width: 25 },
+				{ header: "MBE ID", key: "mbeId", width: 20 },
+				{ header: "Agent Email", key: "agentEmail", width: 30 },
+				{ header: "Agent Phone", key: "agentPhone", width: 20 },
+				{ header: "Agent Status", key: "agentStatus", width: 15 },
+				{ header: "Partner Name", key: "partnerName", width: 25 },
+				{ header: "Partner User ID", key: "partnerUserId", width: 25 },
+				{ header: "Agent State", key: "agentState", width: 15 },
+				{ header: "Agent City", key: "agentCity", width: 20 },
+				{ header: "Total Commission", key: "totalCommission", width: 18 },
+				{
+					header: "Total Agent Commission",
+					key: "totalAgentCommission",
+					width: 20,
+				},
+				{
+					header: "Total Partner Commission",
+					key: "totalPartnerCommission",
+					width: 20,
+				},
+				{ header: "Commission Count", key: "commissionCount", width: 18 },
+				{
+					header: "Avg Commission per Transaction",
+					key: "avgCommission",
+					width: 25,
+				},
+				{ header: "Paid Commissions", key: "paidCommissions", width: 18 },
+				{ header: "Unpaid Commissions", key: "unpaidCommissions", width: 18 },
+				{ header: "Agent Account Name", key: "agentAccountName", width: 25 },
+				{
+					header: "Agent Account Number",
+					key: "agentAccountNumber",
+					width: 20,
+				},
+				{ header: "Agent Bank Name", key: "agentBankName", width: 25 },
+				{
+					header: "Latest Commission Date",
+					key: "latestCommissionDate",
+					width: 20,
+				},
+			];
+
+			let agentCommissionRowIndex = 1;
+			commissionAgents.forEach((agent: any) => {
+				// Find scan partner data from allAgentData for complete information
+				let scanPartnerData = null;
+				let agentFromAllData = null;
+				for (const spData of allAgentData) {
+					const matchingAgent = spData.agents?.find(
+						(a: any) => a.mbeId === agent.mbeId
+					);
+					if (matchingAgent) {
+						scanPartnerData = spData;
+						agentFromAllData = matchingAgent;
+						break;
+					}
+				}
+
+				const scanPartner = scanPartnerData || agent?.scanPartner || {};
+				const agentAccount =
+					agentFromAllData?.MbeAccountDetails || agent?.MbeAccountDetails || {};
+				const agentKyc = agentFromAllData?.MbeKyc || agent?.MbeKyc || {};
+
+				// Calculate commission statistics
+				const commissions = agent.Commission || [];
+				const totalCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.commission || 0),
+					0
+				);
+				const totalAgentCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.mbeCommission || 0),
+					0
+				);
+				const totalPartnerCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.partnerCommission || 0),
+					0
+				);
+				const commissionCount = commissions.length;
+				const avgCommission =
+					commissionCount > 0 ? totalCommission / commissionCount : 0;
+				const paidCommissions = commissions.filter(
+					(c: any) => c.agentPaid
+				).length;
+				const unpaidCommissions = commissionCount - paidCommissions;
+
+				// Get latest commission date
+				const latestCommissionDate =
+					commissions.length > 0
+						? commissions.reduce((latest: any, c: any) => {
+								const currentDate = new Date(c.date_created);
+								const latestDate = new Date(latest.date_created);
+								return currentDate > latestDate ? c : latest;
+						  }).date_created
+						: null;
+
+				const rowData = {
+					sn: agentCommissionRowIndex++,
+					agentName: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
+					mbeId: agent.mbeId || "N/A",
+					agentEmail: agent.email || "N/A",
+					agentPhone: agent.phone || "N/A",
+					agentStatus: agent.accountStatus || "N/A",
+					partnerName: scanPartner?.companyName || "N/A",
+					partnerUserId: scanPartner?.userId || "N/A",
+					agentState:
+						agentKyc?.state || agentFromAllData?.state || agent.state || "N/A",
+					agentCity: agentKyc?.city || "N/A",
+					totalCommission: totalCommission.toLocaleString(),
+					totalAgentCommission: totalAgentCommission.toLocaleString(),
+					totalPartnerCommission: totalPartnerCommission.toLocaleString(),
+					commissionCount,
+					avgCommission:
+						avgCommission > 0 ? avgCommission.toLocaleString() : "0",
+					paidCommissions,
+					unpaidCommissions,
+					agentAccountName: agentAccount?.accountName || "N/A",
+					agentAccountNumber: agentAccount?.accountNumber || "N/A",
+					agentBankName: agentAccount?.bankName || "N/A",
+					latestCommissionDate: latestCommissionDate
+						? new Date(latestCommissionDate).toLocaleDateString()
+						: "N/A",
+				};
+
+				const row = agentCommissionWs.addRow(rowData);
+
+				// Apply color coding based on scan partner
+				const color = scanPartnerColorMap.get(scanPartner?.userId);
+				if (color) {
+					row.eachCell((cell) => {
+						cell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: color },
+						};
+					});
+				}
+
+				// Highlight unpaid commissions
+				if (unpaidCommissions > 0) {
+					row.getCell("unpaidCommissions").fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FFFFCCCB" }, // Light red
+					};
+				}
+			});
+
+			// Style header row
+			const agentHeaderRow = agentCommissionWs.getRow(1);
+			agentHeaderRow.font = { bold: true, size: 11 };
+
+			// Add autofilter
+			agentCommissionWs.autoFilter = {
+				from: { row: 1, column: 1 },
+				to: {
+					row: agentCommissionRowIndex,
+					column: agentCommissionWs.columns.length,
+				},
+			};
+
+			// --- 3. Partner Commission Sheet (Enhanced) ---
+			const partnerCommissionWs = wb.addWorksheet("Partner Commission");
+			partnerCommissionWs.columns = [
+				{ header: "S/N", key: "sn", width: 8 },
+				{ header: "Partner Name", key: "partnerName", width: 25 },
+				{ header: "Partner User ID", key: "partnerUserId", width: 25 },
+				{ header: "Partner Email", key: "partnerEmail", width: 30 },
+				{ header: "Partner Phone", key: "partnerPhone", width: 20 },
+				{ header: "Company State", key: "companyState", width: 20 },
+				{ header: "Company City", key: "companyCity", width: 20 },
+				{ header: "Account Status", key: "accountStatus", width: 15 },
+				{ header: "Total Commission", key: "totalCommission", width: 18 },
+				{
+					header: "Total Agent Commission",
+					key: "totalAgentCommission",
+					width: 20,
+				},
+				{
+					header: "Total Partner Commission",
+					key: "totalPartnerCommission",
+					width: 20,
+				},
+				{ header: "Commission Count", key: "commissionCount", width: 18 },
+				{ header: "Agent Count", key: "agentCount", width: 15 },
+				{ header: "Active Agents", key: "activeAgents", width: 15 },
+				{ header: "Inactive Agents", key: "inactiveAgents", width: 15 },
+				{
+					header: "Avg Commission per Agent",
+					key: "avgCommissionPerAgent",
+					width: 25,
+				},
+				{
+					header: "Avg Commission per Transaction",
+					key: "avgCommissionPerTransaction",
+					width: 28,
+				},
+				{
+					header: "Partner Paid Commissions",
+					key: "partnerPaidCommissions",
+					width: 25,
+				},
+				{
+					header: "Partner Unpaid Commissions",
+					key: "partnerUnpaidCommissions",
+					width: 25,
+				},
+				{ header: "SP Account Name", key: "spAccountName", width: 25 },
+				{ header: "SP Account Number", key: "spAccountNumber", width: 20 },
+				{ header: "SP Bank Name", key: "spBankName", width: 25 },
+			];
+
+			// Group by partner with enhanced data
+			const partnerMap = new Map();
+			commissionAgents.forEach((agent: any) => {
+				// Find scan partner data from allAgentData
+				let scanPartnerData = null;
+				for (const spData of allAgentData) {
+					if (spData.agents?.some((a: any) => a.mbeId === agent.mbeId)) {
+						scanPartnerData = spData;
+						break;
+					}
+				}
+
+				const scanPartner = scanPartnerData || agent?.scanPartner || {};
+				const partnerId = scanPartner?.userId || "N/A";
+				const partnerName = scanPartner?.companyName || "N/A";
+
+				if (!partnerMap.has(partnerId)) {
+					partnerMap.set(partnerId, {
+						partnerName,
+						partnerUserId: partnerId,
+						partnerEmail: scanPartner?.email || "N/A",
+						partnerPhone: scanPartner?.telephoneNumber || "N/A",
+						companyState: scanPartner?.companyState || "N/A",
+						companyCity: scanPartner?.companyCity || "N/A",
+						accountStatus: scanPartner?.accountStatus || "N/A",
+						totalCommission: 0,
+						totalAgentCommission: 0,
+						totalPartnerCommission: 0,
+						commissionCount: 0,
+						agentCount: 0,
+						activeAgents: 0,
+						inactiveAgents: 0,
+						partnerPaidCommissions: 0,
+						partnerUnpaidCommissions: 0,
+						spAccountName:
+							scanPartner?.UserAccountDetails?.[0]?.accountName || "N/A",
+						spAccountNumber:
+							scanPartner?.UserAccountDetails?.[0]?.accountNumber || "N/A",
+						spBankName: scanPartner?.UserAccountDetails?.[0]?.bankName || "N/A",
+						agents: [],
+					});
+				}
+
+				const partner = partnerMap.get(partnerId);
+				const commissions = agent.Commission || [];
+
+				partner.totalCommission += commissions.reduce(
+					(sum: number, c: any) => sum + (c.commission || 0),
+					0
+				);
+				partner.totalAgentCommission += commissions.reduce(
+					(sum: number, c: any) => sum + (c.mbeCommission || 0),
+					0
+				);
+				partner.totalPartnerCommission += commissions.reduce(
+					(sum: number, c: any) => sum + (c.partnerCommission || 0),
+					0
+				);
+				partner.commissionCount += commissions.length;
+				partner.agentCount += 1;
+				partner.agents.push(agent);
+
+				// Count active/inactive agents
+				if (agent.isActive) {
+					partner.activeAgents += 1;
+				} else {
+					partner.inactiveAgents += 1;
+				}
+
+				// Count paid/unpaid partner commissions
+				partner.partnerPaidCommissions += commissions.filter(
+					(c: any) => c.partnerPaid
+				).length;
+				partner.partnerUnpaidCommissions += commissions.filter(
+					(c: any) => !c.partnerPaid
+				).length;
+			});
+
+			let partnerCommissionRowIndex = 1;
+			Array.from(partnerMap.values()).forEach((partner: any) => {
+				const avgCommissionPerAgent =
+					partner.agentCount > 0
+						? partner.totalCommission / partner.agentCount
+						: 0;
+				const avgCommissionPerTransaction =
+					partner.commissionCount > 0
+						? partner.totalCommission / partner.commissionCount
+						: 0;
+
+				const rowData = {
+					sn: partnerCommissionRowIndex++,
+					partnerName: partner.partnerName,
+					partnerUserId: partner.partnerUserId,
+					partnerEmail: partner.partnerEmail,
+					partnerPhone: partner.partnerPhone,
+					companyState: partner.companyState,
+					companyCity: partner.companyCity,
+					accountStatus: partner.accountStatus,
+					totalCommission: partner.totalCommission.toLocaleString(),
+					totalAgentCommission: partner.totalAgentCommission.toLocaleString(),
+					totalPartnerCommission:
+						partner.totalPartnerCommission.toLocaleString(),
+					commissionCount: partner.commissionCount,
+					agentCount: partner.agentCount,
+					activeAgents: partner.activeAgents,
+					inactiveAgents: partner.inactiveAgents,
+					avgCommissionPerAgent:
+						avgCommissionPerAgent > 0
+							? avgCommissionPerAgent.toLocaleString()
+							: "0",
+					avgCommissionPerTransaction:
+						avgCommissionPerTransaction > 0
+							? avgCommissionPerTransaction.toLocaleString()
+							: "0",
+					partnerPaidCommissions: partner.partnerPaidCommissions,
+					partnerUnpaidCommissions: partner.partnerUnpaidCommissions,
+					spAccountName: partner.spAccountName,
+					spAccountNumber: partner.spAccountNumber,
+					spBankName: partner.spBankName,
+				};
+
+				const row = partnerCommissionWs.addRow(rowData);
+
+				// Apply color coding based on scan partner
+				const color = scanPartnerColorMap.get(partner.partnerUserId);
+				if (color) {
+					row.eachCell((cell) => {
+						cell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: color },
+						};
+					});
+				}
+
+				// Highlight partners with unpaid commissions
+				if (partner.partnerUnpaidCommissions > 0) {
+					row.getCell("partnerUnpaidCommissions").fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FFFFCCCB" }, // Light red
+					};
+				}
+			});
+
+			// Style header row
+			const partnerHeaderRow = partnerCommissionWs.getRow(1);
+			partnerHeaderRow.font = { bold: true, size: 11 };
+
+			// Add autofilter
+			partnerCommissionWs.autoFilter = {
+				from: { row: 1, column: 1 },
+				to: {
+					row: partnerCommissionRowIndex,
+					column: partnerCommissionWs.columns.length,
+				},
+			};
+
+			// --- 4. Commission Summary Sheet (Enhanced) ---
+			const commissionSummaryWs = wb.addWorksheet("Commission Summary");
+			commissionSummaryWs.columns = [
+				{ header: "Type", key: "type", width: 18 },
+				{ header: "Name", key: "name", width: 30 },
+				{ header: "ID/User ID", key: "id", width: 25 },
+				{ header: "Location", key: "location", width: 25 },
+				{ header: "Status", key: "status", width: 15 },
+				{ header: "Total Commission", key: "totalCommission", width: 18 },
+				{ header: "Agent Commission", key: "totalAgentCommission", width: 20 },
+				{
+					header: "Partner Commission",
+					key: "totalPartnerCommission",
+					width: 20,
+				},
+				{ header: "Commission Count", key: "commissionCount", width: 18 },
+				{ header: "Avg per Transaction", key: "avgPerTransaction", width: 20 },
+				{ header: "Paid Count", key: "paidCount", width: 15 },
+				{ header: "Unpaid Count", key: "unpaidCount", width: 15 },
+			];
+
+			// Enhanced Agent summary
+			commissionAgents.forEach((agent: any) => {
+				// Find scan partner data from allAgentData
+				let scanPartnerData = null;
+				let agentFromAllData = null;
+				for (const spData of allAgentData) {
+					const matchingAgent = spData.agents?.find(
+						(a: any) => a.mbeId === agent.mbeId
+					);
+					if (matchingAgent) {
+						scanPartnerData = spData;
+						agentFromAllData = matchingAgent;
+						break;
+					}
+				}
+
+				const agentKyc = agentFromAllData?.MbeKyc || agent?.MbeKyc || {};
+				const commissions = agent.Commission || [];
+
+				const totalCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.commission || 0),
+					0
+				);
+				const totalAgentCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.mbeCommission || 0),
+					0
+				);
+				const totalPartnerCommission = commissions.reduce(
+					(sum: number, c: any) => sum + (c.partnerCommission || 0),
+					0
+				);
+				const commissionCount = commissions.length;
+				const avgPerTransaction =
+					commissionCount > 0 ? totalCommission / commissionCount : 0;
+				const paidCount = commissions.filter((c: any) => c.agentPaid).length;
+				const unpaidCount = commissionCount - paidCount;
+
+				const location =
+					agentKyc?.city && agentKyc?.state
+						? `${agentKyc.city}, ${agentKyc.state}`
+						: agentKyc?.state ||
+						  agentFromAllData?.state ||
+						  agent.state ||
+						  "Unknown";
+
+				const rowData = {
+					type: "Agent",
+					name: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
+					id: agent.mbeId || "N/A",
+					location,
+					status: agent.accountStatus || "N/A",
+					totalCommission: totalCommission.toLocaleString(),
+					totalAgentCommission: totalAgentCommission.toLocaleString(),
+					totalPartnerCommission: totalPartnerCommission.toLocaleString(),
+					commissionCount,
+					avgPerTransaction:
+						avgPerTransaction > 0 ? avgPerTransaction.toLocaleString() : "0",
+					paidCount,
+					unpaidCount,
+				};
+
+				const row = commissionSummaryWs.addRow(rowData);
+
+				// Apply color coding
+				const color = scanPartnerColorMap.get(scanPartnerData?.userId);
+				if (color) {
+					row.eachCell((cell) => {
+						cell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: color },
+						};
+					});
+				}
+			});
+
+			// Enhanced Partner summary
+			Array.from(partnerMap.values()).forEach((partner: any) => {
+				const avgPerTransaction =
+					partner.commissionCount > 0
+						? partner.totalCommission / partner.commissionCount
+						: 0;
+
+				const location =
+					partner.companyCity && partner.companyState
+						? `${partner.companyCity}, ${partner.companyState}`
+						: partner.companyState || "Unknown";
+
+				const rowData = {
+					type: "Partner",
+					name: partner.partnerName,
+					id: partner.partnerUserId,
+					location,
+					status: partner.accountStatus,
+					totalCommission: partner.totalCommission.toLocaleString(),
+					totalAgentCommission: partner.totalAgentCommission.toLocaleString(),
+					totalPartnerCommission:
+						partner.totalPartnerCommission.toLocaleString(),
+					commissionCount: partner.commissionCount,
+					avgPerTransaction:
+						avgPerTransaction > 0 ? avgPerTransaction.toLocaleString() : "0",
+					paidCount: partner.partnerPaidCommissions,
+					unpaidCount: partner.partnerUnpaidCommissions,
+				};
+
+				const row = commissionSummaryWs.addRow(rowData);
+
+				// Apply color coding
+				const color = scanPartnerColorMap.get(partner.partnerUserId);
+				if (color) {
+					row.eachCell((cell) => {
+						cell.fill = {
+							type: "pattern",
+							pattern: "solid",
+							fgColor: { argb: color },
+						};
+					});
+				}
+			});
+
+			// Style header row
+			const summaryHeaderRow = commissionSummaryWs.getRow(1);
+			summaryHeaderRow.font = { bold: true, size: 11 };
+
+			// Add autofilter
+			commissionSummaryWs.autoFilter = {
+				from: { row: 1, column: 1 },
+				to: {
+					row: commissionSummaryWs.rowCount,
+					column: commissionSummaryWs.columns.length,
+				},
+			};
 			// 1. Scan Partner Summary Sheet
 			const scanPartnerWs = wb.addWorksheet("Scan Partners Summary");
 			scanPartnerWs.columns = [
@@ -366,12 +1312,16 @@ export default function ScanPartnerPage() {
 					verifiedAgents,
 					unverifiedAgents,
 					createdAt: new Date(scanPartnerData.createdAt).toLocaleDateString(),
-					accountNumber: scanPartnerData?.UserAccountDetails?.[0]?.accountNumber || "N/A",
-					accountName: scanPartnerData?.UserAccountDetails?.[0]?.accountName || "N/A",
+					accountNumber:
+						scanPartnerData?.UserAccountDetails?.[0]?.accountNumber || "N/A",
+					accountName:
+						scanPartnerData?.UserAccountDetails?.[0]?.accountName || "N/A",
 					bankName: scanPartnerData?.UserAccountDetails?.[0]?.bankName || "N/A",
 					bankCode: scanPartnerData?.UserAccountDetails?.[0]?.bankCode || "N/A",
-					vfdBankCode: scanPartnerData?.UserAccountDetails?.[0]?.vfdBankCode || "N/A",
-					vfdBankName: scanPartnerData?.UserAccountDetails?.[0]?.vfdBankName || "N/A",
+					vfdBankCode:
+						scanPartnerData?.UserAccountDetails?.[0]?.vfdBankCode || "N/A",
+					vfdBankName:
+						scanPartnerData?.UserAccountDetails?.[0]?.vfdBankName || "N/A",
 				};
 				const row = scanPartnerWs.addRow(rowData);
 
@@ -663,15 +1613,7 @@ export default function ScanPartnerPage() {
 			];
 
 			// Fetch customer records data for comprehensive sales details
-			let customerRecords: any[] = [];
-			try {
-				const customerRecordsResponse = await getAllCustomerRecord();
-				customerRecords = customerRecordsResponse?.data || [];
-				console.log(`Fetched ${customerRecords.length} customer records for export`);
-			} catch (error) {
-				console.error("Error fetching customer records:", error);
-				customerRecords = [];
-			}
+			// Customer records already fetched above for IMEI mapping
 
 			// Process customer records and add comprehensive data
 			let customerRowIndex = 2; // Start at 2 (after header row)
@@ -868,10 +1810,15 @@ export default function ScanPartnerPage() {
 				customerRowIndex++;
 			}
 
-			console.log(`Processed ${customerRowIndex - 2} customers for Customer Sales Details sheet`);
+			console.log(
+				`Processed ${
+					customerRowIndex - 2
+				} customers for Customer Sales Details sheet`
+			);
 
 			// Add autofilter to Customer Sales Details sheet
-			if (customerRowIndex > 2) { // We have data rows beyond the header
+			if (customerRowIndex > 2) {
+				// We have data rows beyond the header
 				customersWs.autoFilter = {
 					from: { row: 1, column: 1 },
 					to: { row: customerRowIndex - 1, column: customersWs.columns.length },

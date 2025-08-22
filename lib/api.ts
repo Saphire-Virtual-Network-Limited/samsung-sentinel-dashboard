@@ -1,3 +1,54 @@
+// ============================================================================
+// COMMISSION PAYMENT MARK/UNMARK APIs
+// ============================================================================
+
+/**
+ * Mark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function markBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-both-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-both-paid/${commissionId}`, "PATCH");
+}
 import axios from "axios";
 import { cachedApiCall, generateCacheKey } from "./cache";
 
@@ -841,18 +892,16 @@ export interface MbeWithAgents {
 	totalAgents: number;
 }
 
-export interface MbeAssignedAgentsPagination {
-	currentPage: number;
-	totalPages: number;
-	totalItems: number;
-	itemsPerPage: number;
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-}
-
 export interface MbeAssignedAgentsData {
-	data: MbeWithAgents[];
-	pagination: MbeAssignedAgentsPagination;
+	mbe: {
+		mbeId: string;
+		firstname: string;
+		lastname: string;
+		phone: string;
+		email: string;
+	};
+	agents: MbeWithAgents[];
+	totalAgents: number;
 }
 
 export interface MbeAssignedAgentsResponse {
@@ -975,6 +1024,302 @@ export async function getAgentLoansAndCommissions(
 
 	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
 	const endpoint = `/admin/mbe/agents-loans/${userId}${query}`;
+	return apiCall(endpoint, "GET");
+}
+
+// Get all agents with their loans and commissions (admin-level aggregation)
+export interface AllAgentsLoansAndCommissionsParams {
+	startDate?: string;
+	endDate?: string;
+	minCommission?: number;
+	maxCommission?: number;
+	sortBy?: string;
+	sortOrder?: string;
+	limit?: number;
+	offset?: number;
+}
+
+// Base interfaces for shared types
+export interface BaseEntity {
+	createdAt: string;
+	updatedAt: string;
+}
+
+// User interface
+export interface User {
+	userId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	telephoneNumber: string;
+}
+
+// Device interface
+export interface Device {
+	price: number;
+	deviceModelNumber: string;
+	SAP: number;
+	SLD: number;
+	createdAt: string;
+	deviceManufacturer: string;
+	deviceName: string;
+	deviceRam: string;
+	deviceScreen: string | null;
+	deviceStorage: string | null;
+	imageLink: string;
+	newDeviceId: string;
+	oldDeviceId: string | null;
+	sentiprotect: number;
+	updatedAt: string;
+	deviceType: string | null;
+	deviceCamera: string[];
+	android_go: string;
+	erpItemCode: string;
+	erpName: string;
+	erpSerialNo: string;
+	devfinStatus: boolean;
+	status: string;
+}
+
+// Store interface
+export interface Store {
+	storeOldId: number;
+	storeName: string;
+	city: string | null;
+	state: string | null;
+	region: string | null;
+	address: string | null;
+	accountNumber: string;
+	accountName: string;
+	bankName: string;
+	bankCode: string;
+	phoneNumber: string | null;
+	storeEmail: string | null;
+	longitude: number | null;
+	latitude: number | null;
+	clusterId: string | null;
+	partner: string | null;
+	storeOpen: string | null;
+	storeClose: string | null;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+	storeId: string;
+	isArchived: boolean;
+	storeErpId: string | null;
+	channel: string;
+}
+
+// Store on Loan interface
+export interface StoreOnLoan extends BaseEntity {
+	storeOnLoanId: string;
+	storeId: string;
+	loanRecordId: string;
+	amount: number;
+	status: string;
+	channel: string;
+	bankUsed: string;
+	payChannel: string;
+	reference: string;
+	sessionId: string;
+	tnxId: string;
+	store: Store;
+}
+
+// Customer interface
+export interface Customer extends BaseEntity {
+	customerId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	bvn: string;
+	dob: string;
+	dobMisMatch: boolean;
+	customerLoanDiskId: string;
+	channel: string;
+	bvnPhoneNumber: string;
+	mainPhoneNumber: string;
+	mbeId: string;
+	monoCustomerConnectedCustomerId: string;
+	inputtedDob: string;
+}
+
+// Device on Loan interface
+export interface DeviceOnLoan extends BaseEntity {
+	deviceOnLoanId: string;
+	deviceId: string;
+	loanRecordId: string;
+	status: string;
+	channel: string;
+	imei: string;
+	amount: number;
+	devicePrice: number;
+	lockType: string;
+	device: Device;
+}
+
+// Loan Record interface
+export interface LoanRecord extends BaseEntity {
+	loanRecordId: string;
+	customerId: string;
+	loanDiskId: string;
+	lastPoint: string;
+	channel: string;
+	loanStatus: string;
+	loanAmount: number;
+	deviceId: string;
+	downPayment: number;
+	insurancePackage: string;
+	insurancePrice: number;
+	mbsEligibleAmount: number;
+	payFrequency: string;
+	storeId: string;
+	devicePrice: number;
+	deviceAmount: number;
+	monthlyRepayment: number;
+	duration: number;
+	interestAmount: number;
+	deviceName: string;
+	mbeId: string;
+	solarPackageId: string | null;
+	powerflexCustomCalculationId: string | null;
+	customer: Customer;
+	StoresOnLoan: StoreOnLoan[];
+}
+
+// Commission interface (improved, type-safe, with device and agent/partner linkage)
+export interface Commission {
+	commissionId: string;
+	mbeId: string;
+	deviceOnLoanId: string;
+	commission: number;
+	mbeCommission: number;
+	partnerCommission: number;
+	splitPercent: number;
+	agentPaid: boolean;
+	partnerPaid: boolean;
+	agentPaidAt: string | null;
+	partnerPaidAt: string | null;
+	paymentStatus: string;
+	date_created: string;
+	updated_at: string;
+	mbePayoutId: string | null;
+	partnerPayoutId: string | null;
+	devicesOnLoan: DeviceOnLoan;
+	// Optionally, link to the agent and partner for richer lookups
+	agent?: MobiflexSalesAgent;
+	partner?: User;
+}
+
+// Commission Summary interface
+export interface CommissionSummary {
+	totalCommission: number;
+	totalMbeCommission: number;
+	totalPartnerCommission: number;
+	commissionCount: number;
+	avgCommission: number;
+	avgMbeCommission: number;
+	avgPartnerCommission: number;
+	maxCommission: number;
+	minCommission: number;
+	latestCommissionDate: string;
+	earliestCommissionDate: string;
+}
+
+// Main Sales Agent interface (improved, type-safe, with all relationships)
+export interface MobiflexSalesAgent extends BaseEntity {
+	title: string;
+	mbeId: string;
+	mbe_old_id: string;
+	firstname: string;
+	lastname: string;
+	phone: string;
+	state: string | null;
+	username: string;
+	accountStatus: string;
+	bvn: string;
+	bvnPhoneNumber: string;
+	channel: string;
+	dob: string;
+	email: string;
+	isActive: boolean;
+	otp: string | null;
+	otpExpiry: string | null;
+	password: string;
+	role: string;
+	tokenVersion: number;
+	resetOtp: string | null;
+	resetOtpExpiry: string | null;
+	imagePublicId: string;
+	imageUrl: string;
+	defaultSplitPercent: number | null;
+	mbeManaged: boolean;
+	userId: string;
+	assignedMbeId: string | null;
+	LoanRecord: LoanRecord[];
+	Commission: Commission[];
+	user: User;
+	commissionSummary: CommissionSummary;
+	totalCommissionCount: number;
+	filteredCommissionCount: number;
+	scanPartner: User;
+	// Optionally, add bank details for reporting
+	MbeAccountDetails?: {
+		accountName?: string;
+		accountNumber?: string;
+		bankName?: string;
+		bankCode?: string;
+		vfdBankName?: string;
+		vfdBankCode?: string;
+		recipientCode?: string;
+		walletBalance?: string;
+	};
+	// Optionally, add UserAccountDetails for scan partner
+	UserAccountDetails?: Array<{
+		accountName?: string;
+		accountNumber?: string;
+		bankName?: string;
+		bankCode?: string;
+		vfdBankName?: string;
+		vfdBankCode?: string;
+		recipientCode?: string;
+		walletBalance?: string;
+	}>;
+}
+
+export interface AllAgentsLoansAndCommissionsData {
+	agents: MobiflexSalesAgent[];
+	appliedFilters: Record<string, any>;
+	pagination: Record<string, any>;
+}
+
+export interface AllAgentsLoansAndCommissionsResponse {
+	statusCode: number;
+	message: string;
+	data: AllAgentsLoansAndCommissionsData;
+	responseTime: string;
+}
+
+export async function getAllAgentsLoansAndCommissions(
+	params: AllAgentsLoansAndCommissionsParams = {}
+): Promise<AllAgentsLoansAndCommissionsResponse> {
+	const queryParams = new URLSearchParams();
+
+	if (params.startDate) queryParams.append("startDate", params.startDate);
+	if (params.endDate) queryParams.append("endDate", params.endDate);
+	if (params.minCommission !== undefined)
+		queryParams.append("minCommission", params.minCommission.toString());
+	if (params.maxCommission !== undefined)
+		queryParams.append("maxCommission", params.maxCommission.toString());
+	if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+	if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+	if (params.limit !== undefined)
+		queryParams.append("limit", params.limit.toString());
+	if (params.offset !== undefined)
+		queryParams.append("offset", params.offset.toString());
+
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	const endpoint = `/admin/mbe/all-agents/loans${query}`;
 	return apiCall(endpoint, "GET");
 }
 
@@ -2498,7 +2843,7 @@ export async function updateUserProfile(userId: string, data: UpdateUserDto) {
 }
 
 // single collection customer, Extract transaction data for a specific customer
-export async function getSingleCollectionCustomer(
+export async function getSingleCollectionCustomerData(
 	customerId: string,
 	channel?: string
 ) {
@@ -2507,47 +2852,27 @@ export async function getSingleCollectionCustomer(
 }
 
 //Get loan repayment(excluding down payment and card tokenization)
-export async function getLoanRepayment(
-	customerId: string,
-	channel?: string,
+export async function getLoanRepaymentData(
 	startDate?: string,
 	endDate?: string
 ) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(
-		`/collections/loan-repayments?customerId=${customerId}${query}${query2}${query3}`,
-		"GET"
-	);
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPayment(
-	customerId: string,
-	channel?: string,
-	startDate?: string,
-	endDate?: string
-) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(
-		`/collections/down-payments?customerId=${customerId}${query}${query2}${query3}`,
-		"GET"
-	);
+export async function getDownPaymentData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(
-	channel?: string,
-	startDate?: string,
-	endDate?: string
-) {
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	const query = channel ? `&channel=${channel}` : "";
-	return apiCall(`/collections/all?${query2}${query3}${query}`, "GET");
+export async function getTransactionData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/all${query1}${query2}`, "GET");
 }
 
 // SENTINEL INTEGRATION PART
