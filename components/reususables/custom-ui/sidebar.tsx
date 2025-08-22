@@ -173,8 +173,18 @@ export function AppSidebar() {
     {
       icon: CreditCard,
       title: "Loans",
-      url: "/access/admin/loans",
       id: "admin-loans",
+      subItems: [
+        {
+          title: "All Loans",
+          url: "/access/admin/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/admin/loans/repayment",
+        },
+        
+      ],
     },
     {
       icon: Users,
@@ -518,8 +528,17 @@ export function AppSidebar() {
           {
             icon: CreditCard,
             title: "Loans",
-            url: "/access/sub-admin/loans",
             id: "sub-admin-loans",
+            subItems: [
+              {
+                title: "All Loans",
+                url: "/access/sub-admin/loans/loans",
+              },
+              {
+                title: "Repayment",
+                url: "/access/sub-admin/loans/repayment",
+              },
+            ],
           },
           {
             icon: Users,
@@ -741,8 +760,17 @@ export function AppSidebar() {
     {
       icon: CreditCard,
       title: "Loans",
-      url: "/access/dev/loans",
       id: "developer-loans",
+      subItems: [
+        {
+          title: "All Loans",
+          url: "/access/dev/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/dev/loans/repayment",
+        },
+      ]
     },
     {
       icon: Package2Icon,
@@ -853,8 +881,19 @@ export function AppSidebar() {
     {
       icon: CreditCard,
       title: "Loans",
-      url: "/access/finance/loans",
-      id: "finance-loans",
+      id: "finance-loans", 
+      subItems: [
+        {
+          title: "All Loans",
+          url: "/access/dev/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/dev/loans/repayment",
+        },
+      ]
+
+
     },
     {
       icon: Store,
@@ -936,8 +975,17 @@ export function AppSidebar() {
     {
       icon: CreditCard,
       title: "Loans",
-      url: "/access/audit/loans",
       id: "audit-loans",
+      subItems: [
+        {
+          title: "All Loans",
+          url: "/access/dev/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/dev/loans/repayment",
+        },
+      ]
     },
     {
       icon: Store,
@@ -1045,9 +1093,20 @@ export function AppSidebar() {
     },
     {
       title: "Loans",
-      icon: Home,
+      icon: CreditCard,
       url: "/access/collection-admin/loans",
       id: "collection-admin-loans",
+      subItems: [
+        {
+          title: "Loans",
+          url: "/access/collection-admin/loans/loans",
+        },
+        {
+          title: "Repayment",
+          url: "/access/collection-admin/loans/repayment",
+        },
+        
+      ],
     },
     {
       icon: CreditCard,
@@ -1109,6 +1168,22 @@ export function AppSidebar() {
       title: "Customers",
       url: "/access/collection-officer/customers",
       id: "collection-officer-customers",
+    },
+    {
+      title: "Loans",
+      icon: CreditCard,
+      url: "/access/collection-officer/loans",
+      id: "collection-officer-loans",
+      subItems: [
+        {
+          title: "Repayment",
+          url: "/access/collection-officer/loans/repayment",
+        },
+        {
+            title: "Loans",
+          url: "/access/collection-officer/loans/loans",
+        },
+      ],
     },
     {
       icon: CreditCard,

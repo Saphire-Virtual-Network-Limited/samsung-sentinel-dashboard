@@ -313,7 +313,7 @@ export default function SingleStoreView() {
   const handleApproveStore = async () => {
     try {
       setIsLoading(true);
-       await AuditApprovalforStoreDetails(store?.store.storeId || "", "APPROVED");
+       await AuditApprovalforStoreDetails(store?.store.storeId || "", "ACTIVE");
       showToast({
         type: "success",
         message: "Store approved successfully",
