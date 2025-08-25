@@ -887,11 +887,11 @@ export function AppSidebar() {
 			subItems: [
 				{
 					title: "All Loans",
-					url: "/access/dev/loans/loans",
+					url: "/access/finance/loans/loans",
 				},
 				{
 					title: "Repayment",
-					url: "/access/dev/loans/repayment",
+					url: "/access/finance/loans/repayment",
 				},
 			],
 		},
