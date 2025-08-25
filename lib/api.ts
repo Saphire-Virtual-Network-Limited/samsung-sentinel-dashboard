@@ -1547,6 +1547,11 @@ export async function deleteStore(storeId: string) {
 	return apiCall(`/admin/stores/${storeId}/archive`, "PATCH");
 }
 
+// Deactivate store
+export async function deactivateStore(storeId: string) {
+	return apiCall(`/admin/stores/${storeId}/deactivate`, "PATCH");
+}
+
 // Create Device
 
 export interface createDevice {
@@ -1585,23 +1590,37 @@ export async function createDevice(createDevice: createDevice) {
 		formData.append("deviceImage", createDevice.deviceImage);
 	}
 
-	// Add all other fields
-	Object.keys(createDevice).forEach((key) => {
-		if (
-			key !== "deviceImage" &&
-			createDevice[key as keyof createDevice] !== undefined
-		) {
-			formData.append(key, String(createDevice[key as keyof createDevice]));
-		}
-	});
+	// Append all fields as strings, matching the curl example
+	const fieldMap: Record<string, any> = {
+		deviceBrand: createDevice.deviceBrand,
+		deviceModel: createDevice.deviceModel,
+		price: createDevice.price,
+		currency: createDevice.currency,
+		deviceModelNumber: createDevice.deviceModelNumber,
+		back_camera: createDevice.back_camera ?? "",
+		battery: createDevice.battery ?? "",
+		color: createDevice.color ?? "",
+		data_storage: createDevice.data_storage ?? "",
+		display: createDevice.display ?? "",
+		front_camera: createDevice.front_camera ?? "",
+		memory: createDevice.memory ?? "",
+		network: createDevice.network ?? "",
+		os: createDevice.os ?? "",
+		other_features: createDevice.other_features ?? "",
+		proccessor_cpu: createDevice.proccessor_cpu ?? "",
+		sap: createDevice.sap,
+		screen_size: createDevice.screen_size ?? "",
+		sentinel_cover: createDevice.sentinel_cover ?? "",
+		sld: createDevice.sld,
+		deviceType: createDevice.deviceType,
+		case_colors: createDevice.case_colors ?? "",
+		windows_version: createDevice.windows_version ?? "",
+		isActive: createDevice.isActive,
+	};
 
-	// Add all other fields
-	Object.keys(createDevice).forEach((key) => {
-		if (
-			key !== "deviceImage" &&
-			createDevice[key as keyof createDevice] !== undefined
-		) {
-			formData.append(key, String(createDevice[key as keyof createDevice]));
+	Object.entries(fieldMap).forEach(([key, value]) => {
+		if (value !== undefined && value !== null) {
+			formData.append(key, String(value));
 		}
 	});
 
