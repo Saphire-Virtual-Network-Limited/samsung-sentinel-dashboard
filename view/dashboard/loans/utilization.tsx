@@ -2,14 +2,38 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllLoanRecord, capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getAllCustomerRecord, getAllApprovedRecord } from "@/lib";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
+import {
+	getAllLoanRecord,
+	capitalize,
+	calculateAge,
+	showToast,
+	verifyCustomerReferenceNumber,
+	getAllCustomerRecord,
+	getAllApprovedRecord,
+} from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import {
+	Button,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
+	Chip,
+	SortDescriptor,
+	ChipProps,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	useDisclosure,
+} from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-
 
 const columns: ColumnDef[] = [
 	{ name: "Full Name", uid: "fullName", sortable: true },
@@ -28,7 +52,7 @@ const columns: ColumnDef[] = [
 ];
 
 const statusOptions = [
-    { name: "Enrolled", uid: "enrolled" },
+	{ name: "Enrolled", uid: "enrolled" },
 	{ name: "Pending", uid: "pending" },
 	{ name: "Approved", uid: "approved" },
 	{ name: "Rejected", uid: "rejected" },
@@ -41,7 +65,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 	enrolled: "warning",
 	defaulted: "danger",
-};  
+};
 
 type LoanRecord = {
 	customerId: string;
@@ -170,7 +194,6 @@ type LoanRecord = {
 	}>;
 };
 
-
 export default function UtilizationView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -200,28 +223,31 @@ export default function UtilizationView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["approved-records", startDate, endDate] : "approved-records",
-		() => getAllApprovedRecord(startDate, endDate)
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
+		startDate && endDate
+			? ["approved-records", startDate, endDate]
+			: "approved-records",
+		() =>
+			getAllApprovedRecord(startDate, endDate)
+				.then((r) => {
+					if (!r.data || r.data.length === 0) {
+						setHasNoRecords(true);
+						return [];
+					}
+					setHasNoRecords(false);
+					return r.data;
+				})
+				.catch((error) => {
+					console.error("Error fetching approved records:", error);
 					setHasNoRecords(true);
 					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch((error) => {
-				console.error("Error fetching approved records:", error);
-				setHasNoRecords(true);
-				return [];
-			}),
+				}),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
-			revalidateIfStale: true
+			revalidateIfStale: true,
 		}
 	);
 
@@ -231,22 +257,38 @@ export default function UtilizationView() {
 			raw.map((r: LoanRecord) => ({
 				...r,
 				// customerId: r.customer?.customerId || 'N/A',
-				fullName: r.customer?.firstName && r.customer?.lastName ? `${capitalize(r.customer.firstName)} ${capitalize(r.customer.lastName)}` : 'N/A',
-				bvn: r.customer?.bvn || 'N/A',
-				dob: r.customer?.dob || 'N/A',
+				fullName:
+					r.customer?.firstName && r.customer?.lastName
+						? `${capitalize(r.customer.firstName)} ${capitalize(
+								r.customer.lastName
+						  )}`
+						: "N/A",
+				bvn: r.customer?.bvn || "N/A",
+				dob: r.customer?.dob || "N/A",
 				// age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
-				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',		
-				tenorInDays: r.duration ? `${r.duration * 30} days` : 'N/A',
-				status: r.status || 'N/A',
-				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : 'N/A',
-				downPayment: r.downPayment ? `₦${r.downPayment.toLocaleString()}` : 'N/A',
-				devicePrice: r.devicePrice ? `₦${r.devicePrice.toLocaleString()}` : 'N/A',
-				loanStatus: r.loanStatus || 'N/A',
-				imei: r.DeviceOnLoan?.[0]?.imei || 'N/A',
-				deviceName: r.device?.deviceName || 'N/A',
-				createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A',
-                firstPaymentDate: r.updatedAt ? new Date(new Date(r.updatedAt).setMonth(new Date(r.updatedAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
-				
+				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',
+				tenorInDays: r.duration ? `${r.duration * 30} days` : "N/A",
+				status: r.status || "N/A",
+				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : "N/A",
+				downPayment: r.downPayment
+					? `₦${r.downPayment.toLocaleString()}`
+					: "N/A",
+				devicePrice: r.devicePrice
+					? `₦${r.devicePrice.toLocaleString()}`
+					: "N/A",
+				loanStatus: r.loanStatus || "N/A",
+				imei: r.DeviceOnLoan?.[0]?.imei || "N/A",
+				deviceName: r.device?.deviceName || "N/A",
+				createdAt: r.createdAt
+					? new Date(r.createdAt).toLocaleDateString()
+					: "N/A",
+				firstPaymentDate: r.updatedAt
+					? new Date(
+							new Date(r.updatedAt).setMonth(
+								new Date(r.updatedAt).getMonth() + 1
+							)
+					  ).toLocaleDateString()
+					: "N/A",
 			})),
 		[raw]
 	);
@@ -259,31 +301,33 @@ export default function UtilizationView() {
 			list = list.filter((c) => {
 				try {
 					// Safely check each field with proper null checks
-					const fullName = (c.fullName || '').toLowerCase();
-					const email = (c.email || '').toLowerCase();
-					const bvn = (c.bvn || '').toLowerCase();
-					const customerId = (c.customerId || '').toLowerCase();
-					const phone = (c.mainPhoneNumber || '').toLowerCase();
-					const deviceName = (c.deviceName || '').toLowerCase();
-					const deviceModel = (c.deviceModelNumber || '').toLowerCase();
-					const deviceRam = (c.deviceRam || '').toLowerCase();
-					
-					return fullName.includes(f) || 
-						   email.includes(f) || 
-						   bvn.includes(f) || 
-						   customerId.includes(f) || 
-						   phone.includes(f) || 
-						   deviceName.includes(f) || 
-						   deviceModel.includes(f) || 
-						   deviceRam.includes(f);
+					const fullName = (c.fullName || "").toLowerCase();
+					const email = (c.email || "").toLowerCase();
+					const bvn = (c.bvn || "").toLowerCase();
+					const customerId = (c.customerId || "").toLowerCase();
+					const phone = (c.mainPhoneNumber || "").toLowerCase();
+					const deviceName = (c.deviceName || "").toLowerCase();
+					const deviceModel = (c.deviceModelNumber || "").toLowerCase();
+					const deviceRam = (c.deviceRam || "").toLowerCase();
+
+					return (
+						fullName.includes(f) ||
+						email.includes(f) ||
+						bvn.includes(f) ||
+						customerId.includes(f) ||
+						phone.includes(f) ||
+						deviceName.includes(f) ||
+						deviceModel.includes(f) ||
+						deviceRam.includes(f)
+					);
 				} catch (error) {
-					console.error('Error in filter:', error);
+					console.error("Error in filter:", error);
 					return false;
 				}
 			});
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));
+			list = list.filter((c) => statusFilter.has(c.status || ""));
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -298,8 +342,8 @@ export default function UtilizationView() {
 	// Sort the data
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || '');
-			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || '');
+			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || "");
+			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || "");
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
@@ -308,9 +352,31 @@ export default function UtilizationView() {
 	// Export all filtered
 	const exportFn = async (data: LoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Approved_Loans");	
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
+		const ws = wb.addWorksheet("Approved_Loans");
+		ws.columns = columns
+			.filter((c) => c.uid !== "actions")
+			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		data.forEach((r) =>
+			ws.addRow({ ...r, status: capitalize(r.status || "") })
+		);
+
+		// Apply Naira currency formatting to relevant columns
+		const currencyColumns = [
+			"devicePrice",
+			"downPayment",
+			"loanAmount",
+			"insurancePrice",
+			"mbsEligibleAmount",
+			"deviceAmount",
+			"interestAmount",
+		];
+		currencyColumns.forEach((col) => {
+			const colObj = ws.getColumn(col);
+			if (colObj) {
+				colObj.numFmt = "₦#,##0.00";
+			}
+		});
+
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Approved_Loans.xlsx");
 	};
@@ -329,17 +395,12 @@ export default function UtilizationView() {
 				<div className="flex justify-end">
 					<Dropdown>
 						<DropdownTrigger>
-							<Button
-								isIconOnly
-								size="sm"
-								variant="light">
+							<Button isIconOnly size="sm" variant="light">
 								<EllipsisVertical className="text-default-300" />
 							</Button>
 						</DropdownTrigger>
 						<DropdownMenu>
-							<DropdownItem
-								key="view"
-								onPress={() => openModal("view", row)}>
+							<DropdownItem key="view" onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
 						</DropdownMenu>
@@ -351,10 +412,11 @@ export default function UtilizationView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.status || '']}
+					color={statusColorMap[row.status || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.status || '')}
+					variant="flat"
+				>
+					{capitalize(row.status || "")}
 				</Chip>
 			);
 		}
@@ -362,33 +424,61 @@ export default function UtilizationView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.loanStatus?.toLowerCase() || '']}
+					color={statusColorMap[row.loanStatus?.toLowerCase() || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.loanStatus || '')}
+					variant="flat"
+				>
+					{capitalize(row.loanStatus || "")}
 				</Chip>
 			);
 		}
 		if (key === "fullName") {
-			return <div className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</div>;
+			return (
+				<div
+					className="capitalize cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					{row.fullName}
+				</div>
+			);
 		}
 		// Ensure we're converting any value to a string before rendering
 		const cellValue = (row as any)[key];
 		if (cellValue === null || cellValue === undefined) {
-			return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</div>;
+			return (
+				<div
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					N/A
+				</div>
+			);
 		}
-		if (typeof cellValue === 'object') {
-			return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</div>;
+		if (typeof cellValue === "object") {
+			return (
+				<div
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					View Details
+				</div>
+			);
 		}
-		return <div className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</div>;
+		return (
+			<div
+				className="text-small cursor-pointer"
+				onClick={() => openModal("view", row)}
+			>
+				{String(cellValue)}
+			</div>
+		);
 	};
 
 	return (
 		<>
 			<div className="w-full overflow-hidden">
-				<div className="mb-4 flex justify-center md:justify-end">
-				</div>
-				
+				<div className="mb-4 flex justify-center md:justify-end"></div>
+
 				{isLoading ? (
 					<TableSkeleton columns={columns.length} rows={10} />
 				) : (
@@ -428,7 +518,8 @@ export default function UtilizationView() {
 				isOpen={isOpen}
 				onClose={onClose}
 				// size="2xl"
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -438,34 +529,52 @@ export default function UtilizationView() {
 									<div className="space-y-4">
 										{/* Personal Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Personal Information
+											</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												{Object.entries(selectedItem).map(([key, value]) => {
 													// Skip nested objects as they're handled separately
-													if (key === 'customer' || key === 'device' || key === 'store') return null;
-													
+													if (
+														key === "customer" ||
+														key === "device" ||
+														key === "store"
+													)
+														return null;
+
 													// Handle null/undefined values
 													if (value === null || value === undefined) {
 														return (
-															<div key={`${selectedItem.customerId}-personal-${key}`}>
-																<p className="text-sm text-default-500">{key}</p>
+															<div
+																key={`${selectedItem.customerId}-personal-${key}`}
+															>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">N/A</p>
 															</div>
 														);
 													}
 
 													// Handle objects
-													if (typeof value === 'object') {
+													if (typeof value === "object") {
 														return (
-															<div key={`${selectedItem.customerId}-personal-${key}`}>
-																<p className="text-sm text-default-500">{key}</p>
+															<div
+																key={`${selectedItem.customerId}-personal-${key}`}
+															>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">View Details</p>
 															</div>
 														);
 													}
 
 													// Handle dates
-													if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+													if (
+														key.toLowerCase().includes("date") ||
+														key.toLowerCase().includes("at")
+													) {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
@@ -477,20 +586,24 @@ export default function UtilizationView() {
 													}
 
 													// Handle boolean values
-													if (typeof value === 'boolean') {
-														value = value ? 'Yes' : 'No';
+													if (typeof value === "boolean") {
+														value = value ? "Yes" : "No";
 													}
 
 													// Format currency values
-													if (typeof value === 'number' && 
-														(key.toLowerCase().includes('amount') || 
-														 key.toLowerCase().includes('price') || 
-														 key.toLowerCase().includes('payment'))) {
+													if (
+														typeof value === "number" &&
+														(key.toLowerCase().includes("amount") ||
+															key.toLowerCase().includes("price") ||
+															key.toLowerCase().includes("payment"))
+													) {
 														value = `₦${Number(value).toLocaleString()}`;
 													}
 
 													return (
-														<div key={`${selectedItem.customerId}-personal-${key}`}>
+														<div
+															key={`${selectedItem.customerId}-personal-${key}`}
+														>
 															<p className="text-sm text-default-500">{key}</p>
 															<p className="font-medium">{String(value)}</p>
 														</div>
@@ -502,34 +615,49 @@ export default function UtilizationView() {
 										{/* Customer Information */}
 										{selectedItem.customer && (
 											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Customer Information</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Customer Information
+												</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.customer).map(([key, value]) => {
-														if (value === null || value === undefined) {
+													{Object.entries(selectedItem.customer).map(
+														([key, value]) => {
+															if (value === null || value === undefined) {
+																return (
+																	<div
+																		key={`${selectedItem.customerId}-customer-${key}`}
+																	>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">N/A</p>
+																	</div>
+																);
+															}
+
+															if (
+																key.toLowerCase().includes("date") ||
+																key.toLowerCase().includes("at")
+															) {
+																try {
+																	const date = new Date(value as string);
+																	if (!isNaN(date.getTime())) {
+																		value = date.toLocaleString();
+																	}
+																} catch (e) {}
+															}
+
 															return (
-																<div key={`${selectedItem.customerId}-customer-${key}`}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
+																<div
+																	key={`${selectedItem.customerId}-customer-${key}`}
+																>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
+																	<p className="font-medium">{String(value)}</p>
 																</div>
 															);
 														}
-
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
-															try {
-																const date = new Date(value as string);
-																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
-																}
-															} catch (e) {}
-														}
-
-														return (
-															<div key={`${selectedItem.customerId}-customer-${key}`}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+													)}
 												</div>
 											</div>
 										)}
@@ -537,31 +665,45 @@ export default function UtilizationView() {
 										{/* Device Information */}
 										{selectedItem.device && (
 											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Device Information
+												</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.device).map(([key, value]) => {
-														if (value === null || value === undefined) {
+													{Object.entries(selectedItem.device).map(
+														([key, value]) => {
+															if (value === null || value === undefined) {
+																return (
+																	<div
+																		key={`${selectedItem.customerId}-device-${key}`}
+																	>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">N/A</p>
+																	</div>
+																);
+															}
+
+															if (
+																typeof value === "number" &&
+																(key.toLowerCase().includes("price") ||
+																	key.toLowerCase().includes("amount"))
+															) {
+																value = `₦${Number(value).toLocaleString()}`;
+															}
+
 															return (
-																<div key={`${selectedItem.customerId}-device-${key}`}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
+																<div
+																	key={`${selectedItem.customerId}-device-${key}`}
+																>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
+																	<p className="font-medium">{String(value)}</p>
 																</div>
 															);
 														}
-
-														if (typeof value === 'number' && 
-															(key.toLowerCase().includes('price') || 
-															 key.toLowerCase().includes('amount'))) {
-															value = `₦${Number(value).toLocaleString()}`;
-														}
-
-														return (
-															<div key={`${selectedItem.customerId}-device-${key}`}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+													)}
 												</div>
 											</div>
 										)}
@@ -569,34 +711,49 @@ export default function UtilizationView() {
 										{/* Store Information */}
 										{selectedItem.store && (
 											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Store Information</h3>
+												<h3 className="text-lg font-semibold mb-3">
+													Store Information
+												</h3>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.store).map(([key, value]) => {
-														if (value === null || value === undefined) {
+													{Object.entries(selectedItem.store).map(
+														([key, value]) => {
+															if (value === null || value === undefined) {
+																return (
+																	<div
+																		key={`${selectedItem.customerId}-store-${key}`}
+																	>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">N/A</p>
+																	</div>
+																);
+															}
+
+															if (
+																key.toLowerCase().includes("date") ||
+																key.toLowerCase().includes("at")
+															) {
+																try {
+																	const date = new Date(value as string);
+																	if (!isNaN(date.getTime())) {
+																		value = date.toLocaleString();
+																	}
+																} catch (e) {}
+															}
+
 															return (
-																<div key={`${selectedItem.customerId}-store-${key}`}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
+																<div
+																	key={`${selectedItem.customerId}-store-${key}`}
+																>
+																	<p className="text-sm text-default-500">
+																		{key}
+																	</p>
+																	<p className="font-medium">{String(value)}</p>
 																</div>
 															);
 														}
-
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
-															try {
-																const date = new Date(value as string);
-																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
-																}
-															} catch (e) {}
-														}
-
-														return (
-															<div key={`${selectedItem.customerId}-store-${key}`}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+													)}
 												</div>
 											</div>
 										)}
@@ -604,10 +761,7 @@ export default function UtilizationView() {
 								)}
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onClose}>
+								<Button color="danger" variant="light" onPress={onClose}>
 									Close
 								</Button>
 							</ModalFooter>
