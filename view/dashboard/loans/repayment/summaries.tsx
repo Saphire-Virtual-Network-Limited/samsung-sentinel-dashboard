@@ -1,12 +1,12 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { DropOffsView, UniqueEngageView, XiaomiReport, GeneralEngageXiaomi } from "@/view/dashboard";
+	import { DownPaymentView, LoanRepaymentView, AllTransactionView } from "@/view/dashboard";
 
 
 import React from "react";
 
-const SummaryReportXiaomiView = () => {
+const RepaymentSummariesView = () => {
 	return (
 		<div className="flex w-full flex-col">
 			<Tabs
@@ -18,21 +18,28 @@ const SummaryReportXiaomiView = () => {
 				classNames={{
 					tab: "lg:p-4 text-sm lg:text-base",
 				}}>
-				<Tab
-					key="General Engagement"
-					title="General Engagement"
+					<Tab
+					key="Loan Repayment"
+					title="Loan Repayment"
 					className="lg:p-4 text-base">
-					<GeneralEngageXiaomi />
+					<LoanRepaymentView />
 				</Tab>
 				<Tab
-					key="Unique Engagement"
-					title="Unique Engagement"
+					key="Down Payment"
+					title="Down Payment"
 					className="lg:p-4 text-base">
-					<XiaomiReport />
+					<DownPaymentView />	
 				</Tab>
+				<Tab
+					key="All Transaction"
+					title="All Transaction"
+					className="lg:p-4 text-base">
+					<AllTransactionView />	
+				</Tab>
+				
 			</Tabs>
 		</div>
 	);
 };
 
-export default SummaryReportXiaomiView;
+export default RepaymentSummariesView;

@@ -2843,7 +2843,7 @@ export async function updateUserProfile(userId: string, data: UpdateUserDto) {
 }
 
 // single collection customer, Extract transaction data for a specific customer
-export async function getSingleCollectionCustomer(
+export async function getSingleCollectionCustomerData(
 	customerId: string,
 	channel?: string
 ) {
@@ -2852,45 +2852,87 @@ export async function getSingleCollectionCustomer(
 }
 
 //Get loan repayment(excluding down payment and card tokenization)
-export async function getLoanRepayment(
-	customerId: string,
-	channel?: string,
+export async function getLoanRepaymentData(
 	startDate?: string,
 	endDate?: string
 ) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(
-		`/collections/loan-repayments?customerId=${customerId}${query}${query2}${query3}`,
-		"GET"
-	);
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPayment(
-	customerId: string,
-	channel?: string,
-	startDate?: string,
-	endDate?: string
-) {
-	const query = channel ? `&channel=${channel}` : "";
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(
-		`/collections/down-payments?customerId=${customerId}${query}${query2}${query3}`,
-		"GET"
-	);
+export async function getDownPaymentData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(
-	channel?: string,
+export async function getTransactionData(startDate?: string, endDate?: string) {
+	const query1 = startDate ? `?startDate=${startDate}` : "";
+	const query2 = endDate ? `&endDate=${endDate}` : "";
+	return apiCall(`/collections/all${query1}${query2}`, "GET");
+}
+
+// SENTINEL INTEGRATION PART
+
+export interface SentinelCustomerDevice {
+	sentinelCustomerDeviceId: string;
+	sentinelCustomerId: string;
+	serialNumber: string;
+	deviceBrand: string;
+	deviceId: string;
+	deviceName: string;
+	devicePrice: string;
+	salesStoreId: string;
+	purchaseReceiptImagePublicId: string | null;
+	sentinelBlockformImagePublicId: string | null;
+	sentinelReceiptImagePublicId: string | null;
+	createdAt: string;
+	updatedAt: string;
+	deviceType: string | null;
+	purchaseReceiptImageUrl: string | null;
+	sentinelBlockformImageUrl: string | null;
+	sentinelReceiptImageUrl: string | null;
+	deviceOS: string;
+	paymentOption: string;
+	sentinelPackage: string;
+	enrolledAt: string | null;
+	enrollmentStatus: string | null;
+	isEnrolled: boolean;
+}
+
+export interface SentinelCustomer {
+	sentinelCustomerId: string;
+	createdAt: string;
+	updatedAt: string; // ISO date string
+	deviceEnrollmentId: string | null;
+	deviceId: string | null;
+	resendOtp: string | null;
+	resendOtpExpiry: string | null;
+	storeId: string | null;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phoneNumber: string;
+	address: string;
+	country: string;
+	mbeId: string;
+	SentinelCustomerDevice: SentinelCustomerDevice[];
+}
+
+export async function getAllSentinelCustomers(
 	startDate?: string,
 	endDate?: string
 ) {
-	const query2 = startDate ? `&startDate=${startDate}` : "";
-	const query3 = endDate ? `&endDate=${endDate}` : "";
-	const query = channel ? `&channel=${channel}` : "";
-	return apiCall(`/collections/all?${query2}${query3}${query}`, "GET");
+	const query =
+		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/sentinel/sentinel-customers${query}`, "GET");
+}
+
+export async function getSentinelCustomerById(
+	id: string
+): Promise<BaseApiResponse<any>> {
+	return apiCall(`/admin/sentinel/sentinel-customers/${id}`, "GET");
 }
