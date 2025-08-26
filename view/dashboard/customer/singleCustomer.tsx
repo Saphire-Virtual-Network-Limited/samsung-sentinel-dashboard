@@ -163,7 +163,10 @@ const InfoField = ({
 			<div className="text-sm text-default-500">{label}</div>
 			{endComponent}
 		</div>
-		<div className="font-medium text-default-900 flex items-center gap-2">
+		<div
+			className="font-medium text-default-900 flex items-center gap-2 break-words whitespace-pre-line"
+			style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+		>
 			{value || "N/A"}
 			{copyable && value && (
 				<Snippet
@@ -1526,6 +1529,32 @@ export default function CollectionSingleCustomerPage() {
 										label="Customer ID"
 										value={customer.customerId}
 										copyable
+									/>
+
+									{/* Repayment Profile Link using InfoField */}
+									<InfoField
+										label="Repayment Profile"
+										value={`sentiflex.connectwithsapphire.com/repay/${customer.customerId}`}
+										endComponent={
+											<div className="flex items-center gap-2">
+												<a
+													href={`https://sentiflex.connectwithsapphire.com/repay/${customer.customerId}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="max-w-[180px] truncate text-blue-600 hover:underline"
+													title={`https://sentiflex.connectwithsapphire.com/repay/${customer.customerId}`}
+												>
+													View
+												</a>
+												<Snippet
+													codeString={`https://sentiflex.connectwithsapphire.com/repay/${customer.customerId}`}
+													className="p-0"
+													size="sm"
+													hideSymbol
+													hideCopyButton={false}
+												/>
+											</div>
+										}
 									/>
 									<InfoField
 										label="Full Name"
