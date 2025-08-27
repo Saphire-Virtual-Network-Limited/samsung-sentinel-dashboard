@@ -444,15 +444,11 @@ export default function DueLoansView() {
 					? `₦${loanRecord.loanAmount.toLocaleString()}`
 					: "N/A",
 				duration: loanRecord?.duration || "N/A",
-				startDate: loanRecord?.updatedAt
-					? new Date(loanRecord.updatedAt).toLocaleDateString("en-GB")
+				startDate: loanRecord?.startDate
+					? new Date(loanRecord.startDate).toLocaleDateString("en-GB")
 					: "N/A",
-				endDate: loanRecord?.updatedAt
-					? new Date(
-							new Date(loanRecord.updatedAt).setMonth(
-								new Date(loanRecord.updatedAt).getMonth() + loanRecord.duration
-							)
-					  ).toLocaleDateString("en-GB")
+				endDate: loanRecord?.endDate
+					? new Date(loanRecord.endDate).toLocaleDateString("en-GB")
 					: "N/A",
 				interest: "9.50%",
 				loanBalance: loanRecord?.loanAmount
@@ -480,12 +476,8 @@ export default function DueLoansView() {
 					customer.repaymentData?.summary?.repaymentCount || "0",
 				numberOfMissedRepayments:
 					customer.repaymentData?.summary?.loanInfo?.repaymentsLeft || "0",
-				DueDate: loanRecord?.updatedAt
-					? new Date(
-							new Date(loanRecord.updatedAt).setMonth(
-								new Date(loanRecord.updatedAt).getMonth() + 1
-							)
-					  ).toLocaleDateString("en-GB")
+				DueDate: loanRecord?.dueDate
+					? new Date(loanRecord.dueDate).toLocaleDateString("en-GB")
 					: "N/A",
 				Status: "Running",
 				deviceName: loanRecord?.deviceName || "N/A",
