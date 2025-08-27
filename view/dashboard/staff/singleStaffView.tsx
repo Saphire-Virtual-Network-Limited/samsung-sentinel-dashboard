@@ -3340,7 +3340,7 @@ export default function AgentSinglePage() {
 											label="Created At"
 											value={
 												accountDetails.createdAt
-													? new Date(accountDetails.createdAt).toLocalString(
+													? new Date(accountDetails.createdAt).toLocaleString(
 															"en-GB"
 													  )
 													: null
@@ -3350,7 +3350,7 @@ export default function AgentSinglePage() {
 											label="Updated At"
 											value={
 												accountDetails.updatedAt
-													? new Date(accountDetails.updatedAt).toLocalString(
+													? new Date(accountDetails.updatedAt).toLocaleString(
 															"en-GB"
 													  )
 													: null
@@ -3468,9 +3468,9 @@ export default function AgentSinglePage() {
 															label="Created At"
 															value={
 																guarantor.createdAt
-																	? new Date(guarantor.createdAt).toLocalString(
-																			"en-GB"
-																	  )
+																	? new Date(
+																			guarantor.createdAt
+																	  ).toLocaleString("en-GB")
 																	: null
 															}
 														/>
@@ -3478,9 +3478,9 @@ export default function AgentSinglePage() {
 															label="Updated At"
 															value={
 																guarantor.updatedAt
-																	? new Date(guarantor.updatedAt).toLocalString(
-																			"en-GB"
-																	  )
+																	? new Date(
+																			guarantor.updatedAt
+																	  ).toLocaleString("en-GB")
 																	: null
 															}
 														/>

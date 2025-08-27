@@ -562,7 +562,7 @@ export default function AllDevicesView() {
 													</p>
 													<p className="font-medium">
 														{selectedItem.sentiprotect
-															? `₦${selectedItem.sentiprotect.toLocalString(
+															? `₦${selectedItem.sentiprotect.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -578,7 +578,7 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">Created At</p>
 													<p className="font-medium">
 														{selectedItem.createdAt
-															? new Date(selectedItem.createdAt).toLocalString(
+															? new Date(selectedItem.createdAt).toLocaleString(
 																	"en-GB"
 															  )
 															: "N/A"}
@@ -588,7 +588,7 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">Updated At</p>
 													<p className="font-medium">
 														{selectedItem.updatedAt
-															? new Date(selectedItem.updatedAt).toLocalString(
+															? new Date(selectedItem.updatedAt).toLocaleString(
 																	"en-GB"
 															  )
 															: "N/A"}

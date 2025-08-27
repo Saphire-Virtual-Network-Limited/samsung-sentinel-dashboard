@@ -546,13 +546,13 @@ export default function AllTransactionView() {
 											Down Payments
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.downPayments?.count?.toLocalString(
+											{raw.breakdown?.downPayments?.count?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-amber-600 mb-2">
 											₦
-											{raw.breakdown?.downPayments?.amount?.toLocalString(
+											{raw.breakdown?.downPayments?.amount?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>
@@ -587,13 +587,13 @@ export default function AllTransactionView() {
 											Loan Repayments
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.loanRepayments?.count?.toLocalString(
+											{raw.breakdown?.loanRepayments?.count?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-violet-600 mb-2">
 											₦
-											{raw.breakdown?.loanRepayments?.amount?.toLocalString(
+											{raw.breakdown?.loanRepayments?.amount?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>
@@ -628,13 +628,13 @@ export default function AllTransactionView() {
 											Card Tokenizations
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.cardTokenizations?.count?.toLocalString(
+											{raw.breakdown?.cardTokenizations?.count?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-indigo-600 mb-2">
 											₦
-											{raw.breakdown?.cardTokenizations?.amount?.toLocalString(
+											{raw.breakdown?.cardTokenizations?.amount?.toLocaleString(
 												"en-GB"
 											) || "0"}
 										</p>

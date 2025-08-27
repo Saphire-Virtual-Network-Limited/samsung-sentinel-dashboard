@@ -1774,7 +1774,7 @@ export default function ScanPartnerSinglePage() {
 										label="Last Updated"
 										value={
 											userBankDetails.updatedAt
-												? new Date(userBankDetails.updatedAt).toLocalString(
+												? new Date(userBankDetails.updatedAt).toLocaleString(
 														"en-GB"
 												  )
 												: "N/A"
@@ -2807,7 +2807,7 @@ export default function ScanPartnerSinglePage() {
 									{userBankDetails.createdAt && (
 										<InfoField
 											label="Added At"
-											value={new Date(userBankDetails.createdAt).toLocalString(
+											value={new Date(userBankDetails.createdAt).toLocaleString(
 												"en-GB"
 											)}
 										/>

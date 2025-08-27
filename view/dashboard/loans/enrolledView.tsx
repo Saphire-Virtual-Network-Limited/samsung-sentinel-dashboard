@@ -606,7 +606,7 @@ export default function EnrolledView() {
 																		key.toLowerCase().includes("price") ||
 																		key.toLowerCase().includes("payment"))
 																) {
-																	value = `₦${Number(value).toLocalString(
+																	value = `₦${Number(value).toLocaleString(
 																		"en-GB"
 																	)}`;
 																}

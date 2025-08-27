@@ -455,7 +455,7 @@ export default function DueLoansView() {
 					? `₦${loanRecord.loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				AmountPaid: customer.repaymentData?.summary?.loanInfo?.totalRepaid
-					? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocalString(
+					? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocaleString(
 							"en-GB"
 					  )}`
 					: "0",
@@ -930,7 +930,7 @@ export default function DueLoansView() {
 																(key.toLowerCase().includes("price") ||
 																	key.toLowerCase().includes("amount"))
 															) {
-																value = `₦${Number(value).toLocalString(
+																value = `₦${Number(value).toLocaleString(
 																	"en-GB"
 																)}`;
 															}

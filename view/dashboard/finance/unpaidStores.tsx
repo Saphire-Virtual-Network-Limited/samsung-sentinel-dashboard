@@ -696,7 +696,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.loanAmount?.toLocalString(
+														{selectedItem.loanRecord.loanAmount?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -707,7 +707,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.devicePrice?.toLocalString(
+														{selectedItem.loanRecord.devicePrice?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -718,7 +718,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.downPayment?.toLocalString(
+														{selectedItem.loanRecord.downPayment?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -729,7 +729,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.monthlyRepayment?.toLocalString(
+														{selectedItem.loanRecord.monthlyRepayment?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -748,7 +748,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.interestAmount?.toLocalString(
+														{selectedItem.loanRecord.interestAmount?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -767,7 +767,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.insurancePrice?.toLocalString(
+														{selectedItem.loanRecord.insurancePrice?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -827,7 +827,7 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">Price</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.price?.toLocalString(
+														{selectedItem.loanRecord.device.price?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -836,7 +836,7 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">SAP</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.SAP?.toLocalString(
+														{selectedItem.loanRecord.device.SAP?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -845,7 +845,7 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">SLD</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.SLD?.toLocalString(
+														{selectedItem.loanRecord.device.SLD?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -856,7 +856,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.sentiprotect?.toLocalString(
+														{selectedItem.loanRecord.device.sentiprotect?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>

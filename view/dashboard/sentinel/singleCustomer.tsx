@@ -419,7 +419,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 														label="Enrolled At"
 														value={
 															device.enrolledAt
-																? new Date(device.enrolledAt).toLocalString(
+																? new Date(device.enrolledAt).toLocaleString(
 																		"en-GB"
 																  )
 																: "N/A"
@@ -429,7 +429,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 														label="Created At"
 														value={
 															device.createdAt
-																? new Date(device.createdAt).toLocalString(
+																? new Date(device.createdAt).toLocaleString(
 																		"en-GB"
 																  )
 																: "N/A"
@@ -439,7 +439,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 														label="Updated At"
 														value={
 															device.updatedAt
-																? new Date(device.updatedAt).toLocalString(
+																? new Date(device.updatedAt).toLocaleString(
 																		"en-GB"
 																  )
 																: "N/A"
@@ -601,7 +601,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 													device.updatedAt !== device.createdAt && (
 														<div className="text-xs text-default-400 mt-1">
 															Last updated:{" "}
-															{new Date(device.updatedAt).toLocalString(
+															{new Date(device.updatedAt).toLocaleString(
 																"en-GB"
 															)}
 														</div>

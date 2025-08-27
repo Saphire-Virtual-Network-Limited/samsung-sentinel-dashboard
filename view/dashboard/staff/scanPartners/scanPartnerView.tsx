@@ -1707,7 +1707,7 @@ export default function ScanPartnerPage() {
 						? `${customer.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
 						: "N/A",
 					monthlyRepayment: customer.LoanRecord?.[0]?.monthlyRepayment
-						? `${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+						? `${customer.LoanRecord[0].monthlyRepayment.toLocaleString(
 								"en-GB"
 						  )}`
 						: "N/A",
@@ -1731,7 +1731,7 @@ export default function ScanPartnerPage() {
 						  ).toLocaleDateString()
 						: "N/A",
 					nextPayAmount: customer.LoanRecord?.[0]?.monthlyRepayment
-						? `${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+						? `${customer.LoanRecord[0].monthlyRepayment.toLocaleString(
 								"en-GB"
 						  )}`
 						: "N/A",
@@ -2251,7 +2251,7 @@ export default function ScanPartnerPage() {
 						},
 						{
 							metric: "Top Partner Total Commission",
-							value: `₦${(topPartner.totalCommission || 0).toLocalString(
+							value: `₦${(topPartner.totalCommission || 0).toLocaleString(
 								"en-GB"
 							)}`,
 							period: salesData.period || salesPeriod,

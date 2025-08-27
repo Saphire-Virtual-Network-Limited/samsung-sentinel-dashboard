@@ -703,7 +703,7 @@ export default function UtilizationView() {
 																(key.toLowerCase().includes("price") ||
 																	key.toLowerCase().includes("amount"))
 															) {
-																value = `₦${Number(value).toLocalString(
+																value = `₦${Number(value).toLocaleString(
 																	"en-GB"
 																)}`;
 															}

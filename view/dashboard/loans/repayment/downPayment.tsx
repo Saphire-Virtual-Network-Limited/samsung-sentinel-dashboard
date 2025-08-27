@@ -542,7 +542,7 @@ export default function DownPaymentView() {
 										</p>
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												{raw.summary?.downPaymentCount?.toLocalString(
+												{raw.summary?.downPaymentCount?.toLocaleString(
 													"en-GB"
 												) || "0"}
 											</p>
@@ -580,7 +580,7 @@ export default function DownPaymentView() {
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
 												₦
-												{raw.summary?.averageDownPaymentAmount?.toLocalString(
+												{raw.summary?.averageDownPaymentAmount?.toLocaleString(
 													"en-GB"
 												) || "0"}
 											</p>

@@ -815,7 +815,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.loanAmount !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].loanAmount.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].loanAmount.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -828,7 +828,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.monthlyRepayment !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].monthlyRepayment.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].monthlyRepayment.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -850,7 +850,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.interestAmount !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].interestAmount.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].interestAmount.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -863,7 +863,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.downPayment !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].downPayment.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].downPayment.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -885,7 +885,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.insurancePrice !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].insurancePrice.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].insurancePrice.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -898,7 +898,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.mbsEligibleAmount !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].mbsEligibleAmount.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].mbsEligibleAmount.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -920,7 +920,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.devicePrice !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].devicePrice.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].devicePrice.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}
@@ -933,7 +933,7 @@ export default function ApprovedRefereesPage() {
 													<p className="font-medium">
 														{selectedItem.LoanRecord?.[0]?.deviceAmount !==
 														undefined
-															? `₦${selectedItem.LoanRecord[0].deviceAmount.toLocalString(
+															? `₦${selectedItem.LoanRecord[0].deviceAmount.toLocaleString(
 																	"en-GB"
 															  )}`
 															: "N/A"}

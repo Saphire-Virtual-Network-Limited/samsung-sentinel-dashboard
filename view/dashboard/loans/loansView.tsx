@@ -601,7 +601,7 @@ export default function LoansView() {
 																		key.toLowerCase().includes("price") ||
 																		key.toLowerCase().includes("payment"))
 																) {
-																	value = `₦${Number(value).toLocalString(
+																	value = `₦${Number(value).toLocaleString(
 																		"en-GB"
 																	)}`;
 																}
@@ -749,7 +749,7 @@ export default function LoansView() {
 															(key.toLowerCase().includes("price") ||
 																key.toLowerCase().includes("amount"))
 														) {
-															value = `₦${Number(value).toLocalString(
+															value = `₦${Number(value).toLocaleString(
 																"en-GB"
 															)}`;
 														}

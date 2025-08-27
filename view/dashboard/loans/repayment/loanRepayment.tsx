@@ -579,7 +579,7 @@ export default function LoanRepaymentView() {
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
 												₦
-												{raw.summary?.averageRepaymentAmount?.toLocalString(
+												{raw.summary?.averageRepaymentAmount?.toLocaleString(
 													"en-GB"
 												) || "0"}
 											</p>

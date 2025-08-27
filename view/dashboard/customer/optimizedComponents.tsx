@@ -165,7 +165,7 @@ export const LoanInformationSection = React.memo(
 						</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.monthlyRepayment !== undefined
-								? `₦${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+								? `₦${customer.LoanRecord[0].monthlyRepayment.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -183,7 +183,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Interest Amount</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.interestAmount !== undefined
-								? `₦${customer.LoanRecord[0].interestAmount.toLocalString(
+								? `₦${customer.LoanRecord[0].interestAmount.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -217,7 +217,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Down Payment</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.downPayment !== undefined
-								? `₦${customer.LoanRecord[0].downPayment.toLocalString(
+								? `₦${customer.LoanRecord[0].downPayment.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -235,7 +235,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Insurance Price</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.insurancePrice !== undefined
-								? `₦${customer.LoanRecord[0].insurancePrice.toLocalString(
+								? `₦${customer.LoanRecord[0].insurancePrice.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -247,7 +247,7 @@ export const LoanInformationSection = React.memo(
 						</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.mbsEligibleAmount !== undefined
-								? `₦${customer.LoanRecord[0].mbsEligibleAmount.toLocalString(
+								? `₦${customer.LoanRecord[0].mbsEligibleAmount.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -269,7 +269,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Device Price</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.devicePrice !== undefined
-								? `₦${customer.LoanRecord[0].devicePrice.toLocalString(
+								? `₦${customer.LoanRecord[0].devicePrice.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -281,7 +281,7 @@ export const LoanInformationSection = React.memo(
 						</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.deviceAmount !== undefined
-								? `₦${customer.LoanRecord[0].deviceAmount.toLocalString(
+								? `₦${customer.LoanRecord[0].deviceAmount.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
@@ -291,7 +291,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Loan Created At</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.createdAt
-								? new Date(customer.LoanRecord[0].createdAt).toLocalString(
+								? new Date(customer.LoanRecord[0].createdAt).toLocaleString(
 										"en-GB"
 								  )
 								: "N/A"}
@@ -301,7 +301,7 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Loan Updated At</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.updatedAt
-								? new Date(customer.LoanRecord[0].updatedAt).toLocalString(
+								? new Date(customer.LoanRecord[0].updatedAt).toLocaleString(
 										"en-GB"
 								  )
 								: "N/A"}
@@ -390,7 +390,7 @@ export const WalletInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Last Balance</div>
 						<div className="font-medium text-default-900">
 							{customer.WalletBalance?.lastBalance !== undefined
-								? `₦${customer.WalletBalance.lastBalance.toLocalString(
+								? `₦${customer.WalletBalance.lastBalance.toLocaleString(
 										"en-GB"
 								  )}`
 								: "N/A"}
