@@ -86,7 +86,7 @@ const HomeView = () => {
 							<DashCard
 								key={key}
 								title={key.replace(/Total /, "")}
-								value={hasNaira ? raw.toLocalString("en-GB") : raw}
+								value={hasNaira ? raw.toLocaleString("en-GB") : raw}
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
@@ -102,7 +102,7 @@ const HomeView = () => {
 							<DeviceCard
 								key={key}
 								title={key.replace(/Total /, "")}
-								value={hasNaira ? raw.toLocalString("en-GB") : raw}
+								value={hasNaira ? raw.toLocaleString("en-GB") : raw}
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}

@@ -164,7 +164,7 @@ const CreditflexLiquidationRequestsView = () => {
 										{request.customer}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										₦{request.amount.toLocalString("en-GB")}
+										₦{request.amount.toLocaleString("en-GB")}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 										{request.requestDate}

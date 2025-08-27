@@ -102,7 +102,7 @@ export const PersonalInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Created At</div>
 						<div className="font-medium text-default-900">
 							{customer.createdAt
-								? new Date(customer.createdAt).toLocalString("en-GB")
+								? new Date(customer.createdAt).toLocaleString("en-GB")
 								: "N/A"}
 						</div>
 					</div>
@@ -110,7 +110,7 @@ export const PersonalInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Updated At</div>
 						<div className="font-medium text-default-900">
 							{customer.updatedAt
-								? new Date(customer.updatedAt).toLocalString("en-GB")
+								? new Date(customer.updatedAt).toLocaleString("en-GB")
 								: "N/A"}
 						</div>
 					</div>
@@ -153,7 +153,9 @@ export const LoanInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Loan Amount</div>
 						<div className="font-medium text-default-900">
 							{customer.LoanRecord?.[0]?.loanAmount !== undefined
-								? `₦${customer.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
+								? `₦${customer.LoanRecord[0].loanAmount.toLocaleString(
+										"en-GB"
+								  )}`
 								: "N/A"}
 						</div>
 					</div>
@@ -380,7 +382,7 @@ export const WalletInformationSection = React.memo(
 						<div className="text-sm text-default-500 mb-1">Current Balance</div>
 						<div className="font-medium text-default-900">
 							{customer.WalletBalance?.balance !== undefined
-								? `₦${customer.WalletBalance.balance.toLocalString("en-GB")}`
+								? `₦${customer.WalletBalance.balance.toLocaleString("en-GB")}`
 								: "N/A"}
 						</div>
 					</div>

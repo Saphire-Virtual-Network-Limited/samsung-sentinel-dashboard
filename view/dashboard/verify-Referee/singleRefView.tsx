@@ -511,7 +511,7 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.createdAt
-												? new Date(customer.createdAt).toLocalString("en-GB")
+												? new Date(customer.createdAt).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -521,7 +521,7 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.updatedAt
-												? new Date(customer.updatedAt).toLocalString("en-GB")
+												? new Date(customer.updatedAt).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -629,7 +629,7 @@ export default function SingleRefereeView({
 											{customer.CustomerKYC?.[0]?.createdAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.createdAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -641,7 +641,7 @@ export default function SingleRefereeView({
 											{customer.CustomerKYC?.[0]?.updatedAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.updatedAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -1031,7 +1031,7 @@ export default function SingleRefereeView({
 											{customer.LoanRecord?.[0]?.updatedAt
 												? new Date(
 														customer.LoanRecord[0].updatedAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>

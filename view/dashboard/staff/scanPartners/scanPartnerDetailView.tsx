@@ -1191,18 +1191,18 @@ export default function ScanPartnerSinglePage() {
 		data.forEach((loan) =>
 			ws.addRow({
 				...loan,
-				loanAmount: `₦${loan.loanAmount?.toLocalString("en-GB") || 0}`,
-				devicePrice: `₦${loan.devicePrice?.toLocalString("en-GB") || 0}`,
-				downPayment: `₦${loan.downPayment?.toLocalString("en-GB") || 0}`,
+				loanAmount: `₦${loan.loanAmount?.toLocaleString("en-GB") || 0}`,
+				devicePrice: `₦${loan.devicePrice?.toLocaleString("en-GB") || 0}`,
+				downPayment: `₦${loan.downPayment?.toLocaleString("en-GB") || 0}`,
 				monthlyRepayment: `₦${
-					loan.monthlyRepayment?.toLocalString("en-GB") || 0
+					loan.monthlyRepayment?.toLocaleString("en-GB") || 0
 				}`,
-				interestAmount: `₦${loan.interestAmount?.toLocalString("en-GB") || 0}`,
-				insurancePrice: `₦${loan.insurancePrice?.toLocalString("en-GB") || 0}`,
+				interestAmount: `₦${loan.interestAmount?.toLocaleString("en-GB") || 0}`,
+				insurancePrice: `₦${loan.insurancePrice?.toLocaleString("en-GB") || 0}`,
 				mbsEligibleAmount: `₦${
-					loan.mbsEligibleAmount?.toLocalString("en-GB") || 0
+					loan.mbsEligibleAmount?.toLocaleString("en-GB") || 0
 				}`,
-				deviceAmount: `₦${loan.deviceAmount?.toLocalString("en-GB") || 0}`,
+				deviceAmount: `₦${loan.deviceAmount?.toLocaleString("en-GB") || 0}`,
 				createdAt: new Date(loan.createdAt).toLocaleDateString(),
 				updatedAt: new Date(loan.updatedAt).toLocaleDateString(),
 				loanStatus: capitalize(loan.loanStatus || ""),
@@ -1234,12 +1234,12 @@ export default function ScanPartnerSinglePage() {
 		data.forEach((commission) =>
 			ws.addRow({
 				...commission,
-				commission: `₦${commission.commission?.toLocalString("en-GB") || 0}`,
+				commission: `₦${commission.commission?.toLocaleString("en-GB") || 0}`,
 				mbeCommission: `₦${
-					commission.mbeCommission?.toLocalString("en-GB") || 0
+					commission.mbeCommission?.toLocaleString("en-GB") || 0
 				}`,
 				partnerCommission: `₦${
-					commission.partnerCommission?.toLocalString("en-GB") || 0
+					commission.partnerCommission?.toLocaleString("en-GB") || 0
 				}`,
 				splitPercent: `${commission.splitPercent || 0}%`,
 				date_created: new Date(commission.date_created).toLocaleDateString(),
@@ -1265,25 +1265,25 @@ export default function ScanPartnerSinglePage() {
 			case "loanAmount":
 				return (
 					<div className="font-medium">
-						₦{loan.loanAmount?.toLocalString("en-GB") || 0}
+						₦{loan.loanAmount?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "devicePrice":
 				return (
 					<div className="font-medium">
-						₦{loan.devicePrice?.toLocalString("en-GB") || 0}
+						₦{loan.devicePrice?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "downPayment":
 				return (
 					<div className="font-medium">
-						₦{loan.downPayment?.toLocalString("en-GB") || 0}
+						₦{loan.downPayment?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "monthlyRepayment":
 				return (
 					<div className="font-medium">
-						₦{loan.monthlyRepayment?.toLocalString("en-GB") || 0}
+						₦{loan.monthlyRepayment?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "duration":
@@ -1375,19 +1375,19 @@ export default function ScanPartnerSinglePage() {
 			case "commission":
 				return (
 					<div className="font-medium">
-						₦{commission.commission?.toLocalString("en-GB") || 0}
+						₦{commission.commission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "mbeCommission":
 				return (
 					<div className="font-medium">
-						₦{commission.mbeCommission?.toLocalString("en-GB") || 0}
+						₦{commission.mbeCommission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "partnerCommission":
 				return (
 					<div className="font-medium">
-						₦{commission.partnerCommission?.toLocalString("en-GB") || 0}
+						₦{commission.partnerCommission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "splitPercent":
@@ -1695,7 +1695,7 @@ export default function ScanPartnerSinglePage() {
 									label="Created At"
 									value={
 										scanPartner.createdAt
-											? new Date(scanPartner.createdAt).toLocalString("en-GB")
+											? new Date(scanPartner.createdAt).toLocaleString("en-GB")
 											: null
 									}
 								/>
@@ -1703,7 +1703,7 @@ export default function ScanPartnerSinglePage() {
 									label="Updated At"
 									value={
 										scanPartner.updatedAt
-											? new Date(scanPartner.updatedAt).toLocalString("en-GB")
+											? new Date(scanPartner.updatedAt).toLocaleString("en-GB")
 											: null
 									}
 								/>
@@ -2080,7 +2080,7 @@ export default function ScanPartnerSinglePage() {
 													title="Total Commission"
 													value={`₦${(
 														salesStats?.current?.summary?.totalCommission || 0
-													).toLocalString("en-GB")}`}
+													).toLocaleString("en-GB")}`}
 													icon={<DollarSign className="w-6 h-6" />}
 													gradient="from-green-100 to-green-200"
 													textColor="text-green-600"
@@ -2091,7 +2091,7 @@ export default function ScanPartnerSinglePage() {
 													value={`₦${(
 														salesStats?.current?.summary
 															?.totalPartnerCommission || 0
-													).toLocalString("en-GB")}`}
+													).toLocaleString("en-GB")}`}
 													icon={<TrendingUp className="w-6 h-6" />}
 													gradient="from-blue-100 to-blue-200"
 													textColor="text-blue-600"
@@ -2102,7 +2102,7 @@ export default function ScanPartnerSinglePage() {
 													value={`₦${(
 														salesStats?.current?.summary
 															?.totalAgentCommission || 0
-													).toLocalString("en-GB")}`}
+													).toLocaleString("en-GB")}`}
 													icon={<Users className="w-6 h-6" />}
 													gradient="from-purple-100 to-purple-200"
 													textColor="text-purple-600"
@@ -2133,7 +2133,7 @@ export default function ScanPartnerSinglePage() {
 																{(
 																	salesStats?.current?.summary
 																		?.averageCommissionPerAgent || 0
-																).toLocalString("en-GB")}
+																).toLocaleString("en-GB")}
 															</p>
 														</div>
 														<Users className="w-8 h-8 text-primary opacity-50" />
@@ -2150,7 +2150,7 @@ export default function ScanPartnerSinglePage() {
 																{(
 																	salesStats?.current?.summary
 																		?.averageCommissionPerTransaction || 0
-																).toLocalString("en-GB")}
+																).toLocaleString("en-GB")}
 															</p>
 														</div>
 														<DollarSign className="w-8 h-8 text-success opacity-50" />
@@ -2295,7 +2295,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.totalCommission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2303,7 +2303,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.agentCommission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2311,7 +2311,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.partnerCommission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2454,20 +2454,20 @@ export default function ScanPartnerSinglePage() {
 																									₦
 																									{(
 																										commission.amount || 0
-																									).toLocalString("en-GB")}
+																									).toLocaleString("en-GB")}
 																								</p>
 																							</TableCell>
 																							<TableCell>
 																								₦
 																								{(
 																									commission.agentShare || 0
-																								).toLocalString("en-GB")}
+																								).toLocaleString("en-GB")}
 																							</TableCell>
 																							<TableCell>
 																								₦
 																								{(
 																									commission.partnerShare || 0
-																								).toLocalString("en-GB")}
+																								).toLocaleString("en-GB")}
 																							</TableCell>
 																							<TableCell>
 																								{new Date(
@@ -2554,7 +2554,7 @@ export default function ScanPartnerSinglePage() {
 															Generated:{" "}
 															{new Date(
 																commissionAnalytics.generatedAt
-															).toLocalString("en-GB")}
+															).toLocaleString("en-GB")}
 														</p>
 													</div>
 													<div className="text-right">
@@ -2584,7 +2584,7 @@ export default function ScanPartnerSinglePage() {
 																			sum + (item._sum?.commission || 0),
 																		0
 																	)
-																	.toLocalString("en-GB")}
+																	.toLocaleString("en-GB")}
 															</p>
 															<p className="text-xs text-green-600 mt-1">
 																{commissionAnalytics.analytics.reduce(
@@ -2608,7 +2608,7 @@ export default function ScanPartnerSinglePage() {
 																			sum + (item._sum?.mbeCommission || 0),
 																		0
 																	)
-																	.toLocalString("en-GB")}
+																	.toLocaleString("en-GB")}
 															</p>
 															<p className="text-xs text-blue-600 mt-1">
 																{(
@@ -2640,7 +2640,7 @@ export default function ScanPartnerSinglePage() {
 																			sum + (item._sum?.partnerCommission || 0),
 																		0
 																	)
-																	.toLocalString("en-GB")}
+																	.toLocaleString("en-GB")}
 															</p>
 															<p className="text-xs text-purple-600 mt-1">
 																{(
@@ -2696,7 +2696,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agent._sum?.commission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2704,7 +2704,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agent._sum?.mbeCommission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2712,7 +2712,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agent._sum?.partnerCommission || 0
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2726,7 +2726,7 @@ export default function ScanPartnerSinglePage() {
 																						{(
 																							(agent._sum?.commission || 0) /
 																							(agent._count?.commissionId || 1)
-																						).toLocalString("en-GB")}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																			</TableRow>

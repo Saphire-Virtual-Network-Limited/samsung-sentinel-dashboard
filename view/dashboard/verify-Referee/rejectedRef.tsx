@@ -977,7 +977,7 @@ export default function RejectedRefereesPage() {
 														{selectedItem.LoanRecord?.[0]?.createdAt
 															? new Date(
 																	selectedItem.LoanRecord[0].createdAt
-															  ).toLocalString("en-GB")
+															  ).toLocaleString("en-GB")
 															: "N/A"}
 													</p>
 												</div>
@@ -987,7 +987,7 @@ export default function RejectedRefereesPage() {
 														{selectedItem.LoanRecord?.[0]?.updatedAt
 															? new Date(
 																	selectedItem.LoanRecord[0].updatedAt
-															  ).toLocalString("en-GB")
+															  ).toLocaleString("en-GB")
 															: "N/A"}
 													</p>
 												</div>

@@ -166,10 +166,10 @@ const CreditflexTopupRequestsView = () => {
 										{request.customer}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										₦{request.currentBalance.toLocalString("en-GB")}
+										₦{request.currentBalance.toLocaleString("en-GB")}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										₦{request.requestedTopup.toLocalString("en-GB")}
+										₦{request.requestedTopup.toLocaleString("en-GB")}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 										{request.requestDate}

@@ -473,37 +473,37 @@ export default function SamsungReport() {
 				deviceStatus: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.status || "N/A",
 				insurancePackage: r.LoanRecord?.[0]?.insurancePackage || "N/A",
 				insurancePrice: r.LoanRecord?.[0]?.insurancePrice
-					? `${r.LoanRecord[0].insurancePrice.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].insurancePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.LoanRecord?.[0]?.device?.price
-					? `${r.LoanRecord[0].device.price.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].device.price.toLocaleString("en-GB")}`
 					: "N/A",
 				storePrice: r.LoanRecord?.[0]?.devicePrice
-					? `${r.LoanRecord[0].devicePrice.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				margin:
 					r.LoanRecord?.[0]?.devicePrice && r.LoanRecord?.[0]?.device?.price
 						? `${(
 								Number(r.LoanRecord[0].devicePrice) -
 								Number(r.LoanRecord[0].device.price)
-						  ).toLocalString("en-GB")}`
+						  ).toLocaleString("en-GB")}`
 						: "N/A",
 				loanAmount: r.LoanRecord?.[0]?.loanAmount
-					? `${r.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				downPayment: r.LoanRecord?.[0]?.downPayment
-					? `${r.LoanRecord[0].downPayment.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: r.LoanRecord?.[0]?.duration || "N/A",
 				loanTenure: r.LoanRecord?.[0]?.duration || "N/A",
 				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
-					? `${r.LoanRecord[0].monthlyRepayment.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				amountRemaining:
 					r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord[0]?.duration
 						? `${(
 								r.LoanRecord[0].monthlyRepayment * r.LoanRecord[0].duration
-						  ).toLocalString("en-GB")}`
+						  ).toLocaleString("en-GB")}`
 						: "N/A",
 				createdAt: r.LoanRecord?.[0]?.createdAt
 					? new Date(r.LoanRecord[0].createdAt).toLocaleDateString()
@@ -516,7 +516,7 @@ export default function SamsungReport() {
 					  ).toLocaleDateString()
 					: "N/A",
 				nextPayAmount: r.LoanRecord?.[0]?.monthlyRepayment
-					? `${r.LoanRecord[0].monthlyRepayment.toLocalString("en-GB")}`
+					? `${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				completionDate: r.LoanRecord?.[0]?.createdAt
 					? new Date(

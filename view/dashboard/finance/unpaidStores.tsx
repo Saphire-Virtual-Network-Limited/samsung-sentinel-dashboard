@@ -240,7 +240,7 @@ export default function UnpaidStoresView() {
 				accountName: r.store.accountName || "N/A",
 				fullName: r.store.storeName || "N/A",
 				PhoneNo: r.store.phoneNumber || "N/A",
-				Amount: `₦${r.amount?.toLocalString("en-GB") || "0"}`,
+				Amount: `₦${r.amount?.toLocaleString("en-GB") || "0"}`,
 				payChannel: r.payChannel || r.bankUsed || "N/A",
 				Status: r.status || "N/A",
 				createdAt: r.createdAt
@@ -952,7 +952,7 @@ export default function UnpaidStoresView() {
 											Store: {selectedItem.store.storeName}
 										</p>
 										<p className="font-medium">
-											Amount: ₦{selectedItem.amount?.toLocalString("en-GB")}
+											Amount: ₦{selectedItem.amount?.toLocaleString("en-GB")}
 										</p>
 									</div>
 								)}

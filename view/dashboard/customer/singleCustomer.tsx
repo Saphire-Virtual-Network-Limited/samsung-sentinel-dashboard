@@ -1585,7 +1585,7 @@ export default function CollectionSingleCustomerPage() {
 										label="Created At"
 										value={
 											customer.createdAt
-												? new Date(customer.createdAt).toLocalString("en-GB")
+												? new Date(customer.createdAt).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -1593,7 +1593,7 @@ export default function CollectionSingleCustomerPage() {
 										label="Updated At"
 										value={
 											customer.updatedAt
-												? new Date(customer.updatedAt).toLocalString("en-GB")
+												? new Date(customer.updatedAt).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -1664,7 +1664,7 @@ export default function CollectionSingleCustomerPage() {
 											customer.CustomerKYC?.[0]?.createdAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.createdAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -1674,7 +1674,7 @@ export default function CollectionSingleCustomerPage() {
 											customer.CustomerKYC?.[0]?.updatedAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.updatedAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -2171,7 +2171,7 @@ export default function CollectionSingleCustomerPage() {
 											(
 												(customer.LoanRecord?.[0]?.monthlyRepayment ?? 0) *
 												(customer.LoanRecord?.[0]?.duration ?? 0)
-											)?.toLocalString("en-GB") || "N/A"
+											)?.toLocaleString("en-GB") || "N/A"
 										}`}
 									/>
 									<InfoField
@@ -2200,7 +2200,7 @@ export default function CollectionSingleCustomerPage() {
 											customer.LoanRecord?.[0]?.createdAt
 												? new Date(
 														customer.LoanRecord[0].createdAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -2210,7 +2210,7 @@ export default function CollectionSingleCustomerPage() {
 											customer.LoanRecord?.[0]?.updatedAt
 												? new Date(
 														customer.LoanRecord[0].updatedAt
-												  ).toLocalString("en-GB")
+												  ).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -2290,7 +2290,7 @@ export default function CollectionSingleCustomerPage() {
 																</div>
 																<div className="font-medium text-default-900">
 																	{store.amount !== undefined
-																		? `₦${store.amount.toLocalString("en-GB")}`
+																		? `₦${store.amount.toLocaleString("en-GB")}`
 																		: "N/A"}
 																</div>
 															</div>
@@ -2535,7 +2535,9 @@ export default function CollectionSingleCustomerPage() {
 																</div>
 																<div className="font-medium text-default-900">
 																	{device.amount !== undefined
-																		? `₦${device.amount.toLocalString("en-GB")}`
+																		? `₦${device.amount.toLocaleString(
+																				"en-GB"
+																		  )}`
 																		: "N/A"}
 																</div>
 															</div>
@@ -2661,8 +2663,9 @@ export default function CollectionSingleCustomerPage() {
 									<InfoField
 										label="Current Balance"
 										value={`₦${
-											customer.WalletBalance?.balance?.toLocalString("en-GB") ||
-											"N/A"
+											customer.WalletBalance?.balance?.toLocaleString(
+												"en-GB"
+											) || "N/A"
 										}`}
 									/>
 									<InfoField
@@ -3149,7 +3152,7 @@ export default function CollectionSingleCustomerPage() {
 															transaction.prevBalance !== null
 																? `${transaction.currency} ${Number(
 																		transaction.prevBalance
-																  ).toLocalString("en-GB")}`
+																  ).toLocaleString("en-GB")}`
 																: `${transaction.currency} 0`}
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
@@ -3157,7 +3160,7 @@ export default function CollectionSingleCustomerPage() {
 															transaction.newBalance !== null
 																? `${transaction.currency} ${Number(
 																		transaction.newBalance
-																  ).toLocalString("en-GB")}`
+																  ).toLocaleString("en-GB")}`
 																: `${transaction.currency} 0`}
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
@@ -3437,7 +3440,9 @@ export default function CollectionSingleCustomerPage() {
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-default-500">
 															{log.createdAt
-																? new Date(log.createdAt).toLocalString("en-GB")
+																? new Date(log.createdAt).toLocaleString(
+																		"en-GB"
+																  )
 																: "N/A"}
 														</td>
 													</tr>
@@ -4096,7 +4101,7 @@ export default function CollectionSingleCustomerPage() {
 					currentPaymentData?.paymentType || "CREDIT"
 				} payment of ₦${
 					currentPaymentData?.amount
-						? parseFloat(currentPaymentData.amount).toLocalString("en-GB")
+						? parseFloat(currentPaymentData.amount).toLocaleString("en-GB")
 						: "0"
 				} for ${customer?.firstName} ${
 					customer?.lastName

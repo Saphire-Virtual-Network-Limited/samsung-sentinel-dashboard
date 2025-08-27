@@ -368,7 +368,7 @@ export default function SingleMBEPage() {
 	// Render cell function
 	const renderCell = (row: any, key: string) => {
 		if (key === "loanAmount") {
-			return `₦${row[key]?.toLocalString("en-GB") || "N/A"}`;
+			return `₦${row[key]?.toLocaleString("en-GB") || "N/A"}`;
 		}
 		if (key === "dobStatus") {
 			return (
@@ -473,7 +473,7 @@ export default function SingleMBEPage() {
 							<div>
 								<p className="text-sm text-default-500">Total Loan Amount</p>
 								<p className="text-2xl font-bold text-default-900">
-									₦{totalLoanAmount.toLocalString("en-GB")}
+									₦{totalLoanAmount.toLocaleString("en-GB")}
 								</p>
 							</div>
 						</div>
@@ -595,7 +595,7 @@ export default function SingleMBEPage() {
 										</div>
 										<div className="font-medium text-default-900">
 											{mbe.createdAt
-												? new Date(mbe.createdAt).toLocalString("en-GB")
+												? new Date(mbe.createdAt).toLocaleString("en-GB")
 												: "N/A"}
 										</div>
 									</div>

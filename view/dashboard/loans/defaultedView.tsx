@@ -224,13 +224,13 @@ export default function DefaultedView() {
 				bvnPhoneNumber: r.bvnPhoneNumber,
 				status: r.status,
 				loanAmount: r.LoanRecord?.[0]?.loanAmount
-					? `₦${r.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				downPayment: r.LoanRecord?.[0]?.downPayment
-					? `₦${r.LoanRecord[0].downPayment.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.LoanRecord?.[0]?.devicePrice
-					? `₦${r.LoanRecord[0].devicePrice.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
 			})),
@@ -334,7 +334,7 @@ export default function DefaultedView() {
 					if (typeof value === "string") {
 						value = value.replace(/[^\d.-]/g, "");
 					}
-					value = value ? Number(value).toLocalString("en-GB") : "0";
+					value = value ? Number(value).toLocaleString("en-GB") : "0";
 				}
 				row[col.uid] = value;
 			});
@@ -531,7 +531,7 @@ export default function DefaultedView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocalString("en-GB");
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -601,7 +601,7 @@ export default function DefaultedView() {
 																	try {
 																		const date = new Date(value as string);
 																		if (!isNaN(date.getTime())) {
-																			value = date.toLocalString("en-GB");
+																			value = date.toLocaleString("en-GB");
 																		}
 																	} catch (e) {
 																		// If date parsing fails, use the original value
@@ -682,7 +682,7 @@ export default function DefaultedView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocalString("en-GB");
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {
 																	// If date parsing fails, use the original value
@@ -750,7 +750,7 @@ export default function DefaultedView() {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
-																	value = date.toLocalString("en-GB");
+																	value = date.toLocaleString("en-GB");
 																}
 															} catch (e) {
 																// If date parsing fails, use the original value

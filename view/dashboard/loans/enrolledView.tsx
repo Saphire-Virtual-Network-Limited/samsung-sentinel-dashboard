@@ -320,7 +320,7 @@ export default function EnrolledView() {
 					if (typeof value === "string") {
 						value = value.replace(/[^\d.-]/g, "");
 					}
-					value = value ? Number(value).toLocalString("en-GB") : "0";
+					value = value ? Number(value).toLocaleString("en-GB") : "0";
 				}
 				row[col.uid] = value;
 			});
@@ -517,7 +517,7 @@ export default function EnrolledView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocalString("en-GB");
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -587,7 +587,7 @@ export default function EnrolledView() {
 																	try {
 																		const date = new Date(value as string);
 																		if (!isNaN(date.getTime())) {
-																			value = date.toLocalString("en-GB");
+																			value = date.toLocaleString("en-GB");
 																		}
 																	} catch (e) {
 																		// If date parsing fails, use the original value
@@ -658,7 +658,7 @@ export default function EnrolledView() {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
-																	value = date.toLocalString("en-GB");
+																	value = date.toLocaleString("en-GB");
 																}
 															} catch (e) {
 																// If date parsing fails, use the original value
@@ -712,7 +712,7 @@ export default function EnrolledView() {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
-																	value = date.toLocalString("en-GB");
+																	value = date.toLocaleString("en-GB");
 																}
 															} catch (e) {
 																// If date parsing fails, use the original value
@@ -728,7 +728,7 @@ export default function EnrolledView() {
 														if (typeof value === 'number' && 
 															(key.toLowerCase().includes('price') || 
 															 key.toLowerCase().includes('amount'))) {
-															value = `₦${Number(value).toLocalString("en-GB")}`;
+															value = `₦${Number(value).toLocaleString("en-GB")}`;
 														}
 
 														return (

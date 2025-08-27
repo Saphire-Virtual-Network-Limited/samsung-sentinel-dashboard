@@ -154,10 +154,10 @@ const CreditflexRepaymentsView = () => {
 										{payment.customer}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										₦{payment.expected.toLocalString("en-GB")}
+										₦{payment.expected.toLocaleString("en-GB")}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										₦{payment.paid.toLocalString("en-GB")}
+										₦{payment.paid.toLocaleString("en-GB")}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
 										{payment.dueDate}

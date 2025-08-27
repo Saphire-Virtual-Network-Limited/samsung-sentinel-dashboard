@@ -100,9 +100,9 @@ const ScreenReport = () => {
 		if (typeof num === "string" && num.includes(".")) {
 			// Format decimals with commas
 			const [intPart, decPart] = num.split(".");
-			return `${Number(intPart).toLocalString("en-GB")}.${decPart}`;
+			return `${Number(intPart).toLocaleString("en-GB")}.${decPart}`;
 		}
-		return Number(num).toLocalString("en-GB");
+		return Number(num).toLocaleString("en-GB");
 	};
 
 	// Helper to get channel data

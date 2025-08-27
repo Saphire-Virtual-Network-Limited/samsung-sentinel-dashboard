@@ -631,7 +631,9 @@ export default function SingleStoreView() {
 										label="Created At"
 										value={
 											store.store.createdAt
-												? new Date(store.store.createdAt).toLocalString("en-GB")
+												? new Date(store.store.createdAt).toLocaleString(
+														"en-GB"
+												  )
 												: "N/A"
 										}
 									/>
@@ -639,7 +641,9 @@ export default function SingleStoreView() {
 										label="Updated At"
 										value={
 											store.store.updatedAt
-												? new Date(store.store.updatedAt).toLocalString("en-GB")
+												? new Date(store.store.updatedAt).toLocaleString(
+														"en-GB"
+												  )
 												: "N/A"
 										}
 									/>
@@ -873,7 +877,9 @@ export default function SingleStoreView() {
 															<div className="text-xs text-blue-600 mt-1">
 																<strong>Role:</strong> {log.user.role} •{" "}
 																<strong>Date:</strong>{" "}
-																{new Date(log.createdAt).toLocalString("en-GB")}
+																{new Date(log.createdAt).toLocaleString(
+																	"en-GB"
+																)}
 															</div>
 														</div>
 

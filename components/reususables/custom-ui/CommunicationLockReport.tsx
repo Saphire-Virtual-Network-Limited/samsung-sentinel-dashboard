@@ -101,7 +101,7 @@ const CommunicationLockReport = () => {
 								GeneralSans_SemiBold.className
 							)}
 						>
-							{data.total.toLocalString("en-GB")}
+							{data.total.toLocaleString("en-GB")}
 						</p>
 						<p
 							className={cn(

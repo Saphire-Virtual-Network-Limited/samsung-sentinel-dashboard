@@ -231,7 +231,7 @@ export default function PaidStoresView() {
 				fullName: r.store.storeName || "N/A",
 				PhoneNo: r.store.phoneNumber || "N/A",
 				payChannel: r.payChannel || r.bankUsed || "N/A",
-				Amount: `₦${r.amount?.toLocalString("en-GB") || "0"}`,
+				Amount: `₦${r.amount?.toLocaleString("en-GB") || "0"}`,
 				Status: r.status || "N/A",
 			})),
 		[raw]

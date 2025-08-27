@@ -235,7 +235,7 @@ export default function PaymentReceipt({
                   <div class="text-center bg-slate-50 p-3 rounded-lg mb-4">
                     <p class="text-2xl font-bold text-slate-900 mb-1">NGN ${Number(
 											transactionData.amount
-										).toLocalString("en-GB")}</p>
+										).toLocaleString("en-GB")}</p>
                   </div>
 
                   <div class="grid grid-cols-2 gap-4 mb-4">
@@ -266,7 +266,7 @@ export default function PaymentReceipt({
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</p>
                           <p class="text-sm text-slate-900">${new Date(
 														transactionData.date
-													).toLocalString("en-GB")}</p>
+													).toLocaleString("en-GB")}</p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Method</p>
@@ -313,7 +313,7 @@ export default function PaymentReceipt({
                           <span class="text-slate-900">Total Amount</span>
                           <span class="text-slate-900">NGN ${Number(
 														transactionData.amount
-													).toLocalString("en-GB")}</span>
+													).toLocaleString("en-GB")}</span>
                         </div>
                       </div>
                     </div>

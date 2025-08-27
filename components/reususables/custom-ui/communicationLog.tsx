@@ -345,7 +345,7 @@ const CommunicationLog = () => {
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-default-500">
 											{log.createdAt
-												? new Date(log.createdAt).toLocalString("en-GB")
+												? new Date(log.createdAt).toLocaleString("en-GB")
 												: "N/A"}
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-default-500">

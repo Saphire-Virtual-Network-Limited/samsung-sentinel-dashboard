@@ -370,13 +370,13 @@ const exportLoans = async (data: LoanRecord[]) => {
 	data.forEach((loan) =>
 		ws.addRow({
 			...loan,
-			loanAmount: `₦${loan.loanAmount?.toLocalString("en-GB") || 0}`,
-			devicePrice: `₦${loan.devicePrice?.toLocalString("en-GB") || 0}`,
-			downPayment: `₦${loan.downPayment?.toLocalString("en-GB") || 0}`,
+			loanAmount: `₦${loan.loanAmount?.toLocaleString("en-GB") || 0}`,
+			devicePrice: `₦${loan.devicePrice?.toLocaleString("en-GB") || 0}`,
+			downPayment: `₦${loan.downPayment?.toLocaleString("en-GB") || 0}`,
 			monthlyRepayment: `₦${
-				loan.monthlyRepayment?.toLocalString("en-GB") || 0
+				loan.monthlyRepayment?.toLocaleString("en-GB") || 0
 			}`,
-			interestAmount: `₦${loan.interestAmount?.toLocalString("en-GB") || 0}`,
+			interestAmount: `₦${loan.interestAmount?.toLocaleString("en-GB") || 0}`,
 			createdAt: new Date(loan.createdAt).toLocaleDateString(),
 			updatedAt: new Date(loan.updatedAt).toLocaleDateString(),
 		})
@@ -401,12 +401,12 @@ const exportCommissions = async (data: CommissionRecord[]) => {
 	data.forEach((commission) =>
 		ws.addRow({
 			...commission,
-			commission: `₦${commission.commission?.toLocalString("en-GB") || 0}`,
+			commission: `₦${commission.commission?.toLocaleString("en-GB") || 0}`,
 			mbeCommission: `₦${
-				commission.mbeCommission?.toLocalString("en-GB") || 0
+				commission.mbeCommission?.toLocaleString("en-GB") || 0
 			}`,
 			partnerCommission: `₦${
-				commission.partnerCommission?.toLocalString("en-GB") || 0
+				commission.partnerCommission?.toLocaleString("en-GB") || 0
 			}`,
 			splitPercent: `${commission.splitPercent || 0}%`,
 			date_created: new Date(commission.date_created).toLocaleDateString(),
@@ -435,25 +435,25 @@ const renderLoanCell = (
 		case "loanAmount":
 			return (
 				<div className="font-medium">
-					₦{loan.loanAmount?.toLocalString("en-GB") || 0}
+					₦{loan.loanAmount?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "devicePrice":
 			return (
 				<div className="font-medium">
-					₦{loan.devicePrice?.toLocalString("en-GB") || 0}
+					₦{loan.devicePrice?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "downPayment":
 			return (
 				<div className="font-medium">
-					₦{loan.downPayment?.toLocalString("en-GB") || 0}
+					₦{loan.downPayment?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "monthlyRepayment":
 			return (
 				<div className="font-medium">
-					₦{loan.monthlyRepayment?.toLocalString("en-GB") || 0}
+					₦{loan.monthlyRepayment?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "duration":
@@ -519,19 +519,19 @@ const renderCommissionCell = (commission: CommissionRecord, key: string) => {
 		case "commission":
 			return (
 				<div className="font-medium">
-					₦{commission.commission?.toLocalString("en-GB") || 0}
+					₦{commission.commission?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "mbeCommission":
 			return (
 				<div className="font-medium">
-					₦{commission.mbeCommission?.toLocalString("en-GB") || 0}
+					₦{commission.mbeCommission?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "partnerCommission":
 			return (
 				<div className="font-medium">
-					₦{commission.partnerCommission?.toLocalString("en-GB") || 0}
+					₦{commission.partnerCommission?.toLocaleString("en-GB") || 0}
 				</div>
 			);
 		case "splitPercent":
@@ -1718,7 +1718,7 @@ export default function AgentSinglePage() {
 												(sum: any, loan: any) => sum + (loan.loanAmount || 0),
 												0
 											)
-											.toLocalString("en-GB")}
+											.toLocaleString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -1731,7 +1731,7 @@ export default function AgentSinglePage() {
 								<div>
 									<p className="text-sm text-default-500">Total Commissions</p>
 									<p className="text-2xl font-bold text-default-900">
-										₦{(summary?.totalCommission || 0).toLocalString("en-GB")}
+										₦{(summary?.totalCommission || 0).toLocaleString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -1744,7 +1744,7 @@ export default function AgentSinglePage() {
 								<div>
 									<p className="text-sm text-default-500">Avg Commission</p>
 									<p className="text-2xl font-bold text-default-900">
-										₦{(summary?.avgCommission || 0).toLocalString("en-GB")}
+										₦{(summary?.avgCommission || 0).toLocaleString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -2295,7 +2295,7 @@ export default function AgentSinglePage() {
 										label="Created At"
 										value={
 											agent.createdAt
-												? new Date(agent.createdAt).toLocalString("en-GB")
+												? new Date(agent.createdAt).toLocaleString("en-GB")
 												: null
 										}
 									/>
@@ -2303,7 +2303,7 @@ export default function AgentSinglePage() {
 										label="Updated At"
 										value={
 											agent.updatedAt
-												? new Date(agent.updatedAt).toLocalString("en-GB")
+												? new Date(agent.updatedAt).toLocaleString("en-GB")
 												: null
 										}
 									/>
@@ -2823,7 +2823,7 @@ export default function AgentSinglePage() {
 															<div className="flex justify-between">
 																<span className="text-default-500">Price:</span>
 																<span className="font-medium">
-																	₦{device.price?.toLocalString("en-GB")}
+																	₦{device.price?.toLocaleString("en-GB")}
 																</span>
 															</div>
 															<div className="flex justify-between">
@@ -2907,7 +2907,7 @@ export default function AgentSinglePage() {
 																</TableCell>
 																<TableCell>
 																	<span className="font-medium">
-																		₦{device.price?.toLocalString("en-GB")}
+																		₦{device.price?.toLocaleString("en-GB")}
 																	</span>
 																</TableCell>
 																<TableCell>
@@ -3140,7 +3140,7 @@ export default function AgentSinglePage() {
 														mainStore.storeNew.createdAt
 															? new Date(
 																	mainStore.storeNew.createdAt
-															  ).toLocalString("en-GB")
+															  ).toLocaleString("en-GB")
 															: null
 													}
 												/>
@@ -3150,7 +3150,7 @@ export default function AgentSinglePage() {
 														mainStore.storeNew.updatedAt
 															? new Date(
 																	mainStore.storeNew.updatedAt
-															  ).toLocalString("en-GB")
+															  ).toLocaleString("en-GB")
 															: null
 													}
 												/>
@@ -3212,7 +3212,7 @@ export default function AgentSinglePage() {
 											label="Created At"
 											value={
 												kyc.createdAt
-													? new Date(kyc.createdAt).toLocalString("en-GB")
+													? new Date(kyc.createdAt).toLocaleString("en-GB")
 													: null
 											}
 										/>
@@ -3220,7 +3220,7 @@ export default function AgentSinglePage() {
 											label="Updated At"
 											value={
 												kyc.updatedAt
-													? new Date(kyc.updatedAt).toLocalString("en-GB")
+													? new Date(kyc.updatedAt).toLocaleString("en-GB")
 													: null
 											}
 										/>
@@ -3936,19 +3936,19 @@ export default function AgentSinglePage() {
 												Device Price
 											</p>
 											<p className="font-bold text-success-700">
-												₦{selectedDevice.price?.toLocalString("en-GB")}
+												₦{selectedDevice.price?.toLocaleString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-primary-50 p-3 rounded-lg">
 											<p className="text-xs text-primary-600 mb-1">SAP</p>
 											<p className="font-bold text-primary-700">
-												₦{selectedDevice.SAP?.toLocalString("en-GB")}
+												₦{selectedDevice.SAP?.toLocaleString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-warning-50 p-3 rounded-lg">
 											<p className="text-xs text-warning-600 mb-1">SLD</p>
 											<p className="font-bold text-warning-700">
-												₦{selectedDevice.SLD?.toLocalString("en-GB")}
+												₦{selectedDevice.SLD?.toLocaleString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-secondary-50 p-3 rounded-lg">
@@ -3956,7 +3956,7 @@ export default function AgentSinglePage() {
 												Sentiprotect
 											</p>
 											<p className="font-bold text-secondary-700">
-												₦{selectedDevice.sentiprotect?.toLocalString("en-GB")}
+												₦{selectedDevice.sentiprotect?.toLocaleString("en-GB")}
 											</p>
 										</div>
 									</div>
@@ -4363,7 +4363,7 @@ export default function AgentSinglePage() {
 												<p className="mt-1 text-xs text-default-900">
 													{new Date(
 														selectedReconciliation.createdAt
-													).toLocalString("en-GB")}
+													).toLocaleString("en-GB")}
 												</p>
 											</div>
 										</div>
@@ -4502,7 +4502,7 @@ export default function AgentSinglePage() {
 														<p className="text-xs text-default-900">
 															{new Date(
 																selectedReconciliation.updatedAt
-															).toLocalString("en-GB")}
+															).toLocaleString("en-GB")}
 														</p>
 													</div>
 												)}

@@ -378,7 +378,7 @@ export default function AllTransactionView() {
 		if (key === "amount") {
 			return (
 				<div className="text-small">
-					₦{row.amount?.toLocalString("en-GB") || "0"}
+					₦{row.amount?.toLocaleString("en-GB") || "0"}
 				</div>
 			);
 		}
@@ -480,7 +480,7 @@ export default function AllTransactionView() {
 											Total Transactions
 										</p>
 										<p className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.totalTransactions?.toLocalString("en-GB") || "0"}
+											{raw.totalTransactions?.toLocaleString("en-GB") || "0"}
 										</p>
 										<div className="w-full bg-blue-200/40 rounded-full h-1">
 											<div
@@ -513,7 +513,7 @@ export default function AllTransactionView() {
 											Total Amount
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											₦{raw.totalAmount?.toLocalString("en-GB") || "0"}
+											₦{raw.totalAmount?.toLocaleString("en-GB") || "0"}
 										</p>
 										<div className="w-full bg-emerald-200/40 rounded-full h-1">
 											<div

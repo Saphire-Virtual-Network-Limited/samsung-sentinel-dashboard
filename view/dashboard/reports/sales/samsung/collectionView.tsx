@@ -432,7 +432,7 @@ export default function CollectionSamsungView() {
 			raw.map((r: CustomerRecord) => ({
 				...r,
 				devicePrice: r.LoanRecord?.[0]?.devicePrice
-					? `₦${r.LoanRecord[0].devicePrice.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
 				customerId: r.customerId || "N/A",
@@ -453,7 +453,7 @@ export default function CollectionSamsungView() {
 				altPhone: r.mainPhoneNumber || "N/A",
 				state: r.CustomerKYC?.[0]?.state || "N/A",
 				loanAmount: r.LoanRecord?.[0]?.loanAmount
-					? `₦${r.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: r.LoanRecord?.[0]?.duration || "N/A",
 				startDate: r.LoanRecord?.[0]?.updatedAt
@@ -469,11 +469,11 @@ export default function CollectionSamsungView() {
 					: "N/A",
 				interest: "9.50%",
 				loanBalance: r.LoanRecord?.[0]?.loanAmount
-					? `₦${r.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				AmountPaid: "0",
 				totalAmount: r.LoanRecord?.[0]?.monthlyRepayment
-					? `₦${r.LoanRecord[0].monthlyRepayment.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				PrincipalRepaid:
 					r.LoanRecord?.[0]?.monthlyRepayment &&
@@ -481,13 +481,13 @@ export default function CollectionSamsungView() {
 						? `₦${(
 								r.LoanRecord[0].monthlyRepayment -
 								r.LoanRecord[0].interestAmount
-						  ).toLocalString("en-GB")}`
+						  ).toLocaleString("en-GB")}`
 						: "N/A",
 				interestRepaid: r.LoanRecord?.[0]?.interestAmount
-					? `₦${r.LoanRecord[0].interestAmount.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].interestAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
-					? `₦${r.LoanRecord[0].monthlyRepayment.toLocalString("en-GB")}`
+					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				numberOfRepayments: "0",
 				numberOfMissedRepayments: "0",

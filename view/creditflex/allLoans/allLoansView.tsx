@@ -628,7 +628,7 @@ const CreditflexAllLoansView = () => {
 			const amount = loan[key as keyof CreditflexLoan] as number;
 			return (
 				<span className="font-medium">
-					₦{amount?.toLocalString("en-GB") || 0}
+					₦{amount?.toLocaleString("en-GB") || 0}
 				</span>
 			);
 		}

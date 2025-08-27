@@ -295,7 +295,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 										label="Registration Date"
 										value={
 											customer.createdAt
-												? new Date(customer.createdAt).toLocalString("en-GB")
+												? new Date(customer.createdAt).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -303,7 +303,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 										label="Last Updated"
 										value={
 											customer.updatedAt
-												? new Date(customer.updatedAt).toLocalString("en-GB")
+												? new Date(customer.updatedAt).toLocaleString("en-GB")
 												: "N/A"
 										}
 									/>
@@ -379,7 +379,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 															device.devicePrice
 																? `₦${parseFloat(
 																		device.devicePrice
-																  ).toLocalString("en-GB")}`
+																  ).toLocaleString("en-GB")}`
 																: "N/A"
 														}
 													/>
@@ -571,7 +571,7 @@ export const SentinelSingleCustomerPage: React.FC<{
 											</div>
 											<div className="text-sm text-default-500">
 												{customer.createdAt
-													? new Date(customer.createdAt).toLocalString("en-GB")
+													? new Date(customer.createdAt).toLocaleString("en-GB")
 													: "N/A"}
 											</div>
 										</div>
@@ -592,10 +592,10 @@ export const SentinelSingleCustomerPage: React.FC<{
 													{device.isEnrolled && device.enrolledAt
 														? `Enrolled: ${new Date(
 																device.enrolledAt
-														  ).toLocalString("en-GB")}`
+														  ).toLocaleString("en-GB")}`
 														: `Registered: ${new Date(
 																device.createdAt
-														  ).toLocalString("en-GB")}`}
+														  ).toLocaleString("en-GB")}`}
 												</div>
 												{device.updatedAt &&
 													device.updatedAt !== device.createdAt && (
