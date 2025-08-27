@@ -351,34 +351,46 @@ export default function UtilizationView() {
 
 	// Export all filtered
 	const exportFn = async (data: LoanRecord[]) => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Approved_Loans");
-		ws.columns = columns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) =>
-			ws.addRow({ ...r, status: capitalize(r.status || "") })
-		);
+		try {
+			const wb = new ExcelJS.Workbook();
+			const ws = wb.addWorksheet("Utilization_Loans");
+			const exportColumns = columns.filter((c) => c.uid !== "actions");
+			ws.columns = exportColumns.map((c) => ({
+				header: c.name,
+				key: c.uid,
+				width: 20,
+			}));
 
-		// Apply Naira currency formatting to relevant columns
-		const currencyColumns = [
-			"devicePrice",
-			"downPayment",
-			"loanAmount",
-			"insurancePrice",
-			"mbsEligibleAmount",
-			"deviceAmount",
-			"interestAmount",
-		];
-		currencyColumns.forEach((col) => {
-			const colObj = ws.getColumn(col);
-			if (colObj) {
-				colObj.numFmt = "₦#,##0.00";
-			}
-		});
+			data.forEach((r) => {
+				const row: Record<string, any> = {};
+				exportColumns.forEach((col) => {
+					let value = r[col.uid as keyof LoanRecord];
+					// Format currency columns as comma-separated numbers
+					const currencyCols = [
+						"devicePrice",
+						"downPayment",
+						"loanAmount",
+						"insurancePrice",
+						"mbsEligibleAmount",
+						"deviceAmount",
+						"interestAmount",
+					];
+					if (currencyCols.includes(col.uid)) {
+						if (typeof value === "string") {
+							value = value.replace(/[^\d.-]/g, "");
+						}
+						value = value ? Number(value).toLocaleString() : "0";
+					}
+					row[col.uid] = value;
+				});
+				ws.addRow(row);
+			});
 
-		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Approved_Loans.xlsx");
+			const buf = await wb.xlsx.writeBuffer();
+			saveAs(new Blob([buf]), "Approved_Loans.xlsx");
+		} catch (error) {
+			console.error("Export error:", error);
+		}
 	};
 
 	// When action clicked:

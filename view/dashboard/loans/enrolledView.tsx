@@ -2,11 +2,35 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { getAllEnrolledRecord, capitalize, calculateAge, showToast, verifyCustomerReferenceNumber, getAllCustomerRecord } from "@/lib";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
+import {
+	getAllEnrolledRecord,
+	capitalize,
+	calculateAge,
+	showToast,
+	verifyCustomerReferenceNumber,
+	getAllCustomerRecord,
+} from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import {
+	Button,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
+	Chip,
+	SortDescriptor,
+	ChipProps,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	useDisclosure,
+} from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
@@ -24,7 +48,7 @@ const columns: ColumnDef[] = [
 ];
 
 const statusOptions = [
-    { name: "ENROLLED", uid: "enrolled" },
+	{ name: "ENROLLED", uid: "enrolled" },
 	{ name: "PENDING", uid: "pending" },
 	{ name: "APPROVED", uid: "approved" },
 	{ name: "REJECTED", uid: "rejected" },
@@ -37,7 +61,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 	enrolled: "warning",
 	defaulted: "danger",
-};  
+};
 
 type LoanRecord = {
 	customerId: string;
@@ -61,73 +85,71 @@ type LoanRecord = {
 	loanStatus?: string;
 	regBy: string | null;
 	LoanRecord?: string;
-		loanRecordId?: string;
-		// customerId?: string;
-		loanDiskId?: string;
-		lastPoint?: string;
-		// channel?: string;
-		// loanStatus?: string;
-		// createdAt?: string;
-		// updatedAt?: string;
-		loanAmount?: number;
-		deviceId?: string;
-		downPayment?: number;
-		insurancePackage?: string;
-		insurancePrice?: number;
-		mbsEligibleAmount?: number;
-		payFrequency?: string;
-		storeId?: string;
-		devicePrice?: number;
-		deviceAmount?: number;
-		monthlyRepayment?: number;
-		duration?: number;
-		interestAmount?: number;
+	loanRecordId?: string;
+	// customerId?: string;
+	loanDiskId?: string;
+	lastPoint?: string;
+	// channel?: string;
+	// loanStatus?: string;
+	// createdAt?: string;
+	// updatedAt?: string;
+	loanAmount?: number;
+	deviceId?: string;
+	downPayment?: number;
+	insurancePackage?: string;
+	insurancePrice?: number;
+	mbsEligibleAmount?: number;
+	payFrequency?: string;
+	storeId?: string;
+	devicePrice?: number;
+	deviceAmount?: number;
+	monthlyRepayment?: number;
+	duration?: number;
+	interestAmount?: number;
 
-
-		store?: {
-			storeOldId: number;
-			storeName: string;
-			city: string;
-			state: string;
-			region: string | null;
-			address: string;
-			accountNumber: string;
-			accountName: string;
-			bankName: string;
-			bankCode: string;
-			phoneNumber: string;
-			storeEmail: string;
-			longitude: number;
-			latitude: number;
-			clusterId: number;
-			partner: string;
-			storeOpen: string;
-			storeClose: string;
-			createdAt: string;
-			updatedAt: string;
-			storeId: string;
-		};
-		device?: {
-			price: number;
-			deviceModelNumber: string;
-			SAP: number;
-			SLD: number;
-			createdAt: string;
-			deviceManufacturer: string;
-			deviceName: string;
-			deviceRam: string | null;
-			deviceScreen: string | null;
-			deviceStorage: string | null;
-			imageLink: string;
-			newDeviceId: string;
-			oldDeviceId: string;
-			sentiprotect: number;
-			updatedAt: string;
-			deviceType: string;
-			deviceCamera: any[];
-			android_go: string;
-		};
-	
+	store?: {
+		storeOldId: number;
+		storeName: string;
+		city: string;
+		state: string;
+		region: string | null;
+		address: string;
+		accountNumber: string;
+		accountName: string;
+		bankName: string;
+		bankCode: string;
+		phoneNumber: string;
+		storeEmail: string;
+		longitude: number;
+		latitude: number;
+		clusterId: number;
+		partner: string;
+		storeOpen: string;
+		storeClose: string;
+		createdAt: string;
+		updatedAt: string;
+		storeId: string;
+	};
+	device?: {
+		price: number;
+		deviceModelNumber: string;
+		SAP: number;
+		SLD: number;
+		createdAt: string;
+		deviceManufacturer: string;
+		deviceName: string;
+		deviceRam: string | null;
+		deviceScreen: string | null;
+		deviceStorage: string | null;
+		imageLink: string;
+		newDeviceId: string;
+		oldDeviceId: string;
+		sentiprotect: number;
+		updatedAt: string;
+		deviceType: string;
+		deviceCamera: any[];
+		android_go: string;
+	};
 };
 
 export default function EnrolledView() {
@@ -159,28 +181,31 @@ export default function EnrolledView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["enrolled-records", startDate, endDate] : "enrolled-records",
-		() => getAllEnrolledRecord(startDate, endDate)
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
+		startDate && endDate
+			? ["enrolled-records", startDate, endDate]
+			: "enrolled-records",
+		() =>
+			getAllEnrolledRecord(startDate, endDate)
+				.then((r) => {
+					if (!r.data || r.data.length === 0) {
+						setHasNoRecords(true);
+						return [];
+					}
+					setHasNoRecords(false);
+					return r.data;
+				})
+				.catch((error) => {
+					console.error("Error fetching enrolled records:", error);
 					setHasNoRecords(true);
 					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch((error) => {
-				console.error("Error fetching enrolled records:", error);
-				setHasNoRecords(true);
-				return [];
-			}),
+				}),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
-			revalidateIfStale: true
+			revalidateIfStale: true,
 		}
 	);
 
@@ -210,39 +235,41 @@ export default function EnrolledView() {
 			list = list.filter((c) => {
 				try {
 					// Safely check each field with proper null checks
-					const fullName = (c.fullName || '').toLowerCase();
-					const firstName = (c.firstName || '').toLowerCase();
-					const lastName = (c.lastName || '').toLowerCase();
-					const email = (c.email || '').toLowerCase();
-					const bvn = (c.bvn || '').toLowerCase();
-					const customerId = (c.customerId || '').toLowerCase();
-					const phone = (c.mainPhoneNumber || '').toLowerCase();
-					const deviceName = (c.deviceName || '').toLowerCase();
-					const deviceModel = (c.deviceModelNumber || '').toLowerCase();
-					const deviceRam = (c.deviceRam || '').toLowerCase();
-					const loanRecordId = (c.loanRecordId || '').toLowerCase();
-					const storeId = (c.storeId || '').toLowerCase();
+					const fullName = (c.fullName || "").toLowerCase();
+					const firstName = (c.firstName || "").toLowerCase();
+					const lastName = (c.lastName || "").toLowerCase();
+					const email = (c.email || "").toLowerCase();
+					const bvn = (c.bvn || "").toLowerCase();
+					const customerId = (c.customerId || "").toLowerCase();
+					const phone = (c.mainPhoneNumber || "").toLowerCase();
+					const deviceName = (c.deviceName || "").toLowerCase();
+					const deviceModel = (c.deviceModelNumber || "").toLowerCase();
+					const deviceRam = (c.deviceRam || "").toLowerCase();
+					const loanRecordId = (c.loanRecordId || "").toLowerCase();
+					const storeId = (c.storeId || "").toLowerCase();
 
-					return fullName.includes(f) || 
-						   firstName.includes(f) ||
-						   lastName.includes(f) ||	
-						   email.includes(f) || 
-						   bvn.includes(f) || 
-						   customerId.includes(f) || 
-						   phone.includes(f) || 
-						   deviceName.includes(f) || 
-						   deviceModel.includes(f) || 
-							deviceRam.includes(f) ||
-						   loanRecordId.includes(f) ||
-						   storeId.includes(f);
+					return (
+						fullName.includes(f) ||
+						firstName.includes(f) ||
+						lastName.includes(f) ||
+						email.includes(f) ||
+						bvn.includes(f) ||
+						customerId.includes(f) ||
+						phone.includes(f) ||
+						deviceName.includes(f) ||
+						deviceModel.includes(f) ||
+						deviceRam.includes(f) ||
+						loanRecordId.includes(f) ||
+						storeId.includes(f)
+					);
 				} catch (error) {
-					console.error('Error in filter:', error);
+					console.error("Error in filter:", error);
 					return false;
 				}
 			});
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));
+			list = list.filter((c) => statusFilter.has(c.status || ""));
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -255,8 +282,8 @@ export default function EnrolledView() {
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || '');
-			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || '');
+			const aVal = String(a[sortDescriptor.column as keyof LoanRecord] || "");
+			const bVal = String(b[sortDescriptor.column as keyof LoanRecord] || "");
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
@@ -266,8 +293,40 @@ export default function EnrolledView() {
 	const exportFn = async (data: LoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Enrolled Loans");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
+		const exportColumns = columns.filter((c) => c.uid !== "actions");
+		ws.columns = exportColumns.map((c) => ({
+			header: c.name,
+			key: c.uid,
+			width: 20,
+		}));
+
+		// Currency columns to format as numbers with commas
+		const currencyColumns = [
+			"devicePrice",
+			"downPayment",
+			"loanAmount",
+			"monthlyRepayment",
+			"insurancePrice",
+			"mbsEligibleAmount",
+			"deviceAmount",
+			"interestAmount",
+		];
+
+		data.forEach((r) => {
+			const row: Record<string, any> = {};
+			exportColumns.forEach((col) => {
+				let value = r[col.uid as keyof LoanRecord];
+				if (currencyColumns.includes(col.uid)) {
+					if (typeof value === "string") {
+						value = value.replace(/[^\d.-]/g, "");
+					}
+					value = value ? Number(value).toLocaleString() : "0";
+				}
+				row[col.uid] = value;
+			});
+			ws.addRow(row);
+		});
+
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Enrolled_Loan_Records.xlsx");
 	};
@@ -286,17 +345,12 @@ export default function EnrolledView() {
 				<div className="flex justify-end">
 					<Dropdown>
 						<DropdownTrigger>
-							<Button
-								isIconOnly
-								size="sm"
-								variant="light">
+							<Button isIconOnly size="sm" variant="light">
 								<EllipsisVertical className="text-default-300" />
 							</Button>
 						</DropdownTrigger>
 						<DropdownMenu>
-							<DropdownItem
-								key="view"
-								onPress={() => openModal("view", row)}>
+							<DropdownItem key="view" onPress={() => openModal("view", row)}>
 								View
 							</DropdownItem>
 						</DropdownMenu>
@@ -308,10 +362,11 @@ export default function EnrolledView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.status || '']}
+					color={statusColorMap[row.status || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.status || '')}
+					variant="flat"
+				>
+					{capitalize(row.status || "")}
 				</Chip>
 			);
 		}
@@ -319,32 +374,60 @@ export default function EnrolledView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.loanStatus?.toLowerCase() || '']}
+					color={statusColorMap[row.loanStatus?.toLowerCase() || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.loanStatus || '')}
+					variant="flat"
+				>
+					{capitalize(row.loanStatus || "")}
 				</Chip>
 			);
 		}
 		if (key === "fullName") {
-			return <p className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.fullName}</p>;
+			return (
+				<p
+					className="capitalize cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					{row.fullName}
+				</p>
+			);
 		}
 		// Ensure we're converting any value to a string before rendering
 		const cellValue = (row as any)[key];
 		if (cellValue === null || cellValue === undefined) {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>N/A</p>;
+			return (
+				<p
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					N/A
+				</p>
+			);
 		}
-		if (typeof cellValue === 'object') {
-			return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>View Details</p>;
+		if (typeof cellValue === "object") {
+			return (
+				<p
+					className="text-small cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					View Details
+				</p>
+			);
 		}
-		return <p className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{String(cellValue)}</p>;
+		return (
+			<p
+				className="text-small cursor-pointer"
+				onClick={() => openModal("view", row)}
+			>
+				{String(cellValue)}
+			</p>
+		);
 	};
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
-			
+			<div className="mb-4 flex justify-center md:justify-end"></div>
+
 			{isLoading ? (
 				<TableSkeleton columns={columns.length} rows={10} />
 			) : (
@@ -378,13 +461,13 @@ export default function EnrolledView() {
 					defaultDateRange={{ days: 2 }}
 				/>
 			)}
-			
 
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
 				// size="2xl"
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -394,34 +477,43 @@ export default function EnrolledView() {
 									<div className="space-y-4">
 										{/* Personal Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Personal Information
+											</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												{Object.entries(selectedItem).map(([key, value]) => {
 													// Skip LoanRecord as it's handled separately
-													if (key === 'LoanRecord') return null;
-													
+													if (key === "LoanRecord") return null;
+
 													// Handle null/undefined values
 													if (value === null || value === undefined) {
 														return (
 															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">N/A</p>
 															</div>
 														);
 													}
 
 													// Handle objects
-													if (typeof value === 'object') {
+													if (typeof value === "object") {
 														return (
 															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
+																<p className="text-sm text-default-500">
+																	{key}
+																</p>
 																<p className="font-medium">View Details</p>
 															</div>
 														);
 													}
 
 													// Handle dates
-													if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
+													if (
+														key.toLowerCase().includes("date") ||
+														key.toLowerCase().includes("at")
+													) {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
@@ -433,8 +525,8 @@ export default function EnrolledView() {
 													}
 
 													// Handle boolean values
-													if (typeof value === 'boolean') {
-														value = value ? 'Yes' : 'No';
+													if (typeof value === "boolean") {
+														value = value ? "Yes" : "No";
 													}
 
 													return (
@@ -448,69 +540,90 @@ export default function EnrolledView() {
 										</div>
 
 										{/* Loan Information */}
-										{selectedItem.LoanRecord && selectedItem.LoanRecord.length > 0 && (
-											<div className="bg-default-50 p-4 rounded-lg">
-												<h3 className="text-lg font-semibold mb-3">Loan Information</h3>
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{Object.entries(selectedItem.LoanRecord[0]).map(([key, value]) => {
-														// Skip store and device as they're handled separately
-														if (key === 'store' || key === 'device') return null;
+										{selectedItem.LoanRecord &&
+											selectedItem.LoanRecord.length > 0 && (
+												<div className="bg-default-50 p-4 rounded-lg">
+													<h3 className="text-lg font-semibold mb-3">
+														Loan Information
+													</h3>
+													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+														{Object.entries(selectedItem.LoanRecord[0]).map(
+															([key, value]) => {
+																// Skip store and device as they're handled separately
+																if (key === "store" || key === "device")
+																	return null;
 
-														// Handle null/undefined values
-														if (value === null || value === undefined) {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">N/A</p>
-																</div>
-															);
-														}
-
-														// Handle objects
-														if (typeof value === 'object') {
-															return (
-																<div key={key}>
-																	<p className="text-sm text-default-500">{key}</p>
-																	<p className="font-medium">View Details</p>
-																</div>
-															);
-														}
-
-														// Handle dates
-														if (key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) {
-															try {
-																const date = new Date(value as string);
-																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
+																// Handle null/undefined values
+																if (value === null || value === undefined) {
+																	return (
+																		<div key={key}>
+																			<p className="text-sm text-default-500">
+																				{key}
+																			</p>
+																			<p className="font-medium">N/A</p>
+																		</div>
+																	);
 																}
-															} catch (e) {
-																// If date parsing fails, use the original value
+
+																// Handle objects
+																if (typeof value === "object") {
+																	return (
+																		<div key={key}>
+																			<p className="text-sm text-default-500">
+																				{key}
+																			</p>
+																			<p className="font-medium">
+																				View Details
+																			</p>
+																		</div>
+																	);
+																}
+
+																// Handle dates
+																if (
+																	key.toLowerCase().includes("date") ||
+																	key.toLowerCase().includes("at")
+																) {
+																	try {
+																		const date = new Date(value as string);
+																		if (!isNaN(date.getTime())) {
+																			value = date.toLocaleString();
+																		}
+																	} catch (e) {
+																		// If date parsing fails, use the original value
+																	}
+																}
+
+																// Handle boolean values
+																if (typeof value === "boolean") {
+																	value = value ? "Yes" : "No";
+																}
+
+																// Format currency values
+																if (
+																	typeof value === "number" &&
+																	(key.toLowerCase().includes("amount") ||
+																		key.toLowerCase().includes("price") ||
+																		key.toLowerCase().includes("payment"))
+																) {
+																	value = `₦${Number(value).toLocaleString()}`;
+																}
+
+																return (
+																	<div key={key}>
+																		<p className="text-sm text-default-500">
+																			{key}
+																		</p>
+																		<p className="font-medium">
+																			{String(value)}
+																		</p>
+																	</div>
+																);
 															}
-														}
-
-														// Handle boolean values
-														if (typeof value === 'boolean') {
-															value = value ? 'Yes' : 'No';
-														}
-
-														// Format currency values
-														if (typeof value === 'number' && 
-															(key.toLowerCase().includes('amount') || 
-															 key.toLowerCase().includes('price') || 
-															 key.toLowerCase().includes('payment'))) {
-															value = `₦${Number(value).toLocaleString()}`;
-														}
-
-														return (
-															<div key={key}>
-																<p className="text-sm text-default-500">{key}</p>
-																<p className="font-medium">{String(value)}</p>
-															</div>
-														);
-													})}
+														)}
+													</div>
 												</div>
-											</div>
-										)}
+											)}
 
 										{/* Store Information */}
 										{/* {selectedItem.LoanRecord?.[0]?.store && (
@@ -630,10 +743,7 @@ export default function EnrolledView() {
 								)}
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onClose}>
+								<Button color="danger" variant="light" onPress={onClose}>
 									Close
 								</Button>
 							</ModalFooter>
