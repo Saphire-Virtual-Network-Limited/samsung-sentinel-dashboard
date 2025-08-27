@@ -589,6 +589,7 @@ export default function DueLoansView() {
 			"monthlyRepayment",
 			"downPayment",
 			"devicePrice",
+			"loanAmount",
 		];
 
 		data.forEach((r) => {
