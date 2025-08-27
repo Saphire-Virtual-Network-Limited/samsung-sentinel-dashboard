@@ -179,12 +179,12 @@ export default function AllDevicesView() {
 				deviceName: r.deviceName || "",
 				deviceManufacturer: r.deviceManufacturer || "",
 				deviceType: r.deviceType || "",
-				price: r.price ? `₦${r.price.toLocaleString()}` : "",
+				price: r.price ? `₦${r.price.toLocalString("en-GB")}` : "",
 				sentiProtect: r.sentiprotect
-					? `₦${r.sentiprotect.toLocaleString()}`
+					? `₦${r.sentiprotect.toLocalString("en-GB")}`
 					: "",
-				SAP: r.SAP ? `₦${r.SAP.toLocaleString()}` : "",
-				SLD: r.SLD ? `₦${r.SLD.toLocaleString()}` : "",
+				SAP: r.SAP ? `₦${r.SAP.toLocalString("en-GB")}` : "",
+				SLD: r.SLD ? `₦${r.SLD.toLocalString("en-GB")}` : "",
 				status: r.status || "ACTIVE", // Default to active if no status
 			})),
 		[raw]
@@ -536,7 +536,7 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">Price</p>
 													<p className="font-medium">
 														{selectedItem.price
-															? `₦${selectedItem.price.toLocaleString()}`
+															? `₦${selectedItem.price.toLocalString("en-GB")}`
 															: "N/A"}
 													</p>
 												</div>
@@ -544,7 +544,7 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">SAP</p>
 													<p className="font-medium">
 														{selectedItem.SAP
-															? `₦${selectedItem.SAP.toLocaleString()}`
+															? `₦${selectedItem.SAP.toLocalString("en-GB")}`
 															: "N/A"}
 													</p>
 												</div>
@@ -552,7 +552,7 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">SLD</p>
 													<p className="font-medium">
 														{selectedItem.SLD
-															? `₦${selectedItem.SLD.toLocaleString()}`
+															? `₦${selectedItem.SLD.toLocalString("en-GB")}`
 															: "N/A"}
 													</p>
 												</div>
@@ -562,7 +562,9 @@ export default function AllDevicesView() {
 													</p>
 													<p className="font-medium">
 														{selectedItem.sentiprotect
-															? `₦${selectedItem.sentiprotect.toLocaleString()}`
+															? `₦${selectedItem.sentiprotect.toLocalString(
+																	"en-GB"
+															  )}`
 															: "N/A"}
 													</p>
 												</div>
@@ -576,9 +578,9 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">Created At</p>
 													<p className="font-medium">
 														{selectedItem.createdAt
-															? new Date(
-																	selectedItem.createdAt
-															  ).toLocaleString()
+															? new Date(selectedItem.createdAt).toLocalString(
+																	"en-GB"
+															  )
 															: "N/A"}
 													</p>
 												</div>
@@ -586,9 +588,9 @@ export default function AllDevicesView() {
 													<p className="text-sm text-default-500">Updated At</p>
 													<p className="font-medium">
 														{selectedItem.updatedAt
-															? new Date(
-																	selectedItem.updatedAt
-															  ).toLocaleString()
+															? new Date(selectedItem.updatedAt).toLocalString(
+																	"en-GB"
+															  )
 															: "N/A"}
 													</p>
 												</div>

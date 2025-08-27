@@ -370,11 +370,13 @@ const exportLoans = async (data: LoanRecord[]) => {
 	data.forEach((loan) =>
 		ws.addRow({
 			...loan,
-			loanAmount: `₦${loan.loanAmount?.toLocaleString() || 0}`,
-			devicePrice: `₦${loan.devicePrice?.toLocaleString() || 0}`,
-			downPayment: `₦${loan.downPayment?.toLocaleString() || 0}`,
-			monthlyRepayment: `₦${loan.monthlyRepayment?.toLocaleString() || 0}`,
-			interestAmount: `₦${loan.interestAmount?.toLocaleString() || 0}`,
+			loanAmount: `₦${loan.loanAmount?.toLocalString("en-GB") || 0}`,
+			devicePrice: `₦${loan.devicePrice?.toLocalString("en-GB") || 0}`,
+			downPayment: `₦${loan.downPayment?.toLocalString("en-GB") || 0}`,
+			monthlyRepayment: `₦${
+				loan.monthlyRepayment?.toLocalString("en-GB") || 0
+			}`,
+			interestAmount: `₦${loan.interestAmount?.toLocalString("en-GB") || 0}`,
 			createdAt: new Date(loan.createdAt).toLocaleDateString(),
 			updatedAt: new Date(loan.updatedAt).toLocaleDateString(),
 		})
@@ -399,10 +401,12 @@ const exportCommissions = async (data: CommissionRecord[]) => {
 	data.forEach((commission) =>
 		ws.addRow({
 			...commission,
-			commission: `₦${commission.commission?.toLocaleString() || 0}`,
-			mbeCommission: `₦${commission.mbeCommission?.toLocaleString() || 0}`,
+			commission: `₦${commission.commission?.toLocalString("en-GB") || 0}`,
+			mbeCommission: `₦${
+				commission.mbeCommission?.toLocalString("en-GB") || 0
+			}`,
 			partnerCommission: `₦${
-				commission.partnerCommission?.toLocaleString() || 0
+				commission.partnerCommission?.toLocalString("en-GB") || 0
 			}`,
 			splitPercent: `${commission.splitPercent || 0}%`,
 			date_created: new Date(commission.date_created).toLocaleDateString(),
@@ -431,25 +435,25 @@ const renderLoanCell = (
 		case "loanAmount":
 			return (
 				<div className="font-medium">
-					₦{loan.loanAmount?.toLocaleString() || 0}
+					₦{loan.loanAmount?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "devicePrice":
 			return (
 				<div className="font-medium">
-					₦{loan.devicePrice?.toLocaleString() || 0}
+					₦{loan.devicePrice?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "downPayment":
 			return (
 				<div className="font-medium">
-					₦{loan.downPayment?.toLocaleString() || 0}
+					₦{loan.downPayment?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "monthlyRepayment":
 			return (
 				<div className="font-medium">
-					₦{loan.monthlyRepayment?.toLocaleString() || 0}
+					₦{loan.monthlyRepayment?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "duration":
@@ -515,19 +519,19 @@ const renderCommissionCell = (commission: CommissionRecord, key: string) => {
 		case "commission":
 			return (
 				<div className="font-medium">
-					₦{commission.commission?.toLocaleString() || 0}
+					₦{commission.commission?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "mbeCommission":
 			return (
 				<div className="font-medium">
-					₦{commission.mbeCommission?.toLocaleString() || 0}
+					₦{commission.mbeCommission?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "partnerCommission":
 			return (
 				<div className="font-medium">
-					₦{commission.partnerCommission?.toLocaleString() || 0}
+					₦{commission.partnerCommission?.toLocalString("en-GB") || 0}
 				</div>
 			);
 		case "splitPercent":
@@ -1467,7 +1471,7 @@ export default function AgentSinglePage() {
 			});
 			return;
 		}
-		
+
 		if (!agent?.mbeId || !selectedMbeForAgent) return;
 
 		try {
@@ -1503,7 +1507,7 @@ export default function AgentSinglePage() {
 			});
 			return;
 		}
-		
+
 		if (!agent?.mbeId) return;
 
 		try {
@@ -1714,7 +1718,7 @@ export default function AgentSinglePage() {
 												(sum: any, loan: any) => sum + (loan.loanAmount || 0),
 												0
 											)
-											.toLocaleString()}
+											.toLocalString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -1727,7 +1731,7 @@ export default function AgentSinglePage() {
 								<div>
 									<p className="text-sm text-default-500">Total Commissions</p>
 									<p className="text-2xl font-bold text-default-900">
-										₦{(summary?.totalCommission || 0).toLocaleString()}
+										₦{(summary?.totalCommission || 0).toLocalString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -1740,7 +1744,7 @@ export default function AgentSinglePage() {
 								<div>
 									<p className="text-sm text-default-500">Avg Commission</p>
 									<p className="text-2xl font-bold text-default-900">
-										₦{(summary?.avgCommission || 0).toLocaleString()}
+										₦{(summary?.avgCommission || 0).toLocalString("en-GB")}
 									</p>
 								</div>
 							</div>
@@ -2138,8 +2142,12 @@ export default function AgentSinglePage() {
 												onFilterChange={setReconciliationFilterValue}
 												sortDescriptor={reconciliationSortDescriptor}
 												onSortChange={setReconciliationSortDescriptor}
-												page={reconciliationHistory.pagination?.currentPage || 1}
-												pages={reconciliationHistory.pagination?.totalPages || 1}
+												page={
+													reconciliationHistory.pagination?.currentPage || 1
+												}
+												pages={
+													reconciliationHistory.pagination?.totalPages || 1
+												}
 												onPageChange={(page) => setReconciliationPage(page)}
 												exportFn={exportReconciliationData}
 												renderCell={renderReconciliationCell}
@@ -2287,7 +2295,7 @@ export default function AgentSinglePage() {
 										label="Created At"
 										value={
 											agent.createdAt
-												? new Date(agent.createdAt).toLocaleString()
+												? new Date(agent.createdAt).toLocalString("en-GB")
 												: null
 										}
 									/>
@@ -2295,7 +2303,7 @@ export default function AgentSinglePage() {
 										label="Updated At"
 										value={
 											agent.updatedAt
-												? new Date(agent.updatedAt).toLocaleString()
+												? new Date(agent.updatedAt).toLocalString("en-GB")
 												: null
 										}
 									/>
@@ -2455,7 +2463,9 @@ export default function AgentSinglePage() {
 												}}
 												onSortChange={() => {}}
 												page={reconciliationPage}
-												pages={reconciliationHistory?.pagination?.totalPages || 1}
+												pages={
+													reconciliationHistory?.pagination?.totalPages || 1
+												}
 												onPageChange={handleReconciliationPageChange}
 												exportFn={async () => {}}
 												statusOptions={[
@@ -2496,7 +2506,11 @@ export default function AgentSinglePage() {
 															return (
 																<Dropdown>
 																	<DropdownTrigger>
-																		<Button variant="light" size="sm" isIconOnly>
+																		<Button
+																			variant="light"
+																			size="sm"
+																			isIconOnly
+																		>
 																			<MoreVertical className="w-4 h-4" />
 																		</Button>
 																	</DropdownTrigger>
@@ -2809,7 +2823,7 @@ export default function AgentSinglePage() {
 															<div className="flex justify-between">
 																<span className="text-default-500">Price:</span>
 																<span className="font-medium">
-																	₦{device.price?.toLocaleString()}
+																	₦{device.price?.toLocalString("en-GB")}
 																</span>
 															</div>
 															<div className="flex justify-between">
@@ -2893,7 +2907,7 @@ export default function AgentSinglePage() {
 																</TableCell>
 																<TableCell>
 																	<span className="font-medium">
-																		₦{device.price?.toLocaleString()}
+																		₦{device.price?.toLocalString("en-GB")}
 																	</span>
 																</TableCell>
 																<TableCell>
@@ -3126,7 +3140,7 @@ export default function AgentSinglePage() {
 														mainStore.storeNew.createdAt
 															? new Date(
 																	mainStore.storeNew.createdAt
-															  ).toLocaleString()
+															  ).toLocalString("en-GB")
 															: null
 													}
 												/>
@@ -3136,7 +3150,7 @@ export default function AgentSinglePage() {
 														mainStore.storeNew.updatedAt
 															? new Date(
 																	mainStore.storeNew.updatedAt
-															  ).toLocaleString()
+															  ).toLocalString("en-GB")
 															: null
 													}
 												/>
@@ -3198,7 +3212,7 @@ export default function AgentSinglePage() {
 											label="Created At"
 											value={
 												kyc.createdAt
-													? new Date(kyc.createdAt).toLocaleString()
+													? new Date(kyc.createdAt).toLocalString("en-GB")
 													: null
 											}
 										/>
@@ -3206,7 +3220,7 @@ export default function AgentSinglePage() {
 											label="Updated At"
 											value={
 												kyc.updatedAt
-													? new Date(kyc.updatedAt).toLocaleString()
+													? new Date(kyc.updatedAt).toLocalString("en-GB")
 													: null
 											}
 										/>
@@ -3326,7 +3340,9 @@ export default function AgentSinglePage() {
 											label="Created At"
 											value={
 												accountDetails.createdAt
-													? new Date(accountDetails.createdAt).toLocaleString()
+													? new Date(accountDetails.createdAt).toLocalString(
+															"en-GB"
+													  )
 													: null
 											}
 										/>
@@ -3334,7 +3350,9 @@ export default function AgentSinglePage() {
 											label="Updated At"
 											value={
 												accountDetails.updatedAt
-													? new Date(accountDetails.updatedAt).toLocaleString()
+													? new Date(accountDetails.updatedAt).toLocalString(
+															"en-GB"
+													  )
 													: null
 											}
 										/>
@@ -3450,9 +3468,9 @@ export default function AgentSinglePage() {
 															label="Created At"
 															value={
 																guarantor.createdAt
-																	? new Date(
-																			guarantor.createdAt
-																	  ).toLocaleString()
+																	? new Date(guarantor.createdAt).toLocalString(
+																			"en-GB"
+																	  )
 																	: null
 															}
 														/>
@@ -3460,9 +3478,9 @@ export default function AgentSinglePage() {
 															label="Updated At"
 															value={
 																guarantor.updatedAt
-																	? new Date(
-																			guarantor.updatedAt
-																	  ).toLocaleString()
+																	? new Date(guarantor.updatedAt).toLocalString(
+																			"en-GB"
+																	  )
 																	: null
 															}
 														/>
@@ -3918,19 +3936,19 @@ export default function AgentSinglePage() {
 												Device Price
 											</p>
 											<p className="font-bold text-success-700">
-												₦{selectedDevice.price?.toLocaleString()}
+												₦{selectedDevice.price?.toLocalString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-primary-50 p-3 rounded-lg">
 											<p className="text-xs text-primary-600 mb-1">SAP</p>
 											<p className="font-bold text-primary-700">
-												₦{selectedDevice.SAP?.toLocaleString()}
+												₦{selectedDevice.SAP?.toLocalString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-warning-50 p-3 rounded-lg">
 											<p className="text-xs text-warning-600 mb-1">SLD</p>
 											<p className="font-bold text-warning-700">
-												₦{selectedDevice.SLD?.toLocaleString()}
+												₦{selectedDevice.SLD?.toLocalString("en-GB")}
 											</p>
 										</div>
 										<div className="bg-secondary-50 p-3 rounded-lg">
@@ -3938,7 +3956,7 @@ export default function AgentSinglePage() {
 												Sentiprotect
 											</p>
 											<p className="font-bold text-secondary-700">
-												₦{selectedDevice.sentiprotect?.toLocaleString()}
+												₦{selectedDevice.sentiprotect?.toLocalString("en-GB")}
 											</p>
 										</div>
 									</div>
@@ -4293,272 +4311,272 @@ export default function AgentSinglePage() {
 					size="3xl"
 					scrollBehavior="inside"
 				>
-				<ModalContent>
-					<ModalHeader className="pb-3">
-						<div className="flex items-center justify-between w-full">
-							<div className="flex flex-col gap-1">
-								<h3 className="text-base font-semibold">
-									Reconciliation Details
-								</h3>
+					<ModalContent>
+						<ModalHeader className="pb-3">
+							<div className="flex items-center justify-between w-full">
+								<div className="flex flex-col gap-1">
+									<h3 className="text-base font-semibold">
+										Reconciliation Details
+									</h3>
+									{selectedReconciliation && (
+										<p className="text-xs text-default-500">
+											ID: {selectedReconciliation.reconciliationId}
+										</p>
+									)}
+								</div>
 								{selectedReconciliation && (
-									<p className="text-xs text-default-500">
-										ID: {selectedReconciliation.reconciliationId}
-									</p>
+									<StatusChip status={selectedReconciliation.status} />
 								)}
 							</div>
+						</ModalHeader>
+						<ModalBody className="py-0">
 							{selectedReconciliation && (
-								<StatusChip status={selectedReconciliation.status} />
-							)}
-						</div>
-					</ModalHeader>
-					<ModalBody className="py-0">
-						{selectedReconciliation && (
-							<div className="space-y-4">
-								{/* Basic Information */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									<div className="space-y-3">
-										<div>
-											<label className="text-xs font-medium text-default-600">
-												Target Warehouse
-											</label>
-											<p className="mt-1 text-xs text-default-900">
-												{selectedReconciliation.targetWarehouse || "N/A"}
-											</p>
-										</div>
-										{selectedReconciliation.assignedMbe && (
+								<div className="space-y-4">
+									{/* Basic Information */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										<div className="space-y-3">
 											<div>
 												<label className="text-xs font-medium text-default-600">
-													Assigned MBE
+													Target Warehouse
 												</label>
 												<p className="mt-1 text-xs text-default-900">
-													{selectedReconciliation.assignedMbe.name}
-												</p>
-												<p className="text-xs text-default-500">
-													{selectedReconciliation.assignedMbe.email}
+													{selectedReconciliation.targetWarehouse || "N/A"}
 												</p>
 											</div>
+											{selectedReconciliation.assignedMbe && (
+												<div>
+													<label className="text-xs font-medium text-default-600">
+														Assigned MBE
+													</label>
+													<p className="mt-1 text-xs text-default-900">
+														{selectedReconciliation.assignedMbe.name}
+													</p>
+													<p className="text-xs text-default-500">
+														{selectedReconciliation.assignedMbe.email}
+													</p>
+												</div>
+											)}
+											<div>
+												<label className="text-xs font-medium text-default-600">
+													Created Date
+												</label>
+												<p className="mt-1 text-xs text-default-900">
+													{new Date(
+														selectedReconciliation.createdAt
+													).toLocalString("en-GB")}
+												</p>
+											</div>
+										</div>
+										<div className="space-y-3">
+											<div>
+												<label className="text-xs font-medium text-default-600">
+													Agent Name
+												</label>
+												<p className="mt-1 text-xs text-default-900">
+													{selectedReconciliation.agent?.name || "N/A"}
+												</p>
+											</div>
+											<div>
+												<label className="text-xs font-medium text-default-600">
+													Agent Email
+												</label>
+												<p className="mt-1 text-xs text-default-900">
+													{selectedReconciliation.agent?.email || "N/A"}
+												</p>
+											</div>
+											<div>
+												<label className="text-xs font-medium text-default-600">
+													Total Items
+												</label>
+												<p className="mt-1 text-xs text-default-900">
+													{selectedReconciliation.transferItems?.length || 0}{" "}
+													item(s)
+												</p>
+											</div>
+										</div>
+									</div>
+
+									{/* Additional Information */}
+									{selectedReconciliation.description && (
+										<div>
+											<label className="text-xs font-medium text-default-600">
+												Description
+											</label>
+											<p className="mt-1 text-xs text-default-900">
+												{selectedReconciliation.description}
+											</p>
+										</div>
+									)}
+
+									{/* Transfer Items */}
+									{selectedReconciliation.transferItems &&
+										selectedReconciliation.transferItems.length > 0 && (
+											<div>
+												<label className="text-xs font-medium text-default-600 mb-2 block">
+													Transfer Items (
+													{selectedReconciliation.transferItems.length})
+												</label>
+												<div className="space-y-2 max-h-80 overflow-y-auto">
+													{selectedReconciliation.transferItems.map(
+														(item: any, index: number) => (
+															<div
+																key={index}
+																className="bg-default-50 rounded-lg p-3"
+															>
+																<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+																	<div>
+																		<label className="text-xs font-medium text-default-500">
+																			Item Code
+																		</label>
+																		<p className="text-xs text-default-900 font-mono">
+																			{item.item_code || "N/A"}
+																		</p>
+																	</div>
+																	<div>
+																		<label className="text-xs font-medium text-default-500">
+																			Quantity
+																		</label>
+																		<p className="text-xs text-default-900">
+																			{item.qty || "N/A"}
+																		</p>
+																	</div>
+																	{item.serial_nos &&
+																		item.serial_nos.length > 0 && (
+																			<div className="md:col-span-2">
+																				<label className="text-xs font-medium text-default-500 mb-1 block">
+																					Serial Numbers (
+																					{item.serial_nos.length})
+																				</label>
+																				<div className="flex flex-wrap gap-1">
+																					{item.serial_nos.map(
+																						(
+																							serialNo: string,
+																							serialIndex: number
+																						) => (
+																							<div
+																								key={serialIndex}
+																								className="flex items-center gap-1"
+																							>
+																								<Snippet
+																									hideSymbol
+																									size="sm"
+																									variant="flat"
+																									color="primary"
+																									className="text-xs"
+																								>
+																									{serialNo}
+																								</Snippet>
+																								<span className="text-xs text-default-400">
+																									#{serialIndex + 1}
+																								</span>
+																							</div>
+																						)
+																					)}
+																				</div>
+																			</div>
+																		)}
+																</div>
+															</div>
+														)
+													)}
+												</div>
+											</div>
 										)}
-										<div>
-											<label className="text-xs font-medium text-default-600">
-												Created Date
-											</label>
-											<p className="mt-1 text-xs text-default-900">
-												{new Date(
-													selectedReconciliation.createdAt
-												).toLocaleString()}
-											</p>
-										</div>
-									</div>
-									<div className="space-y-3">
-										<div>
-											<label className="text-xs font-medium text-default-600">
-												Agent Name
-											</label>
-											<p className="mt-1 text-xs text-default-900">
-												{selectedReconciliation.agent?.name || "N/A"}
-											</p>
-										</div>
-										<div>
-											<label className="text-xs font-medium text-default-600">
-												Agent Email
-											</label>
-											<p className="mt-1 text-xs text-default-900">
-												{selectedReconciliation.agent?.email || "N/A"}
-											</p>
-										</div>
-										<div>
-											<label className="text-xs font-medium text-default-600">
-												Total Items
-											</label>
-											<p className="mt-1 text-xs text-default-900">
-												{selectedReconciliation.transferItems?.length || 0}{" "}
-												item(s)
-											</p>
-										</div>
-									</div>
-								</div>
 
-								{/* Additional Information */}
-								{selectedReconciliation.description && (
-									<div>
-										<label className="text-xs font-medium text-default-600">
-											Description
-										</label>
-										<p className="mt-1 text-xs text-default-900">
-											{selectedReconciliation.description}
-										</p>
-									</div>
-								)}
-
-								{/* Transfer Items */}
-								{selectedReconciliation.transferItems &&
-									selectedReconciliation.transferItems.length > 0 && (
+									{/* Additional Metadata */}
+									{(selectedReconciliation.updatedAt ||
+										selectedReconciliation.erpResponse ||
+										selectedReconciliation.erpTransferId ||
+										selectedReconciliation.notes ||
+										selectedReconciliation.approvedBy) && (
 										<div>
 											<label className="text-xs font-medium text-default-600 mb-2 block">
-												Transfer Items (
-												{selectedReconciliation.transferItems.length})
+												Additional Information
 											</label>
-											<div className="space-y-2 max-h-80 overflow-y-auto">
-												{selectedReconciliation.transferItems.map(
-													(item: any, index: number) => (
-														<div
-															key={index}
-															className="bg-default-50 rounded-lg p-3"
-														>
-															<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-																<div>
-																	<label className="text-xs font-medium text-default-500">
-																		Item Code
-																	</label>
-																	<p className="text-xs text-default-900 font-mono">
-																		{item.item_code || "N/A"}
-																	</p>
-																</div>
-																<div>
-																	<label className="text-xs font-medium text-default-500">
-																		Quantity
-																	</label>
-																	<p className="text-xs text-default-900">
-																		{item.qty || "N/A"}
-																	</p>
-																</div>
-																{item.serial_nos &&
-																	item.serial_nos.length > 0 && (
-																		<div className="md:col-span-2">
-																			<label className="text-xs font-medium text-default-500 mb-1 block">
-																				Serial Numbers ({item.serial_nos.length}
-																				)
-																			</label>
-																			<div className="flex flex-wrap gap-1">
-																				{item.serial_nos.map(
-																					(
-																						serialNo: string,
-																						serialIndex: number
-																					) => (
-																						<div
-																							key={serialIndex}
-																							className="flex items-center gap-1"
-																						>
-																							<Snippet
-																								hideSymbol
-																								size="sm"
-																								variant="flat"
-																								color="primary"
-																								className="text-xs"
-																							>
-																								{serialNo}
-																							</Snippet>
-																							<span className="text-xs text-default-400">
-																								#{serialIndex + 1}
-																							</span>
-																						</div>
-																					)
-																				)}
-																			</div>
-																		</div>
-																	)}
-															</div>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+												{selectedReconciliation.updatedAt && (
+													<div>
+														<label className="text-xs font-medium text-default-500">
+															Last Updated
+														</label>
+														<p className="text-xs text-default-900">
+															{new Date(
+																selectedReconciliation.updatedAt
+															).toLocalString("en-GB")}
+														</p>
+													</div>
+												)}
+												{selectedReconciliation.erpTransferId && (
+													<div>
+														<label className="text-xs font-medium text-default-500">
+															ERP Transfer ID
+														</label>
+														<p className="text-xs text-default-900">
+															{selectedReconciliation.erpTransferId}
+														</p>
+													</div>
+												)}
+												{selectedReconciliation.erpResponse && (
+													<div className="md:col-span-2">
+														<label className="text-xs font-medium text-default-500">
+															ERP Response
+														</label>
+														<div className="mt-1 bg-success-50 rounded-lg p-2">
+															{selectedReconciliation.erpResponse.data
+																?.message && (
+																<p className="text-xs text-success-700 font-medium">
+																	{
+																		selectedReconciliation.erpResponse.data
+																			.message
+																	}
+																</p>
+															)}
+															{selectedReconciliation.erpResponse.data
+																?.stock_entry_id && (
+																<p className="text-xs text-success-600 mt-1">
+																	Stock Entry ID:{" "}
+																	{
+																		selectedReconciliation.erpResponse.data
+																			.stock_entry_id
+																	}
+																</p>
+															)}
 														</div>
-													)
+													</div>
+												)}
+												{selectedReconciliation.approvedBy && (
+													<div>
+														<label className="text-xs font-medium text-default-500">
+															Approved By
+														</label>
+														<p className="text-xs text-default-900">
+															{selectedReconciliation.approvedBy}
+														</p>
+													</div>
+												)}
+												{selectedReconciliation.notes && (
+													<div className="md:col-span-2">
+														<label className="text-xs font-medium text-default-500">
+															Notes
+														</label>
+														<p className="text-xs text-default-900">
+															{selectedReconciliation.notes}
+														</p>
+													</div>
 												)}
 											</div>
 										</div>
 									)}
-
-								{/* Additional Metadata */}
-								{(selectedReconciliation.updatedAt ||
-									selectedReconciliation.erpResponse ||
-									selectedReconciliation.erpTransferId ||
-									selectedReconciliation.notes ||
-									selectedReconciliation.approvedBy) && (
-									<div>
-										<label className="text-xs font-medium text-default-600 mb-2 block">
-											Additional Information
-										</label>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-											{selectedReconciliation.updatedAt && (
-												<div>
-													<label className="text-xs font-medium text-default-500">
-														Last Updated
-													</label>
-													<p className="text-xs text-default-900">
-														{new Date(
-															selectedReconciliation.updatedAt
-														).toLocaleString()}
-													</p>
-												</div>
-											)}
-											{selectedReconciliation.erpTransferId && (
-												<div>
-													<label className="text-xs font-medium text-default-500">
-														ERP Transfer ID
-													</label>
-													<p className="text-xs text-default-900">
-														{selectedReconciliation.erpTransferId}
-													</p>
-												</div>
-											)}
-											{selectedReconciliation.erpResponse && (
-												<div className="md:col-span-2">
-													<label className="text-xs font-medium text-default-500">
-														ERP Response
-													</label>
-													<div className="mt-1 bg-success-50 rounded-lg p-2">
-														{selectedReconciliation.erpResponse.data
-															?.message && (
-															<p className="text-xs text-success-700 font-medium">
-																{
-																	selectedReconciliation.erpResponse.data
-																		.message
-																}
-															</p>
-														)}
-														{selectedReconciliation.erpResponse.data
-															?.stock_entry_id && (
-															<p className="text-xs text-success-600 mt-1">
-																Stock Entry ID:{" "}
-																{
-																	selectedReconciliation.erpResponse.data
-																		.stock_entry_id
-																}
-															</p>
-														)}
-													</div>
-												</div>
-											)}
-											{selectedReconciliation.approvedBy && (
-												<div>
-													<label className="text-xs font-medium text-default-500">
-														Approved By
-													</label>
-													<p className="text-xs text-default-900">
-														{selectedReconciliation.approvedBy}
-													</p>
-												</div>
-											)}
-											{selectedReconciliation.notes && (
-												<div className="md:col-span-2">
-													<label className="text-xs font-medium text-default-500">
-														Notes
-													</label>
-													<p className="text-xs text-default-900">
-														{selectedReconciliation.notes}
-													</p>
-												</div>
-											)}
-										</div>
-									</div>
-								)}
-							</div>
-						)}
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="flat" onPress={handleCloseReconciliationDetails}>
-							Close
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+								</div>
+							)}
+						</ModalBody>
+						<ModalFooter>
+							<Button variant="flat" onPress={handleCloseReconciliationDetails}>
+								Close
+							</Button>
+						</ModalFooter>
+					</ModalContent>
+				</Modal>
 			)}
 		</div>
 	);

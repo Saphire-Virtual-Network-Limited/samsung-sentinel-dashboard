@@ -511,7 +511,7 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.createdAt
-												? new Date(customer.createdAt).toLocaleString()
+												? new Date(customer.createdAt).toLocalString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -521,7 +521,7 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.updatedAt
-												? new Date(customer.updatedAt).toLocaleString()
+												? new Date(customer.updatedAt).toLocalString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -629,7 +629,7 @@ export default function SingleRefereeView({
 											{customer.CustomerKYC?.[0]?.createdAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.createdAt
-												  ).toLocaleString()
+												  ).toLocalString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -641,7 +641,7 @@ export default function SingleRefereeView({
 											{customer.CustomerKYC?.[0]?.updatedAt
 												? new Date(
 														customer.CustomerKYC?.[0]?.updatedAt
-												  ).toLocaleString()
+												  ).toLocalString("en-GB")
 												: "N/A"}
 										</div>
 									</div>
@@ -819,8 +819,7 @@ export default function SingleRefereeView({
 												{customer.CustomerKYC?.[0]?.generalComment}
 											</div>
 										</div>
-									)
-								}
+									)}
 
 								{/* Updated By Information */}
 								{customer.CustomerKYC?.[0]?.updated_by && (
@@ -869,7 +868,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.downPayment !== undefined
-												? `₦${customer.LoanRecord[0].downPayment.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].downPayment.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -879,7 +880,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.loanAmount !== undefined
-												? `₦${customer.LoanRecord[0].loanAmount.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].loanAmount.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -889,7 +892,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.monthlyRepayment !== undefined
-												? `₦${customer.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -909,7 +914,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.interestAmount !== undefined
-												? `₦${customer.LoanRecord[0].interestAmount.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].interestAmount.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -958,7 +965,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.insurancePrice !== undefined
-												? `₦${customer.LoanRecord[0].insurancePrice.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].insurancePrice.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -968,7 +977,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.mbsEligibleAmount !== undefined
-												? `₦${customer.LoanRecord[0].mbsEligibleAmount.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].mbsEligibleAmount.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -994,7 +1005,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.devicePrice !== undefined
-												? `₦${customer.LoanRecord[0].devicePrice.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].devicePrice.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -1004,7 +1017,9 @@ export default function SingleRefereeView({
 										</div>
 										<div className="font-medium text-default-900">
 											{customer.LoanRecord?.[0]?.deviceAmount !== undefined
-												? `₦${customer.LoanRecord[0].deviceAmount.toLocaleString()}`
+												? `₦${customer.LoanRecord[0].deviceAmount.toLocalString(
+														"en-GB"
+												  )}`
 												: "N/A"}
 										</div>
 									</div>
@@ -1016,7 +1031,7 @@ export default function SingleRefereeView({
 											{customer.LoanRecord?.[0]?.updatedAt
 												? new Date(
 														customer.LoanRecord[0].updatedAt
-												  ).toLocaleString()
+												  ).toLocalString("en-GB")
 												: "N/A"}
 										</div>
 									</div>

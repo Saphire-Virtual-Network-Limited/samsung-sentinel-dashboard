@@ -441,7 +441,7 @@ export default function DueLoansView() {
 				altPhone: customer.mainPhoneNumber || "N/A",
 				state: loanRecord?.store?.state || "N/A",
 				loanAmount: loanRecord?.loanAmount
-					? `₦${loanRecord.loanAmount.toLocaleString()}`
+					? `₦${loanRecord.loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: loanRecord?.duration || "N/A",
 				startDate: loanRecord?.startDate
@@ -452,25 +452,27 @@ export default function DueLoansView() {
 					: "N/A",
 				interest: "9.50%",
 				loanBalance: loanRecord?.loanAmount
-					? `₦${loanRecord.loanAmount.toLocaleString()}`
+					? `₦${loanRecord.loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				AmountPaid: customer.repaymentData?.summary?.loanInfo?.totalRepaid
-					? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocaleString()}`
+					? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocalString(
+							"en-GB"
+					  )}`
 					: "0",
 				totalAmount: loanRecord?.monthlyRepayment
-					? `₦${loanRecord.monthlyRepayment.toLocaleString()}`
+					? `₦${loanRecord.monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				PrincipalRepaid:
 					loanRecord?.monthlyRepayment && loanRecord?.interestAmount
 						? `₦${(
 								loanRecord.monthlyRepayment - loanRecord.interestAmount
-						  ).toLocaleString()}`
+						  ).toLocaleString("en-GB")}`
 						: "N/A",
 				interestRepaid: loanRecord?.interestAmount
-					? `₦${loanRecord.interestAmount.toLocaleString()}`
+					? `₦${loanRecord.interestAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				monthlyRepayment: loanRecord?.monthlyRepayment
-					? `₦${loanRecord.monthlyRepayment.toLocaleString()}`
+					? `₦${loanRecord.monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				numberOfRepayments:
 					customer.repaymentData?.summary?.repaymentCount || "0",
@@ -490,10 +492,10 @@ export default function DueLoansView() {
 						: "N/A",
 				storeName: loanRecord?.store?.storeName || "N/A",
 				downPayment: loanRecord?.downPayment
-					? `₦${loanRecord.downPayment.toLocaleString()}`
+					? `₦${loanRecord.downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: loanRecord?.devicePrice
-					? `₦${loanRecord.devicePrice.toLocaleString()}`
+					? `₦${loanRecord.devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: loanRecord?.loanStatus || "N/A",
 				customer: customer,
@@ -828,7 +830,7 @@ export default function DueLoansView() {
 															key.toLowerCase().includes("price") ||
 															key.toLowerCase().includes("payment"))
 													) {
-														value = `₦${Number(value).toLocaleString()}`;
+														value = `₦${Number(value).toLocaleString("en-GB")}`;
 													}
 
 													return (
@@ -928,7 +930,9 @@ export default function DueLoansView() {
 																(key.toLowerCase().includes("price") ||
 																	key.toLowerCase().includes("amount"))
 															) {
-																value = `₦${Number(value).toLocaleString()}`;
+																value = `₦${Number(value).toLocalString(
+																	"en-GB"
+																)}`;
 															}
 
 															return (

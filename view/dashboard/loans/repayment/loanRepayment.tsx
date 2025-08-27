@@ -368,7 +368,9 @@ export default function LoanRepaymentView() {
 		}
 		if (key === "amount") {
 			return (
-				<div className="text-small">₦{row.amount?.toLocaleString() || "0"}</div>
+				<div className="text-small">
+					₦{row.amount?.toLocaleString("en-GB") || "0"}
+				</div>
 			);
 		}
 		if (key === "createdAt") {
@@ -470,7 +472,7 @@ export default function LoanRepaymentView() {
 										</p>
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												{raw.totalRepayments?.toLocaleString() || "0"}
+												{raw.totalRepayments?.toLocaleString("en-GB") || "0"}
 											</p>
 										</div>
 										<div className="w-full bg-violet-200/40 rounded-full h-1">
@@ -505,7 +507,7 @@ export default function LoanRepaymentView() {
 										</p>
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												₦{raw.totalAmount?.toLocaleString() || "0"}
+												₦{raw.totalAmount?.toLocaleString("en-GB") || "0"}
 											</p>
 										</div>
 										<div className="w-full bg-emerald-200/40 rounded-full h-1">
@@ -540,7 +542,8 @@ export default function LoanRepaymentView() {
 										</p>
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 tracking-tight leading-tight break-words">
-												{raw.summary?.repaymentCount?.toLocaleString() || "0"}
+												{raw.summary?.repaymentCount?.toLocaleString("en-GB") ||
+													"0"}
 											</p>
 										</div>
 										<div className="w-full bg-blue-200/40 rounded-full h-1">
@@ -576,8 +579,9 @@ export default function LoanRepaymentView() {
 										<div className="min-h-[3rem] flex items-center justify-start mb-2">
 											<p className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
 												₦
-												{raw.summary?.averageRepaymentAmount?.toLocaleString() ||
-													"0"}
+												{raw.summary?.averageRepaymentAmount?.toLocalString(
+													"en-GB"
+												) || "0"}
 											</p>
 										</div>
 										<div className="w-full bg-amber-200/40 rounded-full h-1">
@@ -605,11 +609,11 @@ export default function LoanRepaymentView() {
 								<div className="grid grid-cols-3 gap-4">
 									<div>
 										<p className="text-sm text-blue-600">Total Repayments</p>
-										<p className="text-lg font-semibold text-blue-800">{raw.totalRepayments?.toLocaleString() || 0}</p>
+										<p className="text-lg font-semibold text-blue-800">{raw.totalRepayments?.toLocaleString("en-GB") || 0}</p>
 									</div>
 									<div>
 										<p className="text-sm text-blue-600">Total Amount</p>
-										<p className="text-lg font-semibold text-blue-800">₦{(raw.totalAmount || 0).toLocaleString()}</p>
+										<p className="text-lg font-semibold text-blue-800">₦{(raw.totalAmount || 0).toLocaleString("en-GB")}</p>
 									</div>
 									<div>
 										<p className="text-sm text-blue-600">Channel Breakdown</p>

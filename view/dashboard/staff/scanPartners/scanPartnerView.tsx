@@ -569,7 +569,7 @@ export default function ScanPartnerPage() {
 										deviceDetails?.devicePrice ||
 										customerDetails?.devicePrice ||
 										0
-								  ).toLocaleString()
+								  ).toLocalString("en-GB")
 								: "N/A",
 						loanAmount:
 							(customerDetails?.loanAmount || loanRecord?.loanAmount || 0) > 0
@@ -577,7 +577,7 @@ export default function ScanPartnerPage() {
 										customerDetails?.loanAmount ||
 										loanRecord?.loanAmount ||
 										0
-								  ).toLocaleString()
+								  ).toLocalString("en-GB")
 								: "N/A",
 						downPayment:
 							(customerDetails?.downPayment || loanRecord?.downPayment || 0) > 0
@@ -585,7 +585,7 @@ export default function ScanPartnerPage() {
 										customerDetails?.downPayment ||
 										loanRecord?.downPayment ||
 										0
-								  ).toLocaleString()
+								  ).toLocalString("en-GB")
 								: "N/A",
 						monthlyPayment:
 							(customerDetails?.monthlyPayment ||
@@ -595,7 +595,7 @@ export default function ScanPartnerPage() {
 										customerDetails?.monthlyPayment ||
 										loanRecord?.monthlyRepayment ||
 										0
-								  ).toLocaleString()
+								  ).toLocalString("en-GB")
 								: "N/A",
 						duration:
 							customerDetails?.duration || loanRecord?.duration || "N/A",
@@ -607,13 +607,13 @@ export default function ScanPartnerPage() {
 
 						// Commission Details
 						totalCommission: commission.commission
-							? commission.commission.toLocaleString()
+							? commission.commission.toLocalString("en-GB")
 							: "0",
 						agentCommission: commission.mbeCommission
-							? commission.mbeCommission.toLocaleString()
+							? commission.mbeCommission.toLocalString("en-GB")
 							: "0",
 						partnerCommission: commission.partnerCommission
-							? commission.partnerCommission.toLocaleString()
+							? commission.partnerCommission.toLocalString("en-GB")
 							: "0",
 						splitPercent: commission.splitPercent
 							? `${commission.splitPercent}%`
@@ -819,12 +819,12 @@ export default function ScanPartnerPage() {
 					agentState:
 						agentKyc?.state || agentFromAllData?.state || agent.state || "N/A",
 					agentCity: agentKyc?.city || "N/A",
-					totalCommission: totalCommission.toLocaleString(),
-					totalAgentCommission: totalAgentCommission.toLocaleString(),
-					totalPartnerCommission: totalPartnerCommission.toLocaleString(),
+					totalCommission: totalCommission.toLocalString("en-GB"),
+					totalAgentCommission: totalAgentCommission.toLocalString("en-GB"),
+					totalPartnerCommission: totalPartnerCommission.toLocalString("en-GB"),
 					commissionCount,
 					avgCommission:
-						avgCommission > 0 ? avgCommission.toLocaleString() : "0",
+						avgCommission > 0 ? avgCommission.toLocalString("en-GB") : "0",
 					paidCommissions,
 					unpaidCommissions,
 					agentAccountName: agentAccount?.accountName || "N/A",
@@ -1021,21 +1021,22 @@ export default function ScanPartnerPage() {
 					companyState: partner.companyState,
 					companyCity: partner.companyCity,
 					accountStatus: partner.accountStatus,
-					totalCommission: partner.totalCommission.toLocaleString(),
-					totalAgentCommission: partner.totalAgentCommission.toLocaleString(),
+					totalCommission: partner.totalCommission.toLocalString("en-GB"),
+					totalAgentCommission:
+						partner.totalAgentCommission.toLocalString("en-GB"),
 					totalPartnerCommission:
-						partner.totalPartnerCommission.toLocaleString(),
+						partner.totalPartnerCommission.toLocalString("en-GB"),
 					commissionCount: partner.commissionCount,
 					agentCount: partner.agentCount,
 					activeAgents: partner.activeAgents,
 					inactiveAgents: partner.inactiveAgents,
 					avgCommissionPerAgent:
 						avgCommissionPerAgent > 0
-							? avgCommissionPerAgent.toLocaleString()
+							? avgCommissionPerAgent.toLocalString("en-GB")
 							: "0",
 					avgCommissionPerTransaction:
 						avgCommissionPerTransaction > 0
-							? avgCommissionPerTransaction.toLocaleString()
+							? avgCommissionPerTransaction.toLocalString("en-GB")
 							: "0",
 					partnerPaidCommissions: partner.partnerPaidCommissions,
 					partnerUnpaidCommissions: partner.partnerUnpaidCommissions,
@@ -1153,12 +1154,14 @@ export default function ScanPartnerPage() {
 					id: agent.mbeId || "N/A",
 					location,
 					status: agent.accountStatus || "N/A",
-					totalCommission: totalCommission.toLocaleString(),
-					totalAgentCommission: totalAgentCommission.toLocaleString(),
-					totalPartnerCommission: totalPartnerCommission.toLocaleString(),
+					totalCommission: totalCommission.toLocalString("en-GB"),
+					totalAgentCommission: totalAgentCommission.toLocalString("en-GB"),
+					totalPartnerCommission: totalPartnerCommission.toLocalString("en-GB"),
 					commissionCount,
 					avgPerTransaction:
-						avgPerTransaction > 0 ? avgPerTransaction.toLocaleString() : "0",
+						avgPerTransaction > 0
+							? avgPerTransaction.toLocalString("en-GB")
+							: "0",
 					paidCount,
 					unpaidCount,
 				};
@@ -1196,13 +1199,16 @@ export default function ScanPartnerPage() {
 					id: partner.partnerUserId,
 					location,
 					status: partner.accountStatus,
-					totalCommission: partner.totalCommission.toLocaleString(),
-					totalAgentCommission: partner.totalAgentCommission.toLocaleString(),
+					totalCommission: partner.totalCommission.toLocalString("en-GB"),
+					totalAgentCommission:
+						partner.totalAgentCommission.toLocalString("en-GB"),
 					totalPartnerCommission:
-						partner.totalPartnerCommission.toLocaleString(),
+						partner.totalPartnerCommission.toLocalString("en-GB"),
 					commissionCount: partner.commissionCount,
 					avgPerTransaction:
-						avgPerTransaction > 0 ? avgPerTransaction.toLocaleString() : "0",
+						avgPerTransaction > 0
+							? avgPerTransaction.toLocalString("en-GB")
+							: "0",
 					paidCount: partner.partnerPaidCommissions,
 					unpaidCount: partner.partnerUnpaidCommissions,
 				};
@@ -1684,22 +1690,24 @@ export default function ScanPartnerPage() {
 						customer.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.status || "N/A",
 					insurancePackage: customer.LoanRecord?.[0]?.insurancePackage || "N/A",
 					insurancePrice: customer.LoanRecord?.[0]?.insurancePrice
-						? `${customer.LoanRecord[0].insurancePrice.toLocaleString()}`
+						? `${customer.LoanRecord[0].insurancePrice.toLocalString("en-GB")}`
 						: "N/A",
 					devicePrice: customer.LoanRecord?.[0]?.device?.price
-						? `${customer.LoanRecord[0].device.price.toLocaleString()}`
+						? `${customer.LoanRecord[0].device.price.toLocalString("en-GB")}`
 						: "N/A",
 					storePrice: customer.LoanRecord?.[0]?.devicePrice
-						? `${customer.LoanRecord[0].devicePrice.toLocaleString()}`
+						? `${customer.LoanRecord[0].devicePrice.toLocalString("en-GB")}`
 						: "N/A",
 					loanAmount: customer.LoanRecord?.[0]?.loanAmount
-						? `${customer.LoanRecord[0].loanAmount.toLocaleString()}`
+						? `${customer.LoanRecord[0].loanAmount.toLocalString("en-GB")}`
 						: "N/A",
 					downPayment: customer.LoanRecord?.[0]?.downPayment
-						? `${customer.LoanRecord[0].downPayment.toLocaleString()}`
+						? `${customer.LoanRecord[0].downPayment.toLocalString("en-GB")}`
 						: "N/A",
 					monthlyRepayment: customer.LoanRecord?.[0]?.monthlyRepayment
-						? `${customer.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+						? `${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+								"en-GB"
+						  )}`
 						: "N/A",
 					amountRemaining:
 						customer.LoanRecord?.[0]?.monthlyRepayment &&
@@ -1707,7 +1715,7 @@ export default function ScanPartnerPage() {
 							? `${(
 									customer.LoanRecord[0].monthlyRepayment *
 									customer.LoanRecord[0].duration
-							  ).toLocaleString()}`
+							  ).toLocalString("en-GB")}`
 							: "N/A",
 					duration: customer.LoanRecord?.[0]?.duration || "N/A",
 					createdAt: customer.LoanRecord?.[0]?.createdAt
@@ -1721,7 +1729,9 @@ export default function ScanPartnerPage() {
 						  ).toLocaleDateString()
 						: "N/A",
 					nextPayAmount: customer.LoanRecord?.[0]?.monthlyRepayment
-						? `${customer.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+						? `${customer.LoanRecord[0].monthlyRepayment.toLocalString(
+								"en-GB"
+						  )}`
 						: "N/A",
 					completionDate:
 						customer.LoanRecord?.[0]?.createdAt &&
@@ -2187,21 +2197,21 @@ export default function ScanPartnerPage() {
 						metric: "Grand Total Commission",
 						value: `₦${(
 							salesData.summary?.grandTotalCommission || 0
-						).toLocaleString()}`,
+						).toLocalString("en-GB")}`,
 						period: salesData.period || salesPeriod,
 					},
 					{
 						metric: "Total Agent Commission",
 						value: `₦${(
 							salesData.summary?.grandTotalAgentCommission || 0
-						).toLocaleString()}`,
+						).toLocalString("en-GB")}`,
 						period: salesData.period || salesPeriod,
 					},
 					{
 						metric: "Total Partner Commission",
 						value: `₦${(
 							salesData.summary?.grandTotalPartnerCommission || 0
-						).toLocaleString()}`,
+						).toLocalString("en-GB")}`,
 						period: salesData.period || salesPeriod,
 					},
 					{
@@ -2239,7 +2249,9 @@ export default function ScanPartnerPage() {
 						},
 						{
 							metric: "Top Partner Total Commission",
-							value: `₦${(topPartner.totalCommission || 0).toLocaleString()}`,
+							value: `₦${(topPartner.totalCommission || 0).toLocalString(
+								"en-GB"
+							)}`,
 							period: salesData.period || salesPeriod,
 						},
 						{
@@ -2718,7 +2730,7 @@ export default function ScanPartnerPage() {
 															{(
 																partnerStatsData.summary.grandTotalCommission ||
 																0
-															).toLocaleString()}
+															).toLocalString("en-GB")}
 														</p>
 													</div>
 													<DollarSign className="h-8 w-8 text-green-600" />
@@ -2818,19 +2830,19 @@ export default function ScanPartnerPage() {
 																			₦
 																			{(
 																				partner.totalCommission || 0
-																			).toLocaleString()}
+																			).toLocalString("en-GB")}
 																		</td>
 																		<td className="p-3">
 																			₦
 																			{(
 																				partner.totalAgentCommission || 0
-																			).toLocaleString()}
+																			).toLocalString("en-GB")}
 																		</td>
 																		<td className="p-3">
 																			₦
 																			{(
 																				partner.totalPartnerCommission || 0
-																			).toLocaleString()}
+																			).toLocalString("en-GB")}
 																		</td>
 																		<td className="p-3">
 																			<Chip
@@ -2848,7 +2860,7 @@ export default function ScanPartnerPage() {
 																			₦
 																			{(
 																				partner.averageCommissionPerAgent || 0
-																			).toLocaleString()}
+																			).toLocalString("en-GB")}
 																		</td>
 																		<td className="p-3">
 																			<Button
@@ -2932,7 +2944,7 @@ export default function ScanPartnerPage() {
 																		{(
 																			specificPartnerData?.summary
 																				?.totalPartnerCommission || 0
-																		).toLocaleString()}
+																		).toLocalString("en-GB")}
 																	</p>
 																</div>
 																<DollarSign className="h-6 w-6 text-indigo-600" />
@@ -2952,7 +2964,7 @@ export default function ScanPartnerPage() {
 																		{(
 																			specificPartnerData?.summary
 																				?.totalAgentCommission || 0
-																		).toLocaleString()}
+																		).toLocalString("en-GB")}
 																	</p>
 																</div>
 																<Users className="h-6 w-6 text-emerald-600" />
@@ -2989,7 +3001,7 @@ export default function ScanPartnerPage() {
 																		{(
 																			specificPartnerData?.summary
 																				?.totalCommission || 0
-																		).toLocaleString()}
+																		).toLocalString("en-GB")}
 																	</p>
 																</div>
 																<TrendingUp className="h-6 w-6 text-rose-600" />
@@ -3064,19 +3076,19 @@ export default function ScanPartnerPage() {
 																						₦
 																						{(
 																							agentData.totalCommission || 0
-																						).toLocaleString()}
+																						).toLocalString("en-GB")}
 																					</td>
 																					<td className="p-3">
 																						₦
 																						{(
 																							agentData.agentCommission || 0
-																						).toLocaleString()}
+																						).toLocalString("en-GB")}
 																					</td>
 																					<td className="p-3">
 																						₦
 																						{(
 																							agentData.partnerCommission || 0
-																						).toLocaleString()}
+																						).toLocalString("en-GB")}
 																					</td>
 																					<td className="p-3">
 																						<Chip
