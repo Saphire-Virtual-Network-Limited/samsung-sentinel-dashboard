@@ -328,7 +328,7 @@ export default function AllTransactionView() {
 		currencyColumns.forEach((col) => {
 			const colObj = ws.getColumn(col);
 			if (colObj) {
-				colObj.numFmt = "₦#,##0.00";
+				colObj.numFmt = "#,##0.00";
 			}
 		});
 

@@ -288,12 +288,40 @@ export default function LoansView() {
 	const exportFn = async (data: LoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Loans");
-		ws.columns = columns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) =>
-			ws.addRow({ ...r, status: capitalize(r.status || "") })
-		);
+		const exportColumns = columns.filter((c) => c.uid !== "actions");
+		ws.columns = exportColumns.map((c) => ({
+			header: c.name,
+			key: c.uid,
+			width: 20,
+		}));
+
+		// Currency columns to format as numbers with commas
+		const currencyColumns = [
+			"devicePrice",
+			"downPayment",
+			"loanAmount",
+			"monthlyRepayment",
+			"insurancePrice",
+			"mbsEligibleAmount",
+			"deviceAmount",
+			"interestAmount",
+		];
+
+		data.forEach((r) => {
+			const row: Record<string, any> = {};
+			exportColumns.forEach((col) => {
+				let value = r[col.uid as keyof LoanRecord];
+				if (currencyColumns.includes(col.uid)) {
+					if (typeof value === "string") {
+						value = value.replace(/[^\d.-]/g, "");
+					}
+					value = value ? Number(value).toLocaleString() : "0";
+				}
+				row[col.uid] = value;
+			});
+			ws.addRow(row);
+		});
+
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "All_Loan_Records.xlsx");
 	};
