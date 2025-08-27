@@ -3,56 +3,70 @@
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import { useRouter, usePathname } from "next/navigation";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
 import { getAllCustomerRecord, capitalize } from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip, SortDescriptor, ChipProps } from "@heroui/react";
+import {
+	Button,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
+	Chip,
+	SortDescriptor,
+	ChipProps,
+} from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
-
 const columns: ColumnDef[] = [
-    { name: "Customer ID", uid: "customerId", sortable: true },
-    { name: "Full Name", uid: "fullName", sortable: true },
-    { name: "Age", uid: "age", sortable: true },
-    { name: "Email", uid: "email", sortable: true },
-    { name: "Phone", uid: "phone", sortable: true },
-    { name: "Alt Phone", uid: "altPhone", sortable: true },
-    { name: "State", uid: "state", sortable: true },
-    { name: "Loan Amount", uid: "loanAmount", sortable: true },
-    { name: "Duration", uid: "duration", sortable: true },
-    { name: "Start Date", uid: "startDate", sortable: true },
-    { name: "End Date", uid: "endDate", sortable: true },
-    { name: "Interest", uid: "interest", sortable: true },
-    { name: "Loan Balance", uid: "loanBalance", sortable: true },
-    { name: "Amount Paid", uid: "AmountPaid", sortable: true },
-    { name: "Total Amount", uid: "totalAmount", sortable: true },
-    { name: "Principal Repaid", uid: "PrincipalRepaid", sortable: true },
-    { name: "Interest Repaid", uid: "interestRepaid", sortable: true },
-    { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
-    { name: "Number of Repayments", uid: "numberOfRepayments", sortable: true },
-    { name: "Number of Missed Repayments", uid: "numberOfMissedRepayments", sortable: true },
-    { name: "Due Date", uid: "DueDate", sortable: true },
-    { name: "Status", uid: "Status", sortable: true },
-    { name: "Device Name", uid: "deviceName", sortable: true },
-    { name: "Device IMEI", uid: "deviceImei", sortable: true },
-    { name: "Service", uid: "service", sortable: true },
-    { name: "Sale Channel", uid: "saleChannel", sortable: true },
-    { name: "Sale Rep", uid: "sale_Rep", sortable: true },
-    { name: "Store Name", uid: "storeName", sortable: true },
-    { name: "Down Payment", uid: "downPayment", sortable: true },
-    { name: "Actions", uid: "actions"}
+	{ name: "Customer ID", uid: "customerId", sortable: true },
+	{ name: "Full Name", uid: "fullName", sortable: true },
+	{ name: "Age", uid: "age", sortable: true },
+	{ name: "Email", uid: "email", sortable: true },
+	{ name: "Phone", uid: "phone", sortable: true },
+	{ name: "Alt Phone", uid: "altPhone", sortable: true },
+	{ name: "State", uid: "state", sortable: true },
+	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
+	{ name: "Duration", uid: "duration", sortable: true },
+	{ name: "Start Date", uid: "startDate", sortable: true },
+	{ name: "End Date", uid: "endDate", sortable: true },
+	{ name: "Interest", uid: "interest", sortable: true },
+	{ name: "Loan Balance", uid: "loanBalance", sortable: true },
+	{ name: "Amount Paid", uid: "AmountPaid", sortable: true },
+	{ name: "Total Amount", uid: "totalAmount", sortable: true },
+	{ name: "Principal Repaid", uid: "PrincipalRepaid", sortable: true },
+	{ name: "Interest Repaid", uid: "interestRepaid", sortable: true },
+	{ name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
+	{ name: "Number of Repayments", uid: "numberOfRepayments", sortable: true },
+	{
+		name: "Number of Missed Repayments",
+		uid: "numberOfMissedRepayments",
+		sortable: true,
+	},
+	{ name: "Due Date", uid: "DueDate", sortable: true },
+	{ name: "Status", uid: "Status", sortable: true },
+	{ name: "Device Name", uid: "deviceName", sortable: true },
+	{ name: "Device IMEI", uid: "deviceImei", sortable: true },
+	{ name: "Service", uid: "service", sortable: true },
+	{ name: "Sale Channel", uid: "saleChannel", sortable: true },
+	{ name: "Sale Rep", uid: "sale_Rep", sortable: true },
+	{ name: "Store Name", uid: "storeName", sortable: true },
+	{ name: "Down Payment", uid: "downPayment", sortable: true },
+	{ name: "Actions", uid: "actions" },
 ];
 
 // Display columns for table view
 const displayColumns: ColumnDef[] = [
-    { name: "Name", uid: "fullName", sortable: true },
+	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Device Price", uid: "devicePrice", sortable: true },
-    { name: "Loan Amount", uid: "loanAmount", sortable: true },
-    { name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
-    { name: "Loan Status", uid: "loanStatus", sortable: true },
-    { name: "Actions", uid: "actions"},
+	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
+	{ name: "Monthly Repayment", uid: "monthlyRepayment", sortable: true },
+	{ name: "Loan Status", uid: "loanStatus", sortable: true },
+	{ name: "Actions", uid: "actions" },
 ];
 
 const statusOptions = [
@@ -67,7 +81,6 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 	rejected: "danger",
 };
 
-
 type CustomerRecord = {
 	customerId: string;
 	firstName: string;
@@ -75,7 +88,7 @@ type CustomerRecord = {
 	email: string;
 	bvn: string;
 	dob: string;
-  inputtedDob: string;
+	inputtedDob: string;
 	dobMisMatch: boolean;
 	createdAt: string;
 	updatedAt: string;
@@ -149,12 +162,12 @@ type CustomerRecord = {
 		applicantBusinessAddress: string;
 		applicantAddress: string;
 		source: string;
-    phone2: string;
-	phone3: string;
-	phone4: string;
-	phone5: string;
-	phoneApproved: string;
-  generalStatus: string;
+		phone2: string;
+		phone3: string;
+		phone4: string;
+		phone5: string;
+		phoneApproved: string;
+		generalStatus: string;
 		createdAt: string;
 		updatedAt: string;
 		status2Comment: string | null;
@@ -360,7 +373,7 @@ export default function CollectionOverviewView() {
 	const router = useRouter();
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
-	const role = pathname.split('/')[2];
+	const role = pathname.split("/")[2];
 	// --- date filter state ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
 	const [endDate, setEndDate] = useState<string | undefined>(undefined);
@@ -384,28 +397,31 @@ export default function CollectionOverviewView() {
 
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
-		startDate && endDate ? ["customer-records", startDate, endDate] : "customer-records",
-		() => getAllCustomerRecord(startDate, endDate)
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
+		startDate && endDate
+			? ["customer-records", startDate, endDate]
+			: "customer-records",
+		() =>
+			getAllCustomerRecord(startDate, endDate)
+				.then((r) => {
+					if (!r.data || r.data.length === 0) {
+						setHasNoRecords(true);
+						return [];
+					}
+					setHasNoRecords(false);
+					return r.data;
+				})
+				.catch((error) => {
+					console.error("Error fetching customer records:", error);
 					setHasNoRecords(true);
 					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch((error) => {
-				console.error("Error fetching customer records:", error);
-				setHasNoRecords(true);
-				return [];
-			}),
+				}),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
-			revalidateIfStale: true
+			revalidateIfStale: true,
 		}
 	);
 
@@ -415,60 +431,113 @@ export default function CollectionOverviewView() {
 		() =>
 			raw.map((r: CustomerRecord) => ({
 				...r,
-                devicePrice: r.LoanRecord?.[0]?.devicePrice ? `${r.LoanRecord[0].devicePrice.toLocaleString()}` : 'N/A',
-                loanStatus: r.LoanRecord?.[0]?.loanStatus || 'N/A',
-                customerId: r.customerId || 'N/A',
-				fullName: (r.firstName ? r.firstName[0].toUpperCase() + r.firstName.slice(1).toLowerCase() : '') + ' ' + (r.lastName ? r.lastName[0].toUpperCase() + r.lastName.slice(1).toLowerCase() : '') || 'N/A',
-				age: r.dob ? `${new Date().getFullYear() - new Date(r.dob).getFullYear()}` : 'N/A',
-                email: r.email || 'N/A',
-                phone: r.bvnPhoneNumber || 'N/A',
-                altPhone: r.mainPhoneNumber || 'N/A',
-                state: r.CustomerKYC?.[0]?.state || 'N/A',
-                loanAmount: r.LoanRecord?.[0]?.loanAmount ? `${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
-                duration: r.LoanRecord?.[0]?.duration || 'N/A',
-                startDate: r.LoanRecord?.[0]?.updatedAt ? new Date(r.LoanRecord[0].updatedAt).toLocaleDateString() : 'N/A',
-                endDate: r.LoanRecord?.[0]?.updatedAt ? new Date(new Date(r.LoanRecord[0].updatedAt).setMonth(new Date(r.LoanRecord[0].updatedAt).getMonth() + r.LoanRecord[0].duration)).toLocaleDateString() : 'N/A',
-                interest: "9.50%",
-                loanBalance: r.LoanRecord?.[0]?.loanAmount ? `${r.LoanRecord[0].loanAmount.toLocaleString()}` : 'N/A',
-                AmountPaid: "0",
-                totalAmount: r.LoanRecord?.[0]?.monthlyRepayment ? `${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-                PrincipalRepaid: r.LoanRecord?.[0]?.monthlyRepayment && r.LoanRecord?.[0]?.interestAmount ? `${(r.LoanRecord[0].monthlyRepayment - r.LoanRecord[0].interestAmount).toLocaleString()}` : 'N/A',
-                interestRepaid: r.LoanRecord?.[0]?.interestAmount ? `${(r.LoanRecord[0].interestAmount).toLocaleString()}` : 'N/A',
-                monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment ? `${r.LoanRecord[0].monthlyRepayment.toLocaleString()}` : 'N/A',
-                numberOfRepayments: "0",
-                numberOfMissedRepayments: "0",
-                DueDate: r.LoanRecord?.[0]?.updatedAt ? new Date(new Date(r.LoanRecord[0].updatedAt).setMonth(new Date(r.LoanRecord[0].updatedAt).getMonth() + 1)).toLocaleDateString() : 'N/A',
-                Status: "running",
-                deviceName: r.LoanRecord?.[0]?.deviceName || 'N/A',
-                deviceImei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || 'N/A',
-                service: r.LoanRecord?.[0]?.channel || 'N/A',
-                saleChannel: r.regBy?.title || 'N/A',
-                sale_Rep: r.regBy?.firstname && r.regBy?.lastname ? `${r.regBy.firstname} ${r.regBy.lastname}` : 'N/A',
-                storeName: r.LoanRecord?.[0]?.store?.storeName || 'N/A',
-                downPayment: r.LoanRecord?.[0]?.downPayment ? `${r.LoanRecord[0].downPayment.toLocaleString()}` : 'N/A',
+				devicePrice: r.LoanRecord?.[0]?.devicePrice
+					? `${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
+					: "N/A",
+				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
+				customerId: r.customerId || "N/A",
+				fullName:
+					(r.firstName
+						? r.firstName[0].toUpperCase() + r.firstName.slice(1).toLowerCase()
+						: "") +
+						" " +
+						(r.lastName
+							? r.lastName[0].toUpperCase() + r.lastName.slice(1).toLowerCase()
+							: "") || "N/A",
+				age: r.dob
+					? `${new Date().getFullYear() - new Date(r.dob).getFullYear()}`
+					: "N/A",
+				email: r.email || "N/A",
+				phone: r.bvnPhoneNumber || "N/A",
+				altPhone: r.mainPhoneNumber || "N/A",
+				state: r.CustomerKYC?.[0]?.state || "N/A",
+				loanAmount: r.LoanRecord?.[0]?.loanAmount
+					? `${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
+					: "N/A",
+				duration: r.LoanRecord?.[0]?.duration || "N/A",
+				startDate: r.LoanRecord?.[0]?.updatedAt
+					? new Date(r.LoanRecord[0].updatedAt).toLocaleDateString()
+					: "N/A",
+				endDate: r.LoanRecord?.[0]?.updatedAt
+					? new Date(
+							new Date(r.LoanRecord[0].updatedAt).setMonth(
+								new Date(r.LoanRecord[0].updatedAt).getMonth() +
+									r.LoanRecord[0].duration
+							)
+					  ).toLocaleDateString()
+					: "N/A",
+				interest: "9.50%",
+				loanBalance: r.LoanRecord?.[0]?.loanAmount
+					? `${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
+					: "N/A",
+				AmountPaid: "0",
+				totalAmount: r.LoanRecord?.[0]?.monthlyRepayment
+					? `${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
+					: "N/A",
+				PrincipalRepaid:
+					r.LoanRecord?.[0]?.monthlyRepayment &&
+					r.LoanRecord?.[0]?.interestAmount
+						? `${(
+								r.LoanRecord[0].monthlyRepayment -
+								r.LoanRecord[0].interestAmount
+						  ).toLocaleString("en-GB")}`
+						: "N/A",
+				interestRepaid: r.LoanRecord?.[0]?.interestAmount
+					? `${r.LoanRecord[0].interestAmount.toLocaleString("en-GB")}`
+					: "N/A",
+				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
+					? `${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
+					: "N/A",
+				numberOfRepayments: "0",
+				numberOfMissedRepayments: "0",
+				DueDate: r.LoanRecord?.[0]?.updatedAt
+					? new Date(
+							new Date(r.LoanRecord[0].updatedAt).setMonth(
+								new Date(r.LoanRecord[0].updatedAt).getMonth() + 1
+							)
+					  ).toLocaleDateString()
+					: "N/A",
+				Status: "running",
+				deviceName: r.LoanRecord?.[0]?.deviceName || "N/A",
+				deviceImei: r.LoanRecord?.[0]?.DeviceOnLoan?.[0]?.imei || "N/A",
+				service: r.LoanRecord?.[0]?.channel || "N/A",
+				saleChannel: r.regBy?.title || "N/A",
+				sale_Rep:
+					r.regBy?.firstname && r.regBy?.lastname
+						? `${r.regBy.firstname} ${r.regBy.lastname}`
+						: "N/A",
+				storeName: r.LoanRecord?.[0]?.store?.storeName || "N/A",
+				downPayment: r.LoanRecord?.[0]?.downPayment
+					? `${r.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
+					: "N/A",
 			})),
 		[raw]
 	);
 
 	const filtered = useMemo(() => {
-		let list = [...customers].filter(c => c.LoanRecord?.[0]?.loanStatus === 'APPROVED');
+		let list = [...customers].filter(
+			(c) => c.LoanRecord?.[0]?.loanStatus === "APPROVED"
+		);
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
-			list = list.filter((c) => 
-			c.fullName?.toLowerCase().includes(f) || 
-			c.email?.toLowerCase().includes(f) ||
-			c.phone?.toLowerCase().includes(f) ||
-			c.altPhone?.toLowerCase().includes(f) ||
-			c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
-			c.customerId?.toLowerCase().includes(f) ||
-			(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
-			c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
-			c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
-			c.CustomerAccountDetails?.[0]?.accountNumber?.toLowerCase().includes(f)
+			list = list.filter(
+				(c) =>
+					c.fullName?.toLowerCase().includes(f) ||
+					c.email?.toLowerCase().includes(f) ||
+					c.phone?.toLowerCase().includes(f) ||
+					c.altPhone?.toLowerCase().includes(f) ||
+					c.regBy?.mbe_old_id?.toLowerCase().includes(f) ||
+					c.customerId?.toLowerCase().includes(f) ||
+					(c.bvn && c.bvn.toString().toLowerCase().includes(f)) ||
+					c.LoanRecord?.[0]?.loanRecordId?.toLowerCase().includes(f) ||
+					c.LoanRecord?.[0]?.storeId?.toLowerCase().includes(f) ||
+					c.CustomerAccountDetails?.[0]?.accountNumber
+						?.toLowerCase()
+						.includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || ''));
+			list = list.filter((c) => statusFilter.has(c.status || ""));
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -492,8 +561,12 @@ export default function CollectionOverviewView() {
 	const exportFn = async (data: CustomerRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Collection Overview");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
+		ws.columns = columns
+			.filter((c) => c.uid !== "actions")
+			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		data.forEach((r) =>
+			ws.addRow({ ...r, status: capitalize(r.status || "") })
+		);
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "collection_overview.xlsx");
 	};
@@ -505,18 +578,17 @@ export default function CollectionOverviewView() {
 				<div className="flex justify-end">
 					<Dropdown>
 						<DropdownTrigger>
-							<Button
-								isIconOnly
-								size="sm"
-								variant="light">
+							<Button isIconOnly size="sm" variant="light">
 								<EllipsisVertical className="text-default-300" />
 							</Button>
 						</DropdownTrigger>
 						<DropdownMenu>
 							<DropdownItem
 								key="view"
-								onPress={() => router.push(`/access/${role}/customers/${row.customerId}`)}
-                                >
+								onPress={() =>
+									router.push(`/access/${role}/customers/${row.customerId}`)
+								}
+							>
 								View
 							</DropdownItem>
 						</DropdownMenu>
@@ -528,24 +600,42 @@ export default function CollectionOverviewView() {
 			return (
 				<Chip
 					className="capitalize"
-					color={statusColorMap[row.status || '']}
+					color={statusColorMap[row.status || ""]}
 					size="sm"
-					variant="flat">
-					{capitalize(row.status || '')}
+					variant="flat"
+				>
+					{capitalize(row.status || "")}
 				</Chip>
 			);
 		}
 		if (key === "fullName") {
-			return <div className="capitalize cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</div>;
+			return (
+				<div
+					className="capitalize cursor-pointer"
+					onClick={() =>
+						router.push(`/access/${role}/customers/${row.customerId}`)
+					}
+				>
+					{(row as any)[key]}
+				</div>
+			);
 		}
-		return <div className="text-small cursor-pointer" onClick={() => router.push(`/access/${role}/customers/${row.customerId}`)}>{(row as any)[key]}</div>;
+		return (
+			<div
+				className="text-small cursor-pointer"
+				onClick={() =>
+					router.push(`/access/${role}/customers/${row.customerId}`)
+				}
+			>
+				{(row as any)[key]}
+			</div>
+		);
 	};
 
 	return (
 		<>
-			<div className="mb-4 flex justify-center md:justify-end">
-			</div>
-			
+			<div className="mb-4 flex justify-center md:justify-end"></div>
+
 			{isLoading ? (
 				<TableSkeleton columns={columns.length} rows={10} />
 			) : (

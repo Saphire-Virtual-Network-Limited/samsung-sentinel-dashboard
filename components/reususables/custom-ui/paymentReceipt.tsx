@@ -1,71 +1,72 @@
-"use client"
+"use client";
 
-import { Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 // import { Card, CardBody, CardHeader } from "@heroui/card"
 // import { Separator } from "@/components/ui/separator"
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 // import { DynamicQRCode } from "./index"
-import QRCode from "qrcode"
-
+import QRCode from "qrcode";
 
 interface Sender {
-  name: string
-  company: string
-  email: string
+	name: string;
+	company: string;
+	email: string;
 }
 
 interface Recipient {
-  name: string
-  company: string
-  account: string
-  bank: string
+	name: string;
+	company: string;
+	account: string;
+	bank: string;
 }
 
 interface TransactionData {
-  customerId: string
-  receiptNumber: string
-  transactionId: string
-  sessionId: string
-  amount: string
-  currency: string
-  date: string
-  status: string
-  paymentMethod: string
-  sender: Sender
-  recipient: Recipient
-  fee: string
-  reference: string
-  description: string
+	customerId: string;
+	receiptNumber: string;
+	transactionId: string;
+	sessionId: string;
+	amount: string;
+	currency: string;
+	date: string;
+	status: string;
+	paymentMethod: string;
+	sender: Sender;
+	recipient: Recipient;
+	fee: string;
+	reference: string;
+	description: string;
 }
 
 interface PaymentReceiptProps {
-  transactionData: TransactionData
+	transactionData: TransactionData;
 }
 
-export default function PaymentReceipt({ transactionData }: PaymentReceiptProps) {
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [qrCodeUrl, setQrCodeUrl] = useState("")
+export default function PaymentReceipt({
+	transactionData,
+}: PaymentReceiptProps) {
+	const [isDownloading, setIsDownloading] = useState(false);
+	const [qrCodeUrl, setQrCodeUrl] = useState("");
 
-  const userUrl = `https://sentiflex.connectwithsapphire.com/verify-code?customerId=${transactionData.customerId}`; // dynamic data
+	const userUrl = `https://sentiflex.connectwithsapphire.com/verify-code?customerId=${transactionData.customerId}`; // dynamic data
 
-  useEffect(() => {
-    // Generate QR code when component mounts
-    QRCode.toDataURL(userUrl, { width: 200 })
-      .then(url => setQrCodeUrl(url))
-      .catch(console.error);
-  }, [userUrl]);
+	useEffect(() => {
+		// Generate QR code when component mounts
+		QRCode.toDataURL(userUrl, { width: 200 })
+			.then((url) => setQrCodeUrl(url))
+			.catch(console.error);
+	}, [userUrl]);
 
-  const generatePDF = async () => {
-    setIsDownloading(true)
+	const generatePDF = async () => {
+		setIsDownloading(true);
 
-    try {
-      // Create a hidden iframe for printing
-      const iframe = document.createElement('iframe')
-      iframe.style.display = 'none'
-      document.body.appendChild(iframe)
+		try {
+			// Create a hidden iframe for printing
+			const iframe = document.createElement("iframe");
+			iframe.style.display = "none";
+			document.body.appendChild(iframe);
 
-      const receiptHTML = `
+			const receiptHTML = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -215,11 +216,14 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                   <h1 class="text-blue-100 text-xs tracking-wide uppercase">Sapphire Virtual Network</h1>
                   <p class="text-blue-100 text-xs tracking-wide uppercase">Payment Acknowledgement</p>
                   <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    transactionData.status === 'PAID' ? 'bg-green-500' :
-                    transactionData.status === 'PENDING' ? 'bg-yellow-500' :
-                    transactionData.status === 'FAILED' ? 'bg-red-500' :
-                    'bg-red-500'
-                  } text-white mt-2">
+										transactionData.status === "PAID"
+											? "bg-green-500"
+											: transactionData.status === "PENDING"
+											? "bg-yellow-500"
+											: transactionData.status === "FAILED"
+											? "bg-red-500"
+											: "bg-red-500"
+									} text-white mt-2">
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
@@ -229,7 +233,9 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
 
                 <div class="p-4">
                   <div class="text-center bg-slate-50 p-3 rounded-lg mb-4">
-                    <p class="text-2xl font-bold text-slate-900 mb-1">NGN ${Number(transactionData.amount).toLocaleString()}</p>
+                    <p class="text-2xl font-bold text-slate-900 mb-1">NGN ${Number(
+											transactionData.amount
+										).toLocaleString("en-GB")}</p>
                   </div>
 
                   <div class="grid grid-cols-2 gap-4 mb-4">
@@ -240,23 +246,33 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                       <div class="space-y-2">
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reference Number</p>
-                          <p class="text-sm font-mono text-slate-900">${transactionData.receiptNumber}</p>
+                          <p class="text-sm font-mono text-slate-900">${
+														transactionData.receiptNumber
+													}</p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</p>
-                          <p class="text-sm font-mono text-slate-900 break-all">${transactionData.transactionId}</p>
+                          <p class="text-sm font-mono text-slate-900 break-all">${
+														transactionData.transactionId
+													}</p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Session ID</p>
-                          <p class="text-sm font-mono text-slate-900 break-all">${transactionData.sessionId}</p>
+                          <p class="text-sm font-mono text-slate-900 break-all">${
+														transactionData.sessionId
+													}</p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</p>
-                          <p class="text-sm text-slate-900">${new Date(transactionData.date).toLocaleString()}</p>
+                          <p class="text-sm text-slate-900">${new Date(
+														transactionData.date
+													).toLocaleString("en-GB")}</p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Method</p>
-                          <p class="text-sm text-slate-900">${transactionData.paymentMethod}</p>
+                          <p class="text-sm text-slate-900">${
+														transactionData.paymentMethod
+													}</p>
                         </div>
                       </div>
                     </div>
@@ -277,19 +293,27 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         <div class="flex justify-between text-sm">
                           <span class="text-slate-600">Transfer Amount</span>
                           <span class="font-semibold text-slate-900">
-                            NGN ${Number(transactionData.fee).toLocaleString()}
+                            NGN ${Number(transactionData.fee).toLocalString(
+															"en-GB"
+														)}
                           </span>
                         </div>
                         <div class="flex justify-between text-sm">
                           <span class="text-slate-600">Processing Fee</span>
                           <span class="font-semibold text-slate-900">
-                            NGN ${(Number.parseFloat(transactionData.amount.replace(",", "")) - Number.parseFloat(transactionData.fee)).toFixed(2)}
+                            NGN ${(
+															Number.parseFloat(
+																transactionData.amount.replace(",", "")
+															) - Number.parseFloat(transactionData.fee)
+														).toFixed(2)}
                           </span>
                         </div>
                         <hr class="my-2" />
                         <div class="flex justify-between text-sm font-bold">
                           <span class="text-slate-900">Total Amount</span>
-                          <span class="text-slate-900">NGN ${Number(transactionData.amount).toLocaleString()}</span>
+                          <span class="text-slate-900">NGN ${Number(
+														transactionData.amount
+													).toLocaleString("en-GB")}</span>
                         </div>
                       </div>
                     </div>
@@ -299,7 +323,9 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         Description
                       </h3>
                       <div class="bg-slate-50 p-3 rounded-lg">
-                        <p class="text-sm text-slate-900">${transactionData.description}</p>
+                        <p class="text-sm text-slate-900">${
+													transactionData.description
+												}</p>
                       </div>
                     </div>
                   </div>
@@ -310,8 +336,12 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         Payment From
                       </h3>
                       <div class="bg-slate-50 p-3 rounded-lg border-l-4 border-blue-600">
-                        <p class="text-sm font-bold text-slate-900">${transactionData.sender.name}</p>
-                        <p class="text-xs font-semibold text-blue-600">${transactionData.sender.company}</p>
+                        <p class="text-sm font-bold text-slate-900">${
+													transactionData.sender.name
+												}</p>
+                        <p class="text-xs font-semibold text-blue-600">${
+													transactionData.sender.company
+												}</p>
                         <div class="mt-1 space-y-0.5 text-xs text-slate-600">
                           <p>${transactionData.sender.email}</p>
                         </div>
@@ -323,7 +353,9 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         Payment To
                       </h3>
                       <div class="bg-slate-50 p-3 rounded-lg border-l-4 border-green-500">
-                        <p class="text-sm font-bold text-slate-900">${transactionData.recipient.name}</p>
+                        <p class="text-sm font-bold text-slate-900">${
+													transactionData.recipient.name
+												}</p>
                         <div class="mt-1 space-y-0.5 text-xs text-slate-600">
                           <p>Account: ${transactionData.recipient.account}</p>
                           <p>Bank: ${transactionData.recipient.bank}</p>
@@ -338,7 +370,9 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
                         🔒 Secure Transaction Completed
                       </p>
                       <p class="text-xs text-blue-700">
-                        Receipt generated on ${new Date().toLocaleString()}
+                        Receipt generated on ${new Date().toLocalString(
+													"en-GB"
+												)}
                       </p>
                     </div>
                   </div>
@@ -348,48 +382,52 @@ export default function PaymentReceipt({ transactionData }: PaymentReceiptProps)
           </div>
         </body>
         </html>
-      `
+      `;
 
-      iframe.contentDocument?.write(receiptHTML)
-      iframe.contentDocument?.close()
+			iframe.contentDocument?.write(receiptHTML);
+			iframe.contentDocument?.close();
 
-      // Wait for content to load
-      setTimeout(() => {
-        iframe.contentWindow?.print()
-        // Remove iframe after printing
-        setTimeout(() => {
-          document.body.removeChild(iframe)
-        }, 1000)
-      }, 1000)
-    } catch (error) {
-      console.error("Error generating PDF:", error)
-    } finally {
-      setIsDownloading(false)
-    }
-  }
+			// Wait for content to load
+			setTimeout(() => {
+				iframe.contentWindow?.print();
+				// Remove iframe after printing
+				setTimeout(() => {
+					document.body.removeChild(iframe);
+				}, 1000);
+			}, 1000);
+		} catch (error) {
+			console.error("Error generating PDF:", error);
+		} finally {
+			setIsDownloading(false);
+		}
+	};
 
-  // const handleShare = async () => {
-  //   if (navigator.share) {
-  //     try {
-  //       await navigator.share({
-  //         title: `Payment Receipt - ${transactionData.receiptNumber}`,
-  //         text: `Payment receipt for NGN${transactionData.amount} - Transaction ID: ${transactionData.transactionId}`,
-  //       })
-  //     } catch (error) {
-  //       console.log("Error sharing:", error)
-  //     }
-  //   } else {
-  //     const receiptText = `Payment Receipt - ${transactionData.receiptNumber}\nAmount: NGN${transactionData.amount}\nTransaction ID: ${transactionData.transactionId}\nDate: ${transactionData.date}`
-  //     navigator.clipboard.writeText(receiptText)
-  //   }
-  // }
+	// const handleShare = async () => {
+	//   if (navigator.share) {
+	//     try {
+	//       await navigator.share({
+	//         title: `Payment Receipt - ${transactionData.receiptNumber}`,
+	//         text: `Payment receipt for NGN${transactionData.amount} - Transaction ID: ${transactionData.transactionId}`,
+	//       })
+	//     } catch (error) {
+	//       console.log("Error sharing:", error)
+	//     }
+	//   } else {
+	//     const receiptText = `Payment Receipt - ${transactionData.receiptNumber}\nAmount: NGN${transactionData.amount}\nTransaction ID: ${transactionData.transactionId}\nDate: ${transactionData.date}`
+	//     navigator.clipboard.writeText(receiptText)
+	//   }
+	// }
 
-  return (
-    transactionData.status === "PAID" && (
-      <Button onClick={generatePDF} disabled={isDownloading} className="bg-blue-600 hover:bg-blue-700">
-        <Download className="w-4 h-4 mr-2" />
-        {isDownloading ? "Generating..." : "Payment Acknowledgement"}
-      </Button>
-    )
-  )
+	return (
+		transactionData.status === "PAID" && (
+			<Button
+				onClick={generatePDF}
+				disabled={isDownloading}
+				className="bg-blue-600 hover:bg-blue-700"
+			>
+				<Download className="w-4 h-4 mr-2" />
+				{isDownloading ? "Generating..." : "Payment Acknowledgement"}
+			</Button>
+		)
+	);
 }

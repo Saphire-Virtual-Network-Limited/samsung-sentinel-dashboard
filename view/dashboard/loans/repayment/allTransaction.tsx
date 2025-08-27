@@ -377,7 +377,9 @@ export default function AllTransactionView() {
 		}
 		if (key === "amount") {
 			return (
-				<div className="text-small">₦{row.amount?.toLocaleString() || "0"}</div>
+				<div className="text-small">
+					₦{row.amount?.toLocaleString("en-GB") || "0"}
+				</div>
 			);
 		}
 		if (key === "createdAt") {
@@ -478,7 +480,7 @@ export default function AllTransactionView() {
 											Total Transactions
 										</p>
 										<p className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.totalTransactions?.toLocaleString() || "0"}
+											{raw.totalTransactions?.toLocaleString("en-GB") || "0"}
 										</p>
 										<div className="w-full bg-blue-200/40 rounded-full h-1">
 											<div
@@ -511,7 +513,7 @@ export default function AllTransactionView() {
 											Total Amount
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											₦{raw.totalAmount?.toLocaleString() || "0"}
+											₦{raw.totalAmount?.toLocaleString("en-GB") || "0"}
 										</p>
 										<div className="w-full bg-emerald-200/40 rounded-full h-1">
 											<div
@@ -544,13 +546,15 @@ export default function AllTransactionView() {
 											Down Payments
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.downPayments?.count?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.downPayments?.count?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-amber-600 mb-2">
 											₦
-											{raw.breakdown?.downPayments?.amount?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.downPayments?.amount?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<div className="w-full bg-amber-200/40 rounded-full h-1">
 											<div
@@ -583,13 +587,15 @@ export default function AllTransactionView() {
 											Loan Repayments
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.loanRepayments?.count?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.loanRepayments?.count?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-violet-600 mb-2">
 											₦
-											{raw.breakdown?.loanRepayments?.amount?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.loanRepayments?.amount?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<div className="w-full bg-violet-200/40 rounded-full h-1">
 											<div
@@ -622,13 +628,15 @@ export default function AllTransactionView() {
 											Card Tokenizations
 										</p>
 										<p className="text-xl font-bold text-gray-900 mb-1 tracking-tight">
-											{raw.breakdown?.cardTokenizations?.count?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.cardTokenizations?.count?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<p className="text-sm font-medium text-indigo-600 mb-2">
 											₦
-											{raw.breakdown?.cardTokenizations?.amount?.toLocaleString() ||
-												"0"}
+											{raw.breakdown?.cardTokenizations?.amount?.toLocaleString(
+												"en-GB"
+											) || "0"}
 										</p>
 										<div className="w-full bg-indigo-200/40 rounded-full h-1">
 											<div

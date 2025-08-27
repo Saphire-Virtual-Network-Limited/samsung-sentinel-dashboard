@@ -2,12 +2,17 @@
 
 import React, { useState } from "react";
 import useSWR from "swr";
-import { DashCard, DeviceCard, CardSkeleton, DateFilter } from "@/components/reususables";
+import {
+	DashCard,
+	DeviceCard,
+	CardSkeleton,
+	DateFilter,
+} from "@/components/reususables";
 import { getAllLoanData, getAllDevicesData, showToast } from "@/lib";
 
 const HomeView = () => {
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
-	const [endDate, setEndDate] = useState<string |   undefined>(undefined);
+	const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
 	const handleDateFilter = (start: string, end: string) => {
 		if (!start || !end) {
@@ -15,7 +20,10 @@ const HomeView = () => {
 			return;
 		}
 		if (new Date(end) < new Date(start)) {
-			showToast({ message: "End date must be after start date.", type: "error" });
+			showToast({
+				message: "End date must be after start date.",
+				type: "error",
+			});
 			return;
 		}
 		setStartDate(start);
@@ -23,13 +31,22 @@ const HomeView = () => {
 	};
 
 	// build a dynamic changeString once per render
-	const changeString = startDate && endDate ? `${startDate} to ${endDate}` : "from previous month";
+	const changeString =
+		startDate && endDate ? `${startDate} to ${endDate}` : "from previous month";
 
 	// Fetch loans—initially without dates, then with
-	const { data: loanRes, isLoading: isLoansLoading } = useSWR(["loan", startDate, endDate], () => getAllLoanData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 });
+	const { data: loanRes, isLoading: isLoansLoading } = useSWR(
+		["loan", startDate, endDate],
+		() => getAllLoanData(startDate, endDate),
+		{ revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 }
+	);
 
 	// Fetch devices—same strategy
-	const { data: devRes, isLoading: isDevicesLoading } = useSWR(["device", startDate, endDate], () => getAllDevicesData(startDate, endDate), { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 });
+	const { data: devRes, isLoading: isDevicesLoading } = useSWR(
+		["device", startDate, endDate],
+		() => getAllDevicesData(startDate, endDate),
+		{ revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 60000 }
+	);
 
 	const isLoading = isLoansLoading || isDevicesLoading;
 	const loanMetrics = loanRes?.data || {};
@@ -69,7 +86,7 @@ const HomeView = () => {
 							<DashCard
 								key={key}
 								title={key.replace(/Total /, "")}
-								value={hasNaira ? raw.toLocaleString() : raw}
+								value={hasNaira ? raw.toLocaleString("en-GB") : raw}
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}
@@ -85,7 +102,7 @@ const HomeView = () => {
 							<DeviceCard
 								key={key}
 								title={key.replace(/Total /, "")}
-								value={hasNaira ? raw.toLocaleString() : raw}
+								value={hasNaira ? raw.toLocaleString("en-GB") : raw}
 								href={generateHref(key)}
 								hasNaira={hasNaira}
 								changeValue={m.percentageChange || 0}

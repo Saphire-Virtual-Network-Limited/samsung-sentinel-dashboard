@@ -266,15 +266,17 @@ export default function UtilizationView() {
 				bvn: r.customer?.bvn || "N/A",
 				dob: r.customer?.dob || "N/A",
 				// age: r.customer?.dob ? calculateAge(r.customer.dob) : 'N/A',
-				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString()}` : 'N/A',
+				// monthlyRepayment: r.monthlyRepayment ? `₦${r.monthlyRepayment.toLocaleString("en-GB")}` : 'N/A',
 				tenorInDays: r.duration ? `${r.duration * 30} days` : "N/A",
 				status: r.status || "N/A",
-				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : "N/A",
+				loanAmount: r.loanAmount
+					? `₦${r.loanAmount.toLocaleString("en-GB")}`
+					: "N/A",
 				downPayment: r.downPayment
-					? `₦${r.downPayment.toLocaleString()}`
+					? `₦${r.downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.devicePrice
-					? `₦${r.devicePrice.toLocaleString()}`
+					? `₦${r.devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.loanStatus || "N/A",
 				imei: r.DeviceOnLoan?.[0]?.imei || "N/A",
@@ -379,7 +381,7 @@ export default function UtilizationView() {
 						if (typeof value === "string") {
 							value = value.replace(/[^\d.-]/g, "");
 						}
-						value = value ? Number(value).toLocaleString() : "0";
+						value = value ? Number(value).toLocaleString("en-GB") : "0";
 					}
 					row[col.uid] = value;
 				});
@@ -590,7 +592,7 @@ export default function UtilizationView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocaleString();
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -609,7 +611,7 @@ export default function UtilizationView() {
 															key.toLowerCase().includes("price") ||
 															key.toLowerCase().includes("payment"))
 													) {
-														value = `₦${Number(value).toLocaleString()}`;
+														value = `₦${Number(value).toLocaleString("en-GB")}`;
 													}
 
 													return (
@@ -653,7 +655,7 @@ export default function UtilizationView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {}
 															}
@@ -701,7 +703,9 @@ export default function UtilizationView() {
 																(key.toLowerCase().includes("price") ||
 																	key.toLowerCase().includes("amount"))
 															) {
-																value = `₦${Number(value).toLocaleString()}`;
+																value = `₦${Number(value).toLocaleString(
+																	"en-GB"
+																)}`;
 															}
 
 															return (
@@ -749,7 +753,7 @@ export default function UtilizationView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {}
 															}

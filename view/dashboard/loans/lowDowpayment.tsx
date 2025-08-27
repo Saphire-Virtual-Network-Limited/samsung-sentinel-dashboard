@@ -328,8 +328,12 @@ export default function LowDownpayment() {
 				customerId: r.customerId ? r.customerId : "N/A",
 				channel: r.channel ? r.channel : "N/A",
 				loanStatus: r.loanStatus ? r.loanStatus : "N/A",
-				createdAt: r.createdAt ? new Date(r.createdAt).toLocaleString() : "N/A",
-				updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleString() : "N/A",
+				createdAt: r.createdAt
+					? new Date(r.createdAt).toLocaleString("en-GB")
+					: "N/A",
+				updatedAt: r.updatedAt
+					? new Date(r.updatedAt).toLocaleString("en-GB")
+					: "N/A",
 				downPaymentPercentage: r.downPaymentPercentage
 					? `${r.downPaymentPercentage}%`
 					: "N/A",
