@@ -608,7 +608,7 @@ export default function DueLoansView() {
 		currencyCols.forEach((col) => {
 			const colIdx = ws.columns.findIndex((c) => c.key === col) + 1;
 			if (colIdx > 0) {
-				ws.getColumn(colIdx).numFmt = "₦#,##0.00";
+				ws.getColumn(colIdx).numFmt = "#,##0.00";
 			}
 		});
 
