@@ -5,6 +5,7 @@ import { DropOffsView, UniqueEngageView, XiaomiReport, GeneralEngageXiaomi } fro
 
 
 import React from "react";
+
 const SummaryReportXiaomiView = () => {
 	return (
 		<div className="flex w-full flex-col">
@@ -21,13 +22,13 @@ const SummaryReportXiaomiView = () => {
 					key="General Engagement"
 					title="General Engagement"
 					className="lg:p-4 text-base">
-					<GeneralEngageXiaomi />	
+					<GeneralEngageXiaomi />
 				</Tab>
 				<Tab
 					key="Unique Engagement"
 					title="Unique Engagement"
 					className="lg:p-4 text-base">
-					<XiaomiReport />        
+					<XiaomiReport />
 				</Tab>
 			</Tabs>
 		</div>

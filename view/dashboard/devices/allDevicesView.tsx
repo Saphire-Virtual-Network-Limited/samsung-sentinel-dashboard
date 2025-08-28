@@ -2,11 +2,35 @@
 
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
-import GenericTable, { ColumnDef } from "@/components/reususables/custom-ui/tableUi";
-import { activateDevice, deactivateDevice, getAllDevices, showToast, useAuth } from "@/lib";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
+import {
+	activateDevice,
+	deactivateDevice,
+	getAllDevices,
+	showToast,
+	useAuth,
+} from "@/lib";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, SortDescriptor, ChipProps, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Input } from "@heroui/react";
+import {
+	Button,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
+	SortDescriptor,
+	ChipProps,
+	Chip,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	useDisclosure,
+	Input,
+} from "@heroui/react";
 import { EllipsisVertical } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import { usePathname } from "next/navigation";
@@ -15,15 +39,15 @@ import { capitalize } from "@/utils/helpers";
 
 const columns: ColumnDef[] = [
 	{ name: "Name", uid: "deviceName", sortable: true },
-  { name: "Brand", uid: "deviceManufacturer", sortable: true },
-  { name: "Type", uid: "deviceType", sortable: true },
-  { name: "Sentiprotect", uid: "sentiprotect", sortable: true },
+	{ name: "Brand", uid: "deviceManufacturer", sortable: true },
+	{ name: "Type", uid: "deviceType", sortable: true },
+	{ name: "Sentiprotect", uid: "sentiprotect", sortable: true },
 	{ name: "SAP", uid: "SAP", sortable: true },
 	{ name: "SLD", uid: "SLD", sortable: true },
 
 	{ name: "Price", uid: "price", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
-	{ name: "Actions", uid: "actions"},
+	{ name: "Actions", uid: "actions" },
 ];
 
 const statusOptions = [
@@ -37,38 +61,38 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 };
 
 type DeviceRecord = {
-  price: number;
-  deviceModelNumber: string;
-  SAP: number;
-  SLD: number;
-  createdAt: string;
-  deviceManufacturer: string;
-  deviceName: string;
-  deviceRam: string | null;
-  deviceScreen: string | null;
-  deviceStorage: string | null;
-  imageLink: string;
-  newDeviceId: string;
-  oldDeviceId: string;
-  sentiprotect: number;
-  updatedAt: string;
-  deviceType: string;
-  deviceCamera: string[];
-  android_go: string;
-  status: "ACTIVE" | "SUSPENDED";
+	price: number;
+	deviceModelNumber: string;
+	SAP: number;
+	SLD: number;
+	createdAt: string;
+	deviceManufacturer: string;
+	deviceName: string;
+	deviceRam: string | null;
+	deviceScreen: string | null;
+	deviceStorage: string | null;
+	imageLink: string;
+	newDeviceId: string;
+	oldDeviceId: string;
+	sentiprotect: number;
+	updatedAt: string;
+	deviceType: string;
+	deviceCamera: string[];
+	android_go: string;
+	status: "ACTIVE" | "SUSPENDED";
 };
 
 export default function AllDevicesView() {
-
-
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
-	const role = pathname.split("/")[2]; 
+	const role = pathname.split("/")[2];
 	const { userResponse } = useAuth(); // get the user email
 	const userEmail = userResponse?.data?.email || "";
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [modalMode, setModalMode] = useState<"view" | "edit" | "deactivate" | null>(null);
+	const [modalMode, setModalMode] = useState<
+		"view" | "edit" | "deactivate" | null
+	>(null);
 	const [selectedItem, setSelectedItem] = useState<DeviceRecord | null>(null);
 	const [reason, setReason] = useState("");
 
@@ -121,27 +145,28 @@ export default function AllDevicesView() {
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
 		["devices-records"],
-		() => getAllDevices()
-			.then((r) => {
-				if (!r.data || r.data.length === 0) {
+		() =>
+			getAllDevices()
+				.then((r) => {
+					if (!r.data || r.data.length === 0) {
+						setHasNoRecords(true);
+						return [];
+					}
+					setHasNoRecords(false);
+					return r.data;
+				})
+				.catch((error) => {
+					console.error("Error fetching devices records:", error);
 					setHasNoRecords(true);
 					return [];
-				}
-				setHasNoRecords(false);
-				return r.data;
-			})
-			.catch((error) => {
-					console.error("Error fetching devices records:", error);
-				setHasNoRecords(true);
-				return [];
-			}),
+				}),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 60000,
 			refreshInterval: 60000,
 			shouldRetryOnError: false,
 			keepPreviousData: true,
-			revalidateIfStale: true
+			revalidateIfStale: true,
 		}
 	);
 
@@ -149,16 +174,18 @@ export default function AllDevicesView() {
 
 	const customers = useMemo(
 		() =>
-			  raw.map((r: DeviceRecord) => ({
+			raw.map((r: DeviceRecord) => ({
 				...r,
-				deviceName: r.deviceName || '',
-				deviceManufacturer: r.deviceManufacturer || '',
-				deviceType: r.deviceType || '',
-				price: r.price ? `₦${r.price.toLocaleString()}` : '',
-				sentiProtect: r.sentiprotect ? `₦${r.sentiprotect.toLocaleString()}` : '',
-				SAP: r.SAP ? `₦${r.SAP.toLocaleString()}` : '',
-				SLD: r.SLD ? `₦${r.SLD.toLocaleString()}` : '',
-				status: r.status || 'ACTIVE', // Default to active if no status
+				deviceName: r.deviceName || "",
+				deviceManufacturer: r.deviceManufacturer || "",
+				deviceType: r.deviceType || "",
+				price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
+				sentiProtect: r.sentiprotect
+					? `₦${r.sentiprotect.toLocaleString("en-GB")}`
+					: "",
+				SAP: r.SAP ? `₦${r.SAP.toLocaleString("en-GB")}` : "",
+				SLD: r.SLD ? `₦${r.SLD.toLocaleString("en-GB")}` : "",
+				status: r.status || "ACTIVE", // Default to active if no status
 			})),
 		[raw]
 	);
@@ -168,29 +195,31 @@ export default function AllDevicesView() {
 		if (filterValue) {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
-				const deviceName = (c.deviceName || '').toLowerCase();
-				const deviceId = (c.newDeviceId || '').toLowerCase();
-				const oldDeviceId = (c.oldDeviceId || '').toLowerCase();
-				const deviceManufacturer = (c.deviceManufacturer || '').toLowerCase();
-				const deviceType = (c.deviceType || '').toLowerCase();
-				const price = (c.price || '').toLowerCase();
-				const SAP = (c.SAP || '').toLowerCase();
-				const SLD = (c.SLD || '').toLowerCase();
-				const status = (c.status || 'ACTIVE').toLowerCase();
-				
-				return deviceName.includes(f) || 
-					   deviceId.includes(f) ||
-					   oldDeviceId.includes(f) ||
-					   deviceManufacturer.includes(f) || 
-					   deviceType.includes(f) || 
-					   price.includes(f) || 
-					   SAP.includes(f) || 
-					   SLD.includes(f) ||
-					   status.includes(f);
+				const deviceName = (c.deviceName || "").toLowerCase();
+				const deviceId = (c.newDeviceId || "").toLowerCase();
+				const oldDeviceId = (c.oldDeviceId || "").toLowerCase();
+				const deviceManufacturer = (c.deviceManufacturer || "").toLowerCase();
+				const deviceType = (c.deviceType || "").toLowerCase();
+				const price = (c.price || "").toLowerCase();
+				const SAP = (c.SAP || "").toLowerCase();
+				const SLD = (c.SLD || "").toLowerCase();
+				const status = (c.status || "ACTIVE").toLowerCase();
+
+				return (
+					deviceName.includes(f) ||
+					deviceId.includes(f) ||
+					oldDeviceId.includes(f) ||
+					deviceManufacturer.includes(f) ||
+					deviceType.includes(f) ||
+					price.includes(f) ||
+					SAP.includes(f) ||
+					SLD.includes(f) ||
+					status.includes(f)
+				);
 			});
 		}
 		if (statusFilter.size > 0) {
-			list = list.filter((c) => statusFilter.has(c.status || 'ACTIVE'));	
+			list = list.filter((c) => statusFilter.has(c.status || "ACTIVE"));
 		}
 		return list;
 	}, [customers, filterValue, statusFilter]);
@@ -203,8 +232,12 @@ export default function AllDevicesView() {
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
-			const aVal = (a[sortDescriptor.column as keyof DeviceRecord] || '').toString();
-			const bVal = (b[sortDescriptor.column as keyof DeviceRecord] || '').toString();
+			const aVal = (
+				a[sortDescriptor.column as keyof DeviceRecord] || ""
+			).toString();
+			const bVal = (
+				b[sortDescriptor.column as keyof DeviceRecord] || ""
+			).toString();
 			const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 			return sortDescriptor.direction === "descending" ? -cmp : cmp;
 		});
@@ -214,20 +247,29 @@ export default function AllDevicesView() {
 	const exportFn = async (data: DeviceRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Devices");
-		ws.columns = columns.filter((c) => c.uid !== "actions").map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) => ws.addRow({ ...r, status: capitalize(r.status || '') }));	
+		ws.columns = columns
+			.filter((c) => c.uid !== "actions")
+			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		data.forEach((r) =>
+			ws.addRow({ ...r, status: capitalize(r.status || "") })
+		);
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Devices_Records.xlsx");
 	};
 
 	// When action clicked:
-	const openModal = (mode: "view" | "edit" | "deactivate", row: DeviceRecord) => {
+	const openModal = (
+		mode: "view" | "edit" | "deactivate",
+		row: DeviceRecord
+	) => {
 		setModalMode(mode);
 		setSelectedItem(row);
 		if (mode === "edit") {
-			// Open edit page in new tab with store data
+			// Open edit page in new tab with store data using dynamic route
 			const editUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
-			window.open(editUrl, '_blank');
+			// If using Next.js dynamic route, should be /edit/[deviceId]
+			const dynamicEditUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
+			window.open(dynamicEditUrl, "_blank");
 		} else {
 			onDeactivateDevice();
 		}
@@ -246,7 +288,7 @@ export default function AllDevicesView() {
 		try {
 			const response = await deactivateDevice(selectedItem.newDeviceId, reason);
 			showToast({
-				type: "success", 
+				type: "success",
 				message: "Device deactivated successfully",
 				duration: 5000,
 			});
@@ -255,17 +297,15 @@ export default function AllDevicesView() {
 			console.error("Error deactivating device:", error);
 			showToast({
 				type: "error",
-				message: error.message || "Failed to deactivate device", 
-				duration: 5000
+				message: error.message || "Failed to deactivate device",
+				duration: 5000,
 			});
 		}
 	};
 
-
-
 	const handleActivateDevice = async (deviceId: string) => {
 		if (!selectedItem) {
-			showToast({	
+			showToast({
 				type: "error",
 				message: "No device selected",
 				duration: 5000,
@@ -276,7 +316,7 @@ export default function AllDevicesView() {
 		try {
 			const response = await activateDevice(selectedItem.newDeviceId);
 			showToast({
-				type: "success", 
+				type: "success",
 				message: "Device activated successfully",
 				duration: 5000,
 			});
@@ -285,7 +325,7 @@ export default function AllDevicesView() {
 			console.error("Error activating device:", error);
 			showToast({
 				type: "error",
-				message: error.message || "Failed to activate device", 
+				message: error.message || "Failed to activate device",
 				duration: 5000,
 			});
 		}
@@ -298,23 +338,22 @@ export default function AllDevicesView() {
 				<div className="flex justify-end" key={`${row.newDeviceId}-actions`}>
 					<Dropdown>
 						<DropdownTrigger>
-							<Button
-								isIconOnly
-								size="sm"
-								variant="light">
+							<Button isIconOnly size="sm" variant="light">
 								<EllipsisVertical className="text-default-300" />
 							</Button>
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Actions">
 							<DropdownItem
 								key={`${row.newDeviceId}-view`}
-								onPress={() => openModal("view", row)}>
+								onPress={() => openModal("view", row)}
+							>
 								View
 							</DropdownItem>
-							{hasPermission(role, "canEdit", userEmail) ? (	
+							{hasPermission(role, "canEdit", userEmail) ? (
 								<DropdownItem
 									key={`${row.newDeviceId}-edit`}
-									onPress={() => openModal("edit", row)}>	
+									onPress={() => openModal("edit", row)}
+								>
 									Edit
 								</DropdownItem>
 							) : null}
@@ -324,7 +363,8 @@ export default function AllDevicesView() {
 									onPress={() => {
 										setSelectedItem(row);
 										onDeactivateDevice();
-									}}>
+									}}
+								>
 									Deactivate
 								</DropdownItem>
 							) : (
@@ -333,7 +373,8 @@ export default function AllDevicesView() {
 									onPress={() => {
 										setSelectedItem(row);
 										onActivateDevice();
-									}}>
+									}}
+								>
 									Activate
 								</DropdownItem>
 							)}
@@ -342,13 +383,22 @@ export default function AllDevicesView() {
 				</div>
 			);
 		}
-		
+
 		if (key === "deviceName") {
-			return <p key={`${row.newDeviceId}-name`} className="capitalize cursor-pointer" onClick={() => openModal("view", row)}>{row.deviceName || ''}</p>;	
+			return (
+				<p
+					key={`${row.newDeviceId}-name`}
+					className="capitalize cursor-pointer"
+					onClick={() => openModal("view", row)}
+				>
+					{row.deviceName || ""}
+				</p>
+			);
 		}
-		
+
 		if (key === "status") {
-			const statusColor = row.status === "ACTIVE" ? "text-success" : "text-danger";
+			const statusColor =
+				row.status === "ACTIVE" ? "text-success" : "text-danger";
 			return (
 				<Chip
 					key={`${row.newDeviceId}-status`}
@@ -357,19 +407,26 @@ export default function AllDevicesView() {
 					size="sm"
 					className="capitalize"
 				>
-					{row.status || 'N/A'}
+					{row.status || "N/A"}
 				</Chip>
 			);
 		}
-		
-		return <p key={`${row.newDeviceId}-${key}`} className="text-small cursor-pointer" onClick={() => openModal("view", row)}>{(row as any)[key] || ''}</p>;
+
+		return (
+			<p
+				key={`${row.newDeviceId}-${key}`}
+				className="text-small cursor-pointer"
+				onClick={() => openModal("view", row)}
+			>
+				{(row as any)[key] || ""}
+			</p>
+		);
 	};
 
 	return (
 		<>
-		<div className="mb-4 flex justify-center md:justify-end">
-		</div>
-			
+			<div className="mb-4 flex justify-center md:justify-end"></div>
+
 			{isLoading ? (
 				<TableSkeleton columns={columns.length} rows={10} />
 			) : (
@@ -404,19 +461,18 @@ export default function AllDevicesView() {
 						text: "Create",
 						onClick: () => {
 							const createUrl = `/access/${role}/inventory/devices/create`;
-							window.open(createUrl, '_blank');
-						}
+							window.open(createUrl, "_blank");
+						},
 					}}
-
 				/>
 			)}
-			
 
 			<Modal
 				isOpen={isOpen}
 				onClose={onClose}
 				// size="2xl"
-				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto">
+				className="m-4 max-w-[1500px] max-h-[850px] overflow-y-auto"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -426,59 +482,117 @@ export default function AllDevicesView() {
 									<div className="space-y-4">
 										{/* Device Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Device Information
+											</h3>
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
-													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.newDeviceId || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Old Device ID</p>
-													<p className="font-medium">{selectedItem.oldDeviceId || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Old Device ID
+													</p>
+													<p className="font-medium">
+														{selectedItem.oldDeviceId || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Device Name</p>
-													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Name
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceName || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Model Number</p>
-													<p className="font-medium">{selectedItem.deviceModelNumber || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Model Number
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceModelNumber || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Manufacturer</p>
-													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Manufacturer
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceManufacturer || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Device Type</p>
-													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Type
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceType || "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Price</p>
-													<p className="font-medium">{selectedItem.price ? `₦${selectedItem.price.toLocaleString()}` : 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.price
+															? `₦${selectedItem.price.toLocaleString("en-GB")}`
+															: "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">SAP</p>
-													<p className="font-medium">{selectedItem.SAP ? `₦${selectedItem.SAP.toLocaleString()}` : 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.SAP
+															? `₦${selectedItem.SAP.toLocaleString("en-GB")}`
+															: "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">SLD</p>
-													<p className="font-medium">{selectedItem.SLD ? `₦${selectedItem.SLD.toLocaleString()}` : 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.SLD
+															? `₦${selectedItem.SLD.toLocaleString("en-GB")}`
+															: "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Sentiprotect</p>
-													<p className="font-medium">{selectedItem.sentiprotect ? `₦${selectedItem.sentiprotect.toLocaleString()}` : 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Sentiprotect
+													</p>
+													<p className="font-medium">
+														{selectedItem.sentiprotect
+															? `₦${selectedItem.sentiprotect.toLocaleString(
+																	"en-GB"
+															  )}`
+															: "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Android Go</p>
-													<p className="font-medium">{selectedItem.android_go || 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.android_go || "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Created At</p>
-													<p className="font-medium">{selectedItem.createdAt ? new Date(selectedItem.createdAt).toLocaleString() : 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.createdAt
+															? new Date(selectedItem.createdAt).toLocaleString(
+																	"en-GB"
+															  )
+															: "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Updated At</p>
-													<p className="font-medium">{selectedItem.updatedAt ? new Date(selectedItem.updatedAt).toLocaleString() : 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.updatedAt
+															? new Date(selectedItem.updatedAt).toLocaleString(
+																	"en-GB"
+															  )
+															: "N/A"}
+													</p>
 												</div>
 											</div>
 										</div>
@@ -486,10 +600,7 @@ export default function AllDevicesView() {
 								)}
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onClose}>
+								<Button color="danger" variant="light" onPress={onClose}>
 									Close
 								</Button>
 							</ModalFooter>
@@ -501,7 +612,8 @@ export default function AllDevicesView() {
 			<Modal
 				isOpen={isDeactivateDevice}
 				onClose={handleDeactivateDeviceClose}
-				className="m-4 max-w-[600px]">
+				className="m-4 max-w-[600px]"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -511,30 +623,48 @@ export default function AllDevicesView() {
 									<div className="space-y-4">
 										{/* Device Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Device Information
+											</h3>
 											<div className="space-y-3">
 												<div>
-													<p className="text-sm text-default-500">Device Name</p>
-													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Name
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceName || "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
-													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.newDeviceId || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Manufacturer</p>
-													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Manufacturer
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceManufacturer || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Device Type</p>
-													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Type
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceType || "N/A"}
+													</p>
 												</div>
 											</div>
 										</div>
-										
+
 										{/* Reason Input */}
 										<div>
-											<p className="text-sm text-default-500 mb-2">Reason for Deactivation *</p>
+											<p className="text-sm text-default-500 mb-2">
+												Reason for Deactivation *
+											</p>
 											<Input
 												placeholder="Enter reason for deactivation"
 												value={reason}
@@ -550,14 +680,16 @@ export default function AllDevicesView() {
 									color="danger"
 									variant="solid"
 									onPress={handleDeactivateDevice}
-									isDisabled={!reason.trim()}>
+									isDisabled={!reason.trim()}
+								>
 									Confirm
 								</Button>
-								
+
 								<Button
 									color="default"
 									variant="light"
-									onPress={handleDeactivateDeviceClose}>
+									onPress={handleDeactivateDeviceClose}
+								>
 									Cancel
 								</Button>
 							</ModalFooter>
@@ -570,7 +702,8 @@ export default function AllDevicesView() {
 			<Modal
 				isOpen={isActivateDevice}
 				onClose={handleActivateDeviceClose}
-				className="m-4 max-w-[600px]">
+				className="m-4 max-w-[600px]"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -580,35 +713,56 @@ export default function AllDevicesView() {
 									<div className="space-y-4">
 										{/* Device Information */}
 										<div className="bg-default-50 p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-3">Device Information</h3>
+											<h3 className="text-lg font-semibold mb-3">
+												Device Information
+											</h3>
 											<div className="space-y-3">
 												<div>
-													<p className="text-sm text-default-500">Device Name</p>
-													<p className="font-medium">{selectedItem.deviceName || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Name
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceName || "N/A"}
+													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
-													<p className="font-medium">{selectedItem.newDeviceId || 'N/A'}</p>
+													<p className="font-medium">
+														{selectedItem.newDeviceId || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Manufacturer</p>
-													<p className="font-medium">{selectedItem.deviceManufacturer || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Manufacturer
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceManufacturer || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Device Type</p>
-													<p className="font-medium">{selectedItem.deviceType || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Device Type
+													</p>
+													<p className="font-medium">
+														{selectedItem.deviceType || "N/A"}
+													</p>
 												</div>
 												<div>
-													<p className="text-sm text-default-500">Current Status</p>
-													<p className="font-medium capitalize">{selectedItem.status || 'N/A'}</p>
+													<p className="text-sm text-default-500">
+														Current Status
+													</p>
+													<p className="font-medium capitalize">
+														{selectedItem.status || "N/A"}
+													</p>
 												</div>
 											</div>
 										</div>
-										
+
 										{/* Confirmation Message */}
 										<div className="bg-blue-50 p-4 rounded-lg">
 											<p className="text-sm text-blue-700">
-												Are you sure you want to activate this device? This will make it available for use again.
+												Are you sure you want to activate this device? This will
+												make it available for use again.
 											</p>
 										</div>
 									</div>
@@ -618,14 +772,18 @@ export default function AllDevicesView() {
 								<Button
 									color="success"
 									variant="solid"
-									onPress={() => handleActivateDevice(selectedItem?.newDeviceId || '')}>
+									onPress={() =>
+										handleActivateDevice(selectedItem?.newDeviceId || "")
+									}
+								>
 									Activate Device
 								</Button>
-							
+
 								<Button
 									color="default"
 									variant="light"
-									onPress={handleActivateDeviceClose}>
+									onPress={handleActivateDeviceClose}
+								>
 									Cancel
 								</Button>
 							</ModalFooter>

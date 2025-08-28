@@ -222,20 +222,20 @@ export default function LoansView() {
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				age: calculateAge(r.dob),
 				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
-					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: r.LoanRecord?.[0]?.duration
 					? `${r.LoanRecord[0].duration} months`
 					: "N/A",
 				status: r.status,
 				loanAmount: r.LoanRecord?.[0]?.loanAmount
-					? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}`
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				downPayment: r.LoanRecord?.[0]?.downPayment
-					? `₦${r.LoanRecord[0].downPayment.toLocaleString()}`
+					? `₦${r.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.LoanRecord?.[0]?.devicePrice
-					? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}`
+					? `₦${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
 			})),
@@ -288,12 +288,40 @@ export default function LoansView() {
 	const exportFn = async (data: LoanRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Loans");
-		ws.columns = columns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-		data.forEach((r) =>
-			ws.addRow({ ...r, status: capitalize(r.status || "") })
-		);
+		const exportColumns = columns.filter((c) => c.uid !== "actions");
+		ws.columns = exportColumns.map((c) => ({
+			header: c.name,
+			key: c.uid,
+			width: 20,
+		}));
+
+		// Currency columns to format as numbers with commas
+		const currencyColumns = [
+			"devicePrice",
+			"downPayment",
+			"loanAmount",
+			"monthlyRepayment",
+			"insurancePrice",
+			"mbsEligibleAmount",
+			"deviceAmount",
+			"interestAmount",
+		];
+
+		data.forEach((r) => {
+			const row: Record<string, any> = {};
+			exportColumns.forEach((col) => {
+				let value = r[col.uid as keyof LoanRecord];
+				if (currencyColumns.includes(col.uid)) {
+					if (typeof value === "string") {
+						value = value.replace(/[^\d.-]/g, "");
+					}
+					value = value ? Number(value).toLocaleString("en-GB") : "0";
+				}
+				row[col.uid] = value;
+			});
+			ws.addRow(row);
+		});
+
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "All_Loan_Records.xlsx");
 	};
@@ -484,7 +512,7 @@ export default function LoansView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocaleString();
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -554,7 +582,7 @@ export default function LoansView() {
 																	try {
 																		const date = new Date(value as string);
 																		if (!isNaN(date.getTime())) {
-																			value = date.toLocaleString();
+																			value = date.toLocaleString("en-GB");
 																		}
 																	} catch (e) {
 																		// If date parsing fails, use the original value
@@ -573,7 +601,9 @@ export default function LoansView() {
 																		key.toLowerCase().includes("price") ||
 																		key.toLowerCase().includes("payment"))
 																) {
-																	value = `₦${Number(value).toLocaleString()}`;
+																	value = `₦${Number(value).toLocaleString(
+																		"en-GB"
+																	)}`;
 																}
 
 																return (
@@ -633,7 +663,7 @@ export default function LoansView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {
 																	// If date parsing fails, use the original value
@@ -701,7 +731,7 @@ export default function LoansView() {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
+																	value = date.toLocaleString("en-GB");
 																}
 															} catch (e) {
 																// If date parsing fails, use the original value
@@ -719,7 +749,9 @@ export default function LoansView() {
 															(key.toLowerCase().includes("price") ||
 																key.toLowerCase().includes("amount"))
 														) {
-															value = `₦${Number(value).toLocaleString()}`;
+															value = `₦${Number(value).toLocaleString(
+																"en-GB"
+															)}`;
 														}
 
 														return (

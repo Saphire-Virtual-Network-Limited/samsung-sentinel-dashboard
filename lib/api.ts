@@ -1547,6 +1547,11 @@ export async function deleteStore(storeId: string) {
 	return apiCall(`/admin/stores/${storeId}/archive`, "PATCH");
 }
 
+// Deactivate store
+export async function deactivateStore(storeId: string) {
+	return apiCall(`/admin/stores/${storeId}/deactivate`, "PATCH");
+}
+
 // Create Device
 
 export interface createDevice {
@@ -1585,23 +1590,37 @@ export async function createDevice(createDevice: createDevice) {
 		formData.append("deviceImage", createDevice.deviceImage);
 	}
 
-	// Add all other fields
-	Object.keys(createDevice).forEach((key) => {
-		if (
-			key !== "deviceImage" &&
-			createDevice[key as keyof createDevice] !== undefined
-		) {
-			formData.append(key, String(createDevice[key as keyof createDevice]));
-		}
-	});
+	// Append all fields as strings, matching the curl example
+	const fieldMap: Record<string, any> = {
+		deviceBrand: createDevice.deviceBrand,
+		deviceModel: createDevice.deviceModel,
+		price: createDevice.price,
+		currency: createDevice.currency,
+		deviceModelNumber: createDevice.deviceModelNumber,
+		back_camera: createDevice.back_camera ?? "",
+		battery: createDevice.battery ?? "",
+		color: createDevice.color ?? "",
+		data_storage: createDevice.data_storage ?? "",
+		display: createDevice.display ?? "",
+		front_camera: createDevice.front_camera ?? "",
+		memory: createDevice.memory ?? "",
+		network: createDevice.network ?? "",
+		os: createDevice.os ?? "",
+		other_features: createDevice.other_features ?? "",
+		proccessor_cpu: createDevice.proccessor_cpu ?? "",
+		sap: createDevice.sap,
+		screen_size: createDevice.screen_size ?? "",
+		sentinel_cover: createDevice.sentinel_cover ?? "",
+		sld: createDevice.sld,
+		deviceType: createDevice.deviceType,
+		case_colors: createDevice.case_colors ?? "",
+		windows_version: createDevice.windows_version ?? "",
+		isActive: createDevice.isActive,
+	};
 
-	// Add all other fields
-	Object.keys(createDevice).forEach((key) => {
-		if (
-			key !== "deviceImage" &&
-			createDevice[key as keyof createDevice] !== undefined
-		) {
-			formData.append(key, String(createDevice[key as keyof createDevice]));
+	Object.entries(fieldMap).forEach(([key, value]) => {
+		if (value !== undefined && value !== null) {
+			formData.append(key, String(value));
 		}
 	});
 
@@ -2873,4 +2892,66 @@ export async function getTransactionData(startDate?: string, endDate?: string) {
 	const query1 = startDate ? `?startDate=${startDate}` : "";
 	const query2 = endDate ? `&endDate=${endDate}` : "";
 	return apiCall(`/collections/all${query1}${query2}`, "GET");
+}
+
+// SENTINEL INTEGRATION PART
+
+export interface SentinelCustomerDevice {
+	sentinelCustomerDeviceId: string;
+	sentinelCustomerId: string;
+	serialNumber: string;
+	deviceBrand: string;
+	deviceId: string;
+	deviceName: string;
+	devicePrice: string;
+	salesStoreId: string;
+	purchaseReceiptImagePublicId: string | null;
+	sentinelBlockformImagePublicId: string | null;
+	sentinelReceiptImagePublicId: string | null;
+	createdAt: string;
+	updatedAt: string;
+	deviceType: string | null;
+	purchaseReceiptImageUrl: string | null;
+	sentinelBlockformImageUrl: string | null;
+	sentinelReceiptImageUrl: string | null;
+	deviceOS: string;
+	paymentOption: string;
+	sentinelPackage: string;
+	enrolledAt: string | null;
+	enrollmentStatus: string | null;
+	isEnrolled: boolean;
+}
+
+export interface SentinelCustomer {
+	sentinelCustomerId: string;
+	createdAt: string;
+	updatedAt: string; // ISO date string
+	deviceEnrollmentId: string | null;
+	deviceId: string | null;
+	resendOtp: string | null;
+	resendOtpExpiry: string | null;
+	storeId: string | null;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phoneNumber: string;
+	address: string;
+	country: string;
+	mbeId: string;
+	SentinelCustomerDevice: SentinelCustomerDevice[];
+}
+
+export async function getAllSentinelCustomers(
+	startDate?: string,
+	endDate?: string
+) {
+	const query =
+		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
+	return apiCall(`/admin/sentinel/sentinel-customers${query}`, "GET");
+}
+
+export async function getSentinelCustomerById(
+	id: string
+): Promise<BaseApiResponse<any>> {
+	return apiCall(`/admin/sentinel/sentinel-customers/${id}`, "GET");
 }
