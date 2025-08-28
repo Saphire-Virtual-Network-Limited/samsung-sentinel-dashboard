@@ -370,6 +370,7 @@ export default function PaymentReceipt({
                         🔒 Secure Transaction Completed
                       </p>
                       <p class="text-xs text-blue-700">
+ 
                         Receipt generated on ${new Date().toLocaleString(
 													"en-GB"
 												)}
