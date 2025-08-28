@@ -48,7 +48,7 @@ const columns: ColumnDef[] = [
 	{ name: "Device", uid: "deviceName", sortable: true },
 	{ name: "IMEI", uid: "imei", sortable: true },
 	{ name: "Status", uid: "loanStatus", sortable: true },
-	{ name: "Created", uid: "createdAt", sortable: true },
+	{ name: "Created", uid: "updatedAt", sortable: true },
 ];
 
 const statusOptions = [
@@ -281,15 +281,23 @@ export default function UtilizationView() {
 				loanStatus: r.loanStatus || "N/A",
 				imei: r.DeviceOnLoan?.[0]?.imei || "N/A",
 				deviceName: r.device?.deviceName || "N/A",
-				createdAt: r.createdAt
-					? new Date(r.createdAt).toLocaleDateString()
+				updatedAt: r.updatedAt
+					? new Date(r.updatedAt).toLocaleDateString('en-GB', {
+							day: '2-digit',
+							month: '2-digit', 
+							year: 'numeric'
+					})
 					: "N/A",
 				firstPaymentDate: r.updatedAt
 					? new Date(
 							new Date(r.updatedAt).setMonth(
 								new Date(r.updatedAt).getMonth() + 1
 							)
-					  ).toLocaleDateString()
+					  ).toLocaleDateString('en-GB', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric'
+					})
 					: "N/A",
 			})),
 		[raw]
