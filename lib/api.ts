@@ -591,6 +591,10 @@ export async function getAllDevices(startDate?: string, endDate?: string) {
 	return apiCall(`/admin/device/all${query}`, "GET");
 }
 
+export async function getDeviceById(deviceId?: string) {
+	return apiCall(`/admin/device/${deviceId}`, "GET");
+}
+
 export async function getAllEnrolledDevices(
 	status?: string,
 	startDate?: string,
