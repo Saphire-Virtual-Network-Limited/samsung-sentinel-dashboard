@@ -280,7 +280,11 @@ export default function LoansView() {
 					: "N/A",
 				loanStatus: r.loanStatus || "N/A",
 				updatedAt: r.updatedAt
-					? new Date(r.updatedAt).toLocaleString("en-GB")
+					? new Date(r.updatedAt).toLocaleDateString('en-GB', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric'
+					})
 					: "N/A",
 			})),
 		[raw]
