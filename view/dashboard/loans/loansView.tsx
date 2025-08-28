@@ -222,20 +222,20 @@ export default function LoansView() {
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
 				age: calculateAge(r.dob),
 				monthlyRepayment: r.LoanRecord?.[0]?.monthlyRepayment
-					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString()}`
+					? `₦${r.LoanRecord[0].monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: r.LoanRecord?.[0]?.duration
 					? `${r.LoanRecord[0].duration} months`
 					: "N/A",
 				status: r.status,
 				loanAmount: r.LoanRecord?.[0]?.loanAmount
-					? `₦${r.LoanRecord[0].loanAmount.toLocaleString()}`
+					? `₦${r.LoanRecord[0].loanAmount.toLocaleString("en-GB")}`
 					: "N/A",
 				downPayment: r.LoanRecord?.[0]?.downPayment
-					? `₦${r.LoanRecord[0].downPayment.toLocaleString()}`
+					? `₦${r.LoanRecord[0].downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.LoanRecord?.[0]?.devicePrice
-					? `₦${r.LoanRecord[0].devicePrice.toLocaleString()}`
+					? `₦${r.LoanRecord[0].devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.LoanRecord?.[0]?.loanStatus || "N/A",
 			})),
@@ -315,7 +315,7 @@ export default function LoansView() {
 					if (typeof value === "string") {
 						value = value.replace(/[^\d.-]/g, "");
 					}
-					value = value ? Number(value).toLocaleString() : "0";
+					value = value ? Number(value).toLocaleString("en-GB") : "0";
 				}
 				row[col.uid] = value;
 			});
@@ -512,7 +512,7 @@ export default function LoansView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocaleString();
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -582,7 +582,7 @@ export default function LoansView() {
 																	try {
 																		const date = new Date(value as string);
 																		if (!isNaN(date.getTime())) {
-																			value = date.toLocaleString();
+																			value = date.toLocaleString("en-GB");
 																		}
 																	} catch (e) {
 																		// If date parsing fails, use the original value
@@ -601,7 +601,9 @@ export default function LoansView() {
 																		key.toLowerCase().includes("price") ||
 																		key.toLowerCase().includes("payment"))
 																) {
-																	value = `₦${Number(value).toLocaleString()}`;
+																	value = `₦${Number(value).toLocaleString(
+																		"en-GB"
+																	)}`;
 																}
 
 																return (
@@ -661,7 +663,7 @@ export default function LoansView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {
 																	// If date parsing fails, use the original value
@@ -729,7 +731,7 @@ export default function LoansView() {
 															try {
 																const date = new Date(value as string);
 																if (!isNaN(date.getTime())) {
-																	value = date.toLocaleString();
+																	value = date.toLocaleString("en-GB");
 																}
 															} catch (e) {
 																// If date parsing fails, use the original value
@@ -747,7 +749,9 @@ export default function LoansView() {
 															(key.toLowerCase().includes("price") ||
 																key.toLowerCase().includes("amount"))
 														) {
-															value = `₦${Number(value).toLocaleString()}`;
+															value = `₦${Number(value).toLocaleString(
+																"en-GB"
+															)}`;
 														}
 
 														return (

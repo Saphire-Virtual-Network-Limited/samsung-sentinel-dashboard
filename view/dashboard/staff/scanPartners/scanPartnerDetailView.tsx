@@ -821,12 +821,12 @@ export default function ScanPartnerSinglePage() {
 	const [salesPeriod, setSalesPeriod] = useState<
 		"" | "daily" | "weekly" | "monthly" | "yearly" | "mtd"
 	>("");
-	
+
 	// Commission Analytics State
 	const [commissionPeriod, setCommissionPeriod] = useState<
 		"daily" | "weekly" | "monthly" | "yearly"
 	>("monthly");
-	
+
 	const partnerId = isScanPartner ? userId : params.id;
 
 	// Sales Analytics Data - pass period as empty string for "all time"
@@ -843,15 +843,17 @@ export default function ScanPartnerSinglePage() {
 	);
 
 	// Commission Analytics Data
-	const { data: commissionAnalytics, isLoading: commissionAnalyticsLoading } = useSWR<any>(
-		partnerId ? `/commission-analytics/${partnerId}/${commissionPeriod}` : null,
-		() =>
-			getCommissionAnalytics(
-				partnerId as string,
-				commissionPeriod
-			).then((r) => r.data),
-		{ refreshInterval: 30000 }
-	);
+	const { data: commissionAnalytics, isLoading: commissionAnalyticsLoading } =
+		useSWR<any>(
+			partnerId
+				? `/commission-analytics/${partnerId}/${commissionPeriod}`
+				: null,
+			() =>
+				getCommissionAnalytics(partnerId as string, commissionPeriod).then(
+					(r) => r.data
+				),
+			{ refreshInterval: 30000 }
+		);
 
 	// Fetch VFD banks
 	const { data: vfdBanks = [] } = useSWR("vfd-banks", fetchVfdBanks, {
@@ -1189,14 +1191,18 @@ export default function ScanPartnerSinglePage() {
 		data.forEach((loan) =>
 			ws.addRow({
 				...loan,
-				loanAmount: `₦${loan.loanAmount?.toLocaleString() || 0}`,
-				devicePrice: `₦${loan.devicePrice?.toLocaleString() || 0}`,
-				downPayment: `₦${loan.downPayment?.toLocaleString() || 0}`,
-				monthlyRepayment: `₦${loan.monthlyRepayment?.toLocaleString() || 0}`,
-				interestAmount: `₦${loan.interestAmount?.toLocaleString() || 0}`,
-				insurancePrice: `₦${loan.insurancePrice?.toLocaleString() || 0}`,
-				mbsEligibleAmount: `₦${loan.mbsEligibleAmount?.toLocaleString() || 0}`,
-				deviceAmount: `₦${loan.deviceAmount?.toLocaleString() || 0}`,
+				loanAmount: `₦${loan.loanAmount?.toLocaleString("en-GB") || 0}`,
+				devicePrice: `₦${loan.devicePrice?.toLocaleString("en-GB") || 0}`,
+				downPayment: `₦${loan.downPayment?.toLocaleString("en-GB") || 0}`,
+				monthlyRepayment: `₦${
+					loan.monthlyRepayment?.toLocaleString("en-GB") || 0
+				}`,
+				interestAmount: `₦${loan.interestAmount?.toLocaleString("en-GB") || 0}`,
+				insurancePrice: `₦${loan.insurancePrice?.toLocaleString("en-GB") || 0}`,
+				mbsEligibleAmount: `₦${
+					loan.mbsEligibleAmount?.toLocaleString("en-GB") || 0
+				}`,
+				deviceAmount: `₦${loan.deviceAmount?.toLocaleString("en-GB") || 0}`,
 				createdAt: new Date(loan.createdAt).toLocaleDateString(),
 				updatedAt: new Date(loan.updatedAt).toLocaleDateString(),
 				loanStatus: capitalize(loan.loanStatus || ""),
@@ -1228,10 +1234,12 @@ export default function ScanPartnerSinglePage() {
 		data.forEach((commission) =>
 			ws.addRow({
 				...commission,
-				commission: `₦${commission.commission?.toLocaleString() || 0}`,
-				mbeCommission: `₦${commission.mbeCommission?.toLocaleString() || 0}`,
+				commission: `₦${commission.commission?.toLocaleString("en-GB") || 0}`,
+				mbeCommission: `₦${
+					commission.mbeCommission?.toLocaleString("en-GB") || 0
+				}`,
 				partnerCommission: `₦${
-					commission.partnerCommission?.toLocaleString() || 0
+					commission.partnerCommission?.toLocaleString("en-GB") || 0
 				}`,
 				splitPercent: `${commission.splitPercent || 0}%`,
 				date_created: new Date(commission.date_created).toLocaleDateString(),
@@ -1257,25 +1265,25 @@ export default function ScanPartnerSinglePage() {
 			case "loanAmount":
 				return (
 					<div className="font-medium">
-						₦{loan.loanAmount?.toLocaleString() || 0}
+						₦{loan.loanAmount?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "devicePrice":
 				return (
 					<div className="font-medium">
-						₦{loan.devicePrice?.toLocaleString() || 0}
+						₦{loan.devicePrice?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "downPayment":
 				return (
 					<div className="font-medium">
-						₦{loan.downPayment?.toLocaleString() || 0}
+						₦{loan.downPayment?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "monthlyRepayment":
 				return (
 					<div className="font-medium">
-						₦{loan.monthlyRepayment?.toLocaleString() || 0}
+						₦{loan.monthlyRepayment?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "duration":
@@ -1367,19 +1375,19 @@ export default function ScanPartnerSinglePage() {
 			case "commission":
 				return (
 					<div className="font-medium">
-						₦{commission.commission?.toLocaleString() || 0}
+						₦{commission.commission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "mbeCommission":
 				return (
 					<div className="font-medium">
-						₦{commission.mbeCommission?.toLocaleString() || 0}
+						₦{commission.mbeCommission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "partnerCommission":
 				return (
 					<div className="font-medium">
-						₦{commission.partnerCommission?.toLocaleString() || 0}
+						₦{commission.partnerCommission?.toLocaleString("en-GB") || 0}
 					</div>
 				);
 			case "splitPercent":
@@ -1687,7 +1695,7 @@ export default function ScanPartnerSinglePage() {
 									label="Created At"
 									value={
 										scanPartner.createdAt
-											? new Date(scanPartner.createdAt).toLocaleString()
+											? new Date(scanPartner.createdAt).toLocaleString("en-GB")
 											: null
 									}
 								/>
@@ -1695,7 +1703,7 @@ export default function ScanPartnerSinglePage() {
 									label="Updated At"
 									value={
 										scanPartner.updatedAt
-											? new Date(scanPartner.updatedAt).toLocaleString()
+											? new Date(scanPartner.updatedAt).toLocaleString("en-GB")
 											: null
 									}
 								/>
@@ -1766,7 +1774,9 @@ export default function ScanPartnerSinglePage() {
 										label="Last Updated"
 										value={
 											userBankDetails.updatedAt
-												? new Date(userBankDetails.updatedAt).toLocaleString()
+												? new Date(userBankDetails.updatedAt).toLocaleString(
+														"en-GB"
+												  )
 												: "N/A"
 										}
 									/>
@@ -2009,10 +2019,18 @@ export default function ScanPartnerSinglePage() {
 													</p>
 													{salesStats?.period && (
 														<p className="text-xs text-default-500 mt-1">
-															Current period: {salesStats.period.toUpperCase()} 
+															Current period: {salesStats.period.toUpperCase()}
 															{salesStats?.dateRanges?.current && (
 																<span className="ml-2">
-																	({new Date(salesStats.dateRanges.current.start).toLocaleDateString()} - {new Date(salesStats.dateRanges.current.end).toLocaleDateString()})
+																	(
+																	{new Date(
+																		salesStats.dateRanges.current.start
+																	).toLocaleDateString()}{" "}
+																	-{" "}
+																	{new Date(
+																		salesStats.dateRanges.current.end
+																	).toLocaleDateString()}
+																	)
 																</span>
 															)}
 														</p>
@@ -2062,7 +2080,7 @@ export default function ScanPartnerSinglePage() {
 													title="Total Commission"
 													value={`₦${(
 														salesStats?.current?.summary?.totalCommission || 0
-													).toLocaleString()}`}
+													).toLocaleString("en-GB")}`}
 													icon={<DollarSign className="w-6 h-6" />}
 													gradient="from-green-100 to-green-200"
 													textColor="text-green-600"
@@ -2071,8 +2089,9 @@ export default function ScanPartnerSinglePage() {
 												<PerformanceCard
 													title="Partner Commission"
 													value={`₦${(
-														salesStats?.current?.summary?.totalPartnerCommission || 0
-													).toLocaleString()}`}
+														salesStats?.current?.summary
+															?.totalPartnerCommission || 0
+													).toLocaleString("en-GB")}`}
 													icon={<TrendingUp className="w-6 h-6" />}
 													gradient="from-blue-100 to-blue-200"
 													textColor="text-blue-600"
@@ -2081,8 +2100,9 @@ export default function ScanPartnerSinglePage() {
 												<PerformanceCard
 													title="Agent Commission"
 													value={`₦${(
-														salesStats?.current?.summary?.totalAgentCommission || 0
-													).toLocaleString()}`}
+														salesStats?.current?.summary
+															?.totalAgentCommission || 0
+													).toLocaleString("en-GB")}`}
 													icon={<Users className="w-6 h-6" />}
 													gradient="from-purple-100 to-purple-200"
 													textColor="text-purple-600"
@@ -2090,7 +2110,9 @@ export default function ScanPartnerSinglePage() {
 												/>
 												<PerformanceCard
 													title="Commission Count"
-													value={salesStats?.current?.summary?.commissionCount || 0}
+													value={
+														salesStats?.current?.summary?.commissionCount || 0
+													}
 													icon={<CheckCircle className="w-6 h-6" />}
 													gradient="from-amber-100 to-amber-200"
 													textColor="text-amber-600"
@@ -2107,7 +2129,11 @@ export default function ScanPartnerSinglePage() {
 																Average Commission Per Agent
 															</h4>
 															<p className="text-2xl font-bold text-primary">
-																₦{(salesStats?.current?.summary?.averageCommissionPerAgent || 0).toLocaleString()}
+																₦
+																{(
+																	salesStats?.current?.summary
+																		?.averageCommissionPerAgent || 0
+																).toLocaleString("en-GB")}
 															</p>
 														</div>
 														<Users className="w-8 h-8 text-primary opacity-50" />
@@ -2120,7 +2146,11 @@ export default function ScanPartnerSinglePage() {
 																Average Commission Per Transaction
 															</h4>
 															<p className="text-2xl font-bold text-success">
-																₦{(salesStats?.current?.summary?.averageCommissionPerTransaction || 0).toLocaleString()}
+																₦
+																{(
+																	salesStats?.current?.summary
+																		?.averageCommissionPerTransaction || 0
+																).toLocaleString("en-GB")}
 															</p>
 														</div>
 														<DollarSign className="w-8 h-8 text-success opacity-50" />
@@ -2129,44 +2159,76 @@ export default function ScanPartnerSinglePage() {
 											</div>
 
 											{/* Comparison Section */}
-											{salesStats?.comparison && salesStats.period !== '' && (
+											{salesStats?.comparison && salesStats.period !== "" && (
 												<div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-default-200 p-4 mb-6">
 													<h4 className="text-lg font-semibold text-default-700 mb-3">
 														Performance Comparison vs Previous Period
 													</h4>
 													<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 														<div className="text-center">
-															<p className="text-xs text-default-600">Total Commission</p>
+															<p className="text-xs text-default-600">
+																Total Commission
+															</p>
 															<p className="text-lg font-bold text-green-600">
-																{salesStats.comparison.totalCommissionChange >= 0 ? '+' : ''}
+																{salesStats.comparison.totalCommissionChange >=
+																0
+																	? "+"
+																	: ""}
 																{salesStats.comparison.totalCommissionChange}%
 															</p>
 														</div>
 														<div className="text-center">
-															<p className="text-xs text-default-600">Agent Commission</p>
+															<p className="text-xs text-default-600">
+																Agent Commission
+															</p>
 															<p className="text-lg font-bold text-blue-600">
-																{salesStats.comparison.totalAgentCommissionChange >= 0 ? '+' : ''}
-																{salesStats.comparison.totalAgentCommissionChange}%
+																{salesStats.comparison
+																	.totalAgentCommissionChange >= 0
+																	? "+"
+																	: ""}
+																{
+																	salesStats.comparison
+																		.totalAgentCommissionChange
+																}
+																%
 															</p>
 														</div>
 														<div className="text-center">
-															<p className="text-xs text-default-600">Partner Commission</p>
+															<p className="text-xs text-default-600">
+																Partner Commission
+															</p>
 															<p className="text-lg font-bold text-purple-600">
-																{salesStats.comparison.totalPartnerCommissionChange >= 0 ? '+' : ''}
-																{salesStats.comparison.totalPartnerCommissionChange}%
+																{salesStats.comparison
+																	.totalPartnerCommissionChange >= 0
+																	? "+"
+																	: ""}
+																{
+																	salesStats.comparison
+																		.totalPartnerCommissionChange
+																}
+																%
 															</p>
 														</div>
 														<div className="text-center">
-															<p className="text-xs text-default-600">Commission Count</p>
+															<p className="text-xs text-default-600">
+																Commission Count
+															</p>
 															<p className="text-lg font-bold text-amber-600">
-																{salesStats.comparison.commissionCountChange >= 0 ? '+' : ''}
+																{salesStats.comparison.commissionCountChange >=
+																0
+																	? "+"
+																	: ""}
 																{salesStats.comparison.commissionCountChange}%
 															</p>
 														</div>
 														<div className="text-center">
-															<p className="text-xs text-default-600">Total Agents</p>
+															<p className="text-xs text-default-600">
+																Total Agents
+															</p>
 															<p className="text-lg font-bold text-indigo-600">
-																{salesStats.comparison.totalAgentsChange >= 0 ? '+' : ''}
+																{salesStats.comparison.totalAgentsChange >= 0
+																	? "+"
+																	: ""}
 																{salesStats.comparison.totalAgentsChange}%
 															</p>
 														</div>
@@ -2183,8 +2245,10 @@ export default function ScanPartnerSinglePage() {
 																Top Performing Agents
 															</h3>
 															<Chip size="sm" variant="flat" color="success">
-																{salesStats.current.agentPerformance.length} Agent
-																{salesStats.current.agentPerformance.length !== 1
+																{salesStats.current.agentPerformance.length}{" "}
+																Agent
+																{salesStats.current.agentPerformance.length !==
+																1
 																	? "s"
 																	: ""}
 															</Chip>
@@ -2231,7 +2295,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.totalCommission || 0
-																						).toLocaleString()}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2239,7 +2303,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.agentCommission || 0
-																						).toLocaleString()}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2247,7 +2311,7 @@ export default function ScanPartnerSinglePage() {
 																						₦
 																						{(
 																							agentData.partnerCommission || 0
-																						).toLocaleString()}
+																						).toLocaleString("en-GB")}
 																					</p>
 																				</TableCell>
 																				<TableCell>
@@ -2278,7 +2342,8 @@ export default function ScanPartnerSinglePage() {
 														{/* Current Period Stats */}
 														<div className="space-y-3">
 															<h5 className="font-medium text-default-700">
-																Current Period ({salesStats?.period || "All Time"})
+																Current Period (
+																{salesStats?.period || "All Time"})
 															</h5>
 															<div className="grid grid-cols-3 gap-3">
 																<div className="text-center p-3 bg-green-50 rounded-lg">
@@ -2286,7 +2351,8 @@ export default function ScanPartnerSinglePage() {
 																		Total Agents
 																	</p>
 																	<p className="text-xl font-bold text-green-800">
-																		{salesStats?.current?.summary?.totalAgents || 0}
+																		{salesStats?.current?.summary
+																			?.totalAgents || 0}
 																	</p>
 																</div>
 																<div className="text-center p-3 bg-blue-50 rounded-lg">
@@ -2302,7 +2368,8 @@ export default function ScanPartnerSinglePage() {
 																		Commission Count
 																	</p>
 																	<p className="text-xl font-bold text-purple-800">
-																		{salesStats?.current?.summary?.commissionCount || 0}
+																		{salesStats?.current?.summary
+																			?.commissionCount || 0}
 																	</p>
 																</div>
 															</div>
@@ -2319,7 +2386,8 @@ export default function ScanPartnerSinglePage() {
 																		Total Agents
 																	</p>
 																	<p className="text-xl font-bold text-green-800">
-																		{salesStats?.previous?.summary?.totalAgents || 0}
+																		{salesStats?.previous?.summary
+																			?.totalAgents || 0}
 																	</p>
 																</div>
 																<div className="text-center p-3 bg-blue-50 rounded-lg">
@@ -2327,7 +2395,9 @@ export default function ScanPartnerSinglePage() {
 																		Growth
 																	</p>
 																	<p className="text-xl font-bold text-blue-800">
-																		{salesStats?.comparison?.totalAgentsChange || 0}%
+																		{salesStats?.comparison
+																			?.totalAgentsChange || 0}
+																		%
 																	</p>
 																</div>
 																<div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -2335,7 +2405,8 @@ export default function ScanPartnerSinglePage() {
 																		Commission Count
 																	</p>
 																	<p className="text-xl font-bold text-purple-800">
-																		{salesStats?.previous?.summary?.commissionCount || 0}
+																		{salesStats?.previous?.summary
+																			?.commissionCount || 0}
 																	</p>
 																</div>
 															</div>
@@ -2343,58 +2414,74 @@ export default function ScanPartnerSinglePage() {
 													</div>
 
 													{/* Recent Commissions */}
-													{salesStats?.current?.recentCommissions && 
+													{salesStats?.current?.recentCommissions &&
 														salesStats.current.recentCommissions.length > 0 && (
-														<div className="mt-6">
-															<h5 className="font-medium text-default-700 mb-3">
-																Recent Commissions
-															</h5>
-															<div className="overflow-x-auto">
-																<Table aria-label="Recent commissions" className="w-full">
-																	<TableHeader>
-																		<TableColumn>COMMISSION ID</TableColumn>
-																		<TableColumn>AGENT</TableColumn>
-																		<TableColumn>AMOUNT</TableColumn>
-																		<TableColumn>AGENT SHARE</TableColumn>
-																		<TableColumn>PARTNER SHARE</TableColumn>
-																		<TableColumn>DATE</TableColumn>
-																	</TableHeader>
-																	<TableBody>
-																		{salesStats.current.recentCommissions.slice(0, 5).map(
-																			(commission: any, index: number) => (
-																				<TableRow key={index}>
-																					<TableCell>
-																						<p className="font-mono text-xs">
-																							{commission.commissionId}
-																						</p>
-																					</TableCell>
-																					<TableCell>
-																						<p className="font-medium">
-																							{commission.agent}
-																						</p>
-																					</TableCell>
-																					<TableCell>
-																						<p className="font-medium text-green-600">
-																							₦{(commission.amount || 0).toLocaleString()}
-																						</p>
-																					</TableCell>
-																					<TableCell>
-																						₦{(commission.agentShare || 0).toLocaleString()}
-																					</TableCell>
-																					<TableCell>
-																						₦{(commission.partnerShare || 0).toLocaleString()}
-																					</TableCell>
-																					<TableCell>
-																						{new Date(commission.date).toLocaleDateString()}
-																					</TableCell>
-																				</TableRow>
-																			)
-																		)}
-																	</TableBody>
-																</Table>
+															<div className="mt-6">
+																<h5 className="font-medium text-default-700 mb-3">
+																	Recent Commissions
+																</h5>
+																<div className="overflow-x-auto">
+																	<Table
+																		aria-label="Recent commissions"
+																		className="w-full"
+																	>
+																		<TableHeader>
+																			<TableColumn>COMMISSION ID</TableColumn>
+																			<TableColumn>AGENT</TableColumn>
+																			<TableColumn>AMOUNT</TableColumn>
+																			<TableColumn>AGENT SHARE</TableColumn>
+																			<TableColumn>PARTNER SHARE</TableColumn>
+																			<TableColumn>DATE</TableColumn>
+																		</TableHeader>
+																		<TableBody>
+																			{salesStats.current.recentCommissions
+																				.slice(0, 5)
+																				.map(
+																					(commission: any, index: number) => (
+																						<TableRow key={index}>
+																							<TableCell>
+																								<p className="font-mono text-xs">
+																									{commission.commissionId}
+																								</p>
+																							</TableCell>
+																							<TableCell>
+																								<p className="font-medium">
+																									{commission.agent}
+																								</p>
+																							</TableCell>
+																							<TableCell>
+																								<p className="font-medium text-green-600">
+																									₦
+																									{(
+																										commission.amount || 0
+																									).toLocaleString("en-GB")}
+																								</p>
+																							</TableCell>
+																							<TableCell>
+																								₦
+																								{(
+																									commission.agentShare || 0
+																								).toLocaleString("en-GB")}
+																							</TableCell>
+																							<TableCell>
+																								₦
+																								{(
+																									commission.partnerShare || 0
+																								).toLocaleString("en-GB")}
+																							</TableCell>
+																							<TableCell>
+																								{new Date(
+																									commission.date
+																								).toLocaleDateString()}
+																							</TableCell>
+																						</TableRow>
+																					)
+																				)}
+																		</TableBody>
+																	</Table>
+																</div>
 															</div>
-														</div>
-													)}
+														)}
 												</div>
 											)}
 
@@ -2415,7 +2502,8 @@ export default function ScanPartnerSinglePage() {
 
 						{/* Commission Analytics */}
 						<InfoCard
-							title="Commission Analytics"							icon={<TrendingUp className="w-5 h-5 text-default-600" />}
+							title="Commission Analytics"
+							icon={<TrendingUp className="w-5 h-5 text-default-600" />}
 							headerContent={
 								<div className="flex items-center gap-2">
 									<Select
@@ -2424,7 +2512,9 @@ export default function ScanPartnerSinglePage() {
 										defaultSelectedKeys={[commissionPeriod]}
 										onSelectionChange={(keys) => {
 											const selectedKey = Array.from(keys)[0] as string;
-											setCommissionPeriod(selectedKey as "daily" | "weekly" | "monthly" | "yearly");
+											setCommissionPeriod(
+												selectedKey as "daily" | "weekly" | "monthly" | "yearly"
+											);
 										}}
 										className="w-32"
 									>
@@ -2457,14 +2547,20 @@ export default function ScanPartnerSinglePage() {
 												<div className="flex items-center justify-between">
 													<div>
 														<h4 className="font-medium text-default-800">
-															Period: {commissionAnalytics.period || commissionPeriod}
+															Period:{" "}
+															{commissionAnalytics.period || commissionPeriod}
 														</h4>
 														<p className="text-sm text-default-600">
-															Generated: {new Date(commissionAnalytics.generatedAt).toLocaleString()}
+															Generated:{" "}
+															{new Date(
+																commissionAnalytics.generatedAt
+															).toLocaleString("en-GB")}
 														</p>
 													</div>
 													<div className="text-right">
-														<p className="text-sm text-default-600">Total Agents</p>
+														<p className="text-sm text-default-600">
+															Total Agents
+														</p>
 														<p className="text-2xl font-bold text-blue-600">
 															{commissionAnalytics.analytics?.length || 0}
 														</p>
@@ -2473,125 +2569,185 @@ export default function ScanPartnerSinglePage() {
 											</div>
 
 											{/* Commission Summary Cards */}
-											{commissionAnalytics.analytics && commissionAnalytics.analytics.length > 0 && (
-												<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-													<div className="p-4 bg-green-50 rounded-lg border border-green-100">
-														<h5 className="text-sm font-medium text-green-700 mb-2">
-															Total Commission
-														</h5>
-														<p className="text-2xl font-bold text-green-800">
-															₦{commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.commission || 0), 0)
-																.toLocaleString()}
-														</p>
-														<p className="text-xs text-green-600 mt-1">
-															{commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._count?.commissionId || 0), 0)} transactions
-														</p>
-													</div>
+											{commissionAnalytics.analytics &&
+												commissionAnalytics.analytics.length > 0 && (
+													<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+														<div className="p-4 bg-green-50 rounded-lg border border-green-100">
+															<h5 className="text-sm font-medium text-green-700 mb-2">
+																Total Commission
+															</h5>
+															<p className="text-2xl font-bold text-green-800">
+																₦
+																{commissionAnalytics.analytics
+																	.reduce(
+																		(sum: number, item: any) =>
+																			sum + (item._sum?.commission || 0),
+																		0
+																	)
+																	.toLocaleString("en-GB")}
+															</p>
+															<p className="text-xs text-green-600 mt-1">
+																{commissionAnalytics.analytics.reduce(
+																	(sum: number, item: any) =>
+																		sum + (item._count?.commissionId || 0),
+																	0
+																)}{" "}
+																transactions
+															</p>
+														</div>
 
-													<div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-														<h5 className="text-sm font-medium text-blue-700 mb-2">
-															Agent Commission
-														</h5>
-														<p className="text-2xl font-bold text-blue-800">
-															₦{commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.mbeCommission || 0), 0)
-																.toLocaleString()}
-														</p>
-														<p className="text-xs text-blue-600 mt-1">
-															{((commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.mbeCommission || 0), 0) /
-																commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.commission || 0), 0)) * 100).toFixed(1)}% of total
-														</p>
-													</div>
+														<div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+															<h5 className="text-sm font-medium text-blue-700 mb-2">
+																Agent Commission
+															</h5>
+															<p className="text-2xl font-bold text-blue-800">
+																₦
+																{commissionAnalytics.analytics
+																	.reduce(
+																		(sum: number, item: any) =>
+																			sum + (item._sum?.mbeCommission || 0),
+																		0
+																	)
+																	.toLocaleString("en-GB")}
+															</p>
+															<p className="text-xs text-blue-600 mt-1">
+																{(
+																	(commissionAnalytics.analytics.reduce(
+																		(sum: number, item: any) =>
+																			sum + (item._sum?.mbeCommission || 0),
+																		0
+																	) /
+																		commissionAnalytics.analytics.reduce(
+																			(sum: number, item: any) =>
+																				sum + (item._sum?.commission || 0),
+																			0
+																		)) *
+																	100
+																).toFixed(1)}
+																% of total
+															</p>
+														</div>
 
-													<div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-														<h5 className="text-sm font-medium text-purple-700 mb-2">
-															Partner Commission
-														</h5>
-														<p className="text-2xl font-bold text-purple-800">
-															₦{commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.partnerCommission || 0), 0)
-																.toLocaleString()}
-														</p>
-														<p className="text-xs text-purple-600 mt-1">
-															{((commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.partnerCommission || 0), 0) /
-																commissionAnalytics.analytics
-																.reduce((sum: number, item: any) => sum + (item._sum?.commission || 0), 0)) * 100).toFixed(1)}% of total
-														</p>
+														<div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+															<h5 className="text-sm font-medium text-purple-700 mb-2">
+																Partner Commission
+															</h5>
+															<p className="text-2xl font-bold text-purple-800">
+																₦
+																{commissionAnalytics.analytics
+																	.reduce(
+																		(sum: number, item: any) =>
+																			sum + (item._sum?.partnerCommission || 0),
+																		0
+																	)
+																	.toLocaleString("en-GB")}
+															</p>
+															<p className="text-xs text-purple-600 mt-1">
+																{(
+																	(commissionAnalytics.analytics.reduce(
+																		(sum: number, item: any) =>
+																			sum + (item._sum?.partnerCommission || 0),
+																		0
+																	) /
+																		commissionAnalytics.analytics.reduce(
+																			(sum: number, item: any) =>
+																				sum + (item._sum?.commission || 0),
+																			0
+																		)) *
+																	100
+																).toFixed(1)}
+																% of total
+															</p>
+														</div>
 													</div>
-												</div>
-											)}
+												)}
 
 											{/* Agent Commission Breakdown Table */}
-											{commissionAnalytics.analytics && commissionAnalytics.analytics.length > 0 && (
-												<div className="mt-6">
-													<h5 className="font-medium text-default-700 mb-3">
-														Individual Agent Performance
-													</h5>
-													<div className="overflow-x-auto">
-														<Table aria-label="Agent commission breakdown" className="w-full">
-															<TableHeader>
-																<TableColumn>AGENT ID</TableColumn>
-																<TableColumn>TOTAL COMMISSION</TableColumn>
-																<TableColumn>AGENT SHARE</TableColumn>
-																<TableColumn>PARTNER SHARE</TableColumn>
-																<TableColumn>TRANSACTIONS</TableColumn>
-																<TableColumn>AVG PER TRANSACTION</TableColumn>
-															</TableHeader>
-															<TableBody>
-																{commissionAnalytics.analytics.map(
-																	(agent: any, index: number) => (
-																		<TableRow key={index}>
-																			<TableCell>
-																				<p className="font-mono text-xs">
-																					{agent.mbeId}
-																				</p>
-																			</TableCell>
-																			<TableCell>
-																				<p className="font-medium text-green-600">
-																					₦{(agent._sum?.commission || 0).toLocaleString()}
-																				</p>
-																			</TableCell>
-																			<TableCell>
-																				<p className="font-medium text-blue-600">
-																					₦{(agent._sum?.mbeCommission || 0).toLocaleString()}
-																				</p>
-																			</TableCell>
-																			<TableCell>
-																				<p className="font-medium text-purple-600">
-																					₦{(agent._sum?.partnerCommission || 0).toLocaleString()}
-																				</p>
-																			</TableCell>
-																			<TableCell>
-																				<p className="font-medium">
-																					{agent._count?.commissionId || 0}
-																				</p>
-																			</TableCell>
-																			<TableCell>
-																				<p className="text-sm text-default-600">
-																					₦{((agent._sum?.commission || 0) / (agent._count?.commissionId || 1)).toLocaleString()}
-																				</p>
-																			</TableCell>
-																		</TableRow>
-																	)
-																)}
-															</TableBody>
-														</Table>
+											{commissionAnalytics.analytics &&
+												commissionAnalytics.analytics.length > 0 && (
+													<div className="mt-6">
+														<h5 className="font-medium text-default-700 mb-3">
+															Individual Agent Performance
+														</h5>
+														<div className="overflow-x-auto">
+															<Table
+																aria-label="Agent commission breakdown"
+																className="w-full"
+															>
+																<TableHeader>
+																	<TableColumn>AGENT ID</TableColumn>
+																	<TableColumn>TOTAL COMMISSION</TableColumn>
+																	<TableColumn>AGENT SHARE</TableColumn>
+																	<TableColumn>PARTNER SHARE</TableColumn>
+																	<TableColumn>TRANSACTIONS</TableColumn>
+																	<TableColumn>AVG PER TRANSACTION</TableColumn>
+																</TableHeader>
+																<TableBody>
+																	{commissionAnalytics.analytics.map(
+																		(agent: any, index: number) => (
+																			<TableRow key={index}>
+																				<TableCell>
+																					<p className="font-mono text-xs">
+																						{agent.mbeId}
+																					</p>
+																				</TableCell>
+																				<TableCell>
+																					<p className="font-medium text-green-600">
+																						₦
+																						{(
+																							agent._sum?.commission || 0
+																						).toLocaleString("en-GB")}
+																					</p>
+																				</TableCell>
+																				<TableCell>
+																					<p className="font-medium text-blue-600">
+																						₦
+																						{(
+																							agent._sum?.mbeCommission || 0
+																						).toLocaleString("en-GB")}
+																					</p>
+																				</TableCell>
+																				<TableCell>
+																					<p className="font-medium text-purple-600">
+																						₦
+																						{(
+																							agent._sum?.partnerCommission || 0
+																						).toLocaleString("en-GB")}
+																					</p>
+																				</TableCell>
+																				<TableCell>
+																					<p className="font-medium">
+																						{agent._count?.commissionId || 0}
+																					</p>
+																				</TableCell>
+																				<TableCell>
+																					<p className="text-sm text-default-600">
+																						₦
+																						{(
+																							(agent._sum?.commission || 0) /
+																							(agent._count?.commissionId || 1)
+																						).toLocaleString("en-GB")}
+																					</p>
+																				</TableCell>
+																			</TableRow>
+																		)
+																	)}
+																</TableBody>
+															</Table>
+														</div>
 													</div>
-												</div>
-											)}
+												)}
 
-											{commissionAnalytics.analytics && commissionAnalytics.analytics.length === 0 && (
-												<EmptyState
-													title="No Commission Data"
-													description="No commission data available for  agents in this period."
-													icon={<TrendingUp className="w-6 h-6 text-default-400" />}
-												/>
-											)}
+											{commissionAnalytics.analytics &&
+												commissionAnalytics.analytics.length === 0 && (
+													<EmptyState
+														title="No Commission Data"
+														description="No commission data available for  agents in this period."
+														icon={
+															<TrendingUp className="w-6 h-6 text-default-400" />
+														}
+													/>
+												)}
 										</div>
 									)}
 
@@ -2651,9 +2807,9 @@ export default function ScanPartnerSinglePage() {
 									{userBankDetails.createdAt && (
 										<InfoField
 											label="Added At"
-											value={new Date(
-												userBankDetails.createdAt
-											).toLocaleString()}
+											value={new Date(userBankDetails.createdAt).toLocaleString(
+												"en-GB"
+											)}
 										/>
 									)}
 								</div>

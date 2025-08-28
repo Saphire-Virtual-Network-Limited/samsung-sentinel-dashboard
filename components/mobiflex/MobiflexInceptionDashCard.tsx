@@ -50,9 +50,9 @@ const MobiflexInceptionDashCard = () => {
 	const formatDisplayNumber = (num: string | number) => {
 		if (typeof num === "string" && num.includes(".")) {
 			const [intPart, decPart] = num.split(".");
-			return `${Number(intPart).toLocaleString()}.${decPart}`;
+			return `${Number(intPart).toLocaleString("en-GB")}.${decPart}`;
 		}
-		return Number(num).toLocaleString();
+		return Number(num).toLocaleString("en-GB");
 	};
 
 	// Channel configuration with colors and icons

@@ -265,19 +265,23 @@ export default function LoansView() {
 						: "N/A",
 				age: r.customer?.dob ? calculateAge(r.customer.dob) : "N/A",
 				monthlyRepayment: r.monthlyRepayment
-					? `₦${r.monthlyRepayment.toLocaleString()}`
+					? `₦${r.monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
 				duration: r.duration ? `${r.duration} months` : "N/A",
 				status: r.status || "N/A",
-				loanAmount: r.loanAmount ? `₦${r.loanAmount.toLocaleString()}` : "N/A",
+				loanAmount: r.loanAmount
+					? `₦${r.loanAmount.toLocaleString("en-GB")}`
+					: "N/A",
 				downPayment: r.downPayment
-					? `₦${r.downPayment.toLocaleString()}`
+					? `₦${r.downPayment.toLocaleString("en-GB")}`
 					: "N/A",
 				devicePrice: r.devicePrice
-					? `₦${r.devicePrice.toLocaleString()}`
+					? `₦${r.devicePrice.toLocaleString("en-GB")}`
 					: "N/A",
 				loanStatus: r.loanStatus || "N/A",
-				updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleString() : "N/A",
+				updatedAt: r.updatedAt
+					? new Date(r.updatedAt).toLocaleString("en-GB")
+					: "N/A",
 			})),
 		[raw]
 	);
@@ -382,7 +386,7 @@ export default function LoansView() {
 					if (typeof value === "string") {
 						value = value.replace(/[^\d.-]/g, "");
 					}
-					value = value ? Number(value).toLocaleString() : "0";
+					value = value ? Number(value).toLocaleString("en-GB") : "0";
 				}
 				row[col.uid] = value;
 			});
@@ -588,7 +592,7 @@ export default function LoansView() {
 														try {
 															const date = new Date(value as string);
 															if (!isNaN(date.getTime())) {
-																value = date.toLocaleString();
+																value = date.toLocaleString("en-GB");
 															}
 														} catch (e) {
 															// If date parsing fails, use the original value
@@ -607,7 +611,7 @@ export default function LoansView() {
 															key.toLowerCase().includes("price") ||
 															key.toLowerCase().includes("payment"))
 													) {
-														value = `₦${Number(value).toLocaleString()}`;
+														value = `₦${Number(value).toLocaleString("en-GB")}`;
 													}
 
 													return (
@@ -651,7 +655,7 @@ export default function LoansView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {}
 															}
@@ -699,7 +703,9 @@ export default function LoansView() {
 																(key.toLowerCase().includes("price") ||
 																	key.toLowerCase().includes("amount"))
 															) {
-																value = `₦${Number(value).toLocaleString()}`;
+																value = `₦${Number(value).toLocaleString(
+																	"en-GB"
+																)}`;
 															}
 
 															return (
@@ -747,7 +753,7 @@ export default function LoansView() {
 																try {
 																	const date = new Date(value as string);
 																	if (!isNaN(date.getTime())) {
-																		value = date.toLocaleString();
+																		value = date.toLocaleString("en-GB");
 																	}
 																} catch (e) {}
 															}
