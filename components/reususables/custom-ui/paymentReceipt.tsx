@@ -293,7 +293,7 @@ export default function PaymentReceipt({
                         <div class="flex justify-between text-sm">
                           <span class="text-slate-600">Transfer Amount</span>
                           <span class="font-semibold text-slate-900">
-                            NGN ${Number(transactionData.fee).toLocalString(
+                            NGN ${Number(transactionData.fee).toLocaleString(
 															"en-GB"
 														)}
                           </span>
@@ -370,7 +370,8 @@ export default function PaymentReceipt({
                         🔒 Secure Transaction Completed
                       </p>
                       <p class="text-xs text-blue-700">
-                        Receipt generated on ${new Date().toLocalString(
+ 
+                        Receipt generated on ${new Date().toLocaleString(
 													"en-GB"
 												)}
                       </p>
