@@ -61,10 +61,10 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 };
 
 type DeviceRecord = {
-	price: number;
+	price: number | string;
 	deviceModelNumber: string;
-	SAP: number;
-	SLD: number;
+	SAP: number | string;
+	SLD: number | string;
 	createdAt: string;
 	deviceManufacturer: string;
 	deviceName: string;
@@ -81,7 +81,10 @@ type DeviceRecord = {
 	android_go: string;
 	status: "ACTIVE" | "SUSPENDED";
 };
-
+type DevicesResponse = {
+	devices: DeviceRecord[];
+	newDevices: DeviceRecord[];
+};
 export default function AllDevicesView() {
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
@@ -143,22 +146,27 @@ export default function AllDevicesView() {
 	};
 
 	// Fetch data based on date filter
-	const { data: raw = [], isLoading } = useSWR(
+	const { data: raw = { devices: [], newDevices: [] }, isLoading } = useSWR(
 		["devices-records"],
 		() =>
 			getAllDevices()
 				.then((r) => {
-					if (!r.data || r.data.length === 0) {
+					if (!r.data || (!r.data.devices && !r.data.newDevices)) {
 						setHasNoRecords(true);
-						return [];
+						return { devices: [], newDevices: [] };
 					}
 					setHasNoRecords(false);
-					return r.data;
+					return {
+						devices: Array.isArray(r.data.devices) ? r.data.devices : [],
+						newDevices: Array.isArray(r.data.newDevices)
+							? r.data.newDevices
+							: [],
+					};
 				})
 				.catch((error) => {
 					console.error("Error fetching devices records:", error);
 					setHasNoRecords(true);
-					return [];
+					return { devices: [], newDevices: [] };
 				}),
 		{
 			revalidateOnFocus: true,
@@ -172,23 +180,25 @@ export default function AllDevicesView() {
 
 	console.log("Raw data:", raw);
 
-	const customers = useMemo(
-		() =>
-			raw.map((r: DeviceRecord) => ({
-				...r,
-				deviceName: r.deviceName || "",
-				deviceManufacturer: r.deviceManufacturer || "",
-				deviceType: r.deviceType || "",
-				price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
-				sentiProtect: r.sentiprotect
-					? `₦${r.sentiprotect.toLocaleString("en-GB")}`
-					: "",
-				SAP: r.SAP ? `₦${r.SAP.toLocaleString("en-GB")}` : "",
-				SLD: r.SLD ? `₦${r.SLD.toLocaleString("en-GB")}` : "",
-				status: r.status || "ACTIVE", // Default to active if no status
-			})),
-		[raw]
-	);
+	const customers = useMemo(() => {
+		const merged: DeviceRecord[] = [
+			...(Array.isArray(raw.devices) ? raw.devices : []),
+			...(Array.isArray(raw.newDevices) ? raw.newDevices : []),
+		];
+		return merged.map((r: DeviceRecord) => ({
+			...r,
+			deviceName: r.deviceName || "",
+			deviceManufacturer: r.deviceManufacturer || "",
+			deviceType: r.deviceType || "",
+			price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
+			sentiProtect: r.sentiprotect
+				? `₦${r.sentiprotect.toLocaleString("en-GB")}`
+				: "",
+			SAP: r.SAP ? `₦${r.SAP.toLocaleString("en-GB")}` : "",
+			SLD: r.SLD ? `₦${r.SLD.toLocaleString("en-GB")}` : "",
+			status: r.status || "ACTIVE", // Default to active if no status
+		}));
+	}, [raw]);
 
 	const filtered = useMemo(() => {
 		let list = [...customers];
