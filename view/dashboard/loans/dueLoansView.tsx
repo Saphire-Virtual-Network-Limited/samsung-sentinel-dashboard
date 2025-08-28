@@ -445,10 +445,18 @@ export default function DueLoansView() {
 					: "N/A",
 				duration: loanRecord?.duration || "N/A",
 				startDate: loanRecord?.startDate
-					? new Date(loanRecord.startDate).toLocaleDateString("en-GB")
+					? new Date(loanRecord.startDate).toLocaleDateString('en-GB', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric'
+					})
 					: "N/A",
 				endDate: loanRecord?.endDate
-					? new Date(loanRecord.endDate).toLocaleDateString("en-GB")
+					? new Date(loanRecord.endDate).toLocaleDateString('en-GB', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric'
+					})
 					: "N/A",
 				interest: "9.50%",
 				loanBalance: loanRecord?.loanAmount
