@@ -1,161 +1,3 @@
-// =============================
-// ADMIN PAYOUT ENDPOINTS
-// =============================
-
-/**
- * Pay a single MBE (agent) commissions
- * @param {string} mbeId - Unique ID of the MBE to pay
- * @param {string} triggeredBy - User ID of the user who triggered the payout
- * @param {string} [startPeriod] - Start of date range (ISO string, optional)
- * @param {string} [endPeriod] - End of date range (ISO string, optional)
- */
-export async function paySingleMbe({
-	mbeId,
-	triggeredBy,
-	startPeriod,
-	endPeriod,
-}: {
-	mbeId: string;
-	triggeredBy?: string;
-	startPeriod?: string;
-	endPeriod?: string;
-}) {
-	return apiCall("/admin/payouts/mbe/pay", "POST", {
-		mbeId,
-		triggeredBy,
-		...(startPeriod && { startPeriod }),
-		...(endPeriod && { endPeriod }),
-	});
-}
-
-/**
- * Pay a single Partner commissions
- * @param {string} partnerId - Unique ID of the Partner (User.userId) to pay
- * @param {string} triggeredBy - User ID of the user who triggered the payout
- * @param {string} [startPeriod] - Start of date range (ISO string, optional)
- * @param {string} [endPeriod] - End of date range (ISO string, optional)
- */
-export async function paySinglePartner({
-	partnerId,
-	triggeredBy,
-	startPeriod,
-	endPeriod,
-}: {
-	partnerId: string;
-	triggeredBy?: string;
-	startPeriod?: string;
-	endPeriod?: string;
-}) {
-	return apiCall("/admin/payouts/partner/pay", "POST", {
-		partnerId,
-		triggeredBy,
-		...(startPeriod && { startPeriod }),
-		...(endPeriod && { endPeriod }),
-	});
-}
-
-/**
- * Bulk pay multiple MBEs (agents)
- * @param {string[]} mbeIds - List of MBE IDs to pay in bulk
- * @param {string} triggeredBy - User ID of the user who triggered the payout
- * @param {string} [startPeriod] - Start of date range (ISO string, optional)
- * @param {string} [endPeriod] - End of date range (ISO string, optional)
- */
-export async function bulkPayMbes({
-	mbeIds,
-	triggeredBy,
-	startPeriod,
-	endPeriod,
-}: {
-	mbeIds: string[];
-	triggeredBy?: string;
-	startPeriod?: string;
-	endPeriod?: string;
-}) {
-	return apiCall("/admin/payouts/mbe/bulk-pay", "POST", {
-		mbeIds,
-		triggeredBy,
-		...(startPeriod && { startPeriod }),
-		...(endPeriod && { endPeriod }),
-	});
-}
-
-/**
- * Bulk pay multiple Partners
- * @param {string[]} partnerIds - List of Partner IDs (User.userId) to pay in bulk
- * @param {string} triggeredBy - User ID of the user who triggered the payout
- * @param {string} [startPeriod] - Start of date range (ISO string, optional)
- * @param {string} [endPeriod] - End of date range (ISO string, optional)
- */
-export async function bulkPayPartners({
-	partnerIds,
-	triggeredBy,
-	startPeriod,
-	endPeriod,
-}: {
-	partnerIds: string[];
-	triggeredBy?: string;
-	startPeriod?: string;
-	endPeriod?: string;
-}) {
-	return apiCall("/admin/payouts/partner/bulk-pay", "POST", {
-		partnerIds,
-		triggeredBy,
-		...(startPeriod && { startPeriod }),
-		...(endPeriod && { endPeriod }),
-	});
-}
-// ============================================================================
-// COMMISSION PAYMENT MARK/UNMARK APIs
-// ============================================================================
-
-/**
- * Mark agent commission as paid
- * @param commissionId - The commission ID
- */
-export async function markAgentPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/mark-agent-paid/${commissionId}`, "PATCH");
-}
-
-/**
- * Mark partner commission as paid
- * @param commissionId - The commission ID
- */
-export async function markPartnerPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/mark-partner-paid/${commissionId}`, "PATCH");
-}
-
-/**
- * Mark both agent and partner commissions as paid
- * @param commissionId - The commission ID
- */
-export async function markBothPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/mark-both-paid/${commissionId}`, "PATCH");
-}
-
-/**
- * Unmark agent commission as paid
- * @param commissionId - The commission ID
- */
-export async function unmarkAgentPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/unmark-agent-paid/${commissionId}`, "PATCH");
-}
-
-/**
- * Unmark partner commission as paid
- * @param commissionId - The commission ID
- */
-export async function unmarkPartnerPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/unmark-partner-paid/${commissionId}`, "PATCH");
-}
-
-/**
- * Unmark both agent and partner commissions as paid
- * @param commissionId - The commission ID
- */
-export async function unmarkBothPaid(commissionId: string) {
-	return apiCall(`/admin/mbe/unmark-both-paid/${commissionId}`, "PATCH");
-}
 import axios from "axios";
 import { cachedApiCall, generateCacheKey } from "./cache";
 
@@ -3078,4 +2920,303 @@ export async function getSentinelCustomerById(
 	id: string
 ): Promise<BaseApiResponse<any>> {
 	return apiCall(`/admin/sentinel/sentinel-customers/${id}`, "GET");
+}
+
+// =============================
+// ADMIN PAYOUT ENDPOINTS
+// =============================
+
+// Types for payout API
+export interface MbePayout {
+	mbePayoutId: string;
+	payoutId: string;
+	mbeId: string;
+	totalCommission: number;
+	commissionCount: number;
+	status: string;
+	paymentProvider: string;
+	accountNumber: string;
+	accountName: string;
+	bankCode: string;
+	bankName: string;
+	amount: number;
+	reference: string;
+	remark: string;
+	tnxId: string;
+	sessionId: string;
+	paymentReference: string;
+	channel: string;
+	failureReason: string | null;
+	paidAt: string;
+	createdAt: string;
+	updatedAt: string;
+	mbe: {
+		firstname: string;
+		lastname: string;
+		email: string;
+	};
+}
+
+export interface PartnerPayout {
+	partnerPayoutId: string;
+	payoutId: string;
+	partnerId: string;
+	totalCommission: number;
+	commissionCount: number;
+	status: string;
+	paymentProvider: string;
+	accountNumber: string;
+	accountName: string;
+	bankCode: string;
+	bankName: string;
+	amount: number;
+	reference: string;
+	remark: string;
+	tnxId: string;
+	sessionId: string;
+	paymentReference: string;
+	channel: string;
+	failureReason: string | null;
+	paidAt: string;
+	createdAt: string;
+	updatedAt: string;
+	partner: {
+		firstName: string;
+		lastName: string;
+		email: string;
+	};
+}
+
+export interface Payout {
+	payoutId: string;
+	payoutType: string;
+	status: string;
+	totalAmount: number;
+	currency: string;
+	payoutDate: string;
+	scheduledDate: string | null;
+	startPeriod: string;
+	endPeriod: string;
+	triggeredBy: string | null;
+	metadata: {
+		failedCount: number;
+		processedCount: number;
+	};
+	createdAt: string;
+	updatedAt: string;
+	mbePayouts: MbePayout[];
+	partnerPayouts: PartnerPayout[];
+}
+
+export interface PayoutsPagination {
+	page: number;
+	limit: number;
+	total: number;
+	pages: number;
+}
+
+export interface GetAdminPayoutsResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: {
+		success: boolean;
+		data: {
+			payouts: Payout[];
+			pagination: PayoutsPagination;
+		};
+		message: string;
+	};
+	responseTime: string;
+}
+
+// Get payout history with pagination
+export async function getAdminPayouts(
+	page: number = 1,
+	limit: number = 20
+): Promise<GetAdminPayoutsResponse> {
+	return apiCall(`/payouts?page=${page}&limit=${limit}`, "GET");
+}
+
+// Get payout statistics
+// Types for payout stats API
+export interface PayoutStats {
+	totalPayouts: number;
+	totalAmount: number;
+	pendingPayouts: number;
+	failedPayouts: number;
+	thisMonthAmount: number;
+	thisWeekAmount: number;
+}
+
+export interface GetAdminPayoutStatsResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: {
+		success: boolean;
+		data: PayoutStats;
+		message: string;
+	};
+	responseTime: string;
+}
+
+// Get payout statistics
+export async function getAdminPayoutStats(): Promise<GetAdminPayoutStatsResponse> {
+	return apiCall("/payouts/stats", "GET");
+}
+
+/**
+ * Pay a single MBE (agent) commissions
+ * @param {string} mbeId - Unique ID of the MBE to pay
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function paySingleMbe({
+	mbeId,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	mbeId: string;
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/mbe/pay", "POST", {
+		mbeId,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Pay a single Partner commissions
+ * @param {string} partnerId - Unique ID of the Partner (User.userId) to pay
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function paySinglePartner({
+	partnerId,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	partnerId: string;
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/partner/pay", "POST", {
+		partnerId,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Bulk pay multiple MBEs (agents)
+ * @param {string[]} mbeIds - List of MBE IDs to pay in bulk
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function bulkPayMbes({
+	mbeIds,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	mbeIds: string[];
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/mbe/bulk-pay", "POST", {
+		mbeIds,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Bulk pay multiple Partners
+ * @param {string[]} partnerIds - List of Partner IDs (User.userId) to pay in bulk
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function bulkPayPartners({
+	partnerIds,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	partnerIds: string[];
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/partner/bulk-pay", "POST", {
+		partnerIds,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+// ============================================================================
+// COMMISSION PAYMENT MARK/UNMARK APIs
+// ============================================================================
+
+/**
+ * Mark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function markPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Mark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function markBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/mark-both-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark agent commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkAgentPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-agent-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark partner commission as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkPartnerPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-partner-paid/${commissionId}`, "PATCH");
+}
+
+/**
+ * Unmark both agent and partner commissions as paid
+ * @param commissionId - The commission ID
+ */
+export async function unmarkBothPaid(commissionId: string) {
+	return apiCall(`/admin/mbe/unmark-both-paid/${commissionId}`, "PATCH");
 }
