@@ -185,19 +185,29 @@ export default function AllDevicesView() {
 			...(Array.isArray(raw.devices) ? raw.devices : []),
 			...(Array.isArray(raw.newDevices) ? raw.newDevices : []),
 		];
-		return merged.map((r: DeviceRecord) => ({
-			...r,
-			deviceName: r.deviceName || "",
-			deviceManufacturer: r.deviceManufacturer || "",
-			deviceType: r.deviceType || "",
-			price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
-			sentiProtect: r.sentiprotect
-				? `₦${r.sentiprotect.toLocaleString("en-GB")}`
-				: "",
-			SAP: r.SAP ? `₦${r.SAP.toLocaleString("en-GB")}` : "",
-			SLD: r.SLD ? `₦${r.SLD.toLocaleString("en-GB")}` : "",
-			status: r.status || "ACTIVE", // Default to active if no status
-		}));
+		return merged.map((r: DeviceRecord & any) => {
+			const sapValue = r.SAP ?? r.sap;
+			const sldValue = r.SLD ?? r.sld;
+			return {
+				...r,
+				deviceName: r.deviceName || r.deviceBrand || "",
+				deviceManufacturer: r.deviceManufacturer || r.deviceBrand || "",
+				deviceType: r.deviceType || "",
+				price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
+				sentiProtect: r.sentiprotect
+					? `₦${r.sentiprotect.toLocaleString("en-GB")}`
+					: "",
+				SAP: sapValue ? `₦${sapValue.toLocaleString("en-GB")}` : "",
+				SLD: sldValue ? `₦${sldValue.toLocaleString("en-GB")}` : "",
+				status:
+					r.status ||
+					(typeof r.isActive === "boolean"
+						? r.isActive
+							? "ACTIVE"
+							: "SUSPENDED"
+						: "ACTIVE"),
+			};
+		});
 	}, [raw]);
 
 	const filtered = useMemo(() => {

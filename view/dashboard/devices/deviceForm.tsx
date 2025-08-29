@@ -422,16 +422,28 @@ const DeviceForm = () => {
 				try {
 					const response = await getDeviceById(deviceId);
 					const data = response?.data || {};
-					// Map both possible API response shapes to form state
-					// Shape 1: new API (camelCase, e.g. deviceName, deviceBrand, etc)
-					// Shape 2: old API (snake_case, e.g. device_brand, device_model, etc)
-					// Use fallback for each field
 					setDeviceData(data);
 					setDeviceBrand(data.deviceBrand || data.deviceName || "");
 					setDeviceModel(data.deviceModel || data.deviceModelNumber || "");
 					setPrice((data.price !== undefined ? data.price : "").toString());
-					setCurrency(data.currency || "");
-					setDeviceImage(null); // Reset file input when editing
+					setCurrency(data.currency || "NGN");
+					// Fetch image as File if url exists
+					const imageUrl = data?.imageLink || data?.deviceImage;
+					if (imageUrl && typeof imageUrl === "string") {
+						try {
+							const res = await fetch(imageUrl);
+							const blob = await res.blob();
+							// Try to get filename from url, fallback to 'device-image.jpg'
+							const filename =
+								imageUrl.split("/").pop()?.split("?")[0] || "device-image.jpg";
+							const file = new File([blob], filename, { type: blob.type });
+							setDeviceImage(file);
+						} catch (e) {
+							setDeviceImage(null);
+						}
+					} else {
+						setDeviceImage(null);
+					}
 					setDeviceModelNumber(data.deviceModelNumber || "");
 					setBackCamera(data.back_camera || data.deviceCamera || "");
 					setBattery(data.battery || "");
@@ -471,12 +483,7 @@ const DeviceForm = () => {
 							? data.status === "ACTIVE"
 							: false
 					);
-					setSentinelCover(
-						data.sentinel_cover ||
-							data.sentiProtect ||
-							data.sentinel_cover ||
-							""
-					);
+					setSentinelCover(data.sentinel_cover || data.sentiProtect || "");
 				} catch (error: any) {
 					console.error("Error fetching device data:", error);
 					showToast({
