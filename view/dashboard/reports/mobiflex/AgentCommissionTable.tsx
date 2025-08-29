@@ -394,7 +394,6 @@ const AgentCommissionTable = () => {
 		try {
 			const res = await paySingleMbe({
 				mbeId: modal.agent.mbeId,
-				triggeredBy: "ADMIN_USER_ID",
 			});
 
 			// Create payment result for report
@@ -427,19 +426,35 @@ const AgentCommissionTable = () => {
 			const mbeIds = Array.from(selected).filter((id) =>
 				payableAgentIds.has(id)
 			);
-
 			if (mbeIds.length === 0) {
 				showToast({
 					type: "warning",
 					message: "No valid agents selected for payment",
 				});
+				setIsBulkPaying(false);
 				return;
 			}
 
+			let didRespond = false;
+			// Start a timer: if no response in 30s, show fallback toast
+			const timer = setTimeout(() => {
+				if (!didRespond) {
+					showToast({
+						type: "success",
+						message:
+							"Payout request submitted successfully. Check payout history in 3 minutes for feedback.",
+					});
+					setModal(null);
+					setSelected(new Set());
+					setIsBulkPaying(false);
+				}
+			}, 30000);
+
 			const res = await bulkPayMbes({
 				mbeIds: Array.from(mbeIds),
-				triggeredBy: "ADMIN_USER_ID",
 			});
+			didRespond = true;
+			clearTimeout(timer);
 
 			// Create payment results for report
 			const paymentResults: PaymentResult[] = selectedPayableRows.map((row) => {
@@ -470,9 +485,9 @@ const AgentCommissionTable = () => {
 					type: "success",
 					message: res?.message || "Bulk payout successful",
 				});
+				setModal(null);
+				setSelected(new Set());
 			}
-
-			setSelected(new Set());
 			mutate();
 		} catch (e: any) {
 			showToast({
