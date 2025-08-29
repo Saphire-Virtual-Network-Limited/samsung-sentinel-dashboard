@@ -1759,31 +1759,31 @@ export async function createDevice(createDevice: createDevice) {
 // Update Device
 
 export interface updateDevice {
-	deviceBrand: string;
-	deviceModel: string;
-	price: number;
-	currency: string;
+	deviceBrand?: string;
+	deviceModel?: string;
+	price?: number;
+	currency?: string;
 	deviceImage?: File; // File object for FormData
-	deviceModelNumber: string;
-	back_camera: string;
-	battery: string;
-	color: string;
-	data_storage: string;
-	display: string;
-	front_camera: string;
-	memory: string;
-	network: string;
-	os: string;
-	other_features: string;
-	processor_cpu: string;
-	sentinel_cover: string;
-	sap: number;
-	screen_size: string;
-	sld: number;
-	deviceType: string;
-	case_colors: string;
-	windows_version: string;
-	isActive: boolean;
+	deviceModelNumber?: string;
+	back_camera?: string;
+	battery?: string;
+	color?: string;
+	data_storage?: string;
+	display?: string;
+	front_camera?: string;
+	memory?: string;
+	network?: string;
+	os?: string;
+	other_features?: string;
+	proccessor_cpu?: string;
+	sentinel_cover?: string;
+	sap?: number;
+	screen_size?: string;
+	sld?: number;
+	deviceType?: string;
+	case_colors?: string;
+	windows_version?: string;
+	isActive?: boolean;
 }
 
 export async function updateDevice(
@@ -1791,11 +1791,6 @@ export async function updateDevice(
 	updateDevice: updateDevice
 ) {
 	const formData = new FormData();
-
-	// Add file if it exists
-	if (updateDevice.deviceImage) {
-		formData.append("deviceImage", updateDevice.deviceImage);
-	}
 
 	// Add file if it exists
 	if (updateDevice.deviceImage) {
@@ -1811,7 +1806,7 @@ export async function updateDevice(
 			formData.append(key, String(updateDevice[key as keyof updateDevice]));
 		}
 	});
-
+	console.log("formdata is: ", formData);
 	return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
 }
 
