@@ -73,6 +73,7 @@ type DeviceRecord = {
 	deviceStorage: string | null;
 	imageLink: string;
 	newDeviceId: string;
+	deviceid: string;
 	oldDeviceId: string;
 	sentiprotect: number;
 	updatedAt: string;
@@ -190,7 +191,11 @@ export default function AllDevicesView() {
 			const sldValue = r.SLD ?? r.sld;
 			return {
 				...r,
-				deviceName: r.deviceName || r.deviceBrand || "",
+
+				deviceName:
+					r.deviceModel && r.deviceManufacturer
+						? `${r.deviceManufacturer} ${r.deviceModel}`
+						: r.deviceName || r.deviceModel || "",
 				deviceManufacturer: r.deviceManufacturer || r.deviceBrand || "",
 				deviceType: r.deviceType || "",
 				price: r.price ? `₦${r.price.toLocaleString("en-GB")}` : "",
@@ -216,7 +221,7 @@ export default function AllDevicesView() {
 			const f = filterValue.toLowerCase();
 			list = list.filter((c) => {
 				const deviceName = (c.deviceName || "").toLowerCase();
-				const deviceId = (c.newDeviceId || "").toLowerCase();
+				const deviceId = (c.newDeviceId || c.deviceid || "").toLowerCase();
 				const oldDeviceId = (c.oldDeviceId || "").toLowerCase();
 				const deviceManufacturer = (c.deviceManufacturer || "").toLowerCase();
 				const deviceType = (c.deviceType || "").toLowerCase();
@@ -286,9 +291,13 @@ export default function AllDevicesView() {
 		setSelectedItem(row);
 		if (mode === "edit") {
 			// Open edit page in new tab with store data using dynamic route
-			const editUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
+			const editUrl = `/access/${role}/inventory/devices/edit/${
+				row.newDeviceId || row.deviceid
+			}`;
 			// If using Next.js dynamic route, should be /edit/[deviceId]
-			const dynamicEditUrl = `/access/${role}/inventory/devices/edit/${row.newDeviceId}`;
+			const dynamicEditUrl = `/access/${role}/inventory/devices/edit/${
+				row.newDeviceId || row.deviceid
+			}`;
 			window.open(dynamicEditUrl, "_blank");
 		} else {
 			onDeactivateDevice();
@@ -306,7 +315,10 @@ export default function AllDevicesView() {
 		}
 
 		try {
-			const response = await deactivateDevice(selectedItem.newDeviceId, reason);
+			const response = await deactivateDevice(
+				selectedItem.newDeviceId || selectedItem.deviceid,
+				reason
+			);
 			showToast({
 				type: "success",
 				message: "Device deactivated successfully",
@@ -334,7 +346,9 @@ export default function AllDevicesView() {
 		}
 
 		try {
-			const response = await activateDevice(selectedItem.newDeviceId);
+			const response = await activateDevice(
+				selectedItem.newDeviceId || selectedItem.deviceid
+			);
 			showToast({
 				type: "success",
 				message: "Device activated successfully",
@@ -355,7 +369,10 @@ export default function AllDevicesView() {
 	const renderCell = (row: DeviceRecord, key: string) => {
 		if (key === "actions") {
 			return (
-				<div className="flex justify-end" key={`${row.newDeviceId}-actions`}>
+				<div
+					className="flex justify-end"
+					key={`${row.newDeviceId || row.deviceid}-actions`}
+				>
 					<Dropdown>
 						<DropdownTrigger>
 							<Button isIconOnly size="sm" variant="light">
@@ -364,14 +381,14 @@ export default function AllDevicesView() {
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Actions">
 							<DropdownItem
-								key={`${row.newDeviceId}-view`}
+								key={`${row.newDeviceId || row.deviceid}-view`}
 								onPress={() => openModal("view", row)}
 							>
 								View
 							</DropdownItem>
 							{hasPermission(role, "canEdit", userEmail) ? (
 								<DropdownItem
-									key={`${row.newDeviceId}-edit`}
+									key={`${row.newDeviceId || row.deviceid}-edit`}
 									onPress={() => openModal("edit", row)}
 								>
 									Edit
@@ -379,7 +396,7 @@ export default function AllDevicesView() {
 							) : null}
 							{row.status === "ACTIVE" ? (
 								<DropdownItem
-									key={`${row.newDeviceId}-deactivate`}
+									key={`${row.newDeviceId || row.deviceid}-deactivate`}
 									onPress={() => {
 										setSelectedItem(row);
 										onDeactivateDevice();
@@ -389,7 +406,7 @@ export default function AllDevicesView() {
 								</DropdownItem>
 							) : (
 								<DropdownItem
-									key={`${row.newDeviceId}-activate`}
+									key={`${row.newDeviceId || row.deviceid}-activate`}
 									onPress={() => {
 										setSelectedItem(row);
 										onActivateDevice();
@@ -407,7 +424,7 @@ export default function AllDevicesView() {
 		if (key === "deviceName") {
 			return (
 				<p
-					key={`${row.newDeviceId}-name`}
+					key={`${row.newDeviceId || row.deviceid}-name`}
 					className="capitalize cursor-pointer"
 					onClick={() => openModal("view", row)}
 				>
@@ -421,7 +438,7 @@ export default function AllDevicesView() {
 				row.status === "ACTIVE" ? "text-success" : "text-danger";
 			return (
 				<Chip
-					key={`${row.newDeviceId}-status`}
+					key={`${row.newDeviceId || row.deviceid}-status`}
 					color={row.status === "ACTIVE" ? "success" : "danger"}
 					variant="flat"
 					size="sm"
@@ -434,7 +451,7 @@ export default function AllDevicesView() {
 
 		return (
 			<p
-				key={`${row.newDeviceId}-${key}`}
+				key={`${row.newDeviceId || row.deviceid}-${key}`}
 				className="text-small cursor-pointer"
 				onClick={() => openModal("view", row)}
 			>
@@ -509,7 +526,9 @@ export default function AllDevicesView() {
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
 													<p className="font-medium">
-														{selectedItem.newDeviceId || "N/A"}
+														{selectedItem.newDeviceId ||
+															selectedItem.deviceid ||
+															"N/A"}
 													</p>
 												</div>
 												<div>
@@ -658,7 +677,9 @@ export default function AllDevicesView() {
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
 													<p className="font-medium">
-														{selectedItem.newDeviceId || "N/A"}
+														{selectedItem.newDeviceId ||
+															selectedItem.deviceid ||
+															"N/A"}
 													</p>
 												</div>
 												<div>
@@ -748,7 +769,9 @@ export default function AllDevicesView() {
 												<div>
 													<p className="text-sm text-default-500">Device ID</p>
 													<p className="font-medium">
-														{selectedItem.newDeviceId || "N/A"}
+														{selectedItem.newDeviceId ||
+															selectedItem.deviceid ||
+															"N/A"}
 													</p>
 												</div>
 												<div>
@@ -793,7 +816,9 @@ export default function AllDevicesView() {
 									color="success"
 									variant="solid"
 									onPress={() =>
-										handleActivateDevice(selectedItem?.newDeviceId || "")
+										handleActivateDevice(
+											selectedItem?.newDeviceId || selectedItem?.deviceid || ""
+										)
 									}
 								>
 									Activate Device

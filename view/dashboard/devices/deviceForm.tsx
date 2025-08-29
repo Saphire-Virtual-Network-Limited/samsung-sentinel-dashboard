@@ -159,7 +159,7 @@ type DeviceRecord = {
 	network: string;
 	os: string;
 	other_features: string;
-	processor_cpu: string;
+	proccessor_cpu: string;
 	sentinel_cover: string;
 	sap: number;
 	screen_size: string;
@@ -187,7 +187,7 @@ type DeviceFormData = {
 	network: string;
 	os: string;
 	other_features: string;
-	processor_cpu: string;
+	proccessor_cpu: string;
 	sentinel_cover: string;
 	sap: number;
 	screen_size: string;
@@ -225,7 +225,7 @@ const DeviceForm = () => {
 	const [network, setNetwork] = useState("");
 	const [os, setOs] = useState("");
 	const [other_features, setOtherFeatures] = useState("");
-	const [processor_cpu, setProcessorCpu] = useState("");
+	const [proccessor_cpu, setProcessorCpu] = useState("");
 	const [sap, setSap] = useState("");
 	const [screen_size, setScreenSize] = useState("");
 	const [sld, setSld] = useState("");
@@ -251,7 +251,7 @@ const DeviceForm = () => {
 	const [networkError, setNetworkError] = useState("");
 	const [osError, setOsError] = useState("");
 	const [other_featuresError, setOtherFeaturesError] = useState("");
-	const [processor_cpuError, setProcessorCpuError] = useState("");
+	const [proccessor_cpuError, setProcessorCpuError] = useState("");
 	const [sapError, setSapError] = useState("");
 	const [screen_sizeError, setScreenSizeError] = useState("");
 	const [sldError, setSldError] = useState("");
@@ -423,29 +423,24 @@ const DeviceForm = () => {
 					const response = await getDeviceById(deviceId);
 					const data = response?.data || {};
 					setDeviceData(data);
-					setDeviceBrand(data.deviceBrand || data.deviceName || "");
-					setDeviceModel(data.deviceModel || data.deviceModelNumber || "");
+					setDeviceBrand(data.deviceBrand || data.deviceManufacturer || "");
+					setDeviceModel(data.deviceModel || data.deviceName || "");
 					setPrice((data.price !== undefined ? data.price : "").toString());
 					setCurrency(data.currency || "NGN");
 					// Fetch image as File if url exists
-					const imageUrl = data?.imageLink || data?.deviceImage;
-					if (imageUrl && typeof imageUrl === "string") {
-						try {
-							const res = await fetch(imageUrl);
-							const blob = await res.blob();
-							// Try to get filename from url, fallback to 'device-image.jpg'
-							const filename =
-								imageUrl.split("/").pop()?.split("?")[0] || "device-image.jpg";
-							const file = new File([blob], filename, { type: blob.type });
-							setDeviceImage(file);
-						} catch (e) {
-							setDeviceImage(null);
-						}
-					} else {
-						setDeviceImage(null);
-					}
+
 					setDeviceModelNumber(data.deviceModelNumber || "");
-					setBackCamera(data.back_camera || data.deviceCamera || "");
+					// Handle deviceCamera as array or string
+					if (Array.isArray(data.deviceCamera)) {
+						const sortedCameras = [...data.deviceCamera].sort((a, b) =>
+							a.length > b.length ? 1 : -1
+						);
+						setBackCamera(sortedCameras[1] || "");
+						setFrontCamera(sortedCameras[0] || "");
+					} else {
+						setBackCamera(data.back_camera || data.deviceCamera || "");
+						setFrontCamera(data.front_camera || "");
+					}
 					setBattery(data.battery || "");
 					setColor(data.color || data.case_colors || "");
 					setDataStorage(data.data_storage || data.deviceStorage || "");
@@ -455,7 +450,7 @@ const DeviceForm = () => {
 					setNetwork(data.network || "");
 					setOs(data.os || "");
 					setOtherFeatures(data.other_features || "");
-					setProcessorCpu(data.processor_cpu || "");
+					setProcessorCpu(data.proccessor_cpu || "");
 					setSap(
 						(data.sap !== undefined
 							? data.sap
@@ -502,12 +497,12 @@ const DeviceForm = () => {
 		setIsDisabled(true);
 		setIsLoading(true);
 
-		const device: DeviceFormData = {
+		// Create base device object without deviceImage
+		const baseDevice = {
 			deviceBrand,
 			deviceModel,
 			price: Number(price),
 			currency,
-			deviceImage: deviceImage as unknown as File,
 			deviceModelNumber,
 			back_camera,
 			battery,
@@ -519,7 +514,7 @@ const DeviceForm = () => {
 			network,
 			os,
 			other_features,
-			processor_cpu,
+			proccessor_cpu,
 			sap: Number(sap),
 			screen_size,
 			sld: Number(sld),
@@ -529,6 +524,10 @@ const DeviceForm = () => {
 			isActive,
 			sentinel_cover,
 		};
+
+		// Only add deviceImage property if we have a valid File
+		const device: DeviceFormData =
+			deviceImage instanceof File ? { ...baseDevice, deviceImage } : baseDevice;
 
 		try {
 			if (isEditMode && deviceId) {
@@ -637,7 +636,7 @@ const DeviceForm = () => {
 							{ label: "ACCESSORIES", value: "ACCESSORIES" },
 						]}
 						onChange={handleDeviceTypeChange}
-						defaultSelectedKeys={deviceType ? [deviceType] : []}
+						defaultSelectedKeys={[deviceType]}
 						size="sm"
 					/>
 					<FormField
@@ -795,14 +794,14 @@ const DeviceForm = () => {
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					<FormField
 						label="Processor CPU"
-						errorMessage={processor_cpuError}
-						value={processor_cpu}
+						errorMessage={proccessor_cpuError}
+						value={proccessor_cpu}
 						onChange={handleProcessorCpuChange}
 						placeholder="Enter processor cpu"
 						type="text"
 						required
-						htmlFor="processor_cpu"
-						id="processor_cpu"
+						htmlFor="proccessor_cpu"
+						id="proccessor_cpu"
 						size="sm"
 					/>
 					<FormField
