@@ -1,3 +1,110 @@
+// =============================
+// ADMIN PAYOUT ENDPOINTS
+// =============================
+
+/**
+ * Pay a single MBE (agent) commissions
+ * @param {string} mbeId - Unique ID of the MBE to pay
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function paySingleMbe({
+	mbeId,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	mbeId: string;
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/mbe/pay", "POST", {
+		mbeId,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Pay a single Partner commissions
+ * @param {string} partnerId - Unique ID of the Partner (User.userId) to pay
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function paySinglePartner({
+	partnerId,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	partnerId: string;
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/partner/pay", "POST", {
+		partnerId,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Bulk pay multiple MBEs (agents)
+ * @param {string[]} mbeIds - List of MBE IDs to pay in bulk
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function bulkPayMbes({
+	mbeIds,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	mbeIds: string[];
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/mbe/bulk-pay", "POST", {
+		mbeIds,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
+
+/**
+ * Bulk pay multiple Partners
+ * @param {string[]} partnerIds - List of Partner IDs (User.userId) to pay in bulk
+ * @param {string} triggeredBy - User ID of the user who triggered the payout
+ * @param {string} [startPeriod] - Start of date range (ISO string, optional)
+ * @param {string} [endPeriod] - End of date range (ISO string, optional)
+ */
+export async function bulkPayPartners({
+	partnerIds,
+	triggeredBy,
+	startPeriod,
+	endPeriod,
+}: {
+	partnerIds: string[];
+	triggeredBy?: string;
+	startPeriod?: string;
+	endPeriod?: string;
+}) {
+	return apiCall("/admin/payouts/partner/bulk-pay", "POST", {
+		partnerIds,
+		triggeredBy,
+		...(startPeriod && { startPeriod }),
+		...(endPeriod && { endPeriod }),
+	});
+}
 // ============================================================================
 // COMMISSION PAYMENT MARK/UNMARK APIs
 // ============================================================================
@@ -482,6 +589,10 @@ export async function getAllDevices(startDate?: string, endDate?: string) {
 	const query =
 		startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : "";
 	return apiCall(`/admin/device/all${query}`, "GET");
+}
+
+export async function getDeviceById(deviceId?: string) {
+	return apiCall(`/admin/device/${deviceId}`, "GET");
 }
 
 export async function getAllEnrolledDevices(
@@ -1051,7 +1162,25 @@ export interface User {
 	firstName: string;
 	lastName: string;
 	email: string;
+	dob: string | null;
+	gender: string | null;
+	role: "SCAN_PARTNER" | "CUSTOMER" | "MERCHANT" | "ADMIN" | string;
+	referralCode: string | null;
 	telephoneNumber: string;
+	profile_picture: string | null;
+	otp: string | null;
+	tokenVersion: number;
+	accountStatus: "PENDING" | "ACTIVE" | "SUSPENDED" | "DEACTIVATED" | string;
+	isActive: boolean;
+	otpExpiry: string | null;
+	createdAt: string;
+	updatedAt: string;
+	accountType: "INDIVIDUAL" | "CORPORATE" | string;
+	companyName: string | null;
+	companyAddress: string | null;
+	companyState: string | null;
+	companyCity: string | null;
+	companyLGA: string | null;
 }
 
 // Device interface
@@ -1630,31 +1759,31 @@ export async function createDevice(createDevice: createDevice) {
 // Update Device
 
 export interface updateDevice {
-	deviceBrand: string;
-	deviceModel: string;
-	price: number;
-	currency: string;
+	deviceBrand?: string;
+	deviceModel?: string;
+	price?: number;
+	currency?: string;
 	deviceImage?: File; // File object for FormData
-	deviceModelNumber: string;
-	back_camera: string;
-	battery: string;
-	color: string;
-	data_storage: string;
-	display: string;
-	front_camera: string;
-	memory: string;
-	network: string;
-	os: string;
-	other_features: string;
-	processor_cpu: string;
-	sentinel_cover: string;
-	sap: number;
-	screen_size: string;
-	sld: number;
-	deviceType: string;
-	case_colors: string;
-	windows_version: string;
-	isActive: boolean;
+	deviceModelNumber?: string;
+	back_camera?: string;
+	battery?: string;
+	color?: string;
+	data_storage?: string;
+	display?: string;
+	front_camera?: string;
+	memory?: string;
+	network?: string;
+	os?: string;
+	other_features?: string;
+	proccessor_cpu?: string;
+	sentinel_cover?: string;
+	sap?: number;
+	screen_size?: string;
+	sld?: number;
+	deviceType?: string;
+	case_colors?: string;
+	windows_version?: string;
+	isActive?: boolean;
 }
 
 export async function updateDevice(
@@ -1662,11 +1791,6 @@ export async function updateDevice(
 	updateDevice: updateDevice
 ) {
 	const formData = new FormData();
-
-	// Add file if it exists
-	if (updateDevice.deviceImage) {
-		formData.append("deviceImage", updateDevice.deviceImage);
-	}
 
 	// Add file if it exists
 	if (updateDevice.deviceImage) {
@@ -1682,7 +1806,7 @@ export async function updateDevice(
 			formData.append(key, String(updateDevice[key as keyof updateDevice]));
 		}
 	});
-
+	console.log("formdata is: ", formData);
 	return apiCall(`/admin/device/update/${deviceId}`, "PATCH", formData);
 }
 
@@ -2925,7 +3049,7 @@ export interface SentinelCustomerDevice {
 export interface SentinelCustomer {
 	sentinelCustomerId: string;
 	createdAt: string;
-	updatedAt: string; // ISO date string
+	updatedAt: string;
 	deviceEnrollmentId: string | null;
 	deviceId: string | null;
 	resendOtp: string | null;
