@@ -462,12 +462,28 @@ const PartnerCommissionTable = () => {
 					type: "warning",
 					message: "No valid partners selected for payment",
 				});
+				setIsBulkPaying(false);
 				return;
 			}
 
-			const res = await bulkPayPartners({
-				partnerIds: partnerIds,
-			});
+			let didRespond = false;
+			// Start a timer: if no response in 30s, show fallback toast
+			const timer = setTimeout(() => {
+				if (!didRespond) {
+					showToast({
+						type: "success",
+						message:
+							"Payout request submitted successfully. Check payout history in 3 minutes for feedback.",
+					});
+					setModal(null);
+					setSelected(new Set());
+					setIsBulkPaying(false);
+				}
+			}, 30000);
+
+			const res = await bulkPayPartners({ partnerIds });
+			didRespond = true;
+			clearTimeout(timer);
 
 			// Create payment results for report
 			const paymentResults: PaymentResult[] = selectedPayableRows.map((row) => {
@@ -499,9 +515,9 @@ const PartnerCommissionTable = () => {
 					type: "success",
 					message: res?.message || "Bulk payout successful",
 				});
+				setModal(null);
+				setSelected(new Set());
 			}
-
-			setSelected(new Set());
 			mutate();
 		} catch (e: any) {
 			showToast({
