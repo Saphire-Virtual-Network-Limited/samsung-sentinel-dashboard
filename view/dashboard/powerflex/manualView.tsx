@@ -34,8 +34,7 @@ const ManualPowerflexView = () => {
     
     // Simulate API call delay
     setTimeout(() => {
-      const baseUrl = window.location.origin
-      const link = `${baseUrl}/email=${email}&amount=${amount}`
+      const link = `https://widget.connectwithsapphire.com/?email=${email}&amount=${amount}`
       
       setGeneratedLink(link)
       setIsLoading(false)
