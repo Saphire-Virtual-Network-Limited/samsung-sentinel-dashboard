@@ -6,6 +6,7 @@ import CommissionTable from "./CommissionTable";
 import AgentCommissionTable from "./AgentCommissionTable";
 import PartnerCommissionTable from "./PartnerCommissionTable";
 import CommissionSummaryTable from "./CommissionSummaryTable";
+import PayoutHistoryTable from "./PayoutHistoryTable";
 
 const CommissionReportsView: React.FC = () => {
 	const [tab, setTab] = useState("commissions");
@@ -29,6 +30,9 @@ const CommissionReportsView: React.FC = () => {
 				</Tab>
 				<Tab key="summary" title="Commission Summary">
 					<CommissionSummaryTable />
+				</Tab>
+				<Tab key="payout-history" title="Payout History">
+					<PayoutHistoryTable />
 				</Tab>
 			</Tabs>
 		</div>

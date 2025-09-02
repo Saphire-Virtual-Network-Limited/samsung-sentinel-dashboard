@@ -452,6 +452,8 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 								(item as any).loanRecordId ||
 								(item as any).commissionId ||
 								(item as any).mbeId ||
+								(item as any).partnerUserId ||
+								(item as any).userId ||
 								(item as any).agentId ||
 								`row-${rowIndex}-${JSON.stringify(item).slice(0, 50)}`
 						  }`

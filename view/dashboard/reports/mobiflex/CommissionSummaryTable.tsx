@@ -83,11 +83,14 @@ function flattenRows(data: any) {
 	data.agents.forEach((agent: any) => {
 		const partnerId = agent.scanPartner?.userId || "N/A";
 		const partnerName =
-			agent.scanPartner?.companyName || agent.scanPartner?.firstName || "N/A";
+			`${agent.scanPartner?.firstName || ""} ${
+				agent.scanPartner?.lastName || ""
+			} (${agent.scanPartner?.companyName})`.trim() || "N/A";
 		if (!partnerMap.has(partnerId)) {
 			partnerMap.set(partnerId, {
 				type: "Partner",
 				name: partnerName,
+				compantName: agent.scanPartner?.companyName,
 				totalCommission: 0,
 				totalAgentCommission: 0,
 				totalPartnerCommission: 0,
