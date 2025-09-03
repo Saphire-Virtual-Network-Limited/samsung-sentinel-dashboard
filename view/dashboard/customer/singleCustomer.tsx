@@ -4176,11 +4176,8 @@ export default function CollectionSingleCustomerPage() {
 				onClose={onSendSmsClose}
 				customer={{
 					customerId: customer?.customerId || "",
-					phone: customer?.mainPhoneNumber,
-					bvnPhoneNumber: customer?.bvnPhoneNumber,
 					firstName: customer?.firstName,
 					lastName: customer?.lastName,
-					channel: customer?.channel,
 				}}
 			/>
 		</div>
