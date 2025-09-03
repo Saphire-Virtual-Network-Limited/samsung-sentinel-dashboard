@@ -1,9 +1,14 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Divider, Chip } from "@heroui/react";
-import { Lock, Save, Eye, EyeOff } from "lucide-react";
-import { cn, GeneralSans_SemiBold } from "@/lib";
+import { Button, Input, Divider, Chip, Card, CardBody } from "@heroui/react";
+import { Lock, Save, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import {
+	cn,
+	GeneralSans_SemiBold,
+	getPasswordSecurityStatus,
+	PasswordStatus,
+} from "@/lib";
 
 interface ProfileData {
 	userId: string;
@@ -66,8 +71,36 @@ export default function SecurityTab({
 	onToggleConfirmPassword,
 	getStatusColor,
 }: SecurityTabProps) {
+	const passwordStatus = getPasswordSecurityStatus();
+	const hasInsecurePassword = passwordStatus === PasswordStatus.INSECURE;
+
 	return (
 		<div className="space-y-6">
+			{/* Security Warning for Insecure Password */}
+			{hasInsecurePassword && (
+				<Card className="border-l-4 border-l-warning bg-warning-50">
+					<CardBody className="p-4">
+						<div className="flex items-start gap-3">
+							<AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+							<div>
+								<h4
+									className={cn(
+										"font-medium text-warning-800",
+										GeneralSans_SemiBold.className
+									)}
+								>
+									Security Warning: Insecure Password Detected
+								</h4>
+								<p className="text-warning-700 text-sm mt-1">
+									You are currently using an insecure password. Please you must
+									change your password immediately to protect your account.
+								</p>
+							</div>
+						</div>
+					</CardBody>
+				</Card>
+			)}
+
 			{/* Security Header */}
 			<div>
 				<h2

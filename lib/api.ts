@@ -1,5 +1,11 @@
 import axios from "axios";
 import { cachedApiCall, generateCacheKey } from "./cache";
+import { 
+	getPasswordSecurityStatus, 
+	PasswordStatus, 
+	redirectToPasswordChange, 
+	isExemptRoute 
+} from "./passwordSecurity";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -18,6 +24,24 @@ async function apiCall(
 	options?: ApiCallOptions
 ) {
 	try {
+		// Check password security before making API calls (client-side only)
+		if (typeof window !== "undefined") {
+			const currentPath = window.location.pathname;
+			const passwordStatus = getPasswordSecurityStatus();
+			
+			// Skip password check for auth routes, settings, and login endpoint
+			const isLoginEndpoint = endpoint === "/admin/login";
+			const isProfileEndpoint = endpoint === "/admin/profile";
+			const isPasswordChangeEndpoint = endpoint.includes("/admin/update-password");
+			
+			if (!isLoginEndpoint && !isProfileEndpoint && !isPasswordChangeEndpoint && !isExemptRoute(currentPath)) {
+				if (passwordStatus === PasswordStatus.INSECURE) {
+					redirectToPasswordChange();
+					return new Promise(() => {}); // Never resolve to stop execution
+				}
+			}
+		}
+
 		const headers: any = {
 			Accept: "*/*",
 			"x-app-key": options?.appKey,
