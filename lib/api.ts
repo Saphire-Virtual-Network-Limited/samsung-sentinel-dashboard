@@ -3311,3 +3311,9 @@ export async function getCustomerSmsById(customerId: string) {
 export async function getCustomerSmsTotalSent() {
 	return apiCall(`/admin/analytics/sms/total-sent`, "GET");
 }
+
+
+//get all email sent count
+export async function getCustomerEmailTotalSent() {
+	return apiCall(`/resources/email-logs`, "GET");
+}
