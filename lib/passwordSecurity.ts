@@ -125,8 +125,7 @@ export function onPasswordChanged(newPassword: string): void {
 	if (status === PasswordStatus.SECURE) {
 		showToast({
 			type: "success",
-			message:
-				"Password updated successfully.",
+			message: "Password updated successfully.",
 			duration: 3000,
 		});
 	}

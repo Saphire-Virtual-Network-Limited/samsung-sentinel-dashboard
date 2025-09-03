@@ -251,26 +251,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		}
 	}, [logout, pathName, router]);
 
-  useEffect(() => {
-    const isAuthRoute = pathName.startsWith("/auth");
-    const isPublicRoute = pathName.startsWith("/verify-code");
-    const isInviteRoute = pathName.startsWith("/invite"); // Added invite route check
+	useEffect(() => {
+		const isAuthRoute = pathName.startsWith("/auth");
+		const isPublicRoute = pathName.startsWith("/verify-code");
+		const isInviteRoute = pathName.startsWith("/invite"); // Added invite route check
 
-    if (isAuthRoute || isPublicRoute || isInviteRoute) {
-      setUserResponse(null);
-      setIsLoading(false);
-      return;
-    }
+		if (isAuthRoute || isPublicRoute || isInviteRoute) {
+			setUserResponse(null);
+			setIsLoading(false);
+			return;
+		}
 
-    // Check password security for navigation
-    const passwordStatus = getPasswordSecurityStatus();
-    if (passwordStatus === PasswordStatus.INSECURE && !isExemptRoute(pathName)) {
-      redirectToPasswordChange();
-      return;
-    }
+		// Check password security for navigation
+		const passwordStatus = getPasswordSecurityStatus();
+		if (
+			passwordStatus === PasswordStatus.INSECURE &&
+			!isExemptRoute(pathName)
+		) {
+			redirectToPasswordChange();
+			return;
+		}
 
-    fetchUserProfile();
-  }, [fetchUserProfile, pathName]);	const login = async (email: string, password: string) => {
+		fetchUserProfile();
+	}, [fetchUserProfile, pathName]);
+	const login = async (email: string, password: string) => {
 		setUserResponse(null);
 		try {
 			await loginAdmin({ email, password });

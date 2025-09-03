@@ -189,7 +189,8 @@ export default function SettingsView() {
 		if (passwordForm.password === "Password123!") {
 			showToast({
 				type: "error",
-				message: "You cannot use the default password 'Password123!' for security reasons",
+				message:
+					"You cannot use the default password 'Password123!' for security reasons",
 			});
 			return;
 		}
