@@ -3329,3 +3329,15 @@ export async function sendSms(smsData: SendSmsData) {
 export async function getCustomerSmsById(customerId: string) {
 	return apiCall(`/admin/customers/sms/${customerId}`, "GET");
 }
+
+//get all sms sent count
+
+export async function getCustomerSmsTotalSent() {
+	return apiCall(`/admin/analytics/sms/total-sent`, "GET");
+}
+
+
+//get all email sent count
+export async function getCustomerEmailTotalSent() {
+	return apiCall(`/resources/email-logs`, "GET");
+}

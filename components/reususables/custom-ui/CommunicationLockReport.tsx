@@ -1,6 +1,6 @@
 "use client";
 
-import { GeneralSans_Meduim, GeneralSans_SemiBold, cn } from "@/lib";
+import { GeneralSans_Meduim, GeneralSans_SemiBold, cn, getCustomerSmsTotalSent } from "@/lib";
 import { Card, CardBody } from "@heroui/react";
 import {
 	Mail,
@@ -10,30 +10,57 @@ import {
 	CheckCircle,
 	XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+interface SmsData {
+	sent: number;
+	notSent: number;
+	total: number;
+}
 
 const CommunicationLockReport = () => {
-	// Dummy data - replace with actual API data when endpoint is ready
-	const dummyData = {
-		sms: {
-			sent: 1250,
-			notSent: 89,
-			total: 1339,
-		},
-		email: {
-			sent: 890,
-			notSent: 45,
-			total: 935,
-		},
-		// phoneCalls: {
-		// 	made: 567,
-		// 	notMade: 123,
-		// 	total: 690,
-		// },
-		// lock: {
-		// 	locked: 234,
-		// 	notLocked: 56,
-		// 	total: 290,
-		// },
+	const [smsData, setSmsData] = useState<SmsData>({
+		sent: 0,
+		notSent: 0,
+		total: 0,
+	});
+	const [isLoading, setIsLoading] = useState(true);
+
+	// Fetch SMS data
+	useEffect(() => {
+		const fetchSmsData = async () => {
+			try {
+				setIsLoading(true);
+				const response = await getCustomerSmsTotalSent();
+				
+				if (response?.data?.customers?.data) {
+					const smsMessages = response.data.customers.data;
+					const sent = smsMessages.filter((msg: any) => msg.status === "Success").length;
+					const notSent = smsMessages.filter((msg: any) => msg.status === "Failed").length;
+					const total = smsMessages.length;
+
+					setSmsData({
+						sent,
+						notSent,
+						total,
+					});
+				}
+			} catch (error) {
+				console.error("Error fetching SMS data:", error);
+				// Keep default values on error
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchSmsData();
+	}, []);
+
+	// Dummy data for email - replace with actual API data when endpoint is ready
+	const emailData = {
+		sent: 0,
+		notSent: 0,
+		total: 0,
 	};
 
 	// Configuration for each metric type
@@ -215,12 +242,18 @@ const CommunicationLockReport = () => {
 			</div>
 
 			<CardBody className="p-4">
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-					{renderMetricCard("sms", dummyData.sms)}
-					{renderMetricCard("email", dummyData.email)}
-					{/* {renderMetricCard("phoneCalls", dummyData.phoneCalls)} */}
-					{/* {renderMetricCard("lock", dummyData.lock)} */}
-				</div>
+				{isLoading ? (
+					<div className="flex items-center justify-center py-8">
+						<div className="text-sm text-gray-500">Loading SMS data...</div>
+					</div>
+				) : (
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+						{renderMetricCard("sms", smsData)}
+						{renderMetricCard("email", emailData)}
+						{/* {renderMetricCard("phoneCalls", dummyData.phoneCalls)} */}
+						{/* {renderMetricCard("lock", dummyData.lock)} */}
+					</div>
+				)}
 			</CardBody>
 		</Card>
 	);
