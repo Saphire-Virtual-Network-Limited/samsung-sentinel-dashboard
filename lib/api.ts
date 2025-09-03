@@ -1966,6 +1966,68 @@ export async function getCDFAllRepayments() {
 	return apiCall(`/admin/payday/repayments`, "GET");
 }
 
+// Fetch repayments with optional query params (status, teleMarketerId, loanId, dateFrom, dateTo, page, limit)
+export async function getCDFRepayments(filters: Record<string, any> = {}) {
+	const params = new URLSearchParams();
+	Object.entries(filters).forEach(([k, v]) => {
+		if (v !== undefined && v !== null && v !== "") params.append(k, String(v));
+	});
+	const query = params.toString() ? `?${params.toString()}` : "";
+	return apiCall(`/admin/payday/repayments${query}`, "GET");
+}
+
+// Fetch repayments for a specific loan
+export async function getCDFRepaymentsByLoanId(loanId: string) {
+	return apiCall(`/admin/payday/loans/repayment/${loanId}`, "GET");
+}
+
+// Fetch single repayment by id
+export async function getCDFRepaymentById(repaymentId: string) {
+	return apiCall(`/admin/payday/repayments/${repaymentId}`, "GET");
+}
+
+// Record a repayment (assumption: endpoint accepts POST to record a manual repayment)
+// NOTE: If your backend uses a different endpoint, update this helper accordingly.
+export async function recordCDFRepayment(
+	repaymentId: string,
+	payload: Record<string, any>
+) {
+	return apiCall(
+		`/admin/payday/repayments/${repaymentId}/record-payment`,
+		"POST",
+		payload
+	);
+}
+
+// Fetch invoices with filters
+export async function getCDFInvoices(filters: Record<string, any> = {}) {
+	const params = new URLSearchParams();
+	Object.entries(filters).forEach(([k, v]) => {
+		if (v !== undefined && v !== null && v !== "") params.append(k, String(v));
+	});
+	const query = params.toString() ? `?${params.toString()}` : "";
+	return apiCall(`/admin/payday/invoices${query}`, "GET");
+}
+
+// Fetch single invoice by id
+export async function getCDFInvoiceById(invoiceId: string) {
+	return apiCall(`/admin/payday/invoices/${invoiceId}`, "GET");
+}
+
+// Customer endpoints (list & single) used by Creditflex/payday
+export async function getPaydayCustomers(params: Record<string, any> = {}) {
+	const qp = new URLSearchParams();
+	Object.entries(params).forEach(([k, v]) => {
+		if (v !== undefined && v !== null && v !== "") qp.append(k, String(v));
+	});
+	const query = qp.toString() ? `?${qp.toString()}` : "";
+	return apiCall(`/admin/payday/customers${query}`, "GET");
+}
+
+export async function getPaydayCustomerById(wacsCustomerId: string) {
+	return apiCall(`/admin/payday/customers/${wacsCustomerId}`, "GET");
+}
+
 export async function getCDFAllInvoices() {
 	return apiCall(`/admin/payday/invoices`, "GET");
 }
@@ -3219,4 +3281,28 @@ export async function unmarkPartnerPaid(commissionId: string) {
  */
 export async function unmarkBothPaid(commissionId: string) {
 	return apiCall(`/admin/mbe/unmark-both-paid/${commissionId}`, "PATCH");
+}
+
+// SMS Interface and Functions
+export interface SendSmsData {
+	phone: string[];
+	message: string;
+	customerId: string;
+	channel: string;
+}
+
+/**
+ * Send SMS to customer
+ * @param smsData - The SMS data to send
+ */
+export async function sendSms(smsData: SendSmsData) {
+	// Determine endpoint based on environment
+	const isDev =
+		process.env.NODE_ENV === "development" ||
+		process.env.NEXT_PUBLIC_API_URL?.includes("stg") ||
+		process.env.NEXT_PUBLIC_API_URL?.includes("dev");
+
+	const endpoint = isDev ? "/test/send-sms" : "/resources/send-sms";
+
+	return apiCall(endpoint, "POST", smsData);
 }

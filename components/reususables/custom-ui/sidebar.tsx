@@ -457,6 +457,12 @@ export function AppSidebar() {
 						],
 					},
 					{
+						title: "Customers",
+						icon: Users,
+						url: `/access/${accessRole}/creditflex/customers`,
+						id: `${accessRole}-creditflex-customers`,
+					},
+					{
 						title: "Loan Products",
 						icon: Receipt,
 						url: `/access/${accessRole}/creditflex/loan-products`,
@@ -471,7 +477,7 @@ export function AppSidebar() {
 					{
 						title: "Repayment",
 						icon: Package,
-						url: `/access/${accessRole}`, ///creditflex/repayments`,
+						url: `/access/${accessRole}/creditflex/repayments`,
 						id: `${accessRole}-creditflex-repayments`,
 					},
 					{
