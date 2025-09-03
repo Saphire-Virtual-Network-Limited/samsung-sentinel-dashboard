@@ -23,6 +23,7 @@ import {
 	IdCard,
 	Receipt,
 	Package,
+	MessageSquare,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -216,6 +217,16 @@ export function AppSidebar() {
 			url: "/access/admin/stores",
 			id: "admin-stores",
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/admin/sms",
+						id: "admin-sms",
+					},
+			  ]
+			: []),
 		{
 			icon: IoBusiness,
 			title: "Staff",
@@ -651,6 +662,16 @@ export function AppSidebar() {
 						id: "admin-users",
 						url: "/access/sub-admin/users/",
 					},
+					...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+						? [
+								{
+									icon: MessageSquare,
+									title: "SMS",
+									url: "/access/sub-admin/sms",
+									id: "sub-admin-sms",
+								},
+						  ]
+						: []),
 
 					{
 						icon: Package2Icon,
@@ -1214,6 +1235,16 @@ export function AppSidebar() {
 				},
 			],
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/collection-officer/sms",
+						id: "collection-officer-sms",
+					},
+			  ]
+			: []),
 	];
 
 	// Get items based on user role

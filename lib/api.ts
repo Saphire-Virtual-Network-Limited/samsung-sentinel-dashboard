@@ -3285,10 +3285,10 @@ export async function unmarkBothPaid(commissionId: string) {
 
 // SMS Interface and Functions
 export interface SendSmsData {
-	phone: string[];
+	phone?: string[];
 	message: string;
-	customerId: string;
-	channel: string;
+	customerId?: string;
+	channel?: string;
 }
 
 /**
@@ -3296,13 +3296,12 @@ export interface SendSmsData {
  * @param smsData - The SMS data to send
  */
 export async function sendSms(smsData: SendSmsData) {
-	// Determine endpoint based on environment
-	const isDev =
-		process.env.NODE_ENV === "development" ||
-		process.env.NEXT_PUBLIC_API_URL?.includes("stg") ||
-		process.env.NEXT_PUBLIC_API_URL?.includes("dev");
-
-	const endpoint = isDev ? "/test/send-sms" : "/resources/send-sms";
-
-	return apiCall(endpoint, "POST", smsData);
+	return apiCall("/admin/customers/send-sms", "POST", smsData);
+}
+/**
+ * Get all SMS sent to a customer by customerId
+ * @param customerId - The customer ID
+ */
+export async function getCustomerSmsById(customerId: string) {
+	return apiCall(`/admin/customers/sms/${customerId}`, "GET");
 }

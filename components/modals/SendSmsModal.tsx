@@ -19,7 +19,7 @@ interface SendSmsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	customer: {
-		channel: string;
+		channel?: string;
 		customerId: string;
 		phone?: string;
 		bvnPhoneNumber?: string;

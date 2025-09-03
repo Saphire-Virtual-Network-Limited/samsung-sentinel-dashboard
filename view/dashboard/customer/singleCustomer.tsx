@@ -57,6 +57,7 @@ import {
 } from "@/components/reususables";
 import { CustomerRecord } from "./types";
 import SendSmsModal from "@/components/modals/SendSmsModal";
+import SmsHistory from "@/components/dashboard/SmsHistory";
 import {
 	Modal,
 	ModalContent,
@@ -3506,6 +3507,10 @@ export default function CollectionSingleCustomerPage() {
 							</InfoCard>
 						)}
 
+						{hasPermission(role, "canViewCommunicationLog", userEmail) && (
+							<SmsHistory customerId={customer?.customerId || ""} />
+						)}
+
 						{/* COMMUNICATION LOG */}
 						{hasPermission(role, "canViewCommunicationLog", userEmail) && (
 							<CommunicationLog />
@@ -4175,7 +4180,7 @@ export default function CollectionSingleCustomerPage() {
 					bvnPhoneNumber: customer?.bvnPhoneNumber,
 					firstName: customer?.firstName,
 					lastName: customer?.lastName,
-					channel:customer?.channel,
+					channel: customer?.channel,
 				}}
 			/>
 		</div>
