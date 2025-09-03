@@ -212,6 +212,9 @@ type DueLoanRecord = {
 					erpSerialNo?: string | null;
 					devfinStatus?: boolean;
 				};
+				dueDate?: string;
+				startDate?: string;
+				endDate?: string;
 			}
 		];
 		regBy: {
@@ -318,7 +321,6 @@ type TransformedDueLoanRecord = {
 	email: string;
 	phone: string;
 	altPhone: string;
-
 	state: string;
 	loanAmount: string;
 	duration: string | number;
