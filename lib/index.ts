@@ -9,6 +9,7 @@ export * from "./modeToggle";
 export * from "./api";
 export * from "./globalContext";
 export * from "./helper";
+export * from "./passwordSecurity";
 import InternetStatus from "./internetCheck";
 
 import {

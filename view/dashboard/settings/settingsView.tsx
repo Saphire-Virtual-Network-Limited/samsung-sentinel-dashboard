@@ -22,6 +22,7 @@ import {
 	showToast,
 	cn,
 	GeneralSans_SemiBold,
+	onPasswordChanged,
 } from "@/lib";
 
 interface ProfileData {
@@ -184,6 +185,16 @@ export default function SettingsView() {
 			return;
 		}
 
+		// Prevent setting password back to default insecure password
+		if (passwordForm.password === "Password123!") {
+			showToast({
+				type: "error",
+				message:
+					"You cannot use the default password 'Password123!' for security reasons",
+			});
+			return;
+		}
+
 		try {
 			setIsUpdatingPassword(true);
 			setOldPasswordError("");
@@ -207,6 +218,9 @@ export default function SettingsView() {
 				oldPassword: passwordForm.oldPassword,
 				confirmPassword: passwordForm.confirmPassword,
 			});
+
+			// Update password security status
+			onPasswordChanged(passwordForm.password);
 
 			setPasswordForm({ oldPassword: "", password: "", confirmPassword: "" });
 			showToast({ type: "success", message: "Password updated successfully" });

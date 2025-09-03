@@ -19,6 +19,7 @@ import {
 	Search,
 	Plus,
 	RefreshCw,
+	MessageSquare,
 } from "lucide-react";
 import {
 	getCustomerRecordById,
@@ -40,6 +41,7 @@ import {
 	InjectPaymentHistoryData,
 	getDeviceLocksLogs,
 	deleteCustomerMandateAndUpdateLastPoint,
+	sendSms,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -54,6 +56,8 @@ import {
 	AutoCompleteField,
 } from "@/components/reususables";
 import { CustomerRecord } from "./types";
+import SendSmsModal from "@/components/modals/SendSmsModal";
+import SmsHistory from "@/components/dashboard/SmsHistory";
 import {
 	Modal,
 	ModalContent,
@@ -741,6 +745,13 @@ export default function CollectionSingleCustomerPage() {
 		isOpen: isRegenerateMandateSuccess,
 		onOpen: onRegenerateMandateSuccess,
 		onClose: onRegenerateMandateSuccessClose,
+	} = useDisclosure();
+
+	// Send SMS modal
+	const {
+		isOpen: isSendSms,
+		onOpen: onSendSms,
+		onClose: onSendSmsClose,
 	} = useDisclosure();
 
 	const [isInjectingPayment, setIsInjectingPayment] = useState(false);
@@ -1575,6 +1586,24 @@ export default function CollectionSingleCustomerPage() {
 										label="Main Phone"
 										value={customer.mainPhoneNumber}
 									/>
+
+									{/* SMS Button */}
+									{hasPermission(role, "canSendSms", userEmail) && (
+										<div className="bg-default-50 rounded-lg p-4">
+											<Button
+												color="primary"
+												variant="solid"
+												onPress={() => {
+													setSelectedCustomer(customer);
+													onSendSms();
+												}}
+												startContent={<MessageSquare className="w-4 h-4" />}
+											>
+												Send SMS
+											</Button>
+										</div>
+									)}
+
 									<InfoField label="MBE ID" value={customer.mbeId} />
 									<InfoField
 										label="Mono Customer Connected ID"
@@ -3478,6 +3507,10 @@ export default function CollectionSingleCustomerPage() {
 							</InfoCard>
 						)}
 
+						{hasPermission(role, "canViewCommunicationLog", userEmail) && (
+							<SmsHistory customerId={customer?.customerId || ""} />
+						)}
+
 						{/* COMMUNICATION LOG */}
 						{hasPermission(role, "canViewCommunicationLog", userEmail) && (
 							<CommunicationLog />
@@ -4135,6 +4168,17 @@ export default function CollectionSingleCustomerPage() {
 				confirmText="Got It"
 				cancelText=""
 				variant="success"
+			/>
+
+			{/* Send SMS Modal */}
+			<SendSmsModal
+				isOpen={isSendSms}
+				onClose={onSendSmsClose}
+				customer={{
+					customerId: customer?.customerId || "",
+					firstName: customer?.firstName,
+					lastName: customer?.lastName,
+				}}
 			/>
 		</div>
 	);

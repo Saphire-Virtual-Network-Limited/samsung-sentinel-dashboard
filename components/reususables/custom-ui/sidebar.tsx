@@ -23,6 +23,7 @@ import {
 	IdCard,
 	Receipt,
 	Package,
+	MessageSquare,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -216,6 +217,16 @@ export function AppSidebar() {
 			url: "/access/admin/stores",
 			id: "admin-stores",
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/admin/sms",
+						id: "admin-sms",
+					},
+			  ]
+			: []),
 		{
 			icon: IoBusiness,
 			title: "Staff",
@@ -457,6 +468,12 @@ export function AppSidebar() {
 						],
 					},
 					{
+						title: "Customers",
+						icon: Users,
+						url: `/access/${accessRole}/creditflex/customers`,
+						id: `${accessRole}-creditflex-customers`,
+					},
+					{
 						title: "Loan Products",
 						icon: Receipt,
 						url: `/access/${accessRole}/creditflex/loan-products`,
@@ -471,7 +488,7 @@ export function AppSidebar() {
 					{
 						title: "Repayment",
 						icon: Package,
-						url: `/access/${accessRole}`, ///creditflex/repayments`,
+						url: `/access/${accessRole}/creditflex/repayments`,
 						id: `${accessRole}-creditflex-repayments`,
 					},
 					{
@@ -645,6 +662,16 @@ export function AppSidebar() {
 						id: "admin-users",
 						url: "/access/sub-admin/users/",
 					},
+					...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+						? [
+								{
+									icon: MessageSquare,
+									title: "SMS",
+									url: "/access/sub-admin/sms",
+									id: "sub-admin-sms",
+								},
+						  ]
+						: []),
 
 					{
 						icon: Package2Icon,
@@ -792,6 +819,16 @@ export function AppSidebar() {
 			url: "/access/dev/stores",
 			id: "developer-stores",
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/dev/sms",
+						id: "developer-sms",
+					},
+			  ]
+			: []),
 		{
 			icon: Code,
 			title: "API Docs",
@@ -1208,6 +1245,16 @@ export function AppSidebar() {
 				},
 			],
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/collection-officer/sms",
+						id: "collection-officer-sms",
+					},
+			  ]
+			: []),
 	];
 
 	// Get items based on user role

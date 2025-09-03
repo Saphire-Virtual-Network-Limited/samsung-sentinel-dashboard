@@ -64,6 +64,7 @@ export interface PermissionConfig {
 	canInjectTransaction: boolean;
 	canChangeMbeAssignment: boolean;
 	canViewReconciliationHistory: boolean;
+	canSendSms: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -101,6 +102,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 
 		canChangeMbeAssignment: true,
 		canViewReconciliationHistory: true,
+		canSendSms: true,
 		// Admin has no special permissions by default
 		// All permissions default to false
 	},
@@ -130,6 +132,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canInjectTransaction: true,
 		canChangeMbeAssignment: true,
 		canViewReconciliationHistory: true,
+		canSendSms: true,
 	},
 
 	"collection-admin": {
@@ -138,12 +141,14 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canViewOverDuePayments: true,
+		canSendSms: true,
 	},
 	"collection-officer": {
 		// canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canTriggerDeviceActions: true,
+		canSendSms: true,
 		// Collection officer has no special permissions
 		// All permissions default to false
 	},
@@ -161,6 +166,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		canInjectTransaction: true,
+		canSendSms: true,
 	},
 	developer: {
 		canUpdateWalletBalance: true,
@@ -176,6 +182,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		canInjectTransaction: true,
+		canSendSms: true,
 	},
 	finance: {
 		// Finance has no special permissions
@@ -340,6 +347,7 @@ function getDefaultPermissions(): PermissionConfig {
 		canInjectTransaction: false,
 		canChangeMbeAssignment: false,
 		canViewReconciliationHistory: false,
+		canSendSms: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};
