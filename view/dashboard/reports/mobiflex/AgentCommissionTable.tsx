@@ -394,7 +394,6 @@ const AgentCommissionTable = () => {
 		try {
 			const res = await paySingleMbe({
 				mbeId: modal.agent.mbeId,
-				triggeredBy: "ADMIN_USER_ID",
 			});
 
 			// Create payment result for report
@@ -453,7 +452,6 @@ const AgentCommissionTable = () => {
 
 			const res = await bulkPayMbes({
 				mbeIds: Array.from(mbeIds),
-				triggeredBy: "ADMIN_USER_ID",
 			});
 			didRespond = true;
 			clearTimeout(timer);
