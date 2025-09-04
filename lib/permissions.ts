@@ -166,6 +166,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		canInjectTransaction: true,
+		canSendSms: true,
 	},
 	developer: {
 		canUpdateWalletBalance: true,
@@ -181,6 +182,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		canInjectTransaction: true,
+		canSendSms: true,
 	},
 	finance: {
 		// Finance has no special permissions

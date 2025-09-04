@@ -151,6 +151,7 @@ export default function BulkSmsPage() {
 			const smsData: SendSmsData = {
 				phone: phoneNumbers,
 				message: message.trim(),
+				channel: "AT", // Always use AT as channel
 			};
 
 			await sendSms(smsData);

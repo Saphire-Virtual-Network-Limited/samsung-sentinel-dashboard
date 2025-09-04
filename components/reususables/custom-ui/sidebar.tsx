@@ -819,6 +819,16 @@ export function AppSidebar() {
 			url: "/access/dev/stores",
 			id: "developer-stores",
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/dev/sms",
+						id: "developer-sms",
+					},
+			  ]
+			: []),
 		{
 			icon: Code,
 			title: "API Docs",

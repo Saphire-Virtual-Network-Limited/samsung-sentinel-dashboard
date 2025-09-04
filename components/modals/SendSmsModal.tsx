@@ -8,10 +8,8 @@ import {
 	ModalBody,
 	ModalFooter,
 	Button,
-	Chip,
-	Input,
 } from "@heroui/react";
-import { Plus, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { TextAreaField } from "@/components/reususables";
 import { showToast, sendSms, SendSmsData } from "@/lib";
 
@@ -19,10 +17,7 @@ interface SendSmsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	customer: {
-		channel?: string;
 		customerId: string;
-		phone?: string;
-		bvnPhoneNumber?: string;
 		firstName?: string;
 		lastName?: string;
 	};
@@ -34,144 +29,13 @@ export default function SendSmsModal({
 	customer,
 }: SendSmsModalProps) {
 	const [message, setMessage] = useState("");
-	const [phoneInput, setPhoneInput] = useState("");
-	const [phoneNumbers, setPhoneNumbers] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
-
-	const formatPhoneNumber = useCallback((phone: string) => {
-		if (!phone) return phone;
-
-		const cleaned = phone.replace(/[^\d+]/g, "");
-
-		if (cleaned.startsWith("+")) return cleaned;
-
-		if (cleaned.startsWith("234")) return `+${cleaned}`;
-
-		if (cleaned.startsWith("0")) return `+234${cleaned.slice(1)}`;
-
-		if (/^[789]\d{9}$/.test(cleaned)) return `+234${cleaned}`;
-
-		if (/^\d{10,15}$/.test(cleaned) && !cleaned.startsWith("234")) {
-			return `+${cleaned}`;
-		}
-
-		return cleaned;
-	}, []);
-
-	const initializePhoneNumbers = useCallback(() => {
-		const numbers: string[] = [];
-
-		if (customer.phone && customer.phone !== "N/A") {
-			const formattedPhone = formatPhoneNumber(customer.phone);
-			numbers.push(formattedPhone);
-		}
-
-		if (customer.bvnPhoneNumber && customer.bvnPhoneNumber !== "N/A") {
-			const formattedBvnPhone = formatPhoneNumber(customer.bvnPhoneNumber);
-			if (!numbers.includes(formattedBvnPhone)) {
-				numbers.push(formattedBvnPhone);
-			}
-		}
-
-		setPhoneNumbers(numbers);
-	}, [customer.phone, customer.bvnPhoneNumber, formatPhoneNumber]);
 
 	React.useEffect(() => {
 		if (isOpen) {
-			initializePhoneNumbers();
 			setMessage("");
-			setPhoneInput("");
 		}
-	}, [isOpen, initializePhoneNumbers]);
-
-	const isValidPhoneNumber = useCallback((phone: string) => {
-		if (!phone) return false;
-
-		const cleaned = phone.replace(/[^\d+]/g, "");
-
-		return (
-			/^(\+234|234)[789]\d{9}$/.test(cleaned) ||
-			/^0[789]\d{9}$/.test(cleaned) ||
-			/^[789]\d{9}$/.test(cleaned) ||
-			/^\+\d{10,15}$/.test(cleaned)
-		);
-	}, []);
-
-	const addPhoneNumber = useCallback(
-		(phone: string) => {
-			const trimmed = phone.trim();
-			if (!trimmed) return;
-
-			if (!isValidPhoneNumber(trimmed)) {
-				showToast({
-					type: "error",
-					message: "Please enter a valid phone number",
-					duration: 3000,
-				});
-				return;
-			}
-
-			const formatted = formatPhoneNumber(trimmed);
-
-			if (phoneNumbers.some((existingNumber) => existingNumber === formatted)) {
-				showToast({
-					type: "warning",
-					message: "Phone number already added",
-					duration: 3000,
-				});
-				return;
-			}
-
-			setPhoneNumbers((prev) => [...prev, formatted]);
-			setPhoneInput("");
-		},
-		[phoneNumbers, isValidPhoneNumber, formatPhoneNumber]
-	);
-
-	const handlePhoneInputChange = useCallback(
-		(value: string) => {
-			if (value.includes(",")) {
-				const numbers = value.split(",");
-				const newNumber = numbers[0].trim();
-				const remaining = numbers.slice(1).join(",");
-
-				if (newNumber) {
-					addPhoneNumber(newNumber);
-				}
-				setPhoneInput(remaining);
-			} else {
-				setPhoneInput(value);
-			}
-		},
-		[addPhoneNumber]
-	);
-
-	const handlePhoneInputKeyPress = useCallback(
-		(e: React.KeyboardEvent) => {
-			if (e.key === "Enter" || e.key === ",") {
-				e.preventDefault();
-				addPhoneNumber(phoneInput);
-			}
-		},
-		[phoneInput, addPhoneNumber]
-	);
-
-	const removePhoneNumber = useCallback((index: number) => {
-		setPhoneNumbers((prev) => prev.filter((_, i) => i !== index));
-	}, []);
-
-	const handlePaste = useCallback(
-		(e: React.ClipboardEvent) => {
-			e.preventDefault();
-			const pastedText = e.clipboardData.getData("text");
-			const numbers = pastedText.split(/[,\s\n]+/).filter(Boolean);
-
-			numbers.forEach((number) => {
-				addPhoneNumber(number);
-			});
-		},
-		[addPhoneNumber]
-	);
+	}, [isOpen]);
 
 	const messageLength = useMemo(() => message.length, [message]);
 	const isMessageValid = useMemo(
@@ -180,8 +44,8 @@ export default function SendSmsModal({
 	);
 
 	const canSend = useMemo(() => {
-		return isMessageValid && phoneNumbers.length > 0 && !isLoading;
-	}, [isMessageValid, phoneNumbers.length, isLoading]);
+		return isMessageValid && !isLoading;
+	}, [isMessageValid, isLoading]);
 
 	const handleSendSms = useCallback(async () => {
 		if (!canSend) return;
@@ -189,19 +53,16 @@ export default function SendSmsModal({
 		setIsLoading(true);
 		try {
 			const smsData: SendSmsData = {
-				phone: phoneNumbers,
 				message: message.trim(),
 				customerId: customer.customerId,
-				channel: customer.channel,
+				channel: "AT", // Always use AT as channel
 			};
 
 			await sendSms(smsData);
 
 			showToast({
 				type: "success",
-				message: `SMS sent successfully to ${phoneNumbers.length} number${
-					phoneNumbers.length > 1 ? "s" : ""
-				}`,
+				message: "SMS sent successfully",
 				duration: 5000,
 			});
 
@@ -216,14 +77,7 @@ export default function SendSmsModal({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [
-		canSend,
-		phoneNumbers,
-		message,
-		customer.customerId,
-		customer.channel,
-		onClose,
-	]);
+	}, [canSend, message, customer.customerId, onClose]);
 
 	const handleClose = useCallback(() => {
 		if (!isLoading) {
@@ -290,65 +144,13 @@ export default function SendSmsModal({
 						</div>
 					</div>
 
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<label className="text-sm font-medium text-default-700">
-								Phone Numbers
-							</label>
-							<span className="text-xs text-default-500">
-								{phoneNumbers.length} number
-								{phoneNumbers.length !== 1 ? "s" : ""} added
-							</span>
-						</div>
-
-						<div className="flex gap-2">
-							<Input
-								placeholder="Enter phone number (comma-separated for multiple)"
-								value={phoneInput}
-								onValueChange={handlePhoneInputChange}
-								onKeyDown={handlePhoneInputKeyPress}
-								onPaste={handlePaste}
-								variant="bordered"
-								classNames={{
-									inputWrapper:
-										"data-[hover=true]:border-primary group-data-[focus=true]:border-primary",
-								}}
-								disabled={isLoading}
-							/>
-							<Button
-								color="primary"
-								variant="flat"
-								onPress={() => addPhoneNumber(phoneInput)}
-								isDisabled={!phoneInput.trim() || isLoading}
-								className="shrink-0"
-							>
-								<Plus className="w-4 h-4" />
-								Add
-							</Button>
-						</div>
-
-						{phoneNumbers.length > 0 && (
-							<div className="space-y-2">
-								<div className="flex flex-wrap gap-2">
-									{phoneNumbers.map((phone, index) => (
-										<Chip
-											key={`${phone}-${index}`}
-											onClose={
-												!isLoading ? () => removePhoneNumber(index) : undefined
-											}
-											variant="flat"
-											color="primary"
-										>
-											{phone}
-										</Chip>
-									))}
-								</div>
-							</div>
-						)}
-
-						<p className="text-xs text-default-500">
-							Default numbers from customer profile are automatically added. You
-							can add more numbers or paste comma-separated numbers.
+					<div className="bg-default-50 rounded-lg p-4">
+						<p className="text-sm text-default-600">
+							<strong>Channel:</strong> AT
+						</p>
+						<p className="text-xs text-default-500 mt-1">
+							SMS will be sent to customer&apos;s registered phone numbers via
+							AT channel.
 						</p>
 					</div>
 				</ModalBody>
@@ -368,7 +170,7 @@ export default function SendSmsModal({
 						isLoading={isLoading}
 						isDisabled={!canSend}
 					>
-						{isLoading ? "Sending SMS..." : `Send SMS (${phoneNumbers.length})`}
+						{isLoading ? "Sending SMS..." : "Send SMS"}
 					</Button>
 				</ModalFooter>
 			</ModalContent>
