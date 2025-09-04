@@ -45,7 +45,6 @@ import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
 import { hasPermission } from "@/lib/permissions";
 
-console.log("Selected Product:", getSelectedProduct());
 // Define types for menu items
 type SubItem = {
 	title: string;
@@ -532,7 +531,7 @@ export function AppSidebar() {
 			: [];
 
 	const subAdminItems: MenuItem[] =
-		selectedProduct == "Creditflex"
+		selectedProduct === "Creditflex"
 			? adminCreditflexItems
 			: [
 					{
@@ -686,7 +685,7 @@ export function AppSidebar() {
 			  ];
 
 	const adminItems: MenuItem[] =
-		selectedProduct == "Creditflex"
+		selectedProduct === "Creditflex"
 			? adminCreditflexItems
 			: [...adminRootItems, ...adminRelayItems, ...adminAndroidItems];
 
@@ -1233,16 +1232,6 @@ export function AppSidebar() {
 			],
 		},
 		{
-			...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-						? [
-								{
-									icon: MessageSquare,
-									title: "SMS",
-									url: "/access/collection-officer/sms",
-									id: "collection-officer-sms",
-								},
-						  ]
-						: []),
 			icon: CreditCard,
 			title: "Reports",
 			id: "collection-reports",
