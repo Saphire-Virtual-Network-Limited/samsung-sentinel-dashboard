@@ -1195,7 +1195,7 @@ export function AppSidebar() {
 								{
 									icon: MessageSquare,
 									title: "SMS",
-									url: "/access/sub-admin/sms",
+									url: "/access/collection-admin/sms",
 									id: "sub-admin-sms",
 								},
 						  ]
