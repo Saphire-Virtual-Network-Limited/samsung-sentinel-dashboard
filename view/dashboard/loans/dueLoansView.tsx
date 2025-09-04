@@ -69,6 +69,12 @@ const columns: ColumnDef[] = [
 	{ name: "Service", uid: "service", sortable: true },
 	{ name: "Sale Channel", uid: "saleChannel", sortable: true },
 	{ name: "Sale Rep", uid: "sale_Rep", sortable: true },
+	{
+		name: "Sale Rep Phone Number",
+		uid: "sale_Rep_Phone_Number",
+		sortable: true,
+	},
+
 	{ name: "Store Name", uid: "storeName", sortable: true },
 	{ name: "Down Payment", uid: "downPayment", sortable: true },
 	{ name: "Actions", uid: "actions" },
@@ -342,6 +348,7 @@ type TransformedDueLoanRecord = {
 	service: string;
 	saleChannel: string;
 	sale_Rep: string;
+	sale_Rep_Phone_Number?: string;
 	storeName: string;
 	downPayment: string;
 	devicePrice: string;
@@ -447,18 +454,18 @@ export default function DueLoansView() {
 					: "N/A",
 				duration: loanRecord?.duration || "N/A",
 				startDate: loanRecord?.startDate
-					? new Date(loanRecord.startDate).toLocaleDateString('en-GB', {
-							day: '2-digit',
-							month: '2-digit',
-							year: 'numeric'
-					})
+					? new Date(loanRecord.startDate).toLocaleDateString("en-GB", {
+							day: "2-digit",
+							month: "2-digit",
+							year: "numeric",
+					  })
 					: "N/A",
 				endDate: loanRecord?.endDate
-					? new Date(loanRecord.endDate).toLocaleDateString('en-GB', {
-							day: '2-digit',
-							month: '2-digit',
-							year: 'numeric'
-					})
+					? new Date(loanRecord.endDate).toLocaleDateString("en-GB", {
+							day: "2-digit",
+							month: "2-digit",
+							year: "numeric",
+					  })
 					: "N/A",
 				interest: "9.50%",
 				loanBalance: loanRecord?.loanAmount
@@ -500,6 +507,7 @@ export default function DueLoansView() {
 					customer.regBy?.firstname && customer.regBy?.lastname
 						? `${customer.regBy.firstname} ${customer.regBy.lastname}`
 						: "N/A",
+				sale_Rep_Phone_Number: customer.regBy?.phone || "N/A",
 				storeName: loanRecord?.store?.storeName || "N/A",
 				downPayment: loanRecord?.downPayment
 					? `₦${loanRecord.downPayment.toLocaleString("en-GB")}`
