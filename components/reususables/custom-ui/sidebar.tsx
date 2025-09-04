@@ -1191,6 +1191,17 @@ export function AppSidebar() {
 				},
 			],
 		},
+		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+						? [
+								{
+									icon: MessageSquare,
+									title: "SMS",
+									url: "/access/sub-admin/sms",
+									id: "sub-admin-sms",
+								},
+						  ]
+						: []),
+
 	];
 	const collectionOfficerItems: MenuItem[] = [
 		{
@@ -1222,6 +1233,16 @@ export function AppSidebar() {
 			],
 		},
 		{
+			...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
+						? [
+								{
+									icon: MessageSquare,
+									title: "SMS",
+									url: "/access/collection-officer/sms",
+									id: "collection-officer-sms",
+								},
+						  ]
+						: []),
 			icon: CreditCard,
 			title: "Reports",
 			id: "collection-reports",
