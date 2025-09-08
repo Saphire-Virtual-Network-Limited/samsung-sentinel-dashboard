@@ -1,7 +1,7 @@
 "use client";
 
-import { GeneralSans_Meduim, GeneralSans_SemiBold, cn, getCustomerSmsTotalSent } from "@/lib";
-import { Card, CardBody } from "@heroui/react";
+import { GeneralSans_Meduim, GeneralSans_SemiBold, cn, getCustomerSmsTotalSent, getCustomerEmailTotalSent } from "@/lib";
+import { Card, CardBody, CardHeader, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
 import {
 	Mail,
 	MessageSquare,
@@ -9,14 +9,17 @@ import {
 	Lock,
 	CheckCircle,
 	XCircle,
+	ChevronDown,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 interface SmsData {
 	sent: number;
 	notSent: number;
 	total: number;
 }
+
+type TimeFilter = "today" | "month-till-date" | "since-inception";
 
 const CommunicationLockReport = () => {
 	const [smsData, setSmsData] = useState<SmsData>({
@@ -25,36 +28,97 @@ const CommunicationLockReport = () => {
 		total: 0,
 	});
 	const [isLoading, setIsLoading] = useState(true);
+	const [selectedFilter, setSelectedFilter] = useState<TimeFilter>("since-inception");
+	const [rawSmsData, setRawSmsData] = useState<any[]>([]);
+
+	const filterOptions = [
+		{ key: "today", label: "Today" },
+		{ key: "month-till-date", label: "Month Till Date" },
+		{ key: "since-inception", label: "Since Inception" },
+	];
 
 	// Fetch SMS data
-	useEffect(() => {
-		const fetchSmsData = async () => {
-			try {
-				setIsLoading(true);
-				const response = await getCustomerSmsTotalSent();
-				
-				if (response?.data?.customers?.data) {
-					const smsMessages = response.data.customers.data;
-					const sent = smsMessages.filter((msg: any) => msg.status === "Success").length;
-					const notSent = smsMessages.filter((msg: any) => msg.status === "Failed").length;
-					const total = smsMessages.length;
-
-					setSmsData({
-						sent,
-						notSent,
-						total,
-					});
-				}
-			} catch (error) {
-				console.error("Error fetching SMS data:", error);
-				// Keep default values on error
-			} finally {
-				setIsLoading(false);
+	const fetchSmsData = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			const response = await getCustomerSmsTotalSent();
+			
+			if (response?.data?.numbers?.data) {
+				const smsMessages = response.data.numbers.data;
+				setRawSmsData(smsMessages);
 			}
-		};
-
-		fetchSmsData();
+		} catch (error) {
+			console.error("Error fetching SMS data:", error);
+		} finally {
+			setIsLoading(false);
+		}
 	}, []);
+
+	useEffect(() => {
+		fetchSmsData();
+	}, [fetchSmsData]);
+
+	// Fetch Email data
+	const fetchEmailData = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			const response = await getCustomerEmailTotalSent();
+			console.log('Email data:', response);
+			console.log('Email data:', response.data);
+		} catch (error: any) {
+			console.error("Error fetching Email data:", error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchEmailData();
+	}, [fetchEmailData]);
+
+	// Filter data based on selected time period
+	const getFilteredSmsData = useMemo(() => {
+		if (!rawSmsData.length) return [];
+
+		const now = new Date();
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+		let filteredData = [];
+		switch (selectedFilter) {
+			case "today":
+				filteredData = rawSmsData.filter((item: any) => {
+					const itemDate = new Date(item.createdAt);
+					return itemDate >= today;
+				});
+				break;
+			case "month-till-date":
+				filteredData = rawSmsData.filter((item: any) => {
+					const itemDate = new Date(item.createdAt);
+					return itemDate >= thisMonth;
+				});
+				break;
+			case "since-inception":
+			default:
+				filteredData = rawSmsData;
+				break;
+		}
+
+		return filteredData;
+	}, [selectedFilter, rawSmsData]);
+
+	// Calculate SMS metrics from filtered data
+	const currentSmsData = useMemo(() => {
+		const sent = getFilteredSmsData.filter((msg: any) => msg.status === "Success").length;
+		const notSent = getFilteredSmsData.filter((msg: any) => msg.status !== "Success").length;
+		const total = getFilteredSmsData.length;
+
+		return {
+			sent,
+			notSent,
+			total,
+		};
+	}, [getFilteredSmsData]);
 
 	// Dummy data for email - replace with actual API data when endpoint is ready
 	const emailData = {
@@ -224,22 +288,55 @@ const CommunicationLockReport = () => {
 
 	return (
 		<Card className="border border-gray-200 rounded-xl overflow-hidden">
-			<div className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 border-b border-gray-200">
-				<div className="flex items-center space-x-2">
-					<MessageSquare className="w-4 h-4 text-gray-600" />
-					<h3
-						className={cn(
-							"text-base font-semibold text-gray-900",
-							GeneralSans_SemiBold.className
-						)}
-					>
-						Communication & Lock Status Report
-					</h3>
+			<CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 border-b border-gray-200">
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+					<div className="flex items-center space-x-2">
+						<MessageSquare className="w-4 h-4 text-gray-600" />
+						<div>
+							<h3
+								className={cn(
+									"text-base font-semibold text-gray-900",
+									GeneralSans_SemiBold.className
+								)}
+							>
+								Communication & Lock Status Report
+							</h3>
+							<p className="text-xs text-gray-600 mt-1">
+								Overview of SMS and Email Communication Status
+							</p>
+							
+						</div>
+					</div>
+					<div className="flex items-center gap-2">
+						<Dropdown>
+							<DropdownTrigger>
+								<Button
+									variant="bordered"
+									size="sm"
+									endContent={<ChevronDown className="w-3 h-3" />}
+									isLoading={isLoading}
+								>
+									{filterOptions.find(opt => opt.key === selectedFilter)?.label}
+								</Button>
+							</DropdownTrigger>
+							<DropdownMenu
+								aria-label="Time filter"
+								selectedKeys={[selectedFilter]}
+								onAction={(key) => {
+									const selected = key as TimeFilter;
+									setSelectedFilter(selected);
+								}}
+							>
+								{filterOptions.map((option) => (
+									<DropdownItem key={option.key}>
+										{option.label}
+									</DropdownItem>
+								))}
+							</DropdownMenu>
+						</Dropdown>
+					</div>
 				</div>
-				<p className="text-xs text-gray-600 mt-1">
-					Overview of SMS and Email Communication Status
-				</p>
-			</div>
+			</CardHeader>
 
 			<CardBody className="p-4">
 				{isLoading ? (
@@ -248,7 +345,7 @@ const CommunicationLockReport = () => {
 					</div>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-						{renderMetricCard("sms", smsData)}
+						{renderMetricCard("sms", currentSmsData)}
 						{renderMetricCard("email", emailData)}
 						{/* {renderMetricCard("phoneCalls", dummyData.phoneCalls)} */}
 						{/* {renderMetricCard("lock", dummyData.lock)} */}
