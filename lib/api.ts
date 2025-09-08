@@ -8,6 +8,7 @@ import {
 } from "./passwordSecurity";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const appkey = process.env.NEXT_PUBLIC_APP_KEY;
 
 export interface ApiCallOptions {
 	cache?: RequestCache;
@@ -3339,5 +3340,5 @@ export async function getCustomerSmsTotalSent() {
 
 //get all email sent count
 export async function getCustomerEmailTotalSent() {
-	return apiCall(`/resources/email-logs`, "GET");
+	return apiCall(`/resources/email-logs`, "GET" );
 }

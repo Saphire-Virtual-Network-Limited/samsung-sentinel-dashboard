@@ -12,13 +12,16 @@ import {
 } from "@heroui/react";
 import { Plus, MessageSquare, Send, Trash2 } from "lucide-react";
 import { TextAreaField } from "@/components/reususables";
-import { showToast, sendSms, SendSmsData } from "@/lib";
+import { showToast, sendSms, SendSmsData, getCustomerSmsTotalSent } from "@/lib";
+import SmsAnalyticsCard from "@/components/dashboard/SmsAnalyticsCard";
+import SmsDataTable from "@/components/dashboard/SmsDataTable";
 
 export default function BulkSmsPage() {
 	const [message, setMessage] = useState("");
 	const [phoneInput, setPhoneInput] = useState("");
 	const [phoneNumbers, setPhoneNumbers] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [showDataTable, setShowDataTable] = useState(false);
 
 	const formatPhoneNumber = useCallback((phone: string) => {
 		if (!phone) return phone;
@@ -180,8 +183,46 @@ export default function BulkSmsPage() {
 		}
 	}, [canSend, phoneNumbers, message]);
 
+	const getTotalSmsSent = useCallback(async () => {
+		try {
+			const total = await getCustomerSmsTotalSent();
+			console.log('Total SMS sent:', total.data.numbers.count);			
+			console.log('Total SMS sent:', total.data.numbers.data);
+		} catch (error) {
+			console.error('Error getting total SMS sent:', error);
+		}
+	}, []);
+
+	// Call on component mount
+	React.useEffect(() => {
+		getTotalSmsSent();
+	}, [getTotalSmsSent]);
+
+	const handleShowTable = useCallback(() => {
+		setShowDataTable(true);
+	}, []);
+
+	const handleCloseTable = useCallback(() => {
+		setShowDataTable(false);
+	}, []);
+
 	return (
-		<div className=" max-w-4xl mx-auto">
+		<div className="max-w-6xl mx-auto space-y-6">
+			{/* Analytics Card */}
+			<SmsAnalyticsCard 
+				onShowTable={handleShowTable}
+				showTableButton={true}
+			/>
+
+			{/* Data Table */}
+			{showDataTable && (
+				<SmsDataTable 
+					isVisible={showDataTable}
+					onClose={handleCloseTable}
+				/>
+			)}
+
+			{/* SMS Compose Section */}
 			<div className="mb-6">
 				<p className="text-default-600">
 					Send SMS messages to multiple phone numbers at once

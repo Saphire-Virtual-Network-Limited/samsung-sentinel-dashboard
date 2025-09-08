@@ -1107,12 +1107,12 @@ export default function SingleRefereeView({
 											value: "Referee not answering calls",
 										},
 										{
-											label: "Number switched off / unreachable",
+											label: "Number switched off / unreachable", 
 											value: "Number switched off / unreachable",
 										},
 										{
 											label: "Referee does not know the customer",
-											value: "Referee does not know the customer",
+											value: "Referee does not know the customer", 
 										},
 										{
 											label: "Referee advised us to cancel the loan",
@@ -1121,6 +1121,26 @@ export default function SingleRefereeView({
 										{
 											label: "Referee declined standing as a referee",
 											value: "Referee declined standing as a referee",
+										},
+										{
+											label: "Customer number is switched off",
+											value: "Customer number is switched off",
+										},
+										{
+											label: "Customer number isn't reachable",
+											value: "Customer number isn't reachable", 
+										},
+										{
+											label: "Customer number doesn't exist",
+											value: "Customer number doesn't exist",
+										},
+										{
+											label: "Wrong customer's number",
+											value: "Wrong customer's number",
+										},
+										{
+											label: "Bad credit history",
+											value: "Bad credit history",
 										},
 										{ label: "Others", value: "Others" },
 									]}
