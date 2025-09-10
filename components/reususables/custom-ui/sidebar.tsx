@@ -969,6 +969,10 @@ export function AppSidebar() {
 						},
 					],
 				},
+				{
+					title: "Commissions",
+					url: "/access/finance/reports/commissions",
+				},
 				{ title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/finance/reports/tracker" },
 			],
@@ -1060,6 +1064,10 @@ export function AppSidebar() {
 							url: "/access/audit/reports/mobiflex",
 						},
 					],
+				},
+				{
+					title: "Commissions",
+					url: "/access/audit/reports/commissions",
 				},
 				{ title: "Drop-offs", url: "/access/audit/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/audit/reports/tracker" },
@@ -1191,16 +1199,15 @@ export function AppSidebar() {
 			],
 		},
 		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-						? [
-								{
-									icon: MessageSquare,
-									title: "SMS",
-									url: "/access/collection-admin/sms",
-									id: "sub-admin-sms",
-								},
-						  ]
-						: []),
-
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/collection-admin/sms",
+						id: "sub-admin-sms",
+					},
+			  ]
+			: []),
 	];
 	const collectionOfficerItems: MenuItem[] = [
 		{
