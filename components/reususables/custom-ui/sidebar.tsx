@@ -304,6 +304,12 @@ export function AppSidebar() {
 			url: "/access/admin/users/",
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/admin/payout-scheduler",
+			id: "admin-payout-scheduler",
+		},
+		{
 			icon: Package2Icon,
 			title: "Inventory",
 			id: "admin-inventory",
@@ -585,6 +591,12 @@ export function AppSidebar() {
 						title: "Stores",
 						url: "/access/sub-admin/stores",
 						id: "sub-admin-stores",
+					},
+					{
+						icon: CreditCard,
+						title: "Payout Scheduler",
+						url: "/access/sub-admin/payout-scheduler",
+						id: "sub-admin-payout-scheduler",
 					},
 					{
 						icon: IoBusiness,
@@ -938,6 +950,12 @@ export function AppSidebar() {
 			id: "finance-customers",
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/finance/payout-scheduler",
+			id: "finance-payout-scheduler",
+		},
+		{
 			icon: ChartBar,
 			title: "Reports",
 			id: "sales-reports",
@@ -1028,6 +1046,12 @@ export function AppSidebar() {
 			title: "Customers",
 			url: "/access/audit/customers",
 			id: "audit-customers",
+		},
+		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/audit/payout-scheduler",
+			id: "audit-payout-scheduler",
 		},
 		{
 			icon: ChartBar,
@@ -1191,16 +1215,15 @@ export function AppSidebar() {
 			],
 		},
 		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-						? [
-								{
-									icon: MessageSquare,
-									title: "SMS",
-									url: "/access/collection-admin/sms",
-									id: "sub-admin-sms",
-								},
-						  ]
-						: []),
-
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/collection-admin/sms",
+						id: "sub-admin-sms",
+					},
+			  ]
+			: []),
 	];
 	const collectionOfficerItems: MenuItem[] = [
 		{
