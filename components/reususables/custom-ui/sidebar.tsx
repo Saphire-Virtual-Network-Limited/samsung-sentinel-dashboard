@@ -987,6 +987,10 @@ export function AppSidebar() {
 						},
 					],
 				},
+				{
+					title: "Commissions",
+					url: "/access/finance/reports/commissions",
+				},
 				{ title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/finance/reports/tracker" },
 			],
@@ -1084,6 +1088,10 @@ export function AppSidebar() {
 							url: "/access/audit/reports/mobiflex",
 						},
 					],
+				},
+				{
+					title: "Commissions",
+					url: "/access/audit/reports/commissions",
 				},
 				{ title: "Drop-offs", url: "/access/audit/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/audit/reports/tracker" },
