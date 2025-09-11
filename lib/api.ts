@@ -1,10 +1,10 @@
 import axios from "axios";
 import { cachedApiCall, generateCacheKey } from "./cache";
-import { 
-	getPasswordSecurityStatus, 
-	PasswordStatus, 
-	redirectToPasswordChange, 
-	isExemptRoute 
+import {
+	getPasswordSecurityStatus,
+	PasswordStatus,
+	redirectToPasswordChange,
+	isExemptRoute,
 } from "./passwordSecurity";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -29,13 +29,20 @@ async function apiCall(
 		if (typeof window !== "undefined") {
 			const currentPath = window.location.pathname;
 			const passwordStatus = getPasswordSecurityStatus();
-			
+
 			// Skip password check for auth routes, settings, and login endpoint
 			const isLoginEndpoint = endpoint === "/admin/login";
 			const isProfileEndpoint = endpoint === "/admin/profile";
-			const isPasswordChangeEndpoint = endpoint.includes("/admin/update-password");
-			
-			if (!isLoginEndpoint && !isProfileEndpoint && !isPasswordChangeEndpoint && !isExemptRoute(currentPath)) {
+			const isPasswordChangeEndpoint = endpoint.includes(
+				"/admin/update-password"
+			);
+
+			if (
+				!isLoginEndpoint &&
+				!isProfileEndpoint &&
+				!isPasswordChangeEndpoint &&
+				!isExemptRoute(currentPath)
+			) {
 				if (passwordStatus === PasswordStatus.INSECURE) {
 					redirectToPasswordChange();
 					return new Promise(() => {}); // Never resolve to stop execution
@@ -3331,12 +3338,202 @@ export async function getCustomerSmsById(customerId: string) {
 	return apiCall(`/admin/customers/sms/${customerId}`, "GET");
 }
 
+// Payout Scheduler Interfaces and Functions
+export interface CountdownData {
+	days: number;
+	hours: number;
+	minutes: number;
+	seconds: number;
+	totalSeconds: number;
+	isOverdue: boolean;
+	isPending: boolean;
+	humanReadable: string;
+}
+
+export interface JobData {
+	type: string;
+	scheduledFor: string;
+	testMode?: boolean;
+	scheduledBy?: string;
+	customSchedule?: boolean;
+	payoutFor?: string;
+	manual?: boolean;
+	triggeredAt?: string;
+	originalScheduleTime?: string;
+}
+
+export interface PayoutJobInfo {
+	scheduled: boolean;
+	description: string;
+	schedule: string;
+	executionTime?: string;
+	countdown?: CountdownData;
+	jobId?: string;
+	data?: JobData;
+	isCustomSchedule?: boolean;
+	scheduledBy?: string;
+	nextAvailable?: string;
+}
+
+export interface QueueStats {
+	waiting: number;
+	active: number;
+	total: number;
+}
+
+export interface PayoutStatusResponse {
+	currentTime: string;
+	currentTimeWAT: string;
+	test: PayoutJobInfo;
+	weeklyMbe: PayoutJobInfo;
+	monthlyPartner: PayoutJobInfo;
+	queue: QueueStats;
+	timezone: string;
+}
+
+export interface ScheduleCustomTestDto {
+	scheduledDateTime: string;
+	scheduledBy?: string;
+}
+
+export interface ScheduleCustomTestResponse {
+	message: string;
+	scheduledFor: string;
+	scheduledForWAT: string;
+	scheduledBy: string;
+	hoursUntil: number;
+	jobId: string;
+	previousJobRemoved: boolean;
+}
+
+export interface CancelledJobInfo {
+	jobId: string;
+	scheduledFor: string;
+	scheduledBy: string;
+	wasCustom: boolean;
+}
+
+export interface NewScheduleInfo {
+	type: string;
+	scheduledFor: string;
+	description: string;
+}
+
+export interface CancelCustomTestResponse {
+	message: string;
+	cancelledJob?: CancelledJobInfo;
+	newSchedule: NewScheduleInfo;
+}
+
+export interface TriggerResponse {
+	message: string;
+}
+
+export interface ResetScheduleInfo {
+	test: string;
+	weeklyMbe: string;
+	monthlyPartner: string;
+}
+
+export interface ResetResponse {
+	message: string;
+	schedules: ResetScheduleInfo;
+}
+
+export interface SafeRestartResponse {
+	message: string;
+	existing: number;
+	scheduled: number;
+	preserved: number;
+}
+
+export interface ClearedJobsInfo {
+	total: number;
+	byType: Record<string, number>;
+	byStatus: Record<string, number>;
+}
+
+export interface ClearAllResponse {
+	message: string;
+	clearedJobs: ClearedJobsInfo;
+	timestamp: string;
+}
+
+/**
+ * Get payout queue status with countdown timers
+ */
+export async function getPayoutSchedulerStatus(): Promise<PayoutStatusResponse> {
+	return apiCall("/admin/payout-scheduler/status", "GET");
+}
+
+/**
+ * Schedule a custom test payout
+ * @param scheduleData - The schedule data for custom test payout
+ */
+export async function scheduleCustomTestPayout(
+	scheduleData: ScheduleCustomTestDto
+): Promise<ScheduleCustomTestResponse> {
+	return apiCall(
+		"/admin/payout-scheduler/schedule-custom-test",
+		"POST",
+		scheduleData
+	);
+}
+
+/**
+ * Cancel custom test payout and revert to default schedule
+ */
+export async function cancelCustomTestPayout(): Promise<CancelCustomTestResponse> {
+	return apiCall("/admin/payout-scheduler/cancel-custom-test", "POST");
+}
+
+/**
+ * Trigger immediate test payout
+ */
+export async function triggerTestPayout(): Promise<TriggerResponse> {
+	return apiCall("/admin/payout-scheduler/trigger/test", "POST");
+}
+
+/**
+ * Trigger immediate weekly MBE payout
+ */
+export async function triggerWeeklyMbePayout(): Promise<TriggerResponse> {
+	return apiCall("/admin/payout-scheduler/trigger/weekly-mbe", "POST");
+}
+
+/**
+ * Trigger immediate monthly partner payout
+ */
+export async function triggerMonthlyPartnerPayout(): Promise<TriggerResponse> {
+	return apiCall("/admin/payout-scheduler/trigger/monthly-partner", "POST");
+}
+
+/**
+ * Reset all payout schedules (DANGEROUS)
+ */
+export async function resetAllPayoutSchedules(): Promise<ResetResponse> {
+	return apiCall("/admin/payout-scheduler/reset", "POST");
+}
+
+/**
+ * Safe restart of payout scheduler
+ */
+export async function safeRestartPayoutScheduler(): Promise<SafeRestartResponse> {
+	return apiCall("/admin/payout-scheduler/safe-restart", "POST");
+}
+
+/**
+ * Clear all payout schedules completely (NUCLEAR OPTION)
+ */
+export async function clearAllPayoutSchedules(): Promise<ClearAllResponse> {
+	return apiCall("/admin/payout-scheduler/clear-all", "POST");
+}
+
 //get all sms sent count
 
 export async function getCustomerSmsTotalSent() {
 	return apiCall(`/admin/analytics/sms/total-sent`, "GET");
 }
-
 
 //get all email sent count
 export async function getCustomerEmailTotalSent() {
