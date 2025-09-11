@@ -88,6 +88,7 @@ export interface GenericTableProps<T> {
 	rowsPerPageOptions?: number[]; // Available options for rows per page
 	defaultRowsPerPage?: number; // Default number of rows per page
 	showRowsPerPageSelector?: boolean; // Whether to show the rows per page selector
+	onRowsPerPageChange?: (rowsPerPage: number) => void; // Callback for rows per page change
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
@@ -134,6 +135,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		rowsPerPageOptions = [5, 10, 15, 20, 25, 30, 50, 70, 80, 100],
 		defaultRowsPerPage = 10,
 		showRowsPerPageSelector = false,
+		onRowsPerPageChange,
 	} = props;
 
 	// Column visibility state
@@ -353,7 +355,9 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 							selectionMode="single"
 							onSelectionChange={(keys) => {
 								const selectedKey = Array.from(keys)[0] as string;
-								setRowsPerPage(Number(selectedKey));
+								const newRowsPerPage = Number(selectedKey);
+								setRowsPerPage(newRowsPerPage);
+								onRowsPerPageChange?.(newRowsPerPage);
 							}}
 						>
 							{rowsPerPageOptions.map((option) => (

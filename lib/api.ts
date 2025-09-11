@@ -3364,8 +3364,8 @@ export interface JobData {
 
 export interface PayoutJobInfo {
 	scheduled: boolean;
-	description: string;
-	schedule: string;
+	description?: string;
+	schedule?: string;
 	executionTime?: string;
 	countdown?: CountdownData;
 	jobId?: string;
@@ -3381,14 +3381,38 @@ export interface QueueStats {
 	total: number;
 }
 
-export interface PayoutStatusResponse {
+export interface ServerInfo {
+	schedulerEnabled: boolean;
+	canScheduleJobs: boolean;
+}
+
+export interface JobData {
+	type: string;
+	scheduledFor: string;
+	testMode?: boolean;
+	scheduledBy?: string;
+	customSchedule?: boolean;
+	payoutFor?: string;
+	manual?: boolean;
+}
+
+export interface PayoutStatusData {
 	currentTime: string;
 	currentTimeWAT: string;
+	serverInfo: ServerInfo;
 	test: PayoutJobInfo;
 	weeklyMbe: PayoutJobInfo;
 	monthlyPartner: PayoutJobInfo;
 	queue: QueueStats;
 	timezone: string;
+}
+
+export interface PayoutStatusResponse {
+	statusCode?: number;
+	statusType?: string;
+	message?: string;
+	responseTime?: string;
+	data: PayoutStatusData;
 }
 
 export interface ScheduleCustomTestDto {
@@ -3537,5 +3561,5 @@ export async function getCustomerSmsTotalSent() {
 
 //get all email sent count
 export async function getCustomerEmailTotalSent() {
-	return apiCall(`/resources/email-logs`, "GET" );
+	return apiCall(`/resources/email-logs`, "GET");
 }

@@ -83,7 +83,7 @@ export default function SalesUsersPage() {
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
-	const rowsPerPage = 10;
+	const [rowsPerPage, setRowsPerPage] = useState(10);
 
 	// --- handle date filter ---
 	const handleDateFilter = (start: string, end: string) => {
@@ -315,7 +315,7 @@ export default function SalesUsersPage() {
 	const paged = useMemo(() => {
 		const start = (page - 1) * rowsPerPage;
 		return filtered.slice(start, start + rowsPerPage);
-	}, [filtered, page]);
+	}, [filtered, page, rowsPerPage]);
 
 	const sorted = React.useMemo(() => {
 		return [...paged].sort((a, b) => {
@@ -512,6 +512,11 @@ export default function SalesUsersPage() {
 								onDateFilterChange={handleDateFilter}
 								initialStartDate={startDate}
 								initialEndDate={endDate}
+								showRowsPerPageSelector={true}
+								onRowsPerPageChange={(newRowsPerPage) => {
+									setRowsPerPage(newRowsPerPage);
+									setPage(1);
+								}}
 							/>
 						)}
 					</Tab>
@@ -558,6 +563,11 @@ export default function SalesUsersPage() {
 								initialStartDate={startDate}
 								initialEndDate={endDate}
 								createButton={createMbeButton}
+								showRowsPerPageSelector={true}
+								onRowsPerPageChange={(newRowsPerPage) => {
+									setRowsPerPage(newRowsPerPage);
+									setPage(1);
+								}}
 							/>
 						)}
 					</Tab>
