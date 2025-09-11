@@ -19,6 +19,7 @@ export const fallbackAgentTypes: AgentType[] = [
 	{ label: "Verification", value: "VERIFICATION" },
 	{ label: "Ver", value: "VER" },
 	{ label: "Support", value: "SUPPORT" },
+	{ label: "Telesales", value: "TELESALES" },
 	{ label: "Human Resource", value: "HUMAN_RESOURCE" },
 	{ label: "Verification Officer", value: "VERIFICATION_OFFICER" },
 	{ label: "Inventory Manager", value: "INVENTORY_MANAGER" },
@@ -31,7 +32,13 @@ export const fallbackAgentTypes: AgentType[] = [
 	{ label: "Zoho Notifier", value: "ZOHO_NOTIFIER" },
 	{ label: "Scan Partner", value: "SCAN_PARTNER" },
 	{ label: "MBE", value: "MBE" },
-
+	{ label: "Mobiflex MBE", value: "MOBIFLEX_MBE" },
+	{ label: "Recovery Agent", value: "RECOVERY_AGENT" },
+	{ label: "Recovery Supervisor", value: "RECOVERY_SUPERVISOR" },
+	{ label: "Audit", value: "AUDIT" },
+	{ label: "Cluster Supervisor", value: "CLUSTER_SUPERVISOR" },
+	{ label: "State Manager", value: "STATE_MANAGER" },
+	{ label: "State Supervisor", value: "STATE_SUPERVISOR" },
 	{ label: "Telemarketer", value: "TELEMARKETER" },
 ];
 
@@ -45,7 +52,6 @@ const fetchValidRoles = async (): Promise<AgentType[]> => {
 			role: "GOD_OF_ALL_CREATIONS", // Invalid role to trigger validation
 		});
 
-		// If no error, return fallback data (shouldn't happen)
 		console.warn(
 			"Expected validation error but got success - using fallback roles"
 		);
@@ -77,6 +83,10 @@ const fetchValidRoles = async (): Promise<AgentType[]> => {
 						label = "Mobiflex MBE";
 					} else if (role === "VER") {
 						label = "Ver";
+					} else if (role === "TELESALES") {
+						label = "Telesales";
+					} else if (role === "AUDIT") {
+						label = "Audit";
 					} else {
 						label = role
 							.split("_")
