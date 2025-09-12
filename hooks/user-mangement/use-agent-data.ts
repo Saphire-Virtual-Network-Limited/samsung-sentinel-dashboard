@@ -59,52 +59,59 @@ const fetchValidRoles = async (): Promise<AgentType[]> => {
 	} catch (error: any) {
 		console.log("Extracting roles from validation error:", error?.message);
 
+		let roleMessage = "";
+
 		if (error?.message && Array.isArray(error.message)) {
-			const roleMessage = error.message.find((msg: string) =>
+			roleMessage = error.message.find((msg: string) =>
 				msg.includes("role must be one of the following values:")
 			);
-
-			if (roleMessage) {
-				console.log("Successfully extracted roles from API validation");
-				const rolesString = roleMessage.replace(
-					"role must be one of the following values: ",
-					""
-				);
-				const roles = rolesString
-					.split(", ")
-					.map((role: string) => role.trim());
-
-				const agentTypes: AgentType[] = roles.map((role: string) => {
-					let label = role;
-
-					if (role === "MBE") {
-						label = "MBE";
-					} else if (role === "MOBIFLEX_MBE") {
-						label = "Mobiflex MBE";
-					} else if (role === "VER") {
-						label = "Ver";
-					} else if (role === "TELESALES") {
-						label = "Telesales";
-					} else if (role === "AUDIT") {
-						label = "Audit";
-					} else {
-						label = role
-							.split("_")
-							.map(
-								(word) =>
-									word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-							)
-							.join(" ");
-					}
-
-					return {
-						label,
-						value: role,
-					};
-				});
-
-				return agentTypes;
+		} else if (error?.message && typeof error.message === "string") {
+			if (error.message.includes("role must be one of the following values:")) {
+				roleMessage = error.message;
 			}
+		}
+
+		if (roleMessage) {
+			console.log("Successfully extracted roles from API validation");
+			console.log("Role message:", roleMessage);
+			const rolesString = roleMessage.replace(
+				"role must be one of the following values: ",
+				""
+			);
+			console.log("Roles string:", rolesString);
+			const roles = rolesString.split(", ").map((role: string) => role.trim());
+			console.log("Parsed roles array:", roles);
+			const agentTypes: AgentType[] = roles.map((role: string) => {
+				let label = role;
+
+				if (role === "MBE") {
+					label = "MBE";
+				} else if (role === "MOBIFLEX_MBE") {
+					label = "Mobiflex MBE";
+				} else if (role === "VER") {
+					label = "Ver";
+				} else if (role === "TELESALES") {
+					label = "Telesales";
+				} else if (role === "AUDIT") {
+					label = "Audit";
+				} else {
+					label = role
+						.split("_")
+						.map(
+							(word) =>
+								word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+						)
+						.join(" ");
+				}
+
+				return {
+					label,
+					value: role,
+				};
+			});
+
+			console.log("Final agent types:", agentTypes);
+			return agentTypes;
 		}
 
 		return fallbackAgentTypes;
@@ -138,7 +145,7 @@ export const useAgentData = (): UseAgentDataReturn => {
 			dedupingInterval: 300000, // 5 minutes
 		}
 	);
-
+	console.log("fetched types: ", fetchedAgentTypes);
 	const agentTypes = useMemo(() => {
 		const userRole = userResponse?.data?.role;
 		const typesToFilter = fetchedAgentTypes || filteredFallbackData;
