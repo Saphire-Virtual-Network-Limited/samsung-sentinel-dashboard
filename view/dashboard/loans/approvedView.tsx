@@ -40,6 +40,7 @@ const columns: ColumnDef[] = [
 	{ name: "Loan ID", uid: "loanRecordId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Age", uid: "age", sortable: true },
+	{ name: "Email", uid: "email", sortable: true },
 	{ name: "Device Price", uid: "devicePrice", sortable: true },
 	{ name: "Loan Amount", uid: "loanAmount", sortable: true },
 	{ name: "Down Payment", uid: "downPayment", sortable: true },
@@ -264,6 +265,7 @@ export default function LoansView() {
 						  )}`
 						: "N/A",
 				age: r.customer?.dob ? calculateAge(r.customer.dob) : "N/A",
+				email: r.customer?.email || "N/A",
 				monthlyRepayment: r.monthlyRepayment
 					? `₦${r.monthlyRepayment.toLocaleString("en-GB")}`
 					: "N/A",
