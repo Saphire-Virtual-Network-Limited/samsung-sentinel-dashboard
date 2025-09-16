@@ -1,5 +1,5 @@
 import React from "react";
-import ScanPartnerPage from "@/view/dashboard/staff/scanPartners/scanPartnerViewOld";
+import ScanPartnerPage from "@/view/dashboard/staff/scanPartners/scanPartnerView";
 const Page = () => {
 	return <ScanPartnerPage />;
 };
