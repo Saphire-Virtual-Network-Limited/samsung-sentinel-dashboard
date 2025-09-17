@@ -58,12 +58,16 @@ export function createScanPartnerColorMap(
 	allAgentData: any[]
 ): Map<string, string> {
 	const colorMap = new Map<string, string>();
-	allAgentData.forEach((scanPartnerData: any, index: number) => {
-		colorMap.set(
-			scanPartnerData.userId,
-			SCAN_PARTNER_COLORS[index % SCAN_PARTNER_COLORS.length]
-		);
-	});
+	if (Array.isArray(allAgentData)) {
+		allAgentData.forEach((scanPartnerData: any, index: number) => {
+			if (scanPartnerData && scanPartnerData.userId) {
+				colorMap.set(
+					scanPartnerData.userId,
+					SCAN_PARTNER_COLORS[index % SCAN_PARTNER_COLORS.length]
+				);
+			}
+		});
+	}
 	return colorMap;
 }
 
@@ -98,23 +102,44 @@ export async function fetchExportData(context: ExportContext) {
 			getAllCustomerRecord(context.startDate, context.endDate),
 		]);
 
-		// Combine scan partners with and without agents
-		const scanPartnersWithAgents = agentsResponse?.data || [];
-		const allScanPartners = allScanPartnersResponse?.data || [];
-		const allMbeAgents = allMbeAgentsResponse?.data || [];
-		const commissionAgents = allCommissionsResponse?.data?.agents || [];
+		// Safely extract arrays from API responses with proper type checking
+		const scanPartnersWithAgents = Array.isArray(agentsResponse?.data)
+			? agentsResponse.data
+			: [];
+		const allScanPartners = Array.isArray(allScanPartnersResponse?.data)
+			? allScanPartnersResponse.data
+			: [];
+		const allMbeAgents = Array.isArray(allMbeAgentsResponse?.data)
+			? allMbeAgentsResponse.data
+			: [];
+		const commissionAgents = Array.isArray(allCommissionsResponse?.data?.agents)
+			? allCommissionsResponse.data.agents
+			: [];
+		const customerRecords = Array.isArray(customerRecordsResponse?.data)
+			? customerRecordsResponse.data
+			: [];
+
+		console.log("Data extraction completed:", {
+			scanPartnersWithAgents: scanPartnersWithAgents.length,
+			allScanPartners: allScanPartners.length,
+			allMbeAgents: allMbeAgents.length,
+			commissionAgents: commissionAgents.length,
+			customerRecords: customerRecords.length,
+		});
 
 		// Create a comprehensive list ensuring all partners are included
 		const scanPartnerMap = new Map();
 
 		// First, add all partners with agents (they have the agent data)
 		scanPartnersWithAgents.forEach((partner: any) => {
-			scanPartnerMap.set(partner.userId, partner);
+			if (partner && partner.userId) {
+				scanPartnerMap.set(partner.userId, partner);
+			}
 		});
 
 		// Then, add any partners without agents (they won't have agent data but should still be shown)
 		allScanPartners.forEach((partner: any) => {
-			if (!scanPartnerMap.has(partner.userId)) {
+			if (partner && partner.userId && !scanPartnerMap.has(partner.userId)) {
 				scanPartnerMap.set(partner.userId, {
 					...partner,
 					agents: [], // Empty agents array for partners without agents
@@ -127,12 +152,14 @@ export async function fetchExportData(context: ExportContext) {
 
 		// Add commission agents (these have commission data)
 		commissionAgents.forEach((agent: any) => {
-			allAgentsMap.set(agent.mbeId, agent);
+			if (agent && agent.mbeId) {
+				allAgentsMap.set(agent.mbeId, agent);
+			}
 		});
 
 		// Add all MBE agents (may include agents without commissions)
 		allMbeAgents.forEach((agent: any) => {
-			if (!allAgentsMap.has(agent.mbeId)) {
+			if (agent && agent.mbeId && !allAgentsMap.has(agent.mbeId)) {
 				allAgentsMap.set(agent.mbeId, agent);
 			}
 		});
@@ -144,7 +171,7 @@ export async function fetchExportData(context: ExportContext) {
 				...allCommissionsResponse?.data,
 				agents: Array.from(allAgentsMap.values()), // Comprehensive agents list
 			},
-			customerRecords: customerRecordsResponse?.data || [],
+			customerRecords: customerRecords,
 		};
 	} catch (error) {
 		console.error("Error fetching export data:", error);
@@ -159,6 +186,10 @@ export function createEnhancedImeiMapping(
 	customerRecords: any[]
 ): Map<string, EnhancedCustomerData> {
 	const enhancedImeiToCustomer = new Map<string, EnhancedCustomerData>();
+
+	if (!Array.isArray(customerRecords)) {
+		return enhancedImeiToCustomer;
+	}
 
 	for (const customer of customerRecords) {
 		const loanRecord = customer.LoanRecord?.[0];
@@ -224,16 +255,26 @@ export function getAgentsWithoutPartners(
 ): any[] {
 	const agentsWithPartners = new Set<string>();
 
-	// Collect all agent IDs that have partners
-	allAgentData.forEach((scanPartnerData: any) => {
-		(scanPartnerData.agents || []).forEach((agent: any) => {
-			agentsWithPartners.add(agent.mbeId);
+	// Collect all agent IDs that have partners (safe array handling)
+	if (Array.isArray(allAgentData)) {
+		allAgentData.forEach((scanPartnerData: any) => {
+			if (scanPartnerData && Array.isArray(scanPartnerData.agents)) {
+				scanPartnerData.agents.forEach((agent: any) => {
+					if (agent && agent.mbeId) {
+						agentsWithPartners.add(agent.mbeId);
+					}
+				});
+			}
 		});
-	});
+	}
 
-	// Return agents that don't have partners
+	// Return agents that don't have partners (safe array handling)
+	if (!Array.isArray(commissionAgents)) {
+		return [];
+	}
+
 	return commissionAgents.filter(
-		(agent: any) => !agentsWithPartners.has(agent.mbeId)
+		(agent: any) => agent && agent.mbeId && !agentsWithPartners.has(agent.mbeId)
 	);
 }
 
@@ -380,6 +421,43 @@ export async function createFallbackExport(data: any[], columns: any[]) {
 
 	const buf = await wb.xlsx.writeBuffer();
 	saveAs(new Blob([buf]), "Scan_Partner_Records.xlsx");
+}
+
+/**
+ * Generates worksheet name with date range and generation time
+ */
+export function generateWorksheetName(
+	baseName: string,
+	context: ExportContext
+): string {
+	const now = new Date();
+	const generatedTime = now.toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+
+	let dateRange = "";
+	if (context.startDate && context.endDate) {
+		const start = new Date(context.startDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		const end = new Date(context.endDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		dateRange = ` (${start} - ${end})`;
+	} else if (context.salesPeriod) {
+		dateRange = ` (${context.salesPeriod.toUpperCase()})`;
+	}
+
+	return `${baseName}${dateRange} - Generated ${generatedTime}`;
 }
 
 /**

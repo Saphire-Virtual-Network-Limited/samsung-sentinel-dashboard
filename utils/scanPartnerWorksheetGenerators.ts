@@ -8,6 +8,8 @@ import {
 	createScanPartnerColorMap,
 	findScanPartnerForAgent,
 	createEnhancedImeiMapping,
+	generateWorksheetName,
+	ExportContext,
 	getAgentsWithoutPartners,
 } from "./scanPartnerExportUtils";
 
@@ -18,7 +20,8 @@ export function createCommissionWorksheet(
 	wb: ExcelJS.Workbook,
 	commissionAgents: any[],
 	allAgentData: any[],
-	enhancedImeiToCustomer: Map<string, any>
+	enhancedImeiToCustomer: Map<string, any>,
+	context: ExportContext
 ): void {
 	const ws = wb.addWorksheet("Commissions");
 	const colorMap = createScanPartnerColorMap(allAgentData);
@@ -44,94 +47,132 @@ export function createCommissionWorksheet(
 		{ header: "Total Commission", key: "totalCommission", width: 18 },
 		{ header: "Agent Commission", key: "agentCommission", width: 18 },
 		{ header: "Partner Commission", key: "partnerCommission", width: 18 },
+		{ header: "Agent Amount Paid", key: "agentAmountPaid", width: 18 },
+		{ header: "Agent Amount Owed", key: "agentAmountOwed", width: 18 },
+		{ header: "Partner Amount Paid", key: "partnerAmountPaid", width: 18 },
+		{ header: "Partner Amount Owed", key: "partnerAmountOwed", width: 18 },
 		{ header: "Payment Status", key: "paymentStatus", width: 15 },
 		{ header: "Commission Date", key: "commissionDate", width: 18 },
 		{ header: "Last Updated", key: "lastUpdated", width: 18 },
 	];
 
-	let rowIndex = 1;
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const titleText = generateWorksheetName("COMMISSION REPORT", context);
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:P${titleRow.number}`);
 
-	// Process commission data
-	commissionAgents.forEach((agent: any) => {
-		const scanPartnerInfo = findScanPartnerForAgent(allAgentData, agent.mbeId);
-		const scanPartner = scanPartnerInfo?.scanPartnerData || {};
-		const color = scanPartnerInfo?.color;
+	// Add spacing
+	ws.addRow([]);
 
-		(agent.Commission || []).forEach((commission: any) => {
-			// Get device and customer details
-			let deviceDetails = null;
-			let customerDetails = null;
-			let imei = "N/A";
+	let rowIndex = titleRow.number + 2;
 
-			if (commission.devicesOnLoan) {
-				const deviceOnLoan = commission.devicesOnLoan;
-				imei = deviceOnLoan.imei || "N/A";
-				deviceDetails = {
-					deviceName: deviceOnLoan.device?.deviceName || "N/A",
-					devicePrice:
-						deviceOnLoan.device?.price || deviceOnLoan.devicePrice || 0,
+	// Process commission data (safe array handling)
+	if (Array.isArray(commissionAgents)) {
+		commissionAgents.forEach((agent: any) => {
+			if (!agent) return;
+
+			const scanPartnerInfo = findScanPartnerForAgent(
+				allAgentData,
+				agent.mbeId
+			);
+			const scanPartner = scanPartnerInfo?.scanPartnerData || {};
+			const color = scanPartnerInfo?.color;
+
+			const commissions = Array.isArray(agent.Commission)
+				? agent.Commission
+				: [];
+			commissions.forEach((commission: any) => {
+				if (!commission) return;
+				// Get device and customer details
+				let deviceDetails = null;
+				let customerDetails = null;
+				let imei = "N/A";
+
+				if (commission.devicesOnLoan) {
+					const deviceOnLoan = commission.devicesOnLoan;
+					imei = deviceOnLoan.imei || "N/A";
+					deviceDetails = {
+						deviceName: deviceOnLoan.device?.deviceName || "N/A",
+						devicePrice:
+							deviceOnLoan.device?.price || deviceOnLoan.devicePrice || 0,
+					};
+				}
+
+				if (imei && enhancedImeiToCustomer.has(imei)) {
+					customerDetails = enhancedImeiToCustomer.get(imei);
+				}
+
+				const rowData = {
+					sn: rowIndex++,
+					scanPartnerCompany: scanPartner?.companyName || "N/A",
+					scanPartnerName:
+						scanPartner?.firstName && scanPartner?.lastName
+							? `${scanPartner.firstName} ${scanPartner.lastName}`
+							: "N/A",
+					scanPartnerUserId: scanPartner?.userId || "N/A",
+					scanPartnerPhone: scanPartner?.telephoneNumber || "N/A",
+					agentName: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
+					mbeId: agent.mbeId || "N/A",
+					agentEmail: agent.email || "N/A",
+					agentPhone: agent.phone || "N/A",
+					agentStatus: agent.accountStatus || "N/A",
+					deviceName:
+						deviceDetails?.deviceName || customerDetails?.deviceName || "N/A",
+					imei: imei,
+					devicePrice: formatCurrency(
+						deviceDetails?.devicePrice || customerDetails?.devicePrice || 0
+					),
+					loanAmount: formatCurrency(customerDetails?.loanAmount || 0),
+					customerName: customerDetails?.customerName || "N/A",
+					customerPhone: customerDetails?.customerPhone || "N/A",
+					totalCommission: formatCurrency(commission.commission || 0),
+					agentCommission: formatCurrency(commission.mbeCommission || 0),
+					partnerCommission: formatCurrency(commission.partnerCommission || 0),
+					agentAmountPaid: formatCurrency(
+						commission.agentPaid ? commission.mbeCommission || 0 : 0
+					),
+					agentAmountOwed: formatCurrency(
+						commission.agentPaid ? 0 : commission.mbeCommission || 0
+					),
+					partnerAmountPaid: formatCurrency(
+						commission.partnerPaid ? commission.partnerCommission || 0 : 0
+					),
+					partnerAmountOwed: formatCurrency(
+						commission.partnerPaid ? 0 : commission.partnerCommission || 0
+					),
+					paymentStatus: commission.paymentStatus || "N/A",
+					commissionDate: formatDateValue(commission.date_created),
+					lastUpdated: formatDateValue(commission.updated_at),
 				};
-			}
 
-			if (imei && enhancedImeiToCustomer.has(imei)) {
-				customerDetails = enhancedImeiToCustomer.get(imei);
-			}
+				const row = ws.addRow(rowData);
 
-			const rowData = {
-				sn: rowIndex++,
-				scanPartnerCompany: scanPartner?.companyName || "N/A",
-				scanPartnerName:
-					scanPartner?.firstName && scanPartner?.lastName
-						? `${scanPartner.firstName} ${scanPartner.lastName}`
-						: "N/A",
-				scanPartnerUserId: scanPartner?.userId || "N/A",
-				scanPartnerPhone: scanPartner?.telephoneNumber || "N/A",
-				agentName: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
-				mbeId: agent.mbeId || "N/A",
-				agentEmail: agent.email || "N/A",
-				agentPhone: agent.phone || "N/A",
-				agentStatus: agent.accountStatus || "N/A",
-				deviceName:
-					deviceDetails?.deviceName || customerDetails?.deviceName || "N/A",
-				imei: imei,
-				devicePrice: formatCurrency(
-					deviceDetails?.devicePrice || customerDetails?.devicePrice || 0
-				),
-				loanAmount: formatCurrency(customerDetails?.loanAmount || 0),
-				customerName: customerDetails?.customerName || "N/A",
-				customerPhone: customerDetails?.customerPhone || "N/A",
-				totalCommission: formatCurrency(commission.commission || 0),
-				agentCommission: formatCurrency(commission.mbeCommission || 0),
-				partnerCommission: formatCurrency(commission.partnerCommission || 0),
-				paymentStatus: commission.paymentStatus || "N/A",
-				commissionDate: formatDateValue(commission.date_created),
-				lastUpdated: formatDateValue(commission.updated_at),
-			};
+				// Set date column types
+				setDateColumnTypes(row, rowData, ["commissionDate", "lastUpdated"]);
 
-			const row = ws.addRow(rowData);
+				applyCellStyle(row, color);
 
-			// Set date column types
-			setDateColumnTypes(row, rowData, ["commissionDate", "lastUpdated"]);
-
-			applyCellStyle(row, color);
-
-			// Apply conditional formatting for payment status
-			const paymentStatusCell = row.getCell("paymentStatus");
-			if (commission.paymentStatus === "PAID") {
-				paymentStatusCell.fill = {
-					type: "pattern",
-					pattern: "solid",
-					fgColor: { argb: "FF90EE90" }, // Light green
-				};
-			} else if (commission.paymentStatus === "UNPAID") {
-				paymentStatusCell.fill = {
-					type: "pattern",
-					pattern: "solid",
-					fgColor: { argb: "FFFFCCCB" }, // Light red
-				};
-			}
+				// Apply conditional formatting for payment status
+				const paymentStatusCell = row.getCell("paymentStatus");
+				if (commission.paymentStatus === "PAID") {
+					paymentStatusCell.fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FF90EE90" }, // Light green
+					};
+				} else if (commission.paymentStatus === "UNPAID") {
+					paymentStatusCell.fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FFFFCCCB" }, // Light red
+					};
+				}
+			});
 		});
-	});
+	}
 
 	// Style header and add autofilter
 	applyCellStyle(ws.getRow(1), undefined, true);
@@ -172,17 +213,73 @@ export function createMbeDetailsWorksheet(
 	let rowIndex = 1;
 	const processedAgents = new Set<string>(); // Track processed agent IDs
 
-	// Process agents with partners first
-	for (const scanPartnerData of allAgentData) {
-		const agents = scanPartnerData.agents || [];
-		const color = colorMap.get(scanPartnerData.userId);
+	// Process agents with partners first (safe array handling)
+	if (Array.isArray(allAgentData)) {
+		for (const scanPartnerData of allAgentData) {
+			if (!scanPartnerData) continue;
 
-		for (const agent of agents) {
+			const agents = Array.isArray(scanPartnerData.agents)
+				? scanPartnerData.agents
+				: [];
+			const color = colorMap.get(scanPartnerData.userId);
+
+			for (const agent of agents) {
+				if (!agent) continue;
+
+				if (!processedAgents.has(agent.mbeId)) {
+					const rowData = {
+						sn: rowIndex++,
+						scanPartnerCompany: scanPartnerData.companyName || "N/A",
+						scanPartnerUserId: scanPartnerData.userId || "N/A",
+						mbeId: agent.mbeId,
+						fullName:
+							`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() ||
+							"N/A",
+						email: agent.email || "N/A",
+						phone: agent.phone || "N/A",
+						state: agent.state || agent.MbeKyc?.state || "N/A",
+						accountStatus: agent.accountStatus || "N/A",
+						isActive: agent.isActive ? "Yes" : "No",
+						dob: formatDateValue(agent.dob),
+						createdAt: formatDateValue(agent.createdAt),
+						updatedAt: formatDateValue(agent.updatedAt),
+						city: agent.MbeKyc?.city || agent.city || "N/A",
+						accountName:
+							agent.MbeBank?.[0]?.accountName ||
+							agent.MbeAccountDetails?.accountName ||
+							"N/A",
+						accountNumber:
+							agent.MbeBank?.[0]?.accountNumber ||
+							agent.MbeAccountDetails?.accountNumber ||
+							"N/A",
+						bankName:
+							agent.MbeBank?.[0]?.bankName ||
+							agent.MbeAccountDetails?.bankName ||
+							"N/A",
+					};
+
+					const row = ws.addRow(rowData);
+
+					// Set date column types
+					setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
+
+					applyCellStyle(row, color);
+					processedAgents.add(agent.mbeId);
+				}
+			}
+		}
+	}
+
+	// Process ALL commission agents (including those without partners)
+	if (Array.isArray(commissionAgents)) {
+		for (const agent of commissionAgents) {
+			if (!agent) continue;
+
 			if (!processedAgents.has(agent.mbeId)) {
 				const rowData = {
 					sn: rowIndex++,
-					scanPartnerCompany: scanPartnerData.companyName || "N/A",
-					scanPartnerUserId: scanPartnerData.userId || "N/A",
+					scanPartnerCompany: "N/A",
+					scanPartnerUserId: "N/A",
 					mbeId: agent.mbeId,
 					fullName:
 						`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() ||
@@ -215,53 +312,10 @@ export function createMbeDetailsWorksheet(
 				// Set date column types
 				setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
 
-				applyCellStyle(row, color);
+				// Highlight agents without partners in light gray
+				applyCellStyle(row, "FFF0F0F0");
 				processedAgents.add(agent.mbeId);
 			}
-		}
-	}
-
-	// Process ALL commission agents (including those without partners)
-	for (const agent of commissionAgents) {
-		if (!processedAgents.has(agent.mbeId)) {
-			const rowData = {
-				sn: rowIndex++,
-				scanPartnerCompany: "N/A",
-				scanPartnerUserId: "N/A",
-				mbeId: agent.mbeId,
-				fullName:
-					`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() || "N/A",
-				email: agent.email || "N/A",
-				phone: agent.phone || "N/A",
-				state: agent.state || agent.MbeKyc?.state || "N/A",
-				accountStatus: agent.accountStatus || "N/A",
-				isActive: agent.isActive ? "Yes" : "No",
-				dob: formatDateValue(agent.dob),
-				createdAt: formatDateValue(agent.createdAt),
-				updatedAt: formatDateValue(agent.updatedAt),
-				city: agent.MbeKyc?.city || agent.city || "N/A",
-				accountName:
-					agent.MbeBank?.[0]?.accountName ||
-					agent.MbeAccountDetails?.accountName ||
-					"N/A",
-				accountNumber:
-					agent.MbeBank?.[0]?.accountNumber ||
-					agent.MbeAccountDetails?.accountNumber ||
-					"N/A",
-				bankName:
-					agent.MbeBank?.[0]?.bankName ||
-					agent.MbeAccountDetails?.bankName ||
-					"N/A",
-			};
-
-			const row = ws.addRow(rowData);
-
-			// Set date column types
-			setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
-
-			// Highlight agents without partners in light gray
-			applyCellStyle(row, "FFF0F0F0");
-			processedAgents.add(agent.mbeId);
 		}
 	}
 
@@ -269,7 +323,6 @@ export function createMbeDetailsWorksheet(
 	applyCellStyle(ws.getRow(1), undefined, true);
 	addAutofilter(ws, rowIndex);
 }
-
 /**
  * Creates scan partner summary worksheet
  */
@@ -456,7 +509,8 @@ export function createCustomerSalesWorksheet(
 export function createCommissionSummaryWorksheet(
 	wb: ExcelJS.Workbook,
 	commissionAgents: any[],
-	allAgentData: any[]
+	allAgentData: any[],
+	context: ExportContext
 ): void {
 	const ws = wb.addWorksheet("Commission Summary");
 	const colorMap = createScanPartnerColorMap(allAgentData);
@@ -479,7 +533,20 @@ export function createCommissionSummaryWorksheet(
 		{ header: "Avg per Transaction", key: "avgPerTransaction", width: 20 },
 		{ header: "Paid Count", key: "paidCount", width: 15 },
 		{ header: "Unpaid Count", key: "unpaidCount", width: 15 },
+		{ header: "Amount Paid", key: "amountPaid", width: 18 },
+		{ header: "Amount Owed", key: "amountOwed", width: 18 },
 	];
+
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const titleText = generateWorksheetName("COMMISSION SUMMARY", context);
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:J${titleRow.number}`);
+
+	// Add spacing
+	ws.addRow([]);
 
 	// Enhanced Agent summary (matching old export structure)
 	commissionAgents.forEach((agent: any) => {
@@ -500,11 +567,17 @@ export function createCommissionSummaryWorksheet(
 			0
 		);
 		const paidCount = commissions.filter(
-			(c: any) => c.agentCommissionPaid && c.partnerCommissionPaid
+			(c: any) => c.agentPaid && c.partnerPaid
 		).length;
 		const unpaidCount = commissions.length - paidCount;
 		const avgPerTransaction =
 			commissions.length > 0 ? totalCommission / commissions.length : 0;
+
+		// Calculate total amount paid and owed
+		const amountPaid = commissions
+			.filter((c: any) => c.agentPaid && c.partnerPaid)
+			.reduce((sum: number, c: any) => sum + (c.commission || 0), 0);
+		const amountOwed = totalCommission - amountPaid;
 
 		const agentLocation = `${agent.MbeKyc?.city || agent.city || "N/A"}, ${
 			agent.MbeKyc?.state || agent.state || "N/A"
@@ -523,6 +596,8 @@ export function createCommissionSummaryWorksheet(
 			avgPerTransaction: formatCurrency(avgPerTransaction),
 			paidCount,
 			unpaidCount,
+			amountPaid: formatCurrency(amountPaid),
+			amountOwed: formatCurrency(amountOwed),
 		};
 
 		const row = ws.addRow(rowData);
@@ -552,6 +627,8 @@ export function createCommissionSummaryWorksheet(
 					commissionCount: 0,
 					paidCount: 0,
 					unpaidCount: 0,
+					amountPaid: 0,
+					amountOwed: 0,
 				});
 			}
 
@@ -565,10 +642,12 @@ export function createCommissionSummaryWorksheet(
 				partner.totalPartnerCommission += c.partnerCommission || 0;
 				partner.commissionCount += 1;
 
-				if (c.agentCommissionPaid && c.partnerCommissionPaid) {
+				if (c.agentPaid && c.partnerPaid) {
 					partner.paidCount += 1;
+					partner.amountPaid += c.commission || 0;
 				} else {
 					partner.unpaidCount += 1;
+					partner.amountOwed += c.commission || 0;
 				}
 			});
 		}
@@ -596,6 +675,8 @@ export function createCommissionSummaryWorksheet(
 			avgPerTransaction: formatCurrency(avgPerTransaction),
 			paidCount: partner.paidCount,
 			unpaidCount: partner.unpaidCount,
+			amountPaid: formatCurrency(partner.amountPaid),
+			amountOwed: formatCurrency(partner.amountOwed),
 		};
 
 		const row = ws.addRow(rowData);
@@ -613,7 +694,8 @@ export function createCommissionSummaryWorksheet(
 export function createAgentCommissionsWorksheet(
 	wb: ExcelJS.Workbook,
 	commissionAgents: any[],
-	allAgentData: any[]
+	allAgentData: any[],
+	context: ExportContext
 ): void {
 	const ws = wb.addWorksheet("Agent Commissions");
 	const colorMap = createScanPartnerColorMap(allAgentData);
@@ -649,6 +731,8 @@ export function createAgentCommissionsWorksheet(
 		},
 		{ header: "Paid Commissions", key: "paidCommissions", width: 18 },
 		{ header: "Unpaid Commissions", key: "unpaidCommissions", width: 18 },
+		{ header: "Amount Paid", key: "amountPaid", width: 18 },
+		{ header: "Amount Owed", key: "amountOwed", width: 18 },
 		{ header: "Agent Account Name", key: "agentAccountName", width: 25 },
 		{
 			header: "Agent Account Number",
@@ -663,8 +747,19 @@ export function createAgentCommissionsWorksheet(
 		},
 	];
 
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const titleText = generateWorksheetName("AGENT COMMISSIONS", context);
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:P${titleRow.number}`);
+
+	// Add spacing
+	ws.addRow([]);
+
 	// Match old export logic
-	let agentCommissionRowIndex = 1;
+	let agentCommissionRowIndex = titleRow.number + 2;
 	commissionAgents.forEach((agent: any) => {
 		agentCommissionRowIndex++;
 		const scanPartnerInfo = findScanPartnerForAgent(allAgentData, agent.mbeId);
@@ -685,11 +780,17 @@ export function createAgentCommissionsWorksheet(
 			0
 		);
 		const paidCommissions = commissions.filter(
-			(c: any) => c.agentCommissionPaid
+			(c: any) => c.agentPaid || c.agentCommissionPaid
 		).length;
 		const unpaidCommissions = commissions.length - paidCommissions;
 		const avgCommission =
 			commissions.length > 0 ? totalCommission / commissions.length : 0;
+
+		// Calculate amount paid and owed
+		const amountPaid = commissions
+			.filter((c: any) => c.agentPaid || c.agentCommissionPaid)
+			.reduce((sum: number, c: any) => sum + (c.mbeCommission || 0), 0);
+		const amountOwed = totalAgentCommission - amountPaid;
 
 		// Get latest commission date
 		const latestCommissionDate =
@@ -721,9 +822,23 @@ export function createAgentCommissionsWorksheet(
 			avgCommission: formatCurrency(avgCommission),
 			paidCommissions,
 			unpaidCommissions,
-			agentAccountName: agent.MbeBank?.[0]?.accountName || "N/A",
-			agentAccountNumber: agent.MbeBank?.[0]?.accountNumber || "N/A",
-			agentBankName: agent.MbeBank?.[0]?.bankName || "N/A",
+			amountPaid: formatCurrency(amountPaid),
+			amountOwed: formatCurrency(amountOwed),
+			agentAccountName:
+				agent.MbeBank?.[0]?.accountName ||
+				agent.MbeAccountDetails?.accountName ||
+				agent.accountName ||
+				"N/A",
+			agentAccountNumber:
+				agent.MbeBank?.[0]?.accountNumber ||
+				agent.MbeAccountDetails?.accountNumber ||
+				agent.accountNumber ||
+				"N/A",
+			agentBankName:
+				agent.MbeBank?.[0]?.bankName ||
+				agent.MbeAccountDetails?.bankName ||
+				agent.bankName ||
+				"N/A",
 			latestCommissionDate: formatDateValue(latestCommissionDate),
 		};
 
@@ -748,7 +863,8 @@ export function createAgentCommissionsWorksheet(
 export function createPartnerCommissionsWorksheet(
 	wb: ExcelJS.Workbook,
 	commissionAgents: any[],
-	allAgentData: any[]
+	allAgentData: any[],
+	context: ExportContext
 ): void {
 	const ws = wb.addWorksheet("Partner Commissions");
 	const colorMap = createScanPartnerColorMap(allAgentData);
@@ -798,10 +914,26 @@ export function createPartnerCommissionsWorksheet(
 			key: "partnerUnpaidCommissions",
 			width: 25,
 		},
+		{ header: "Amount Paid", key: "amountPaid", width: 18 },
+		{ header: "Amount Owed", key: "amountOwed", width: 18 },
 		{ header: "SP Account Name", key: "spAccountName", width: 25 },
 		{ header: "SP Account Number", key: "spAccountNumber", width: 20 },
 		{ header: "SP Bank Name", key: "spBankName", width: 25 },
 	];
+
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const titleText = generateWorksheetName(
+		"PARTNER COMMISSIONS REPORT",
+		context
+	);
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:O${titleRow.number}`);
+
+	// Add spacing
+	ws.addRow([]);
 
 	// Group by partner with enhanced data (match old export)
 	const partnerMap = new Map();
@@ -824,6 +956,8 @@ export function createPartnerCommissionsWorksheet(
 					commissionCount: 0,
 					partnerPaidCommissions: 0,
 					partnerUnpaidCommissions: 0,
+					amountPaid: 0,
+					amountOwed: 0,
 				});
 			}
 
@@ -843,10 +977,12 @@ export function createPartnerCommissionsWorksheet(
 				partner.totalPartnerCommission += c.partnerCommission || 0;
 				partner.commissionCount += 1;
 
-				if (c.partnerCommissionPaid) {
+				if (c.partnerPaid) {
 					partner.partnerPaidCommissions += c.partnerCommission || 0;
+					partner.amountPaid += c.partnerCommission || 0;
 				} else {
 					partner.partnerUnpaidCommissions += c.partnerCommission || 0;
+					partner.amountOwed += c.partnerCommission || 0;
 				}
 			});
 		}
@@ -886,6 +1022,8 @@ export function createPartnerCommissionsWorksheet(
 			partnerUnpaidCommissions: formatCurrency(
 				partner.partnerUnpaidCommissions
 			),
+			amountPaid: formatCurrency(partner.amountPaid),
+			amountOwed: formatCurrency(partner.amountOwed),
 			spAccountName:
 				partner.scanPartnerData.UserAccountDetails?.[0]?.accountName || "N/A",
 			spAccountNumber:
