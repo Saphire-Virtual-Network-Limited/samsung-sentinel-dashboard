@@ -103,20 +103,28 @@ export async function fetchExportData(context: ExportContext) {
 		]);
 
 		// Safely extract arrays from API responses with proper type checking
-		const scanPartnersWithAgents = Array.isArray(agentsResponse?.data) ? agentsResponse.data : [];
-		const allScanPartners = Array.isArray(allScanPartnersResponse?.data) ? allScanPartnersResponse.data : [];
-		const allMbeAgents = Array.isArray(allMbeAgentsResponse?.data) ? allMbeAgentsResponse.data : [];
-		const commissionAgents = Array.isArray(allCommissionsResponse?.data?.agents) 
-			? allCommissionsResponse.data.agents 
+		const scanPartnersWithAgents = Array.isArray(agentsResponse?.data)
+			? agentsResponse.data
 			: [];
-		const customerRecords = Array.isArray(customerRecordsResponse?.data) ? customerRecordsResponse.data : [];
+		const allScanPartners = Array.isArray(allScanPartnersResponse?.data)
+			? allScanPartnersResponse.data
+			: [];
+		const allMbeAgents = Array.isArray(allMbeAgentsResponse?.data)
+			? allMbeAgentsResponse.data
+			: [];
+		const commissionAgents = Array.isArray(allCommissionsResponse?.data?.agents)
+			? allCommissionsResponse.data.agents
+			: [];
+		const customerRecords = Array.isArray(customerRecordsResponse?.data)
+			? customerRecordsResponse.data
+			: [];
 
 		console.log("Data extraction completed:", {
 			scanPartnersWithAgents: scanPartnersWithAgents.length,
 			allScanPartners: allScanPartners.length,
 			allMbeAgents: allMbeAgents.length,
 			commissionAgents: commissionAgents.length,
-			customerRecords: customerRecords.length
+			customerRecords: customerRecords.length,
 		});
 
 		// Create a comprehensive list ensuring all partners are included

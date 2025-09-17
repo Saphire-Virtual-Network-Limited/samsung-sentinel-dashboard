@@ -55,86 +55,91 @@ export function createCommissionWorksheet(
 	if (Array.isArray(commissionAgents)) {
 		commissionAgents.forEach((agent: any) => {
 			if (!agent) return;
-			
-			const scanPartnerInfo = findScanPartnerForAgent(allAgentData, agent.mbeId);
+
+			const scanPartnerInfo = findScanPartnerForAgent(
+				allAgentData,
+				agent.mbeId
+			);
 			const scanPartner = scanPartnerInfo?.scanPartnerData || {};
 			const color = scanPartnerInfo?.color;
 
-			const commissions = Array.isArray(agent.Commission) ? agent.Commission : [];
+			const commissions = Array.isArray(agent.Commission)
+				? agent.Commission
+				: [];
 			commissions.forEach((commission: any) => {
 				if (!commission) return;
-			// Get device and customer details
-			let deviceDetails = null;
-			let customerDetails = null;
-			let imei = "N/A";
+				// Get device and customer details
+				let deviceDetails = null;
+				let customerDetails = null;
+				let imei = "N/A";
 
-			if (commission.devicesOnLoan) {
-				const deviceOnLoan = commission.devicesOnLoan;
-				imei = deviceOnLoan.imei || "N/A";
-				deviceDetails = {
-					deviceName: deviceOnLoan.device?.deviceName || "N/A",
-					devicePrice:
-						deviceOnLoan.device?.price || deviceOnLoan.devicePrice || 0,
+				if (commission.devicesOnLoan) {
+					const deviceOnLoan = commission.devicesOnLoan;
+					imei = deviceOnLoan.imei || "N/A";
+					deviceDetails = {
+						deviceName: deviceOnLoan.device?.deviceName || "N/A",
+						devicePrice:
+							deviceOnLoan.device?.price || deviceOnLoan.devicePrice || 0,
+					};
+				}
+
+				if (imei && enhancedImeiToCustomer.has(imei)) {
+					customerDetails = enhancedImeiToCustomer.get(imei);
+				}
+
+				const rowData = {
+					sn: rowIndex++,
+					scanPartnerCompany: scanPartner?.companyName || "N/A",
+					scanPartnerName:
+						scanPartner?.firstName && scanPartner?.lastName
+							? `${scanPartner.firstName} ${scanPartner.lastName}`
+							: "N/A",
+					scanPartnerUserId: scanPartner?.userId || "N/A",
+					scanPartnerPhone: scanPartner?.telephoneNumber || "N/A",
+					agentName: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
+					mbeId: agent.mbeId || "N/A",
+					agentEmail: agent.email || "N/A",
+					agentPhone: agent.phone || "N/A",
+					agentStatus: agent.accountStatus || "N/A",
+					deviceName:
+						deviceDetails?.deviceName || customerDetails?.deviceName || "N/A",
+					imei: imei,
+					devicePrice: formatCurrency(
+						deviceDetails?.devicePrice || customerDetails?.devicePrice || 0
+					),
+					loanAmount: formatCurrency(customerDetails?.loanAmount || 0),
+					customerName: customerDetails?.customerName || "N/A",
+					customerPhone: customerDetails?.customerPhone || "N/A",
+					totalCommission: formatCurrency(commission.commission || 0),
+					agentCommission: formatCurrency(commission.mbeCommission || 0),
+					partnerCommission: formatCurrency(commission.partnerCommission || 0),
+					paymentStatus: commission.paymentStatus || "N/A",
+					commissionDate: formatDateValue(commission.date_created),
+					lastUpdated: formatDateValue(commission.updated_at),
 				};
-			}
 
-			if (imei && enhancedImeiToCustomer.has(imei)) {
-				customerDetails = enhancedImeiToCustomer.get(imei);
-			}
+				const row = ws.addRow(rowData);
 
-			const rowData = {
-				sn: rowIndex++,
-				scanPartnerCompany: scanPartner?.companyName || "N/A",
-				scanPartnerName:
-					scanPartner?.firstName && scanPartner?.lastName
-						? `${scanPartner.firstName} ${scanPartner.lastName}`
-						: "N/A",
-				scanPartnerUserId: scanPartner?.userId || "N/A",
-				scanPartnerPhone: scanPartner?.telephoneNumber || "N/A",
-				agentName: `${agent.firstname || ""} ${agent.lastname || ""}`.trim(),
-				mbeId: agent.mbeId || "N/A",
-				agentEmail: agent.email || "N/A",
-				agentPhone: agent.phone || "N/A",
-				agentStatus: agent.accountStatus || "N/A",
-				deviceName:
-					deviceDetails?.deviceName || customerDetails?.deviceName || "N/A",
-				imei: imei,
-				devicePrice: formatCurrency(
-					deviceDetails?.devicePrice || customerDetails?.devicePrice || 0
-				),
-				loanAmount: formatCurrency(customerDetails?.loanAmount || 0),
-				customerName: customerDetails?.customerName || "N/A",
-				customerPhone: customerDetails?.customerPhone || "N/A",
-				totalCommission: formatCurrency(commission.commission || 0),
-				agentCommission: formatCurrency(commission.mbeCommission || 0),
-				partnerCommission: formatCurrency(commission.partnerCommission || 0),
-				paymentStatus: commission.paymentStatus || "N/A",
-				commissionDate: formatDateValue(commission.date_created),
-				lastUpdated: formatDateValue(commission.updated_at),
-			};
+				// Set date column types
+				setDateColumnTypes(row, rowData, ["commissionDate", "lastUpdated"]);
 
-			const row = ws.addRow(rowData);
+				applyCellStyle(row, color);
 
-			// Set date column types
-			setDateColumnTypes(row, rowData, ["commissionDate", "lastUpdated"]);
-
-			applyCellStyle(row, color);
-
-			// Apply conditional formatting for payment status
-			const paymentStatusCell = row.getCell("paymentStatus");
-			if (commission.paymentStatus === "PAID") {
-				paymentStatusCell.fill = {
-					type: "pattern",
-					pattern: "solid",
-					fgColor: { argb: "FF90EE90" }, // Light green
-				};
-			} else if (commission.paymentStatus === "UNPAID") {
-				paymentStatusCell.fill = {
-					type: "pattern",
-					pattern: "solid",
-					fgColor: { argb: "FFFFCCCB" }, // Light red
-				};
-			}
+				// Apply conditional formatting for payment status
+				const paymentStatusCell = row.getCell("paymentStatus");
+				if (commission.paymentStatus === "PAID") {
+					paymentStatusCell.fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FF90EE90" }, // Light green
+					};
+				} else if (commission.paymentStatus === "UNPAID") {
+					paymentStatusCell.fill = {
+						type: "pattern",
+						pattern: "solid",
+						fgColor: { argb: "FFFFCCCB" }, // Light red
+					};
+				}
 			});
 		});
 	}
@@ -182,13 +187,15 @@ export function createMbeDetailsWorksheet(
 	if (Array.isArray(allAgentData)) {
 		for (const scanPartnerData of allAgentData) {
 			if (!scanPartnerData) continue;
-			
-			const agents = Array.isArray(scanPartnerData.agents) ? scanPartnerData.agents : [];
+
+			const agents = Array.isArray(scanPartnerData.agents)
+				? scanPartnerData.agents
+				: [];
 			const color = colorMap.get(scanPartnerData.userId);
 
 			for (const agent of agents) {
 				if (!agent) continue;
-				
+
 				if (!processedAgents.has(agent.mbeId)) {
 					const rowData = {
 						sn: rowIndex++,
@@ -237,7 +244,7 @@ export function createMbeDetailsWorksheet(
 	if (Array.isArray(commissionAgents)) {
 		for (const agent of commissionAgents) {
 			if (!agent) continue;
-			
+
 			if (!processedAgents.has(agent.mbeId)) {
 				const rowData = {
 					sn: rowIndex++,
@@ -245,7 +252,8 @@ export function createMbeDetailsWorksheet(
 					scanPartnerUserId: "N/A",
 					mbeId: agent.mbeId,
 					fullName:
-						`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() || "N/A",
+						`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() ||
+						"N/A",
 					email: agent.email || "N/A",
 					phone: agent.phone || "N/A",
 					state: agent.state || agent.MbeKyc?.state || "N/A",
@@ -284,7 +292,8 @@ export function createMbeDetailsWorksheet(
 	// Style header and add autofilter
 	applyCellStyle(ws.getRow(1), undefined, true);
 	addAutofilter(ws, rowIndex);
-}/**
+}
+/**
  * Creates scan partner summary worksheet
  */
 export function createScanPartnerSummaryWorksheet(
