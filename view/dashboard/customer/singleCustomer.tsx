@@ -441,11 +441,11 @@ const InjectPaymentModal = React.memo(
 
 		return (
 			<Modal isOpen={isOpen} onClose={onClose} size="3xl">
-				<ModalContent>
+				<ModalContent className="max-h-[90vh] overflow-hidden">
 					{() => (
 						<>
 							<ModalHeader>Inject Payment History</ModalHeader>
-							<ModalBody>
+							<ModalBody className="overflow-y-auto max-h-[calc(90vh-120px)]">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										label="Amount"
