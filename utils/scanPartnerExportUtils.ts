@@ -424,6 +424,43 @@ export async function createFallbackExport(data: any[], columns: any[]) {
 }
 
 /**
+ * Generates worksheet name with date range and generation time
+ */
+export function generateWorksheetName(
+	baseName: string,
+	context: ExportContext
+): string {
+	const now = new Date();
+	const generatedTime = now.toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+
+	let dateRange = "";
+	if (context.startDate && context.endDate) {
+		const start = new Date(context.startDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		const end = new Date(context.endDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		dateRange = ` (${start} - ${end})`;
+	} else if (context.salesPeriod) {
+		dateRange = ` (${context.salesPeriod.toUpperCase()})`;
+	}
+
+	return `${baseName}${dateRange} - Generated ${generatedTime}`;
+}
+
+/**
  * Generates filename with timestamp
  */
 export function generateExportFilename(baseName: string): string {
