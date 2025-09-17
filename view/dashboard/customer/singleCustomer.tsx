@@ -368,7 +368,7 @@ const InjectPaymentModal = React.memo(
 			const errors: Record<string, string> = {};
 
 			// Validate amount
-			const amountNumber = parseFloat(internalPaymentData.amount);
+			const amountNumber = parseFloat(internalPaymentData.amount || "0");
 			if (
 				!internalPaymentData.amount ||
 				internalPaymentData.amount.trim() === "" ||
@@ -379,12 +379,12 @@ const InjectPaymentModal = React.memo(
 			}
 
 			// Validate payment reference
-			if (!internalPaymentData.paymentReference.trim()) {
+			if (!internalPaymentData.paymentReference?.trim()) {
 				errors.paymentReference = "Please enter a payment reference";
 			}
 
 			// Validate payment description
-			if (!internalPaymentData.paymentDescription.trim()) {
+			if (!internalPaymentData.paymentDescription?.trim()) {
 				errors.paymentDescription = "Please enter a payment description";
 			}
 
@@ -394,22 +394,22 @@ const InjectPaymentModal = React.memo(
 			}
 
 			// Validate sender account
-			if (!internalPaymentData.senderAccount.trim()) {
+			if (!internalPaymentData.senderAccount?.trim()) {
 				errors.senderAccount = "Please enter sender account number";
 			}
 
 			// Validate sender bank
-			if (!internalPaymentData.senderBank.trim()) {
+			if (!internalPaymentData.senderBank?.trim()) {
 				errors.senderBank = "Please select sender bank";
 			}
 
 			// Validate receiver account
-			if (!internalPaymentData.receiverAccount.trim()) {
+			if (!internalPaymentData.receiverAccount?.trim()) {
 				errors.receiverAccount = "Please enter receiver account number";
 			}
 
 			// Validate receiver bank
-			if (!internalPaymentData.receiverBank.trim()) {
+			if (!internalPaymentData.receiverBank?.trim()) {
 				errors.receiverBank = "Please select receiver bank";
 			}
 
@@ -522,7 +522,7 @@ const InjectPaymentModal = React.memo(
 										<DateInput
 											aria-label="Payment Date and Time"
 											granularity="minute"
-											value={parseLocalDateTime(internalPaymentData.paid_at)}
+											value={parseLocalDateTime(internalPaymentData.paid_at || "")}
 											onChange={handleInternalDateChange}
 											isRequired
 											size="sm"
@@ -1378,7 +1378,7 @@ export default function CollectionSingleCustomerPage() {
 			// Convert datetime-local format to ISO string for API
 			const apiPaymentData = {
 				...currentPaymentData,
-				paid_at: new Date(currentPaymentData.paid_at).toISOString(),
+				paid_at: new Date(currentPaymentData.paid_at || "").toISOString(),
 			};
 
 			const response = await injectPaymentHistory(
@@ -1394,7 +1394,7 @@ export default function CollectionSingleCustomerPage() {
 
 			// Add the new transaction to the frontend optimistically
 			if (customer.TransactionHistory) {
-				const amountNumber = parseFloat(currentPaymentData.amount);
+				const amountNumber = parseFloat(currentPaymentData.amount || "0");
 				const prevBalance = Number(
 					customer.TransactionHistory[0]?.newBalance || 0
 				);
@@ -1402,40 +1402,40 @@ export default function CollectionSingleCustomerPage() {
 				const newTransaction = {
 					transactionHistoryId: `temp-${Date.now()}`,
 					amount: amountNumber,
-					paymentType: currentPaymentData.paymentType,
+					paymentType: currentPaymentData.paymentType || "CREDIT",
 					prevBalance: prevBalance,
 					newBalance:
 						currentPaymentData.paymentType === "CREDIT"
 							? prevBalance + amountNumber
 							: prevBalance - amountNumber,
-					paymentReference: currentPaymentData.paymentReference,
-					extRef: currentPaymentData.paymentReference,
+					paymentReference: currentPaymentData.paymentReference || "N/A",
+					extRef: currentPaymentData.paymentReference || "N/A",
 					currency: "NGN",
 					channel: "MANUAL_INJECTION",
 					charge: 0,
-					chargeNarration: "",
-					senderBank: currentPaymentData.senderBank,
-					senderAccount: currentPaymentData.senderAccount,
-					recieverBank: currentPaymentData.receiverBank,
-					recieverAccount: currentPaymentData.receiverAccount,
-					paymentDescription: currentPaymentData.paymentDescription,
-					paid_at: currentPaymentData.paid_at,
+					chargeNarration: "N/A",
+					senderBank: currentPaymentData.senderBank || "N/A",
+					senderAccount: currentPaymentData.senderAccount || "N/A",
+					recieverBank: currentPaymentData.receiverBank || "N/A",
+					recieverAccount: currentPaymentData.receiverAccount || "N/A",
+					paymentDescription: currentPaymentData.paymentDescription || "monthly repayment",
+					paid_at: currentPaymentData.paid_at || new Date().toISOString(),
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
 					userid: customer.customerId,
 					customersCustomerId: customer.customerId,
 				};
 
-				setCustomer((prev) =>
+				setCustomer((prev: CustomerRecord | null) =>
 					prev
 						? {
 								...prev,
 								TransactionHistory: [
 									newTransaction,
-									...(prev.TransactionHistory || []),
+									...(prev?.TransactionHistory || []),
 								],
 						  }
-						: null
+						: null as CustomerRecord | null			
 				);
 			}
 
