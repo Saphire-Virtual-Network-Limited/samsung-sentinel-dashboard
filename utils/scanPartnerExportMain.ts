@@ -62,7 +62,8 @@ export async function exportScanPartnerData(
 				wb,
 				commissionAgents,
 				allAgentData,
-				enhancedImeiToCustomer
+				enhancedImeiToCustomer,
+				context
 			);
 			console.log("✓ Commission worksheet created");
 		}
@@ -87,19 +88,34 @@ export async function exportScanPartnerData(
 
 		// 5. Commission Summary Sheet
 		if (commissionAgents.length > 0) {
-			createCommissionSummaryWorksheet(wb, commissionAgents, allAgentData);
+			createCommissionSummaryWorksheet(
+				wb,
+				commissionAgents,
+				allAgentData,
+				context
+			);
 			console.log("✓ Commission Summary worksheet created");
 		}
 
 		// 6. Agent Commissions Sheet
 		if (commissionAgents.length > 0) {
-			createAgentCommissionsWorksheet(wb, commissionAgents, allAgentData);
+			createAgentCommissionsWorksheet(
+				wb,
+				commissionAgents,
+				allAgentData,
+				context
+			);
 			console.log("✓ Agent Commissions worksheet created");
 		}
 
 		// 7. Partner Commissions Sheet
 		if (commissionAgents.length > 0) {
-			createPartnerCommissionsWorksheet(wb, commissionAgents, allAgentData);
+			createPartnerCommissionsWorksheet(
+				wb,
+				commissionAgents,
+				allAgentData,
+				context
+			);
 			console.log("✓ Partner Commissions worksheet created");
 		}
 
@@ -150,7 +166,11 @@ export async function exportScanPartnerData(
 		console.log("✓ Summary Statistics worksheet created");
 
 		// 14. Sales Performance Sheet (if sales data available)
-		if (salesData && salesData.partnerStats) {
+		if (
+			salesData &&
+			Array.isArray(salesData.partnerStats) &&
+			salesData.partnerStats.length > 0
+		) {
 			createSalesPerformanceWorksheet(wb, salesData, context);
 			console.log("✓ Sales Performance worksheet created");
 		}
@@ -191,6 +211,45 @@ function createSummaryStatisticsWorksheet(
 		{ header: "Count", key: "count", width: 20 },
 		{ header: "Period", key: "period", width: 20 },
 	];
+
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const now = new Date();
+	const generatedTime = now.toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+
+	let titleText = "SUMMARY STATISTICS REPORT";
+	if (data.context.startDate && data.context.endDate) {
+		const start = new Date(data.context.startDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		const end = new Date(data.context.endDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		titleText += ` (${start} - ${end}) - Generated ${generatedTime}`;
+	} else if (data.context.salesPeriod) {
+		titleText += ` (${data.context.salesPeriod.toUpperCase()}) - Generated ${generatedTime}`;
+	} else {
+		titleText += ` - Generated ${generatedTime}`;
+	}
+
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:C${titleRow.number}`);
+
+	// Add spacing
+	ws.addRow([]);
 
 	const { allAgentData, commissionAgents, customerRecords, context } = data;
 
@@ -345,8 +404,50 @@ function createSalesPerformanceWorksheet(
 		{ header: "Period", key: "period", width: 15 },
 	];
 
-	// Add partner performance data
-	salesData.partnerStats.forEach((partner: any, index: number) => {
+	// Add title with date range and generation info
+	ws.addRow([]);
+	const now = new Date();
+	const generatedTime = now.toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+
+	let titleText = "SALES PERFORMANCE REPORT";
+	if (context.startDate && context.endDate) {
+		const start = new Date(context.startDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		const end = new Date(context.endDate).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+		});
+		titleText += ` (${start} - ${end}) - Generated ${generatedTime}`;
+	} else if (context.salesPeriod) {
+		titleText += ` (${context.salesPeriod.toUpperCase()}) - Generated ${generatedTime}`;
+	} else {
+		titleText += ` - Generated ${generatedTime}`;
+	}
+
+	const titleRow = ws.addRow([titleText]);
+	titleRow.font = { size: 16, bold: true };
+	titleRow.alignment = { horizontal: "center" };
+	ws.mergeCells(`A${titleRow.number}:I${titleRow.number}`);
+
+	// Add spacing
+	ws.addRow([]);
+
+	// Add partner performance data (safe array handling)
+	const partnerStats = Array.isArray(salesData.partnerStats)
+		? salesData.partnerStats
+		: [];
+	partnerStats.forEach((partner: any, index: number) => {
 		const rowData = {
 			sn: index + 1,
 			partnerId: partner.partnerId,
@@ -407,7 +508,7 @@ function createSalesPerformanceWorksheet(
 	ws.autoFilter = {
 		from: { row: 1, column: 1 },
 		to: {
-			row: salesData.partnerStats.length + 2,
+			row: partnerStats.length + 5, // Account for title rows
 			column: ws.columns.length,
 		},
 	};
