@@ -65,6 +65,7 @@ export interface PermissionConfig {
 	canChangeMbeAssignment: boolean;
 	canViewReconciliationHistory: boolean;
 	canSendSms: boolean;
+	canAccessPayoutScheduler: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -103,6 +104,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canChangeMbeAssignment: true,
 		canViewReconciliationHistory: true,
 		canSendSms: true,
+		canAccessPayoutScheduler: true,
 		// Admin has no special permissions by default
 		// All permissions default to false
 	},
@@ -133,6 +135,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canChangeMbeAssignment: true,
 		canViewReconciliationHistory: true,
 		canSendSms: true,
+		canAccessPayoutScheduler: true,
 	},
 
 	"collection-admin": {
@@ -185,7 +188,13 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canSendSms: true,
 	},
 	finance: {
+		canAccessPayoutScheduler: true,
 		// Finance has no special permissions
+		// All permissions default to false
+	},
+	audit: {
+		canAccessPayoutScheduler: true,
+		// Audit has no special permissions
 		// All permissions default to false
 	},
 	hr: {
@@ -348,6 +357,7 @@ function getDefaultPermissions(): PermissionConfig {
 		canChangeMbeAssignment: false,
 		canViewReconciliationHistory: false,
 		canSendSms: false,
+		canAccessPayoutScheduler: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};

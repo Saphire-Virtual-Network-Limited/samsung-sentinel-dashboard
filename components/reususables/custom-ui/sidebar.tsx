@@ -304,6 +304,12 @@ export function AppSidebar() {
 			url: "/access/admin/users/",
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/admin/payout-scheduler",
+			id: "admin-payout-scheduler",
+		},
+		{
 			icon: Package2Icon,
 			title: "Inventory",
 			id: "admin-inventory",
@@ -587,6 +593,12 @@ export function AppSidebar() {
 						id: "sub-admin-stores",
 					},
 					{
+						icon: CreditCard,
+						title: "Payout Scheduler",
+						url: "/access/sub-admin/payout-scheduler",
+						id: "sub-admin-payout-scheduler",
+					},
+					{
 						icon: IoBusiness,
 						title: "Staff",
 						url: "/access/sub-admin/staff",
@@ -807,6 +819,26 @@ export function AppSidebar() {
 			id: "developer-products",
 		},
 		{
+			icon: IoBusiness,
+			title: "Staff",
+			url: "/access/dev/staff",
+			id: "dev-staff",
+			subItems: [
+				{
+					title: "Mobiflex Sales Agent",
+					url: "/access/dev/staff/agents",
+				},
+				{
+					title: "MBE",
+					url: "/access/dev/staff/mbe",
+				},
+				{
+					title: "SCAN Partners",
+					url: "/access/dev/staff/scan-partners",
+				},
+			],
+		},
+		{
 			icon: Users2,
 			title: "Users",
 			id: "admin-users",
@@ -938,6 +970,12 @@ export function AppSidebar() {
 			id: "finance-customers",
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/finance/payout-scheduler",
+			id: "finance-payout-scheduler",
+		},
+		{
 			icon: ChartBar,
 			title: "Reports",
 			id: "sales-reports",
@@ -968,6 +1006,10 @@ export function AppSidebar() {
 							url: "/access/finance/reports/mobiflex",
 						},
 					],
+				},
+				{
+					title: "Commissions",
+					url: "/access/finance/reports/commissions",
 				},
 				{ title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/finance/reports/tracker" },
@@ -1030,6 +1072,12 @@ export function AppSidebar() {
 			id: "audit-customers",
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/audit/payout-scheduler",
+			id: "audit-payout-scheduler",
+		},
+		{
 			icon: ChartBar,
 			title: "Reports",
 			id: "audit-reports",
@@ -1060,6 +1108,10 @@ export function AppSidebar() {
 							url: "/access/audit/reports/mobiflex",
 						},
 					],
+				},
+				{
+					title: "Commissions",
+					url: "/access/audit/reports/commissions",
 				},
 				{ title: "Drop-offs", url: "/access/audit/reports/drop-offs" },
 				{ title: "Tracker", url: "/access/audit/reports/tracker" },
@@ -1191,16 +1243,15 @@ export function AppSidebar() {
 			],
 		},
 		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-						? [
-								{
-									icon: MessageSquare,
-									title: "SMS",
-									url: "/access/collection-admin/sms",
-									id: "sub-admin-sms",
-								},
-						  ]
-						: []),
-
+			? [
+					{
+						icon: MessageSquare,
+						title: "SMS",
+						url: "/access/collection-admin/sms",
+						id: "sub-admin-sms",
+					},
+			  ]
+			: []),
 	];
 	const collectionOfficerItems: MenuItem[] = [
 		{
@@ -1327,7 +1378,7 @@ export function AppSidebar() {
 								asChild
 								className="hover:bg-black sidebar-transition sidebar-focus"
 							>
-								<Link href="/dashboard" onClick={handleLinkClick}>
+								<Link href="/" onClick={handleLinkClick}>
 									<div className="flex items-center justify-center gap-3 px-1 p-4 sidebar-transition">
 										<div className="flex-shrink-0">
 											<Image
