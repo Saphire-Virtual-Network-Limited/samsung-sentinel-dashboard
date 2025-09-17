@@ -51,13 +51,18 @@ export function createCommissionWorksheet(
 
 	let rowIndex = 1;
 
-	// Process commission data
-	commissionAgents.forEach((agent: any) => {
-		const scanPartnerInfo = findScanPartnerForAgent(allAgentData, agent.mbeId);
-		const scanPartner = scanPartnerInfo?.scanPartnerData || {};
-		const color = scanPartnerInfo?.color;
+	// Process commission data (safe array handling)
+	if (Array.isArray(commissionAgents)) {
+		commissionAgents.forEach((agent: any) => {
+			if (!agent) return;
+			
+			const scanPartnerInfo = findScanPartnerForAgent(allAgentData, agent.mbeId);
+			const scanPartner = scanPartnerInfo?.scanPartnerData || {};
+			const color = scanPartnerInfo?.color;
 
-		(agent.Commission || []).forEach((commission: any) => {
+			const commissions = Array.isArray(agent.Commission) ? agent.Commission : [];
+			commissions.forEach((commission: any) => {
+				if (!commission) return;
 			// Get device and customer details
 			let deviceDetails = null;
 			let customerDetails = null;
@@ -130,8 +135,9 @@ export function createCommissionWorksheet(
 					fgColor: { argb: "FFFFCCCB" }, // Light red
 				};
 			}
+			});
 		});
-	});
+	}
 
 	// Style header and add autofilter
 	applyCellStyle(ws.getRow(1), undefined, true);
@@ -172,21 +178,74 @@ export function createMbeDetailsWorksheet(
 	let rowIndex = 1;
 	const processedAgents = new Set<string>(); // Track processed agent IDs
 
-	// Process agents with partners first
-	for (const scanPartnerData of allAgentData) {
-		const agents = scanPartnerData.agents || [];
-		const color = colorMap.get(scanPartnerData.userId);
+	// Process agents with partners first (safe array handling)
+	if (Array.isArray(allAgentData)) {
+		for (const scanPartnerData of allAgentData) {
+			if (!scanPartnerData) continue;
+			
+			const agents = Array.isArray(scanPartnerData.agents) ? scanPartnerData.agents : [];
+			const color = colorMap.get(scanPartnerData.userId);
 
-		for (const agent of agents) {
+			for (const agent of agents) {
+				if (!agent) continue;
+				
+				if (!processedAgents.has(agent.mbeId)) {
+					const rowData = {
+						sn: rowIndex++,
+						scanPartnerCompany: scanPartnerData.companyName || "N/A",
+						scanPartnerUserId: scanPartnerData.userId || "N/A",
+						mbeId: agent.mbeId,
+						fullName:
+							`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() ||
+							"N/A",
+						email: agent.email || "N/A",
+						phone: agent.phone || "N/A",
+						state: agent.state || agent.MbeKyc?.state || "N/A",
+						accountStatus: agent.accountStatus || "N/A",
+						isActive: agent.isActive ? "Yes" : "No",
+						dob: formatDateValue(agent.dob),
+						createdAt: formatDateValue(agent.createdAt),
+						updatedAt: formatDateValue(agent.updatedAt),
+						city: agent.MbeKyc?.city || agent.city || "N/A",
+						accountName:
+							agent.MbeBank?.[0]?.accountName ||
+							agent.MbeAccountDetails?.accountName ||
+							"N/A",
+						accountNumber:
+							agent.MbeBank?.[0]?.accountNumber ||
+							agent.MbeAccountDetails?.accountNumber ||
+							"N/A",
+						bankName:
+							agent.MbeBank?.[0]?.bankName ||
+							agent.MbeAccountDetails?.bankName ||
+							"N/A",
+					};
+
+					const row = ws.addRow(rowData);
+
+					// Set date column types
+					setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
+
+					applyCellStyle(row, color);
+					processedAgents.add(agent.mbeId);
+				}
+			}
+		}
+	}
+
+	// Process ALL commission agents (including those without partners)
+	if (Array.isArray(commissionAgents)) {
+		for (const agent of commissionAgents) {
+			if (!agent) continue;
+			
 			if (!processedAgents.has(agent.mbeId)) {
 				const rowData = {
 					sn: rowIndex++,
-					scanPartnerCompany: scanPartnerData.companyName || "N/A",
-					scanPartnerUserId: scanPartnerData.userId || "N/A",
+					scanPartnerCompany: "N/A",
+					scanPartnerUserId: "N/A",
 					mbeId: agent.mbeId,
 					fullName:
-						`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() ||
-						"N/A",
+						`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() || "N/A",
 					email: agent.email || "N/A",
 					phone: agent.phone || "N/A",
 					state: agent.state || agent.MbeKyc?.state || "N/A",
@@ -215,62 +274,17 @@ export function createMbeDetailsWorksheet(
 				// Set date column types
 				setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
 
-				applyCellStyle(row, color);
+				// Highlight agents without partners in light gray
+				applyCellStyle(row, "FFF0F0F0");
 				processedAgents.add(agent.mbeId);
 			}
-		}
-	}
-
-	// Process ALL commission agents (including those without partners)
-	for (const agent of commissionAgents) {
-		if (!processedAgents.has(agent.mbeId)) {
-			const rowData = {
-				sn: rowIndex++,
-				scanPartnerCompany: "N/A",
-				scanPartnerUserId: "N/A",
-				mbeId: agent.mbeId,
-				fullName:
-					`${agent?.firstname || ""} ${agent?.lastname || ""}`.trim() || "N/A",
-				email: agent.email || "N/A",
-				phone: agent.phone || "N/A",
-				state: agent.state || agent.MbeKyc?.state || "N/A",
-				accountStatus: agent.accountStatus || "N/A",
-				isActive: agent.isActive ? "Yes" : "No",
-				dob: formatDateValue(agent.dob),
-				createdAt: formatDateValue(agent.createdAt),
-				updatedAt: formatDateValue(agent.updatedAt),
-				city: agent.MbeKyc?.city || agent.city || "N/A",
-				accountName:
-					agent.MbeBank?.[0]?.accountName ||
-					agent.MbeAccountDetails?.accountName ||
-					"N/A",
-				accountNumber:
-					agent.MbeBank?.[0]?.accountNumber ||
-					agent.MbeAccountDetails?.accountNumber ||
-					"N/A",
-				bankName:
-					agent.MbeBank?.[0]?.bankName ||
-					agent.MbeAccountDetails?.bankName ||
-					"N/A",
-			};
-
-			const row = ws.addRow(rowData);
-
-			// Set date column types
-			setDateColumnTypes(row, rowData, ["dob", "createdAt", "updatedAt"]);
-
-			// Highlight agents without partners in light gray
-			applyCellStyle(row, "FFF0F0F0");
-			processedAgents.add(agent.mbeId);
 		}
 	}
 
 	// Style header and add autofilter
 	applyCellStyle(ws.getRow(1), undefined, true);
 	addAutofilter(ws, rowIndex);
-}
-
-/**
+}/**
  * Creates scan partner summary worksheet
  */
 export function createScanPartnerSummaryWorksheet(
