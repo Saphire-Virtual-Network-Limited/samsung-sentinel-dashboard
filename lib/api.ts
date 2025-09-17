@@ -1435,15 +1435,15 @@ export async function createCustomerVirtualWallet(customerId: string) {
 
 // Inject payment history into customer
 export interface InjectPaymentHistoryData {
-	amount: string; // Changed to string for better input handling
-	paymentType: "CREDIT" | "DEBIT";
-	paymentReference: string;
-	paymentDescription: string;
-	paid_at: string;
-	senderAccount: string;
-	senderBank: string;
-	receiverAccount: string;
-	receiverBank: string;
+	amount?: string; // Changed to string for better input handling
+	paymentType?: "CREDIT" | "DEBIT";
+	paymentReference?: string;
+	paymentDescription?: string;
+	paid_at?: string;
+	senderAccount?: string;
+	senderBank?: string;
+	receiverAccount?: string;
+	receiverBank?: string;
 }
 
 export async function injectPaymentHistory(
@@ -1453,7 +1453,7 @@ export async function injectPaymentHistory(
 	// Convert amount to number before sending to API
 	const apiData = {
 		...data,
-		amount: parseFloat(data.amount) || 0,
+		amount: parseFloat(data.amount || "0") || 0,
 	};
 
 	return apiCall(
