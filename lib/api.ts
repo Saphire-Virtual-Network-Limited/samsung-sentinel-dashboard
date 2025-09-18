@@ -3563,3 +3563,82 @@ export async function getCustomerSmsTotalSent() {
 export async function getCustomerEmailTotalSent() {
 	return apiCall(`/resources/email-logs`, "GET");
 }
+
+// Cluster management //////////////////////////////////////////////////////////////
+
+// create cluster supervisor
+
+export interface createClusterSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	clusterId: string;
+	clusterName?: string;
+}
+
+export async function clusterSupervisor(createClusterSupervisor: createClusterSupervisor) {
+	return apiCall(`/admin/cluster/supervisor/create`, "POST", createClusterSupervisor);
+}
+
+// create state manager
+
+export interface createStateManager {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateManager(createStateManager: createStateManager) {
+	return apiCall(`/admin/cluster/state-manager/create`, "POST", createStateManager);
+}
+
+// create state Supervisor
+
+export interface createStateSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateSupervisor(createStateSupervisor: createStateSupervisor) {
+	return apiCall(`/admin/cluster/state-supervisor/create`, "POST", createStateSupervisor);
+}
+
+
+// Get all cluster supervisors
+
+export async function getClusterSupervisors() {
+	return apiCall(`/admin/cluster/supervisors`, "GET");	
+}
+
+// Get all state managers
+export async function getStateManagers() {
+	return apiCall(`/admin/cluster/state-managers`, "GET");
+}
+
+// Get all state supervisors
+export async function getStateSupervisors() {
+	return apiCall(`/admin/cluster/state-supervisors`, "GET");
+}
+
+
+// Assign cluster supervisor to a cluster
+
+export async function assignClusterSupervisorToCluster(userId: string) {
+	return apiCall(`/admin/cluster/assign-supervisor/${userId}`, "PUT");
+}
+
+// get all cluster for assignment
+
+export async function getClustersForAssignment() {
+	return apiCall(`/admin/cluster/clusters`, "GET");
+}
+
+
+
+
