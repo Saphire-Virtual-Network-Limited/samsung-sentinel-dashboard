@@ -11,6 +11,7 @@ export const columns: ColumnDef[] = [
   { name: "Company", uid: "companyName", sortable: true },
   { name: "State", uid: "companyState", sortable: true },
   { name: "City", uid: "companyCity", sortable: true },
+  { name: "Cluster", uid: "clusterName", sortable: true },
   { name: "Active", uid: "isActive", sortable: true },
   { name: "Actions", uid: "actions" },
 ];

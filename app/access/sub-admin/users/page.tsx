@@ -1,6 +1,6 @@
 import React from "react";
-import UsersPage from "@/view/dashboard/user-management/usersView";
+import UserSummaryView from "@/view/dashboard/user-management/userSummary";
 const Page: React.FC = () => {
-  return <UsersPage />;
+  return <UserSummaryView />;
 };
 export default Page;
