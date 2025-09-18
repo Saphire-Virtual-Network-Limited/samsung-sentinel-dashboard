@@ -54,3 +54,29 @@ export interface AcceptInviteResponse {
   success: boolean;
   message: string;
 }
+
+
+export interface clusterSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	clusterId: number;
+	clusterName?: string;
+}
+
+export interface stateManager {     
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export interface stateSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}

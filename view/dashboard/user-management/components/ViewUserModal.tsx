@@ -5,12 +5,12 @@ import { useRouter, usePathname } from "next/navigation";
 import UserModal from "./UserModal";
 import { InfoSection, InfoField } from "./InfoComponents";
 import { capitalize } from "@/lib";
-import type { User } from "../types";
+import type { UserOrClusterSupervisor } from "../types";
 
 interface ViewUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedUser: User | null;
+  selectedUser: UserOrClusterSupervisor | null;
   statusColorMap: Record<string, any>;
 }
 
