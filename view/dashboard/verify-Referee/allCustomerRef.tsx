@@ -41,6 +41,7 @@ const columns: ColumnDef[] = [
 	{ name: "Age", uid: "age", sortable: true },
 	{ name: "Status", uid: "generalStatus" },
 	{ name: "Date", uid: "updatedAt", sortable: true },
+	{ name: "Updated By", uid: "updated_by" },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -75,6 +76,7 @@ type UnapprovedRefereeRecord = {
 	fullName?: string;
 	age?: number;
 	status?: string;
+	updated_by?: string;
 	CustomerKYC?: Array<{
 		kycId: string;
 		customerId: string;
@@ -99,7 +101,40 @@ type UnapprovedRefereeRecord = {
 		channel: string;
 		phone2Status: string;
 		phone3Status: string;
-		updated_by: string | null;
+		updated_by: {
+			adminid: string;
+			inviteStatus: string;
+			mbeId: string | null;
+			password: string;
+			user: {
+				accountStatus: string;
+				accountType: string;
+				companyAddress: string | null;
+				companyCity: string | null;
+				companyLGA: string | null;
+				companyName: string | null;
+				companyState: string | null;
+				createdAt: string;
+				dob: string | null;
+				email: string;
+				firstName: string;
+				gender: string | null;
+				isActive: boolean;
+				lastName: string;
+				otp: string | null;
+				otpExpiry: string | null;
+				profile_picture: string | null;
+				referralCode: string | null;
+				role: string;
+				telephoneNumber: string;
+				tokenVersion: number;
+				updatedAt: string;
+				userId: string;
+			};
+			userid: string;
+		} | null;
+		updated_by_id: string | null;
+
 	}>;
 	LoanRecord?: Array<{
 		loanRecordId: string;
@@ -201,6 +236,8 @@ export default function AllCustomerRefereesPage() {
 			keepPreviousData: true,
 			revalidateIfStale: true,
 		}
+
+		
 	);
 
 	console.log(raw);
@@ -235,6 +272,15 @@ export default function AllCustomerRefereesPage() {
 					minute: "2-digit",
 				}),
 				age: calculateAge(r.dob),
+				updated_by: (() => {
+					const updatedBy = r.CustomerKYC?.[0]?.updated_by;
+					console.log("Updated by data:", updatedBy);
+					if (!updatedBy || !updatedBy.user) return "N/A";
+					const fullName = `${updatedBy.user.firstName} ${updatedBy.user.lastName}`;
+					console.log("Generated full name:", fullName);
+					return fullName;
+				})(),
+				
 			})),
 		[raw]
 	);
@@ -257,7 +303,8 @@ export default function AllCustomerRefereesPage() {
 					(c.CustomerKYC?.[0]?.phone2 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone3 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone4 || "").includes(f) ||
-					(c.CustomerKYC?.[0]?.phone5 || "").includes(f)
+					(c.CustomerKYC?.[0]?.phone5 || "").includes(f) ||
+					(c.updated_by || "").includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
@@ -405,6 +452,15 @@ export default function AllCustomerRefereesPage() {
 
 	// Render each cell, including actions dropdown:
 	const renderCell = (row: UnapprovedRefereeRecord, key: string) => {
+		if (key === "updated_by") {
+			const updatedBy = (row as any).updated_by;
+			console.log("Rendering updated_by for row:", updatedBy);
+			return (
+				<div className="text-small">
+					{updatedBy || "N/A"}
+				</div>
+			);
+		}
 		if (key === "actions") {
 			return (
 				<div className="flex justify-end">
