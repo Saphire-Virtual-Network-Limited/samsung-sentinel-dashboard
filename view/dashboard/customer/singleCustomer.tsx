@@ -254,6 +254,8 @@ const InjectPaymentModal = React.memo(
 					paymentReference: "",
 					paymentDescription: "",
 					paid_at: currentDateTime,
+					// Note: senderAccount, senderBank, receiverAccount, and receiverBank are hidden fields
+					// but kept in state for API compatibility
 					senderAccount: "",
 					senderBank: "",
 					receiverAccount: customer?.Wallet?.accountNumber || "",
@@ -298,6 +300,8 @@ const InjectPaymentModal = React.memo(
 					paymentReference: "",
 					paymentDescription: "",
 					paid_at: currentDateTime,
+					// Note: senderAccount, senderBank, receiverAccount, and receiverBank are hidden fields
+					// but kept in state for API compatibility
 					senderAccount: "",
 					senderBank: "",
 					receiverAccount: customer?.Wallet?.accountNumber || "",
@@ -392,17 +396,8 @@ const InjectPaymentModal = React.memo(
 				errors.paid_at = "Please select payment date and time";
 			}
 
-			// Sender account and bank are optional - no validation needed
-
-			// Validate receiver account
-			if (!internalPaymentData.receiverAccount?.trim()) {
-				errors.receiverAccount = "Please enter receiver account number";
-			}
-
-			// Validate receiver bank
-			if (!internalPaymentData.receiverBank?.trim()) {
-				errors.receiverBank = "Please select receiver bank";
-			}
+			// Note: Sender account, sender bank, receiver account, and receiver bank fields are hidden
+			// so their validation has been removed
 
 			// If there are errors, set them and show toast
 			if (Object.keys(errors).length > 0) {
