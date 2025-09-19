@@ -740,17 +740,30 @@ export default function SingleRefereeView({
 										</Button>
 									)}
 									{customer?.CustomerKYC?.[0]?.generalStatus === "REJECTED" && (
-										<Button
-											color="success"
-											variant="flat"
-											className="font-medium w-full sm:w-auto"
-											isDisabled={!selectedPhone.length}
-											onPress={() => {
-												setShowApproveModal(true);
-											}}
-										>
-											Approve
-										</Button>
+										<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+											<Button
+												color="success"
+												variant="flat"
+												className="font-medium w-full sm:w-auto"
+												isDisabled={!selectedPhone.length}
+												onPress={() => {
+													setShowApproveModal(true);
+												}}
+											>
+												Approve
+											</Button>
+											<Button
+												color="danger"
+												variant="flat"
+												className="font-medium w-full sm:w-auto"
+												isDisabled={!selectedPhone.length}
+												onPress={() => {
+													setShowRejectModal(true);
+												}}
+											>
+												Reject
+											</Button>
+										</div>
 									)}
 								</div>
 							</div>
