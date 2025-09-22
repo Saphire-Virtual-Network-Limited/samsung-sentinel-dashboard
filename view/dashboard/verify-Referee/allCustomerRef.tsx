@@ -37,12 +37,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
+	{ name: "Customer ID", uid: "customerId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
 	{ name: "Age", uid: "age", sortable: true },
 	{ name: "Status", uid: "generalStatus" },
 	{ name: "Date", uid: "updatedAt", sortable: true },
 	{ name: "Updated By", uid: "updated_by" },
-	{ name: "Actions", uid: "actions" },
+	{ name: "Reason", uid: "reason" },
+	{ name: "Actions", uid: "actions" }
 ];
 
 const statusOptions = [
@@ -98,6 +100,7 @@ type UnapprovedRefereeRecord = {
 		status2Comment: string | null;
 		status3Comment: string | null;
 		generalStatus: string;
+		generalComment: string | null;
 		channel: string;
 		phone2Status: string;
 		phone3Status: string;
@@ -250,8 +253,8 @@ export default function AllCustomerRefereesPage() {
 		() =>
 			raw.map((r: UnapprovedRefereeRecord) => ({
 				...r,
+				customerId: r.customerId,
 				fullName: `${capitalize(r.firstName)} ${capitalize(r.lastName)}`,
-				email: r.email,
 				generalStatus:
 					r.CustomerKYC?.[0]?.generalStatus ||
 					"pending" ||
@@ -280,6 +283,7 @@ export default function AllCustomerRefereesPage() {
 					console.log("Generated full name:", fullName);
 					return fullName;
 				})(),
+				reason: r.CustomerKYC?.[0]?.generalComment || "N/A",
 				
 			})),
 		[raw]
@@ -291,6 +295,7 @@ export default function AllCustomerRefereesPage() {
 			const f = filterValue.toLowerCase();
 			list = list.filter(
 				(c) =>
+					(c.customerId || "").includes(f) ||
 					(c.firstName || "").toLowerCase().includes(f) ||
 					(c.lastName || "").toLowerCase().includes(f) ||
 					(c.email || "").toLowerCase().includes(f) ||
@@ -304,7 +309,8 @@ export default function AllCustomerRefereesPage() {
 					(c.CustomerKYC?.[0]?.phone3 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone4 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone5 || "").includes(f) ||
-					(c.updated_by || "").includes(f)
+					(c.updated_by || "").includes(f) ||
+					(c.reason || "").includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {
