@@ -24,7 +24,7 @@ import {
 	ModalFooter,
 	useDisclosure,
 } from "@heroui/react";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, ChevronDownIcon } from "lucide-react";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 // Minimal columns for table view (only essential ones)
@@ -65,6 +65,15 @@ const statusOptions = [
 	{ name: "Due", uid: "due" },
 	{ name: "Rejected", uid: "rejected" },
 	{ name: "Defaulted", uid: "defaulted" },
+];
+
+const channelOptions = [
+	{ name: "All Channels", uid: "" },
+	{ name: "Sentiflex", uid: "Sentiflex" },
+	{ name: "Mobiflex", uid: "Mobiflex" },
+	{ name: "Poweflex", uid: "Poweflex" },
+	{ name: "Card", uid: "card" },
+	{ name: "Dedicated NUBAN", uid: "dedicated_nuban" },
 ];
 
 const statusColorMap: Record<string, ChipProps["color"]> = {
@@ -149,6 +158,11 @@ export default function AllTransactionView() {
 	});
 	const [hasNoRecords, setHasNoRecords] = useState(false);
 	const [channel, setChannel] = useState<string | undefined>(undefined);
+	
+	// Debug channel changes
+	React.useEffect(() => {
+		console.log("Channel state changed to:", channel);
+	}, [channel]);
 	// --- table state ---
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
@@ -173,11 +187,12 @@ export default function AllTransactionView() {
 		data: raw = [],
 		isLoading,
 		error,
+		mutate
 	} = useSWR(
-		["all-transaction-data", fromDate, toDate],
+		["all-transaction-data", fromDate, toDate, channel],
 		() => {
-			console.log("Fetching data with params:", { fromDate, toDate });
-			return getTransactionData(fromDate, toDate)
+			console.log("Fetching data with params:", { fromDate, toDate, channel });
+			return getTransactionData(fromDate, toDate, channel)
 				.then((r) => {
 					console.log("API response:", r);
 					if (!r.data || r.data.length === 0) {
@@ -651,7 +666,140 @@ export default function AllTransactionView() {
 					</div>
 				)}
 
-				<div className="mb-4 flex justify-center md:justify-end"></div>
+				{/* Channel Filter Section */}
+				<div className="mb-6 bg-white rounded-xl shadow-sm border border-default-200 p-6">
+					<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+						<div className="flex items-center space-x-3">
+							<div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+								<svg
+									className="w-4 h-4 text-white"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"
+									/>
+								</svg>
+							</div>
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">Filter by Channel</h3>
+								<p className="text-sm text-gray-500">
+									{channel 
+										? `Currently filtering by: ${channelOptions.find(opt => opt.uid === channel)?.name}`
+										: "Showing all channels - select a channel to filter"
+									}
+								</p>
+								{/* Debug info - remove this later */}
+								{/* <p className="text-xs text-red-500 mt-1">
+									Debug: Channel = &quot;{channel}&quot; (type: {typeof channel})
+								</p> */}
+								{/* <div className="flex gap-2 mt-2">
+									<Button
+										size="sm"
+										variant="flat"
+										color="secondary"
+										onPress={() => setChannel("Sentiflex")}
+									>
+										Test Sentiflex
+									</Button>
+									<Button
+										size="sm"
+										variant="flat"
+										color="secondary"
+										onPress={() => setChannel(undefined)}
+									>
+										Test Clear
+									</Button>
+								</div> */}
+							</div>
+						</div>
+						<div className="flex gap-2 w-full sm:w-auto">
+							<div className="flex-1 sm:w-64">
+								<Dropdown>
+									<DropdownTrigger>
+										<Button
+											variant="bordered"
+											className="w-full justify-between"
+											endContent={<ChevronDownIcon className="w-4 h-4" />}
+										>
+											{channel 
+												? channelOptions.find(opt => opt.uid === channel)?.name || "Select Channel"
+												: "All Channels"
+											}
+										</Button>
+									</DropdownTrigger>
+									<DropdownMenu
+										aria-label="Channel selection"
+										disallowEmptySelection={false}
+										closeOnSelect={true}
+										selectedKeys={channel ? [channel] : []}
+										onSelectionChange={(keys) => {
+											console.log("Raw keys from dropdown:", keys);
+											const selectedKey = Array.from(keys)[0] as string;
+											console.log("Selected channel:", selectedKey);
+											// Handle empty selection (All Channels)
+											if (selectedKey === "" || !selectedKey) {
+												setChannel(undefined);
+											} else {
+												setChannel(selectedKey);
+											}
+										}}
+									>
+										{channelOptions.map((option) => (
+											<DropdownItem 
+												key={option.uid} 
+												value={option.uid}
+												onPress={() => {
+													console.log("Item pressed:", option.uid);
+													if (option.uid === "") {
+														setChannel(undefined);
+													} else {
+														setChannel(option.uid);
+													}
+												}}
+											>
+												{option.name}
+											</DropdownItem>
+										))}
+									</DropdownMenu>
+								</Dropdown>
+							</div>
+							<div className="flex gap-2">
+								<Button
+									variant="light"
+									color="primary"
+									size="sm"
+									onPress={() => {
+										console.log("Manually refreshing data...");
+										mutate();
+									}}
+									className="px-3"
+									isLoading={isLoading}
+								>
+									Refresh
+								</Button>
+								{channel && (
+									<Button
+										variant="light"
+										color="danger"
+										size="sm"
+										onPress={() => {
+											console.log("Clearing channel filter");
+											setChannel(undefined);
+										}}
+										className="px-3"
+									>
+										Clear
+									</Button>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
 
 				{isLoading ? (
 					<TableSkeleton columns={displayColumns.length} rows={10} />
