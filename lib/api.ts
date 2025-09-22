@@ -2932,26 +2932,56 @@ export async function getSingleCollectionCustomerData(
 
 //Get loan repayment(excluding down payment and card tokenization)
 export async function getLoanRepaymentData(
+	channel?: string,
 	startDate?: string,
 	endDate?: string
 ) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
+	let query = "";
+	
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+	
+	return apiCall(`/collections/loan-repayments${query}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPaymentData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
+export async function getDownPaymentData(channel?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+	
+	return apiCall(`/collections/down-payments${query}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/all${query1}${query2}`, "GET");
+export async function getTransactionData(startDate?: string, endDate?: string, channel?: string) {
+	let query = "";
+	
+	if (startDate) {
+		query += `?startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (endDate) {
+		query += `?endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (channel) {
+		query += `?channel=${channel}`;
+	}
+	
+	return apiCall(`/collections/all${query}`, "GET");
 }
 
 // SENTINEL INTEGRATION PART
