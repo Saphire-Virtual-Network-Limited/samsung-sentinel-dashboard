@@ -819,6 +819,26 @@ export function AppSidebar() {
 			id: "developer-products",
 		},
 		{
+			icon: IoBusiness,
+			title: "Staff",
+			url: "/access/dev/staff",
+			id: "dev-staff",
+			subItems: [
+				{
+					title: "Mobiflex Sales Agent",
+					url: "/access/dev/staff/agents",
+				},
+				{
+					title: "MBE",
+					url: "/access/dev/staff/mbe",
+				},
+				{
+					title: "SCAN Partners",
+					url: "/access/dev/staff/scan-partners",
+				},
+			],
+		},
+		{
 			icon: Users2,
 			title: "Users",
 			id: "admin-users",
@@ -1358,7 +1378,7 @@ export function AppSidebar() {
 								asChild
 								className="hover:bg-black sidebar-transition sidebar-focus"
 							>
-								<Link href="/dashboard" onClick={handleLinkClick}>
+								<Link href="/" onClick={handleLinkClick}>
 									<div className="flex items-center justify-center gap-3 px-1 p-4 sidebar-transition">
 										<div className="flex-shrink-0">
 											<Image

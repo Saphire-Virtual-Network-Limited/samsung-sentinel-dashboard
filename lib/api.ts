@@ -1435,15 +1435,15 @@ export async function createCustomerVirtualWallet(customerId: string) {
 
 // Inject payment history into customer
 export interface InjectPaymentHistoryData {
-	amount: string; // Changed to string for better input handling
-	paymentType: "CREDIT" | "DEBIT";
-	paymentReference: string;
-	paymentDescription: string;
-	paid_at: string;
-	senderAccount: string;
-	senderBank: string;
-	receiverAccount: string;
-	receiverBank: string;
+	amount?: string; // Changed to string for better input handling
+	paymentType?: "CREDIT" | "DEBIT";
+	paymentReference?: string;
+	paymentDescription?: string;
+	paid_at?: string;
+	senderAccount?: string;
+	senderBank?: string;
+	receiverAccount?: string;
+	receiverBank?: string;
 }
 
 export async function injectPaymentHistory(
@@ -1453,7 +1453,7 @@ export async function injectPaymentHistory(
 	// Convert amount to number before sending to API
 	const apiData = {
 		...data,
-		amount: parseFloat(data.amount) || 0,
+		amount: parseFloat(data.amount || "0") || 0,
 	};
 
 	return apiCall(
@@ -2932,26 +2932,56 @@ export async function getSingleCollectionCustomerData(
 
 //Get loan repayment(excluding down payment and card tokenization)
 export async function getLoanRepaymentData(
+	channel?: string,
 	startDate?: string,
 	endDate?: string
 ) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
+	let query = "";
+	
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+	
+	return apiCall(`/collections/loan-repayments${query}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPaymentData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
+export async function getDownPaymentData(channel?: string, startDate?: string, endDate?: string) {
+	let query = "";
+	
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+	
+	return apiCall(`/collections/down-payments${query}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/all${query1}${query2}`, "GET");
+export async function getTransactionData(startDate?: string, endDate?: string, channel?: string) {
+	let query = "";
+	
+	if (startDate) {
+		query += `?startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (endDate) {
+		query += `?endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (channel) {
+		query += `?channel=${channel}`;
+	}
+	
+	return apiCall(`/collections/all${query}`, "GET");
 }
 
 // SENTINEL INTEGRATION PART
@@ -3563,3 +3593,82 @@ export async function getCustomerSmsTotalSent() {
 export async function getCustomerEmailTotalSent() {
 	return apiCall(`/resources/email-logs`, "GET");
 }
+
+// Cluster management //////////////////////////////////////////////////////////////
+
+// create cluster supervisor
+
+export interface createClusterSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	clusterId: string;
+	clusterName?: string;
+}
+
+export async function clusterSupervisor(createClusterSupervisor: createClusterSupervisor) {
+	return apiCall(`/admin/cluster/supervisor/create`, "POST", createClusterSupervisor);
+}
+
+// create state manager
+
+export interface createStateManager {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateManager(createStateManager: createStateManager) {
+	return apiCall(`/admin/cluster/state-manager/create`, "POST", createStateManager);
+}
+
+// create state Supervisor
+
+export interface createStateSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateSupervisor(createStateSupervisor: createStateSupervisor) {
+	return apiCall(`/admin/cluster/state-supervisor/create`, "POST", createStateSupervisor);
+}
+
+
+// Get all cluster supervisors
+
+export async function getClusterSupervisors() {
+	return apiCall(`/admin/cluster/supervisors`, "GET");	
+}
+
+// Get all state managers
+export async function getStateManagers() {
+	return apiCall(`/admin/cluster/state-managers`, "GET");
+}
+
+// Get all state supervisors
+export async function getStateSupervisors() {
+	return apiCall(`/admin/cluster/state-supervisors`, "GET");
+}
+
+
+// Assign cluster supervisor to a cluster
+
+export async function assignClusterSupervisorToCluster(userId: string) {
+	return apiCall(`/admin/cluster/assign-supervisor/${userId}`, "PUT");
+}
+
+// get all cluster for assignment
+
+export async function getClustersForAssignment() {
+	return apiCall(`/admin/cluster/clusters`, "GET");
+}
+
+
+
+

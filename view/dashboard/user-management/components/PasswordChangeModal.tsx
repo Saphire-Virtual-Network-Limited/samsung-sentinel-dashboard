@@ -3,12 +3,12 @@ import { Button, Input } from "@heroui/react";
 import { KeyRound } from "lucide-react";
 import UserModal from "./UserModal";
 import { InfoSection, InfoField } from "./InfoComponents";
-import type { User } from "../types";
+import type { UserOrClusterSupervisor } from "../types";
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedUser: User | null;
+  selectedUser: UserOrClusterSupervisor | null;
   passwordForm: {
     password: string;
     confirmPassword: string;

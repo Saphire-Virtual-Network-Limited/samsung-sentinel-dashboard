@@ -5,12 +5,12 @@ import { useRouter, usePathname } from "next/navigation";
 import UserModal from "./UserModal";
 import { InfoSection, InfoField } from "./InfoComponents";
 import { capitalize } from "@/lib";
-import type { User } from "../types";
+import type { UserOrClusterSupervisor } from "../types";
 
 interface ViewUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedUser: User | null;
+  selectedUser: UserOrClusterSupervisor | null;
   statusColorMap: Record<string, any>;
 }
 
@@ -56,7 +56,7 @@ export default function ViewUserModal({
           <InfoField label="Email" value={selectedUser.email} />
           <InfoField
             label="Phone"
-            value={selectedUser.telephoneNumber || "N/A"}
+            value={(selectedUser as any).phone || (selectedUser as any).telephoneNumber || "N/A"}
           />
           <InfoField
             label="Role"
@@ -96,13 +96,13 @@ export default function ViewUserModal({
         </InfoSection>
 
         {/* Company Information */}
-        {selectedUser.companyName && (
+        {(selectedUser as any).companyName && selectedUser.role === "CUSTOMER" && (
           <InfoSection title="Company Information">
-            <InfoField label="Company" value={selectedUser.companyName} />
+            <InfoField label="Company" value={(selectedUser as any).companyName} />
             <InfoField
               label="Location"
               value={
-                [selectedUser.companyCity, selectedUser.companyState]
+                [(selectedUser as any).companyCity, (selectedUser as any).companyState]
                   .filter(Boolean)
                   .join(", ") || "N/A"
               }
@@ -118,7 +118,7 @@ export default function ViewUserModal({
           />
           <InfoField
             label="Last Updated"
-            value={new Date(selectedUser.updatedAt).toLocaleDateString()}
+            value={(selectedUser as any).updatedAt ? new Date((selectedUser as any).updatedAt).toLocaleDateString() : "N/A"}
           />
         </InfoSection>
       </div>

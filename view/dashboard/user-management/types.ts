@@ -47,3 +47,54 @@ export interface UsersResponse {
   data: User[];
   responseTime: string;
 }
+
+export interface clusterSupervisor {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  accountStatus: AccountStatus;
+  isActive: boolean;
+  clusterName?: string;
+  stateName?: string | null;
+  createdAt: string;
+  dob?: string | null;
+  clusterId?: number;
+  Admins?: Admin | null;
+}
+
+export type UserOrClusterSupervisor = User | clusterSupervisor | stateManager | stateSupervisor;
+
+export interface stateManager {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  accountStatus: AccountStatus;
+  isActive: boolean;
+  stateName?: string;
+  createdAt: string;
+  dob?: string | null;
+  stateId?: number;
+  Admins?: Admin | null;
+}
+
+export interface stateSupervisor {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  accountStatus: AccountStatus;
+  isActive: boolean;
+  stateName?: string;
+  createdAt: string;
+  dob?: string | null;
+  stateId?: number;
+  Admins?: Admin | null;
+}
