@@ -1,7 +1,7 @@
 "use client";
 import { Tabs, Tab, cn } from "@heroui/react";
 import { GeneralSans_Meduim } from "@/lib";
-import { SentinelPage } from "@/view";
+import { AllSentinelPage, SentinelPage } from "@/view";
 
 import React from "react";
 
@@ -21,7 +21,7 @@ const SentinelSummaryView = () => {
           key="All Sentinel"
           title="All Sentinel"
           className="lg:p-4 text-base">
-          <SentinelPage />
+          <AllSentinelPage />
         </Tab>
         <Tab
           key="Standalone Sentinel"
