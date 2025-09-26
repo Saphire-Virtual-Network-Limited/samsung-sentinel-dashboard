@@ -103,7 +103,10 @@ type StoreOnLoan = {
 		updatedAt: string;
 		loanAmount: number;
 		deviceId: string;
+		newDeviceId: string;
 		downPayment: number;
+		deviceName: string | null;
+		deviceModel: string | null;
 		insurancePackage: string;
 		insurancePrice: number;
 		mbsEligibleAmount: number;
@@ -114,18 +117,19 @@ type StoreOnLoan = {
 		monthlyRepayment: number;
 		duration: number;
 		interestAmount: number;
-		device: {
+		device?: {
 			price: number;
+			deviceModel: string | null;
 			deviceModelNumber: string;
 			SAP: number;
 			SLD: number;
 			createdAt: string;
 			deviceManufacturer: string;
-			deviceName: string;
+			deviceName: string | null;
 			deviceRam: string | null;
 			deviceScreen: string | null;
 			deviceStorage: string | null;
-			imageLink: string;
+			imageLink: string | null;
 			newDeviceId: string;
 			oldDeviceId: string;
 			sentiprotect: number;
@@ -794,7 +798,7 @@ export default function UnpaidStoresView() {
 														Device Name
 													</p>
 													<p className="font-medium">
-														{selectedItem.loanRecord.device.deviceName || "N/A"}
+														{selectedItem.loanRecord.device?.deviceName || selectedItem.loanRecord.device?.deviceModel || "N/A"}
 													</p>
 												</div>
 												<div>
@@ -802,7 +806,7 @@ export default function UnpaidStoresView() {
 														Device Model
 													</p>
 													<p className="font-medium">
-														{selectedItem.loanRecord.device.deviceModelNumber ||
+														{selectedItem.loanRecord.device?.deviceModelNumber ||
 															"N/A"}
 													</p>
 												</div>
@@ -811,8 +815,7 @@ export default function UnpaidStoresView() {
 														Manufacturer
 													</p>
 													<p className="font-medium">
-														{selectedItem.loanRecord.device
-															.deviceManufacturer || "N/A"}
+														{selectedItem.loanRecord.device?.deviceManufacturer || "N/A"}
 													</p>
 												</div>
 												<div>
@@ -820,14 +823,14 @@ export default function UnpaidStoresView() {
 														Device Type
 													</p>
 													<p className="font-medium">
-														{selectedItem.loanRecord.device.deviceType || "N/A"}
+														{selectedItem.loanRecord.device?.deviceType || "N/A"}
 													</p>
 												</div>
 												<div>
 													<p className="text-sm text-default-500">Price</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.price?.toLocaleString(
+														{selectedItem.loanRecord.device?.price?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -836,7 +839,7 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">SAP</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.SAP?.toLocaleString(
+														{selectedItem.loanRecord.device?.SAP?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -845,7 +848,7 @@ export default function UnpaidStoresView() {
 													<p className="text-sm text-default-500">SLD</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.SLD?.toLocaleString(
+														{selectedItem.loanRecord.device?.SLD?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
@@ -856,7 +859,7 @@ export default function UnpaidStoresView() {
 													</p>
 													<p className="font-medium">
 														₦
-														{selectedItem.loanRecord.device.sentiprotect?.toLocaleString(
+														{selectedItem.loanRecord.device?.sentiprotect?.toLocaleString(
 															"en-GB"
 														) || "N/A"}
 													</p>
