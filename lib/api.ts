@@ -3159,7 +3159,7 @@ export async function getAdminPayouts(
 	page: number = 1,
 	limit: number = 20
 ): Promise<GetAdminPayoutsResponse> {
-	return apiCall(`/payouts?page=${page}&limit=${limit}`, "GET");
+	return apiCall(`admin/payouts?page=${page}&limit=${limit}`, "GET");
 }
 
 // Get payout statistics
@@ -3187,7 +3187,7 @@ export interface GetAdminPayoutStatsResponse {
 
 // Get payout statistics
 export async function getAdminPayoutStats(): Promise<GetAdminPayoutStatsResponse> {
-	return apiCall("/payouts/stats", "GET");
+	return apiCall("admin/payouts/stats", "GET");
 }
 
 /**
