@@ -254,6 +254,8 @@ const InjectPaymentModal = React.memo(
 					paymentReference: "",
 					paymentDescription: "",
 					paid_at: currentDateTime,
+					// Note: senderAccount, senderBank, receiverAccount, and receiverBank are hidden fields
+					// but kept in state for API compatibility
 					senderAccount: "",
 					senderBank: "",
 					receiverAccount: customer?.Wallet?.accountNumber || "",
@@ -298,6 +300,8 @@ const InjectPaymentModal = React.memo(
 					paymentReference: "",
 					paymentDescription: "",
 					paid_at: currentDateTime,
+					// Note: senderAccount, senderBank, receiverAccount, and receiverBank are hidden fields
+					// but kept in state for API compatibility
 					senderAccount: "",
 					senderBank: "",
 					receiverAccount: customer?.Wallet?.accountNumber || "",
@@ -378,10 +382,9 @@ const InjectPaymentModal = React.memo(
 				errors.amount = "Please enter a valid amount greater than 0";
 			}
 
-			// Validate payment reference
-			if (!internalPaymentData.paymentReference?.trim()) {
-				errors.paymentReference = "Please enter a payment reference";
-			}
+			// Generate default payment reference if not provided
+			const paymentReference = internalPaymentData.paymentReference?.trim() || 
+				`PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
 			// Validate payment description
 			if (!internalPaymentData.paymentDescription?.trim()) {
@@ -393,40 +396,28 @@ const InjectPaymentModal = React.memo(
 				errors.paid_at = "Please select payment date and time";
 			}
 
-			// Validate sender account
-			if (!internalPaymentData.senderAccount?.trim()) {
-				errors.senderAccount = "Please enter sender account number";
-			}
-
-			// Validate sender bank
-			if (!internalPaymentData.senderBank?.trim()) {
-				errors.senderBank = "Please select sender bank";
-			}
-
-			// Validate receiver account
-			if (!internalPaymentData.receiverAccount?.trim()) {
-				errors.receiverAccount = "Please enter receiver account number";
-			}
-
-			// Validate receiver bank
-			if (!internalPaymentData.receiverBank?.trim()) {
-				errors.receiverBank = "Please select receiver bank";
-			}
+			// Note: Sender account, sender bank, receiver account, and receiver bank fields are hidden
+			// so their validation has been removed
 
 			// If there are errors, set them and show toast
 			if (Object.keys(errors).length > 0) {
+				console.log("Validation errors:", errors);
+				console.log("Current form data:", internalPaymentData);
 				setFieldErrors(errors);
 				showToast({
 					type: "error",
-					message: "Please fill in all required fields correctly",
+					message: `Please fill in all required fields correctly. Errors: ${Object.keys(errors).join(", ")}`,
 					duration: 5000,
 				});
 				return;
 			}
 
-			// If all validations pass, submit the form
+			// If all validations pass, submit the form with generated payment reference
 			setFieldErrors({});
-			onSubmit(internalPaymentData);
+			onSubmit({
+				...internalPaymentData,
+				paymentReference: paymentReference
+			});
 		}, [internalPaymentData, onSubmit]);
 
 		// Transform banks data for AutoCompleteField
@@ -441,11 +432,11 @@ const InjectPaymentModal = React.memo(
 
 		return (
 			<Modal isOpen={isOpen} onClose={onClose} size="3xl">
-				<ModalContent>
+				<ModalContent className="max-h-[90vh] overflow-hidden">
 					{() => (
 						<>
 							<ModalHeader>Inject Payment History</ModalHeader>
-							<ModalBody>
+							<ModalBody className="overflow-y-auto max-h-[calc(90vh-120px)]">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										label="Amount"
@@ -485,15 +476,12 @@ const InjectPaymentModal = React.memo(
 										htmlFor="paymentReference"
 										id="paymentReference"
 										type="text"
-										placeholder="Enter payment reference"
-										value={internalPaymentData.paymentReference}
+										placeholder="Enter payment reference (auto-generated if empty)"
+										value={internalPaymentData.paymentReference || ""}
 										onChange={(value) =>
 											handleInternalPaymentDataChange("paymentReference", value)
 										}
 										size="sm"
-										isInvalid={!!fieldErrors.paymentReference}
-										errorMessage={fieldErrors.paymentReference}
-										required
 									/>
 
 									<FormField
@@ -535,7 +523,7 @@ const InjectPaymentModal = React.memo(
 											</div>
 										)}
 									</div>
-
+{/* 
 									<FormField
 										label="Sender Account Number"
 										htmlFor="senderAccount"
@@ -550,9 +538,9 @@ const InjectPaymentModal = React.memo(
 										isInvalid={!!fieldErrors.senderAccount}
 										errorMessage={fieldErrors.senderAccount}
 										required
-									/>
+									/> */}
 
-									<AutoCompleteField
+									{/* <AutoCompleteField
 										label="Sender Bank"
 										htmlFor="senderBank"
 										id="senderBank"
@@ -565,9 +553,9 @@ const InjectPaymentModal = React.memo(
 										isInvalid={!!fieldErrors.senderBank}
 										errorMessage={fieldErrors.senderBank}
 										required
-									/>
+									/> */}
 
-									<FormField
+									{/* <FormField
 										label="Receiver Account Number"
 										htmlFor="receiverAccount"
 										id="receiverAccount"
@@ -581,9 +569,9 @@ const InjectPaymentModal = React.memo(
 										isInvalid={!!fieldErrors.receiverAccount}
 										errorMessage={fieldErrors.receiverAccount}
 										required
-									/>
+									/> */}
 
-									<AutoCompleteField
+									{/* <AutoCompleteField
 										label="Receiver Bank"
 										htmlFor="receiverBank"
 										id="receiverBank"
@@ -596,7 +584,7 @@ const InjectPaymentModal = React.memo(
 										isInvalid={!!fieldErrors.receiverBank}
 										errorMessage={fieldErrors.receiverBank}
 										required
-									/>
+									/> */}
 								</div>
 							</ModalBody>
 							<ModalFooter className="flex gap-2">
@@ -1408,14 +1396,14 @@ export default function CollectionSingleCustomerPage() {
 						currentPaymentData.paymentType === "CREDIT"
 							? prevBalance + amountNumber
 							: prevBalance - amountNumber,
-					paymentReference: currentPaymentData.paymentReference || "N/A",
+					paymentReference: currentPaymentData.paymentReference || "PAYSTACK63764",
 					extRef: currentPaymentData.paymentReference || "N/A",
 					currency: "NGN",
 					channel: "MANUAL_INJECTION",
 					charge: 0,
 					chargeNarration: "N/A",
-					senderBank: currentPaymentData.senderBank || "N/A",
-					senderAccount: currentPaymentData.senderAccount || "N/A",
+					senderBank: currentPaymentData.senderBank || "",
+					senderAccount: currentPaymentData.senderAccount || "",
 					recieverBank: currentPaymentData.receiverBank || "N/A",
 					recieverAccount: currentPaymentData.receiverAccount || "N/A",
 					paymentDescription: currentPaymentData.paymentDescription || "monthly repayment",

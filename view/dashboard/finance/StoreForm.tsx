@@ -1,8 +1,9 @@
 "use client";
 
-import { createSchema, createStore, updateStore, showToast, getAllVfdBanks } from '@/lib'  
+import { createSchema, createStore, updateStore, showToast, getAllVfdBanks, getClustersForAssignment } from '@/lib'  
 import { FormField } from '@/components/reususables/' 
 import AutoCompleteField from '@/components/reususables/form/AutoCompleteField';
+import { SelectField } from '@/components/reususables/form';
 import React, { useState, useEffect } from 'react'
 import { Button } from '@heroui/react';
 import { useParams, useRouter } from 'next/navigation';
@@ -78,6 +79,11 @@ const clusterIdSchema = createSchema((value: string) => {
 	return clusterIdRegex.test(value);
 }, "Please enter a valid cluster id");
 
+const clusterNameSchema = createSchema((value: string) => {
+	const clusterNameRegex = /^[a-zA-Z\s]+$/;
+	return clusterNameRegex.test(value);
+}, "Please enter a valid cluster name");
+
 const partnerSchema = createSchema((value: string) => {
 	const partnerRegex = /^[a-zA-Z0-9\s]+$/;
 	return partnerRegex.test(value);
@@ -109,6 +115,7 @@ type StoreRecord = {
   longitude: number;
   latitude: number;
   clusterId: number;
+  clusterName: string;
   partner: string;
   storeOpen: string;
   storeClose: string;
@@ -130,6 +137,10 @@ const StoreForm = () => {
     const [loadingBanks, setLoadingBanks] = useState(true);
     const [selectedBankCode, setSelectedBankCode] = useState<string | null>(null);
     const [selectedBankName, setSelectedBankName] = useState<string | null>(null);
+    const [clusterList, setClusterList] = useState<{ label: string; value: string; id: string }[]>([]);
+    const [loadingClusters, setLoadingClusters] = useState(true);
+    const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null);
+    const [selectedClusterName, setSelectedClusterName] = useState<string | null>(null);
     // Form state
     const [storeName, setStoreName] = useState("");
     const [city, setCity] = useState("");
@@ -145,6 +156,7 @@ const StoreForm = () => {
     const [longitude, setLongitude] = useState("");
     const [latitude, setLatitude] = useState("");
     const [clusterId, setClusterId] = useState("");
+    const [clusterName, setClusterName] = useState("");
     const [partner, setPartner] = useState("");
     const [storeOpen, setStoreOpen] = useState("");
     const [storeClose, setStoreClose] = useState("");
@@ -164,6 +176,7 @@ const StoreForm = () => {
     const [longitudeError, setLongitudeError] = useState("");
     const [latitudeError, setLatitudeError] = useState("");
     const [clusterIdError, setClusterIdError] = useState("");
+    const [clusterNameError, setClusterNameError] = useState("");
     const [partnerError, setPartnerError] = useState("");
     const [storeOpenError, setStoreOpenError] = useState("");
     const [storeCloseError, setStoreCloseError] = useState("");
@@ -251,6 +264,11 @@ const StoreForm = () => {
         validateField(value, clusterIdSchema, setClusterIdError);
     };
 
+    const handleClusterNameChange = (value: string) => {
+        setClusterName(value);
+        validateField(value, clusterNameSchema, setClusterNameError);
+    };
+
     const handlePartnerChange = (value: string) => {
         setPartner(value);
         validateField(value, partnerSchema, setPartnerError);
@@ -285,6 +303,29 @@ const StoreForm = () => {
 		fetchBanks();
 	}, []);
 
+	// Fetch the cluster list when the component mounts
+	useEffect(() => {
+		const fetchClusters = async () => {
+			setLoadingClusters(true);
+			try {
+				const clusterData = await getClustersForAssignment();
+				if (clusterData?.statusCode === 200) {
+					const formattedOptions = clusterData.data.map((cluster: { id: string; name: string; supervisor: string; manager: string }) => ({
+						label: cluster.name,
+						value: cluster.id,
+						id: cluster.id,
+					}));
+					setClusterList(formattedOptions);
+					setLoadingClusters(false);
+				}
+			} catch (error) {
+				console.error("Error fetching clusters:", error);
+				setLoadingClusters(false);
+			}
+		};
+		fetchClusters();
+	}, []);
+
     const handleBankSelection = (bankCode: string) => {
 		setSelectedBankCode(bankCode);
 		const selectedBank = bankList.find((bank) => bank.value === bankCode);
@@ -293,6 +334,17 @@ const StoreForm = () => {
 		setBankCode(bankCode);
 		setBankCodeError(""); // Clear any existing error
 		setBankNameError(""); // Clear any existing bank name error
+	};
+
+    const handleClusterSelection = (clusterId: string) => {
+		setSelectedClusterId(clusterId);
+		const selectedCluster = clusterList.find((cluster) => cluster.value === clusterId);
+		setSelectedClusterName(selectedCluster?.label || '');  
+		// Auto-fill the cluster fields when a cluster is selected
+		setClusterId(clusterId);
+		setClusterName(selectedCluster?.label || '');
+		setClusterIdError(""); // Clear any existing error
+		setClusterNameError(""); // Clear any existing cluster name error
 	};
 
     // Fetch store data if in edit mode
@@ -323,6 +375,9 @@ const StoreForm = () => {
                         setLongitude(store.longitude?.toString() || '');
                         setLatitude(store.latitude?.toString() || '');
                         setClusterId(store.clusterId?.toString() || '');
+                        setClusterName(store.clusterName || '');
+                        setSelectedClusterId(store.clusterId?.toString() || '');
+                        setSelectedClusterName(store.clusterName || '');
                         setPartner(store.partner || '');
                         setStoreOpen(store.storeOpen || '');
                         setStoreClose(store.storeClose || '');
@@ -378,7 +433,8 @@ const StoreForm = () => {
             storeEmail,
             longitude: parseFloat(longitude),
             latitude: parseFloat(latitude),
-            clusterId: parseInt(clusterId),
+            clusterId: parseInt(selectedClusterId || clusterId),
+            clusterName: selectedClusterName || clusterName,
             partner,
             storeOpen,
             storeClose
@@ -603,17 +659,21 @@ const StoreForm = () => {
                     id="latitude"
                     size="sm"
                 />
-                <FormField
-                    label="Cluster ID"
-                    errorMessage={clusterIdError}
-                    value={clusterId}
-                    onChange={handleClusterIdChange}
-                    placeholder="Enter cluster id"
-                    type="number"
+                <SelectField
+                    label="Cluster"
+                    htmlFor="cluster"
+                    id="cluster"
+                    placeholder={loadingClusters ? "Loading clusters..." : clusterList.length > 0 ? "Select cluster" : "No clusters available"}
+                    reqValue={selectedClusterId || clusterId}
+                    onChange={(value) => handleClusterSelection(value as string)}
+                    options={clusterList.map((cluster) => ({
+                        label: cluster.label,
+                        value: cluster.value,
+                    }))}
+                    isInvalid={!!clusterIdError || !!clusterNameError}
+                    errorMessage={clusterIdError || clusterNameError || undefined}
                     required
-                    htmlFor="clusterId"
-                    id="clusterId"
-                    size="sm"
+                    disabled={loadingClusters || clusterList.length === 0}
                 />
                 <FormField
                     label="Partner"

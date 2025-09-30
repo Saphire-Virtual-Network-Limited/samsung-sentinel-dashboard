@@ -63,6 +63,7 @@ import RepaymentSummariesView from "./loans/repayment/summaries";
 import AllTransactionView from "./loans/repayment/allTransaction";
 import { SentinelSingleCustomerPage } from "./sentinel/singleCustomer";
 import SentinelSummaryView from "./sentinel/setinelSummary";
+import AllSentinelPage from "./sentinel/allSentinel";
 
 export {
 	MBEPage,
@@ -130,6 +131,7 @@ export {
 	AllTransactionView,
 	SentinelSingleCustomerPage,
 	SentinelSummaryView,
+	AllSentinelPage,
 };
 
 export * from "./payout-scheduler";
