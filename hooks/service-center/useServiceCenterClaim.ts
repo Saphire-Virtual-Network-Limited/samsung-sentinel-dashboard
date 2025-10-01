@@ -1,0 +1,149 @@
+import useSWR from "swr";
+
+export interface ServiceCenterClaim {
+	id: string;
+	imei: string;
+	customerName: string;
+	customerPhone: string;
+	customerEmail?: string;
+	customerAddress?: string;
+	deviceBrand: string;
+	deviceModel: string;
+	devicePrice?: number;
+	faultType: string;
+	faultDescription?: string;
+	repairCost?: number;
+	dateSubmitted: string;
+	dateUpdated?: string;
+	status: string;
+	deviceStatus?: string;
+	engineer?: string;
+	engineerPhone?: string;
+	estimatedCompletionDate?: string;
+	warrantyStartDate?: string;
+	warrantyEndDate?: string;
+	partsRequired?: any[];
+	repairHistory?: any[];
+	statusHistory?: any[];
+	documents?: any[];
+}
+
+// Mock data fetcher
+const fetcher = (url: string): Promise<ServiceCenterClaim> => {
+	return Promise.resolve({
+		id: "SC001",
+		imei: "123456789012345",
+		customerName: "Jane Smith",
+		customerPhone: "+234802345678",
+		customerEmail: "jane.smith@email.com", 
+		customerAddress: "456 Market Street, Abuja, Nigeria",
+		deviceBrand: "Samsung",
+		deviceModel: "Galaxy S22",
+		devicePrice: 450000,
+		faultType: "Battery Drain",
+		faultDescription: "Device battery drains quickly even when not in use. Battery life reduced to 2-3 hours.",
+		dateSubmitted: "2024-01-18T09:15:00Z",
+		dateUpdated: "2024-01-18T16:30:00Z",
+		status: "in-progress",
+		deviceStatus: "Under Diagnosis",
+		repairCost: 35000,
+		engineer: "Eng. Sarah Johnson",
+		engineerPhone: "+234901234567",
+		estimatedCompletionDate: "2024-01-22T17:00:00Z",
+		warrantyStartDate: "2023-06-15T00:00:00Z",
+		warrantyEndDate: "2024-06-15T00:00:00Z",
+		partsRequired: [
+			{
+				partName: "Battery",
+				partCode: "SM-G996B-BAT",
+				cost: 25000,
+				availability: "In Stock"
+			},
+			{
+				partName: "Charging Port",
+				partCode: "SM-G996B-PORT",
+				cost: 8000,
+				availability: "Ordered"
+			}
+		],
+		documents: [
+			{
+				id: "DOC001",
+				name: "diagnostic_report.pdf",
+				type: "document",
+				uploadDate: "2024-01-18",
+			},
+			{
+				id: "DOC002",
+				name: "device_photos.jpg",
+				type: "image",
+				uploadDate: "2024-01-18",
+			},
+		],
+		repairHistory: [
+			{
+				id: "REP001",
+				date: "2024-01-18T10:00:00Z",
+				action: "Initial Diagnosis",
+				engineer: "Eng. Sarah Johnson",
+				findings: "Battery health at 65%, charging port shows signs of wear",
+				status: "completed"
+			},
+			{
+				id: "REP002",
+				date: "2024-01-18T14:30:00Z",
+				action: "Parts Assessment",
+				engineer: "Eng. Sarah Johnson",
+				findings: "Battery replacement required, charging port needs cleaning",
+				status: "completed"
+			}
+		],
+		statusHistory: [
+			{
+				id: "ST001",
+				date: "2024-01-18T09:15:00Z",
+				status: "submitted",
+				user: "Service Center Staff",
+				notes: "Claim submitted by customer"
+			},
+			{
+				id: "ST002",
+				date: "2024-01-18T10:00:00Z",
+				status: "in-progress",
+				user: "Eng. Sarah Johnson",
+				notes: "Diagnosis started"
+			}
+		]
+	});
+};
+
+export const useServiceCenterClaim = (claimId: string) => {
+	const { data, error, mutate, isLoading } = useSWR(
+		claimId ? `/api/service-center/claims/${claimId}` : null,
+		fetcher
+	);
+
+	return {
+		claim: data,
+		isLoading,
+		error,
+		mutate,
+	};
+};
+
+export const useServiceCenterClaimActions = () => {
+	const updateStatus = async (claimId: string, status: string, notes: string) => {
+		// API call to update claim status
+		return Promise.resolve();
+	};
+
+	const uploadDocument = async (claimId: string, file: File) => {
+		// API call to upload document
+		return Promise.resolve();
+	};
+
+	return {
+		updateStatus,
+		uploadDocument,
+	};
+};

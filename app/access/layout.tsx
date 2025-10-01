@@ -1,6 +1,10 @@
 import { AccessLayoutView } from "@/view";
-
+import { DebugProvider } from "@/lib/debugContext";
 async function AccessLayout({ children }: { children: React.ReactNode }) {
-	return <AccessLayoutView>{children}</AccessLayoutView>;
+	return (
+		<DebugProvider>
+			<AccessLayoutView>{children}</AccessLayoutView>
+		</DebugProvider>
+	);
 }
 export default AccessLayout;

@@ -24,6 +24,9 @@ import {
 	Receipt,
 	Package,
 	MessageSquare,
+	CheckCircle,
+	FileText,
+	Bug,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -44,6 +47,8 @@ import { useState } from "react";
 import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
 import { hasPermission } from "@/lib/permissions";
+import { useDebug } from "@/lib/debugContext";
+import DebugModal from "@/components/modals/DebugModal";
 
 // Define types for menu items
 type SubItem = {
@@ -67,7 +72,9 @@ export function AppSidebar() {
 	const [openNestedMenus, setOpenNestedMenus] = useState<{
 		[key: string]: boolean;
 	}>({});
+	const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
 	const { label: selectedProduct } = getSelectedProduct();
+	const { isDebugMode, debugOverrides } = useDebug();
 	const handleLogout = async () => {
 		try {
 			logout();
@@ -1318,6 +1325,55 @@ export function AppSidebar() {
 			: []),
 	];
 
+	const serviceCenterItems: MenuItem[] = [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/service-center/",
+			id: "service-center-dashboard",
+		},
+		{
+			icon: CheckCircle,
+			title: "Validate Claims",
+			url: "/access/service-center/validate-claims",
+			id: "service-center-validate-claims",
+		},
+		{
+			icon: FileText,
+			title: "Claims",
+			id: "service-center-claims",
+			subItems: [
+				{
+					title: "Approved",
+					url: "/access/service-center/claims/approved",
+				},
+				{
+					title: "Pending", 
+					url: "/access/service-center/claims/pending",
+				},
+				{
+					title: "Rejected",
+					url: "/access/service-center/claims/rejected",
+				},
+			],
+		},
+		{
+			icon: Wrench,
+			title: "Completed Repairs",
+			id: "service-center-completed-repairs",
+			subItems: [
+				{
+					title: "Paid",
+					url: "/access/service-center/completed-repairs/paid",
+				},
+				{
+					title: "Unpaid",
+					url: "/access/service-center/completed-repairs/unpaid",
+				},
+			],
+		},
+	];
+
 	// Get items based on user role
 	const items: MenuItem[] = (() => {
 		const role = userResponse?.data?.role;
@@ -1345,6 +1401,8 @@ export function AppSidebar() {
 				return collectionOfficerItems;
 			case "SCAN_PARTNER":
 				return scanParterItems;
+			case "SERVICE_CENTER":
+				return serviceCenterItems;
 			default:
 				return [];
 		}
@@ -1516,6 +1574,33 @@ export function AppSidebar() {
 
 				<SidebarFooter className="bg-black text-white border-t border-gray-800 sidebar-transition">
 					<SidebarMenu className="py-2 px-2 sm:px-3 flex flex-1 flex-col gap-1 sm:gap-2">
+						{/* Debug Button - Only show in development */}
+						{process.env.NODE_ENV === "development" && (
+							<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
+								<SidebarMenuButton
+									className={`hover:bg-orange-600 hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus ${
+										isDebugMode ? "bg-orange-500 text-white" : ""
+									}`}
+									onClick={() => setIsDebugModalOpen(true)}
+								>
+									<div className="flex items-center gap-2.5 sm:gap-3 w-full">
+										<Bug
+											className="sidebar-icon"
+											style={{ width: "16px", height: "16px" }}
+										/>
+										<span className="text-sm sm:text-base font-medium sidebar-transition">
+											Debug
+										</span>
+										{isDebugMode && (
+											<div className="ml-auto">
+												<div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse" />
+											</div>
+										)}
+									</div>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						)}
+
 						<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
 							<SidebarMenuButton
 								asChild
@@ -1560,6 +1645,12 @@ export function AppSidebar() {
 					</SidebarMenu>
 				</SidebarFooter>
 			</Sidebar>
+
+			{/* Debug Modal */}
+			<DebugModal
+				isOpen={isDebugModalOpen}
+				onClose={() => setIsDebugModalOpen(false)}
+			/>
 		</>
 	);
 }

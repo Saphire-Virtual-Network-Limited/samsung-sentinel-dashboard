@@ -408,6 +408,37 @@ export function hasPermission(
 	permission: keyof PermissionConfig,
 	userEmail?: string
 ): boolean {
+	// Check for debug overrides in development mode
+	if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+		try {
+			const debugState = localStorage.getItem("debug-overrides");
+			if (debugState) {
+				const parsed = JSON.parse(debugState);
+				if (parsed.enabled && parsed.overrides) {
+					// Use debug role if set
+					const debugRole = parsed.overrides.role;
+					const debugEmail = parsed.overrides.email;
+					const debugPermissions = parsed.overrides.permissions;
+
+					// If permission is explicitly granted in debug overrides
+					if (debugPermissions && debugPermissions.includes(permission)) {
+						return true;
+					}
+
+					// Use debug role and email for regular permission check
+					const effectiveRole = debugRole || role;
+					const effectiveEmail = debugEmail || userEmail;
+					const permissions = getPermissions(effectiveRole, effectiveEmail);
+					return permissions[permission] || false;
+				}
+			}
+		} catch (error) {
+			// Ignore errors in debug override parsing
+			console.warn("Failed to parse debug overrides:", error);
+		}
+	}
+
+	// Normal permission check
 	const permissions = getPermissions(role, userEmail);
 	return permissions[permission] || false;
 }
