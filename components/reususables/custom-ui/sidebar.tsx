@@ -1348,7 +1348,7 @@ export function AppSidebar() {
 					url: "/access/service-center/claims/approved",
 				},
 				{
-					title: "Pending", 
+					title: "Pending",
 					url: "/access/service-center/claims/pending",
 				},
 				{

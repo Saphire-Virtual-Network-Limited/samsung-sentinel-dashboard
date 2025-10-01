@@ -1,19 +1,31 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Input, Card, CardBody, CardHeader, Divider } from "@heroui/react";
+import {
+	Button,
+	Input,
+	Card,
+	CardBody,
+	CardHeader,
+	Divider,
+} from "@heroui/react";
 import { FormField } from "@/components/reususables";
 import { showToast } from "@/lib/showNotification";
 import { Search, AlertCircle, CheckCircle } from "lucide-react";
-import { useValidateClaims, ValidationResult, ClaimFormData } from "@/hooks/service-center/useValidateClaims";
+import {
+	useValidateClaims,
+	ValidationResult,
+	ClaimFormData,
+} from "@/hooks/service-center/useValidateClaims";
 
 const ValidateClaimsView = () => {
 	const [step, setStep] = useState<1 | 2>(1);
 	const [imei, setImei] = useState("");
-	const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+	const [validationResult, setValidationResult] =
+		useState<ValidationResult | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	
+
 	const [formData, setFormData] = useState<ClaimFormData>({
 		imei: "",
 		customerName: "",
@@ -42,9 +54,9 @@ const ValidateClaimsView = () => {
 		try {
 			const result = await validateImei(imei);
 			setValidationResult(result);
-			
+
 			if (result.isValid) {
-				setFormData(prev => ({
+				setFormData((prev) => ({
 					...prev,
 					imei,
 					customerName: result.customerName || "",
@@ -71,7 +83,7 @@ const ValidateClaimsView = () => {
 	};
 
 	const handleInputChange = (field: keyof ClaimFormData, value: string) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			[field]: value,
 		}));
@@ -80,15 +92,22 @@ const ValidateClaimsView = () => {
 	const handleSubmit = async () => {
 		// Basic validation
 		const requiredFields: (keyof ClaimFormData)[] = [
-			"customerPhone", "deviceBrand", "deviceModel", 
-			"devicePrice", "faultType", "repairCost", "description"
+			"customerPhone",
+			"deviceBrand",
+			"deviceModel",
+			"devicePrice",
+			"faultType",
+			"repairCost",
+			"description",
 		];
-		
+
 		for (const field of requiredFields) {
 			if (!formData[field].trim()) {
 				showToast({
 					type: "error",
-					message: `Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
+					message: `Please fill in ${field
+						.replace(/([A-Z])/g, " $1")
+						.toLowerCase()}`,
 				});
 				return;
 			}
@@ -97,7 +116,7 @@ const ValidateClaimsView = () => {
 		setIsSubmitting(true);
 		try {
 			const result = await submitClaimForm(formData);
-			
+
 			if (result.success) {
 				showToast({
 					type: "success",
@@ -182,7 +201,9 @@ const ValidateClaimsView = () => {
 								<AlertCircle className="text-red-500 mt-0.5" size={20} />
 								<div>
 									<p className="text-red-700 font-medium">Validation Failed</p>
-									<p className="text-red-600 text-sm">{validationResult.error}</p>
+									<p className="text-red-600 text-sm">
+										{validationResult.error}
+									</p>
 								</div>
 							</div>
 						)}
@@ -214,7 +235,8 @@ const ValidateClaimsView = () => {
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 											<div>
 												<p className="text-green-700">
-													<span className="font-medium">Customer:</span> {validationResult.customerName}
+													<span className="font-medium">Customer:</span>{" "}
+													{validationResult.customerName}
 												</p>
 												<p className="text-green-700">
 													<span className="font-medium">IMEI:</span> {imei}
@@ -223,10 +245,16 @@ const ValidateClaimsView = () => {
 											{validationResult.previousClaims && (
 												<div>
 													<p className="text-green-700">
-														<span className="font-medium">Previous Claims:</span> {validationResult.previousClaims.count}
+														<span className="font-medium">
+															Previous Claims:
+														</span>{" "}
+														{validationResult.previousClaims.count}
 													</p>
 													<p className="text-green-700">
-														<span className="font-medium">Remaining Claims:</span> {validationResult.previousClaims.remainingClaims}
+														<span className="font-medium">
+															Remaining Claims:
+														</span>{" "}
+														{validationResult.previousClaims.remainingClaims}
 													</p>
 												</div>
 											)}
@@ -242,11 +270,7 @@ const ValidateClaimsView = () => {
 						<CardHeader>
 							<div className="flex items-center justify-between">
 								<h2 className="text-lg font-semibold">Create Repair Claim</h2>
-								<Button
-									variant="light"
-									onPress={handleBack}
-									size="sm"
-								>
+								<Button variant="light" onPress={handleBack} size="sm">
 									← Back to Validation
 								</Button>
 							</div>
@@ -254,7 +278,9 @@ const ValidateClaimsView = () => {
 						<CardBody className="space-y-6">
 							{/* Customer Information */}
 							<div>
-								<h3 className="text-md font-semibold mb-4">Customer Information</h3>
+								<h3 className="text-md font-semibold mb-4">
+									Customer Information
+								</h3>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										label="Customer Name"
@@ -263,7 +289,9 @@ const ValidateClaimsView = () => {
 										type="text"
 										placeholder=""
 										value={formData.customerName}
-										onChange={(value) => handleInputChange("customerName", value)}
+										onChange={(value) =>
+											handleInputChange("customerName", value)
+										}
 										size="lg"
 										disabled
 									/>
@@ -274,7 +302,9 @@ const ValidateClaimsView = () => {
 										type="tel"
 										placeholder="+234..."
 										value={formData.customerPhone}
-										onChange={(value) => handleInputChange("customerPhone", value)}
+										onChange={(value) =>
+											handleInputChange("customerPhone", value)
+										}
 										size="lg"
 									/>
 									<FormField
@@ -284,7 +314,9 @@ const ValidateClaimsView = () => {
 										type="email"
 										placeholder="customer@example.com"
 										value={formData.customerEmail}
-										onChange={(value) => handleInputChange("customerEmail", value)}
+										onChange={(value) =>
+											handleInputChange("customerEmail", value)
+										}
 										size="lg"
 									/>
 								</div>
@@ -294,7 +326,9 @@ const ValidateClaimsView = () => {
 
 							{/* Device Information */}
 							<div>
-								<h3 className="text-md font-semibold mb-4">Device Information</h3>
+								<h3 className="text-md font-semibold mb-4">
+									Device Information
+								</h3>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										label="Device Brand"
@@ -303,7 +337,9 @@ const ValidateClaimsView = () => {
 										type="text"
 										placeholder="e.g., Samsung"
 										value={formData.deviceBrand}
-										onChange={(value) => handleInputChange("deviceBrand", value)}
+										onChange={(value) =>
+											handleInputChange("deviceBrand", value)
+										}
 										size="lg"
 									/>
 									<FormField
@@ -313,7 +349,9 @@ const ValidateClaimsView = () => {
 										type="text"
 										placeholder="e.g., Galaxy S22"
 										value={formData.deviceModel}
-										onChange={(value) => handleInputChange("deviceModel", value)}
+										onChange={(value) =>
+											handleInputChange("deviceModel", value)
+										}
 										size="lg"
 									/>
 									<FormField
@@ -323,7 +361,9 @@ const ValidateClaimsView = () => {
 										type="number"
 										placeholder="450000"
 										value={formData.devicePrice}
-										onChange={(value) => handleInputChange("devicePrice", value)}
+										onChange={(value) =>
+											handleInputChange("devicePrice", value)
+										}
 										size="lg"
 									/>
 								</div>
@@ -333,7 +373,9 @@ const ValidateClaimsView = () => {
 
 							{/* Repair Information */}
 							<div>
-								<h3 className="text-md font-semibold mb-4">Repair Information</h3>
+								<h3 className="text-md font-semibold mb-4">
+									Repair Information
+								</h3>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										label="Fault Type"
@@ -364,7 +406,9 @@ const ValidateClaimsView = () => {
 										type="text"
 										placeholder="Describe the device problem in detail..."
 										value={formData.description}
-										onChange={(value) => handleInputChange("description", value)}
+										onChange={(value) =>
+											handleInputChange("description", value)
+										}
 										size="lg"
 									/>
 								</div>

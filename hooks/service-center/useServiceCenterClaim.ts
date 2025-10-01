@@ -35,13 +35,14 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 		imei: "123456789012345",
 		customerName: "Jane Smith",
 		customerPhone: "+234802345678",
-		customerEmail: "jane.smith@email.com", 
+		customerEmail: "jane.smith@email.com",
 		customerAddress: "456 Market Street, Abuja, Nigeria",
 		deviceBrand: "Samsung",
 		deviceModel: "Galaxy S22",
 		devicePrice: 450000,
 		faultType: "Battery Drain",
-		faultDescription: "Device battery drains quickly even when not in use. Battery life reduced to 2-3 hours.",
+		faultDescription:
+			"Device battery drains quickly even when not in use. Battery life reduced to 2-3 hours.",
 		dateSubmitted: "2024-01-18T09:15:00Z",
 		dateUpdated: "2024-01-18T16:30:00Z",
 		status: "in-progress",
@@ -57,14 +58,14 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 				partName: "Battery",
 				partCode: "SM-G996B-BAT",
 				cost: 25000,
-				availability: "In Stock"
+				availability: "In Stock",
 			},
 			{
 				partName: "Charging Port",
 				partCode: "SM-G996B-PORT",
 				cost: 8000,
-				availability: "Ordered"
-			}
+				availability: "Ordered",
+			},
 		],
 		documents: [
 			{
@@ -87,7 +88,7 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 				action: "Initial Diagnosis",
 				engineer: "Eng. Sarah Johnson",
 				findings: "Battery health at 65%, charging port shows signs of wear",
-				status: "completed"
+				status: "completed",
 			},
 			{
 				id: "REP002",
@@ -95,8 +96,8 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 				action: "Parts Assessment",
 				engineer: "Eng. Sarah Johnson",
 				findings: "Battery replacement required, charging port needs cleaning",
-				status: "completed"
-			}
+				status: "completed",
+			},
 		],
 		statusHistory: [
 			{
@@ -104,16 +105,16 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 				date: "2024-01-18T09:15:00Z",
 				status: "submitted",
 				user: "Service Center Staff",
-				notes: "Claim submitted by customer"
+				notes: "Claim submitted by customer",
 			},
 			{
 				id: "ST002",
 				date: "2024-01-18T10:00:00Z",
 				status: "in-progress",
 				user: "Eng. Sarah Johnson",
-				notes: "Diagnosis started"
-			}
-		]
+				notes: "Diagnosis started",
+			},
+		],
 	});
 };
 
@@ -132,7 +133,11 @@ export const useServiceCenterClaim = (claimId: string) => {
 };
 
 export const useServiceCenterClaimActions = () => {
-	const updateStatus = async (claimId: string, status: string, notes: string) => {
+	const updateStatus = async (
+		claimId: string,
+		status: string,
+		notes: string
+	) => {
 		// API call to update claim status
 		return Promise.resolve();
 	};

@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Available roles from the permissions system  
+// Available roles from the permissions system
 const AVAILABLE_ROLES = [
 	"ADMIN",
-	"SUB_ADMIN", 
+	"SUB_ADMIN",
 	"SALES",
 	"FINANCE",
 	"HR",
@@ -17,10 +17,10 @@ const AVAILABLE_ROLES = [
 	"SUPPORT",
 	"VERIFY",
 	"SCAN_PARTNER",
-	"SERVICE_CENTER"
+	"SERVICE_CENTER",
 ] as const;
 
-type Role = typeof AVAILABLE_ROLES[number];
+type Role = (typeof AVAILABLE_ROLES)[number];
 
 interface DebugOverrides {
 	role?: Role;
@@ -76,23 +76,26 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	// Save debug state to localStorage
 	useEffect(() => {
 		if (process.env.NODE_ENV === "development") {
-			localStorage.setItem("debug-overrides", JSON.stringify({
-				enabled: isDebugMode,
-				overrides: debugOverrides
-			}));
+			localStorage.setItem(
+				"debug-overrides",
+				JSON.stringify({
+					enabled: isDebugMode,
+					overrides: debugOverrides,
+				})
+			);
 		}
 	}, [isDebugMode, debugOverrides]);
 
 	const setDebugRole = (role: Role | undefined) => {
-		setDebugOverrides(prev => ({ ...prev, role }));
+		setDebugOverrides((prev) => ({ ...prev, role }));
 	};
 
 	const setDebugEmail = (email: string | undefined) => {
-		setDebugOverrides(prev => ({ ...prev, email }));
+		setDebugOverrides((prev) => ({ ...prev, email }));
 	};
 
 	const setDebugPermissions = (permissions: string[] | undefined) => {
-		setDebugOverrides(prev => ({ ...prev, permissions }));
+		setDebugOverrides((prev) => ({ ...prev, permissions }));
 	};
 
 	const resetDebugOverrides = () => {
@@ -122,9 +125,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	};
 
 	return (
-		<DebugContext.Provider value={value}>
-			{children}
-		</DebugContext.Provider>
+		<DebugContext.Provider value={value}>{children}</DebugContext.Provider>
 	);
 };
 

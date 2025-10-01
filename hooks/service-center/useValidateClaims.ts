@@ -30,8 +30,8 @@ export interface ClaimFormData {
 // Mock validation fetcher
 const validateIMEI = async (imei: string): Promise<ValidationResult> => {
 	// Simulate API delay
-	await new Promise(resolve => setTimeout(resolve, 1500));
-	
+	await new Promise((resolve) => setTimeout(resolve, 1500));
+
 	// Mock validation logic
 	if (imei === "123456789012345") {
 		return {
@@ -68,10 +68,12 @@ const validateIMEI = async (imei: string): Promise<ValidationResult> => {
 };
 
 // Mock claim submission
-const submitClaim = async (claimData: ClaimFormData): Promise<{ success: boolean; claimId?: string; error?: string }> => {
+const submitClaim = async (
+	claimData: ClaimFormData
+): Promise<{ success: boolean; claimId?: string; error?: string }> => {
 	// Simulate API delay
-	await new Promise(resolve => setTimeout(resolve, 2000));
-	
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+
 	// Mock success response
 	return {
 		success: true,

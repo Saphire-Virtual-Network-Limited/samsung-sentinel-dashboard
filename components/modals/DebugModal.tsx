@@ -66,7 +66,9 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 			newSelected.add(permission);
 		}
 		setSelectedPermissions(newSelected);
-		setDebugPermissions(newSelected.size > 0 ? Array.from(newSelected) : undefined);
+		setDebugPermissions(
+			newSelected.size > 0 ? Array.from(newSelected) : undefined
+		);
 	};
 
 	const handleReset = () => {
@@ -111,7 +113,9 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 							{/* Debug Mode Toggle */}
 							<div className="flex items-center justify-between">
 								<div>
-									<h3 className="text-lg font-semibold text-white">Debug Mode</h3>
+									<h3 className="text-lg font-semibold text-white">
+										Debug Mode
+									</h3>
 									<p className="text-sm text-gray-400">
 										Enable role and permission overrides
 									</p>
@@ -140,13 +144,17 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											<option value="">No Override (Use Original Role)</option>
 											{AVAILABLE_ROLES.map((role) => (
 												<option key={role} value={role}>
-													{role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+													{role
+														.replace(/_/g, " ")
+														.toLowerCase()
+														.replace(/\b\w/g, (l) => l.toUpperCase())}
 												</option>
 											))}
 										</select>
 										{debugOverrides.role && (
 											<p className="text-xs text-orange-400">
-												Currently overriding role to: <strong>{debugOverrides.role}</strong>
+												Currently overriding role to:{" "}
+												<strong>{debugOverrides.role}</strong>
 											</p>
 										)}
 									</div>
@@ -167,7 +175,8 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 										/>
 										{debugOverrides.email && (
 											<p className="text-xs text-orange-400">
-												Permission checks will use: <strong>{debugOverrides.email}</strong>
+												Permission checks will use:{" "}
+												<strong>{debugOverrides.email}</strong>
 											</p>
 										)}
 									</div>
@@ -178,7 +187,8 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											Override Permissions
 										</label>
 										<p className="text-xs text-gray-400 mb-3">
-											Select permissions to force grant (bypasses role-based permissions)
+											Select permissions to force grant (bypasses role-based
+											permissions)
 										</p>
 										<div className="max-h-48 overflow-y-auto space-y-2 p-3 bg-gray-700 rounded-lg">
 											{availablePermissions.map((permission) => (
@@ -192,7 +202,9 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 													<Switch
 														size="sm"
 														isSelected={selectedPermissions.has(permission)}
-														onValueChange={() => handlePermissionToggle(permission)}
+														onValueChange={() =>
+															handlePermissionToggle(permission)
+														}
 														color="warning"
 													/>
 												</div>
@@ -216,7 +228,10 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 									</div>
 
 									{/* Active Overrides Summary */}
-									{(debugOverrides.role || debugOverrides.email || (debugOverrides.permissions && debugOverrides.permissions.length > 0)) && (
+									{(debugOverrides.role ||
+										debugOverrides.email ||
+										(debugOverrides.permissions &&
+											debugOverrides.permissions.length > 0)) && (
 										<>
 											<Divider className="bg-gray-700" />
 											<div className="space-y-2">
@@ -234,11 +249,13 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 														<strong>Email:</strong> {debugOverrides.email}
 													</p>
 												)}
-												{debugOverrides.permissions && debugOverrides.permissions.length > 0 && (
-													<p className="text-xs text-gray-300">
-														<strong>Permissions:</strong> {debugOverrides.permissions.length} override(s)
-													</p>
-												)}
+												{debugOverrides.permissions &&
+													debugOverrides.permissions.length > 0 && (
+														<p className="text-xs text-gray-300">
+															<strong>Permissions:</strong>{" "}
+															{debugOverrides.permissions.length} override(s)
+														</p>
+													)}
 											</div>
 										</>
 									)}

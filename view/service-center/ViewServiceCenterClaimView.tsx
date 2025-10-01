@@ -2,24 +2,59 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Card, CardBody, CardHeader, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, Textarea, useDisclosure } from "@heroui/react";
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	Chip,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	Select,
+	SelectItem,
+	Textarea,
+	useDisclosure,
+} from "@heroui/react";
 import { InfoField, InfoCard } from "@/components/reususables";
-import { ArrowLeft, Upload, Eye, Calendar, User, Phone, Wrench, FileText } from "lucide-react";
+import {
+	ArrowLeft,
+	Upload,
+	Eye,
+	Calendar,
+	User,
+	Phone,
+	Wrench,
+	FileText,
+} from "lucide-react";
 import { showToast } from "@/lib/showNotification";
-import { useServiceCenterClaim, useServiceCenterClaimActions } from "@/hooks/service-center/useServiceCenterClaim";
+import {
+	useServiceCenterClaim,
+	useServiceCenterClaimActions,
+} from "@/hooks/service-center/useServiceCenterClaim";
 
 const ViewServiceCenterClaimView = () => {
 	const params = useParams();
 	const router = useRouter();
 	const claimId = params?.id as string;
-	
+
 	const [newStatus, setNewStatus] = useState("");
 	const [statusNotes, setStatusNotes] = useState("");
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	
-	const { isOpen: isStatusModalOpen, onOpen: onStatusModalOpen, onClose: onStatusModalClose } = useDisclosure();
-	const { isOpen: isUploadModalOpen, onOpen: onUploadModalOpen, onClose: onUploadModalClose } = useDisclosure();
-	
+
+	const {
+		isOpen: isStatusModalOpen,
+		onOpen: onStatusModalOpen,
+		onClose: onStatusModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isUploadModalOpen,
+		onOpen: onUploadModalOpen,
+		onClose: onUploadModalClose,
+	} = useDisclosure();
+
 	const { claim, isLoading, error, mutate } = useServiceCenterClaim(claimId);
 	const { updateStatus, uploadDocument } = useServiceCenterClaimActions();
 
@@ -29,7 +64,7 @@ const ViewServiceCenterClaimView = () => {
 		{ key: "repair-completed", label: "Repair Completed" },
 		{ key: "ready-pickup", label: "Ready for Pickup" },
 		{ key: "completed", label: "Completed" },
-		{ key: "cancelled", label: "Cancelled" }
+		{ key: "cancelled", label: "Cancelled" },
 	];
 
 	const handleStatusUpdate = async () => {
@@ -118,7 +153,11 @@ const ViewServiceCenterClaimView = () => {
 			<div className="p-6">
 				<div className="text-center py-12">
 					<p className="text-gray-600">Claim not found</p>
-					<Button color="primary" onPress={() => router.back()} className="mt-4">
+					<Button
+						color="primary"
+						onPress={() => router.back()}
+						className="mt-4"
+					>
 						Go Back
 					</Button>
 				</div>
@@ -131,11 +170,7 @@ const ViewServiceCenterClaimView = () => {
 			{/* Header */}
 			<div className="mb-6">
 				<div className="flex items-center gap-4 mb-4">
-					<Button
-						isIconOnly
-						variant="light"
-						onPress={() => router.back()}
-					>
+					<Button isIconOnly variant="light" onPress={() => router.back()}>
 						<ArrowLeft size={20} />
 					</Button>
 					<div>
@@ -160,9 +195,12 @@ const ViewServiceCenterClaimView = () => {
 							variant="flat"
 							size="lg"
 						>
-							{claim?.status?.split("-").map((word: string) => 
-								word.charAt(0).toUpperCase() + word.slice(1)
-							).join(" ") || "N/A"}
+							{claim?.status
+								?.split("-")
+								.map(
+									(word: string) => word.charAt(0).toUpperCase() + word.slice(1)
+								)
+								.join(" ") || "N/A"}
 						</Chip>
 						<Chip color="primary" variant="flat" size="lg">
 							{claim?.deviceStatus}
@@ -170,10 +208,7 @@ const ViewServiceCenterClaimView = () => {
 					</div>
 
 					<div className="flex gap-2">
-						<Button
-							color="primary"
-							onPress={onStatusModalOpen}
-						>
+						<Button color="primary" onPress={onStatusModalOpen}>
 							Update Status
 						</Button>
 						<Button
@@ -207,9 +242,26 @@ const ViewServiceCenterClaimView = () => {
 							<InfoField label="IMEI Number" value={claim?.imei} />
 							<InfoField label="Device Brand" value={claim?.deviceBrand} />
 							<InfoField label="Device Model" value={claim?.deviceModel} />
-							<InfoField label="Device Price" value={`₦${claim?.devicePrice?.toLocaleString()}`} />
-							<InfoField label="Warranty Start" value={claim?.warrantyStartDate ? new Date(claim.warrantyStartDate).toLocaleDateString() : 'N/A'} />
-							<InfoField label="Warranty End" value={claim?.warrantyEndDate ? new Date(claim.warrantyEndDate).toLocaleDateString() : 'N/A'} />
+							<InfoField
+								label="Device Price"
+								value={`₦${claim?.devicePrice?.toLocaleString()}`}
+							/>
+							<InfoField
+								label="Warranty Start"
+								value={
+									claim?.warrantyStartDate
+										? new Date(claim.warrantyStartDate).toLocaleDateString()
+										: "N/A"
+								}
+							/>
+							<InfoField
+								label="Warranty End"
+								value={
+									claim?.warrantyEndDate
+										? new Date(claim.warrantyEndDate).toLocaleDateString()
+										: "N/A"
+								}
+							/>
 						</div>
 					</InfoCard>
 
@@ -217,14 +269,29 @@ const ViewServiceCenterClaimView = () => {
 					<InfoCard title="Repair Information" icon={<Wrench size={20} />}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<InfoField label="Fault Type" value={claim?.faultType} />
-							<InfoField label="Repair Cost" value={`₦${claim?.repairCost?.toLocaleString()}`} />
+							<InfoField
+								label="Repair Cost"
+								value={`₦${claim?.repairCost?.toLocaleString()}`}
+							/>
 							<InfoField label="Assigned Engineer" value={claim?.engineer} />
 							<InfoField label="Engineer Phone" value={claim?.engineerPhone} />
-							<InfoField label="Estimated Completion" value={claim?.estimatedCompletionDate ? new Date(claim.estimatedCompletionDate).toLocaleDateString() : 'N/A'} />
+							<InfoField
+								label="Estimated Completion"
+								value={
+									claim?.estimatedCompletionDate
+										? new Date(
+												claim.estimatedCompletionDate
+										  ).toLocaleDateString()
+										: "N/A"
+								}
+							/>
 						</div>
 						{claim?.faultDescription && (
 							<div className="mt-4">
-								<InfoField label="Fault Description" value={claim.faultDescription} />
+								<InfoField
+									label="Fault Description"
+									value={claim.faultDescription}
+								/>
 							</div>
 						)}
 					</InfoCard>
@@ -238,12 +305,21 @@ const ViewServiceCenterClaimView = () => {
 										<div className="grid grid-cols-1 md:grid-cols-4 gap-2">
 											<InfoField label="Part Name" value={part.partName} />
 											<InfoField label="Part Code" value={part.partCode} />
-											<InfoField label="Cost" value={`₦${part.cost?.toLocaleString()}`} />
+											<InfoField
+												label="Cost"
+												value={`₦${part.cost?.toLocaleString()}`}
+											/>
 											<div>
-												<p className="text-sm font-medium text-gray-600 mb-1">Availability</p>
-												<Chip 
-													size="sm" 
-													color={part.availability === "In Stock" ? "success" : "warning"}
+												<p className="text-sm font-medium text-gray-600 mb-1">
+													Availability
+												</p>
+												<Chip
+													size="sm"
+													color={
+														part.availability === "In Stock"
+															? "success"
+															: "warning"
+													}
 													variant="flat"
 												>
 													{part.availability}
@@ -260,7 +336,10 @@ const ViewServiceCenterClaimView = () => {
 					<InfoCard title="Repair History" icon={<FileText size={20} />}>
 						<div className="space-y-4">
 							{claim?.repairHistory?.map((repair: any, index: number) => (
-								<div key={repair.id} className="relative border-l-2 border-blue-200 pl-4">
+								<div
+									key={repair.id}
+									className="relative border-l-2 border-blue-200 pl-4"
+								>
 									{index < (claim?.repairHistory?.length || 0) - 1 && (
 										<div className="absolute left-0 top-8 w-0.5 h-12 bg-blue-200"></div>
 									)}
@@ -268,7 +347,9 @@ const ViewServiceCenterClaimView = () => {
 									<div>
 										<p className="font-medium text-gray-900">{repair.action}</p>
 										<p className="text-sm text-gray-600">{repair.engineer}</p>
-										<p className="text-sm text-gray-700 mt-1">{repair.findings}</p>
+										<p className="text-sm text-gray-700 mt-1">
+											{repair.findings}
+										</p>
 										<div className="flex items-center gap-2 mt-2">
 											<p className="text-xs text-gray-500">
 												{new Date(repair.date).toLocaleString()}
@@ -299,7 +380,9 @@ const ViewServiceCenterClaimView = () => {
 								<div className="text-sm">
 									<p className="font-medium text-gray-900">Submitted</p>
 									<p className="text-gray-600">
-										{claim?.dateSubmitted ? new Date(claim.dateSubmitted).toLocaleDateString() : 'N/A'}
+										{claim?.dateSubmitted
+											? new Date(claim.dateSubmitted).toLocaleDateString()
+											: "N/A"}
 									</p>
 								</div>
 								{claim?.dateUpdated && (
@@ -323,16 +406,15 @@ const ViewServiceCenterClaimView = () => {
 							<CardBody>
 								<div className="space-y-2">
 									{claim.documents.map((doc: any) => (
-										<div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+										<div
+											key={doc.id}
+											className="flex items-center justify-between p-2 border rounded"
+										>
 											<div className="flex items-center gap-2">
 												<FileText size={16} />
 												<span className="text-sm">{doc.name}</span>
 											</div>
-											<Button
-												size="sm"
-												variant="light"
-												isIconOnly
-											>
+											<Button size="sm" variant="light" isIconOnly>
 												<Eye size={14} />
 											</Button>
 										</div>
@@ -387,7 +469,9 @@ const ViewServiceCenterClaimView = () => {
 								label="New Status"
 								placeholder="Select new status"
 								selectedKeys={newStatus ? [newStatus] : []}
-								onSelectionChange={(keys) => setNewStatus(Array.from(keys)[0] as string)}
+								onSelectionChange={(keys) =>
+									setNewStatus(Array.from(keys)[0] as string)
+								}
 							>
 								{statusOptions.map((option) => (
 									<SelectItem key={option.key} value={option.key}>
