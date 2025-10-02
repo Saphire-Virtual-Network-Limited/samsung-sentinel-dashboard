@@ -3375,7 +3375,7 @@ export default function CollectionSingleCustomerPage() {
 						</InfoCard>
 
 						{/* Repayment Schedule */}
-						
+						{hasPermission(role, "canViewOverDuePayments", userEmail) && (
 							<InfoCard
 								title="Repayment Schedule"
 								icon={<Calendar className="w-5 h-5 text-default-600" />}
@@ -3772,6 +3772,7 @@ export default function CollectionSingleCustomerPage() {
 								</div>
 								)}
 							</InfoCard>
+						)}
 
 
 						{/* Device Activity Log */}
