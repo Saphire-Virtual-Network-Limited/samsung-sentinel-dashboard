@@ -20,6 +20,13 @@ import {
 	Plus,
 	RefreshCw,
 	MessageSquare,
+	Calendar,
+	CheckCircle,
+	AlertCircle,
+	XCircle,
+	TrendingUp,
+	DollarSign,
+	CalendarDays,
 } from "lucide-react";
 import {
 	getCustomerRecordById,
@@ -42,6 +49,7 @@ import {
 	getDeviceLocksLogs,
 	deleteCustomerMandateAndUpdateLastPoint,
 	sendSms,
+	getcustomerRepaymentSchedule,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -55,7 +63,12 @@ import {
 	SelectField,
 	AutoCompleteField,
 } from "@/components/reususables";
-import { CustomerRecord } from "./types";
+import { 
+	CustomerRecord, 
+	RepaymentScheduleData, 
+	RepaymentScheduleItem, 
+	RepaymentScheduleSummary 
+} from "./types";
 import SendSmsModal from "@/components/modals/SendSmsModal";
 import SmsHistory from "@/components/dashboard/SmsHistory";
 import {
@@ -625,6 +638,10 @@ export default function CollectionSingleCustomerPage() {
 	const params = useParams();
 
 	const [customer, setCustomer] = useState<CustomerRecord | null>(null);
+	const [repaymentSchedule, setRepaymentSchedule] = useState<RepaymentScheduleData | null>(null);
+	const [repaymentLoading, setRepaymentLoading] = useState(false);
+	const [repaymentError, setRepaymentError] = useState<string | null>(null);
+	const [viewMode, setViewMode] = useState<"timeline" | "grid">("timeline");
 
 	const {
 		value: imei,
@@ -830,6 +847,116 @@ export default function CollectionSingleCustomerPage() {
 
 		fetchCustomer();
 	}, [params.id]);
+
+	// Fetch repayment schedule when customer data is available
+	const loanRecordId = customer?.LoanRecord?.[0]?.loanRecordId;
+	
+	useEffect(() => {
+		const fetchRepaymentSchedule = async () => {
+			if (!loanRecordId) {
+				setRepaymentSchedule(null);
+				setRepaymentError(null);
+				return;
+			}
+
+			setRepaymentLoading(true);
+			setRepaymentError(null);
+			
+			try {
+				const response = await getcustomerRepaymentSchedule(loanRecordId);
+				
+				if (response?.statusCode === 200 && response?.data) {
+					setRepaymentSchedule(response.data);
+				} else {
+					const errorMessage = response?.message || "Invalid response format";
+					setRepaymentError(errorMessage);
+					showToast({
+						type: "error",
+						message: `Failed to load repayment schedule: ${errorMessage}`,
+						duration: 5000,
+					});
+				}
+			} catch (error: any) {
+				const errorMessage = error?.message || "Network error occurred";
+				setRepaymentError(errorMessage);
+				console.error("Error fetching repayment schedule:", error);
+				showToast({
+					type: "error",
+					message: `Failed to fetch repayment schedule: ${errorMessage}`,
+					duration: 5000,
+				});
+			} finally {
+				setRepaymentLoading(false);
+			}
+		};
+
+		fetchRepaymentSchedule();
+	}, [loanRecordId]);
+
+	// Helper functions for repayment schedule
+	const formatCurrency = useCallback((amount: number | undefined): string => {
+		return amount ? `₦${amount.toLocaleString("en-GB")}` : "₦0";
+	}, []);
+
+	const formatDate = useCallback((dateString: string | undefined): string => {
+		if (!dateString) return "N/A";
+		try {
+			return new Date(dateString).toLocaleDateString("en-GB", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			});
+		} catch {
+			return "Invalid Date";
+		}
+	}, []);
+
+	const formatDateTime = useCallback((dateString: string | undefined): string => {
+		if (!dateString) return "N/A";
+		try {
+			return new Date(dateString).toLocaleString("en-GB", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+				second: "2-digit",
+			});
+		} catch {
+			return "Invalid Date";
+		}
+	}, []);
+
+	const getStatusColor = useCallback((status: string): "success" | "warning" | "danger" => {
+		switch (status) {
+			case "COMPLETED":
+				return "success";
+			case "PENDING":
+				return "warning";
+			case "PARTIAL":
+				return "danger";
+			default:
+				return "warning";
+		}
+	}, []);
+
+	const getStatusIcon = useCallback((status: string) => {
+		switch (status) {
+			case "COMPLETED":
+				return <CheckCircle className="w-6 h-6 text-green-500" />;
+			case "PENDING":
+				return <Clock className="w-6 h-6 text-yellow-500" />;
+			case "PARTIAL":
+				return <AlertCircle className="w-6 h-6 text-orange-500" />;
+			default:
+				return <Clock className="w-6 h-6 text-gray-500" />;
+		}
+	}, []);
+
+	const calculateProgressPercentage = useCallback((amountPaid: number, amount: number): number => {
+		if (!amount || amount === 0) return 0;
+		return Math.min((amountPaid / amount) * 100, 100);
+	}, []);
 
 	// Helper function to convert datetime-local format to CalendarDateTime
 	const parseLocalDateTime = useCallback((localDateTime: string) => {
@@ -3247,113 +3374,403 @@ export default function CollectionSingleCustomerPage() {
 							</div>
 						</InfoCard>
 
-						{/* Overdue Repayment */}
+						{/* Repayment Schedule */}
 						{hasPermission(role, "canViewOverDuePayments", userEmail) && (
 							<InfoCard
-								title="Overdue Repayment"
-								icon={<Clock className="w-5 h-5 text-default-600" />}
+								title="Repayment Schedule"
+								icon={<Calendar className="w-5 h-5 text-default-600" />}
 								collapsible={true}
 								defaultExpanded={true}
 							>
-								<div className="overflow-x-auto">
-									<table className="min-w-full divide-y divide-default-200">
-										<thead className="bg-default-50">
-											<tr>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													S/N
-												</th>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													Amount
-												</th>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													Reason
-												</th>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													Date
-												</th>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													Next Retry
-												</th>
-												<th
-													scope="col"
-													className="px-6 py-3 text-left text-xs font-medium text-default-500 uppercase tracking-wider"
-												>
-													Actions
-												</th>
-											</tr>
-										</thead>
-										<tbody className="bg-white divide-y divide-default-200">
-											{/* Sample row - Replace with actual data mapping */}
-											<tr>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-													1
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-													₦50
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-													Testing
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-													2025-06-24
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-default-600">
-													2025-06-24
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-													<button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm">
-														Retry Debit
-													</button>
-													<button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
-														Delete
-													</button>
-												</td>
-											</tr>
-											{/* No records state */}
-											{(!customer?.LoanRecord ||
-												customer.LoanRecord.length === 0) && (
-												<tr>
-													<td colSpan={6} className="px-6 py-12 text-center">
-														<EmptyState
-															title="No Overdue Repayments"
-															description="There are no overdue repayments to display at this time."
-															icon={
-																<svg
-																	className="w-12 h-12 mb-4 text-default-300"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
+								{repaymentLoading ? (
+									<div className="flex flex-col items-center justify-center py-12 space-y-4">
+										<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+										<p className="text-sm text-gray-500">Loading repayment schedule...</p>
+									</div>
+								) : repaymentError ? (
+									<div className="text-center py-12">
+										<div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+											<XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Schedule</h3>
+											<p className="text-sm text-red-700 mb-4">{repaymentError}</p>
+											<Button 
+												color="danger" 
+												variant="flat" 
+												size="sm"
+												onPress={() => {
+													if (loanRecordId) {
+														setRepaymentError(null);
+														// Trigger refetch by updating loanRecordId dependency
+													}
+												}}
+											>
+												Try Again
+											</Button>
+										</div>
+									</div>
+								) : repaymentSchedule ? (
+									<div className="space-y-6">
+										{/* Summary Cards */}
+										<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+											<div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 hover:shadow-md transition-shadow">
+												<div className="flex items-center justify-between">
+													<div>
+														<p className="text-sm font-medium text-blue-600">Total Due</p>
+														<p className="text-2xl font-bold text-blue-900">
+															{formatCurrency(repaymentSchedule.summary?.totalDue)}
+														</p>
+													</div>
+												</div>
+											</div>
+											<div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200 hover:shadow-md transition-shadow">
+												<div className="flex items-center justify-between">
+													<div>
+														<p className="text-sm font-medium text-green-600">Total Paid</p>
+														<p className="text-2xl font-bold text-green-900">
+															{formatCurrency(repaymentSchedule.summary?.totalPaid)}
+														</p>
+													</div>
+													<CheckCircle className="w-8 h-8 text-green-500" />
+												</div>
+											</div>
+											<div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200 hover:shadow-md transition-shadow">
+												<div className="flex items-center justify-between">
+													<div>
+														<p className="text-sm font-medium text-orange-600">Remaining</p>
+														<p className="text-2xl font-bold text-orange-900">
+															{formatCurrency(repaymentSchedule.summary?.remainingBalance)}
+														</p>
+													</div>
+													<TrendingUp className="w-8 h-8 text-orange-500" />
+												</div>
+											</div>
+											<div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 hover:shadow-md transition-shadow">
+												<div className="flex items-center justify-between">
+													<div>
+														<p className="text-sm font-medium text-purple-600">Progress</p>
+														<p className="text-2xl font-bold text-purple-900">
+															{repaymentSchedule.summary?.percentagePaid || "0"}%
+														</p>
+													</div>
+													<CalendarDays className="w-8 h-8 text-purple-500" />
+												</div>
+											</div>
+										</div>
+
+										{/* Progress Bar */}
+										<div className="bg-gray-100 rounded-full h-3 overflow-hidden">
+											<div 
+												className="bg-gradient-to-r from-green-400 to-green-600 h-full transition-all duration-500 ease-out"
+												style={{ width: `${parseFloat(repaymentSchedule.summary?.percentagePaid || "0")}%` }}
+											></div>
+										</div>
+
+										{/* Installment Schedule - Creative Views */}
+										<div className="space-y-6">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center space-x-3">
+													<h3 className="text-lg font-semibold text-gray-900">Payment Schedule</h3>
+													<div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+														{viewMode === "timeline" ? "Timeline View" : "Grid View"}
+													</div>
+												</div>
+												<div className="flex items-center space-x-4">
+													<div className="text-sm text-gray-500">
+														{repaymentSchedule.schedules?.length || 0} installment{(repaymentSchedule.schedules?.length || 0) !== 1 ? 's' : ''}
+													</div>
+													<div className="flex space-x-2">
+														<Chip color="success" variant="flat" size="sm">
+															{repaymentSchedule.summary?.completedSchedules || 0} Paid
+														</Chip>
+														<Chip color="warning" variant="flat" size="sm">
+															{repaymentSchedule.summary?.pendingSchedules || 0} Pending
+														</Chip>
+													</div>
+													{/* View Toggle */}
+													<div className="flex bg-gray-100 rounded-lg p-1">
+														<button
+															onClick={() => setViewMode("timeline")}
+															className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+																viewMode === "timeline"
+																	? "bg-white text-gray-900 shadow-sm"
+																	: "text-gray-500 hover:text-gray-700"
+															}`}
+														>
+															Timeline
+														</button>
+														<button
+															onClick={() => setViewMode("grid")}
+															className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+																viewMode === "grid"
+																	? "bg-white text-gray-900 shadow-sm"
+																	: "text-gray-500 hover:text-gray-700"
+															}`}
+														>
+															Grid
+														</button>
+													</div>
+												</div>
+											</div>
+
+											{/* Conditional View Rendering */}
+											{viewMode === "timeline" ? (
+												/* Timeline View */
+												<div className="relative">
+													{/* Timeline Line */}
+													<div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+													
+													<div className="space-y-4">
+														{repaymentSchedule.schedules?.map((schedule: RepaymentScheduleItem, index: number) => (
+														<div key={schedule.id} className="relative flex items-start space-x-4">
+															{/* Timeline Dot */}
+															<div className={`relative z-10 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+																schedule.status === "COMPLETED" 
+																	? "bg-green-100 border-green-500" 
+																	: schedule.status === "PENDING"
+																	? "bg-yellow-100 border-yellow-500"
+																	: "bg-orange-100 border-orange-500"
+															}`}>
+																{getStatusIcon(schedule.status)}
+															</div>
+
+															{/* Content Card */}
+															<div className={`flex-1 bg-white rounded-lg border-2 transition-all duration-200 hover:shadow-lg ${
+																schedule.status === "COMPLETED" 
+																	? "border-green-200 bg-green-50/30" 
+																	: schedule.status === "PENDING"
+																	? "border-yellow-200 bg-yellow-50/30"
+																	: "border-orange-200 bg-orange-50/30"
+															}`}>
+																<div className="p-4">
+																	{/* Header */}
+																	<div className="flex items-center justify-between mb-3">
+																		<div className="flex items-center space-x-3">
+																			<div className="text-2xl font-bold text-gray-700">
+																				#{schedule.installmentNumber}
+																			</div>
+																			<div>
+																				<h4 className="text-lg font-semibold text-gray-900">
+																					{formatCurrency(schedule.amount)}
+																				</h4>
+																				<p className="text-sm text-gray-500">
+																					Due {formatDate(schedule.dueDate)}
+																				</p>
+																			</div>
+																		</div>
+																		<div className="text-right">
+																			<Chip
+																				color={getStatusColor(schedule.status)}
+																				variant="flat"
+																				size="sm"
+																				className="font-medium"
+																			>
+																				{schedule.status}
+																			</Chip>
+																			{schedule.completedAt && (
+																				<p className="text-xs text-gray-500 mt-1">
+																					Completed {formatDate(schedule.completedAt)}
+																				</p>
+																			)}
+																		</div>
+																	</div>
+
+																	{/* Progress Bar - Compact */}
+																	<div className="mb-3">
+																		<div className="flex justify-between text-xs text-gray-600 mb-1">
+																			<span>Progress</span>
+																			<span>{formatCurrency(schedule.amountPaid)} / {formatCurrency(schedule.amount)}</span>
+																		</div>
+																		<div className="bg-gray-200 rounded-full h-1.5">
+																			<div 
+																				className={`h-1.5 rounded-full transition-all duration-300 ${
+																					schedule.status === "COMPLETED" 
+																						? "bg-gradient-to-r from-green-400 to-green-600" 
+																						: schedule.status === "PENDING"
+																						? "bg-gradient-to-r from-yellow-400 to-yellow-600"
+																						: "bg-gradient-to-r from-orange-400 to-orange-600"
+																				}`}
+																				style={{ width: `${calculateProgressPercentage(schedule.amountPaid, schedule.amount)}%` }}
+																			></div>
+																		</div>
+																	</div>
+
+																	{/* Payment Details - Collapsible */}
+																	{schedule.repayments && schedule.repayments.length > 0 && (
+																		<div className="border-t border-gray-200 pt-3">
+																			<details className="group">
+																				<summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+																					<span className="flex items-center space-x-2">
+																						<CreditCard className="w-4 h-4" />
+																						<span>{schedule.repayments.length} Payment{schedule.repayments.length > 1 ? 's' : ''}</span>
+																					</span>
+																					<ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+																				</summary>
+																				<div className="mt-3 space-y-2">
+																					{schedule.repayments.map((repayment, repaymentIndex) => (
+																						<div key={repayment.id} className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+																							<div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+																								<div>
+																									<span className="font-medium text-gray-600 block">Amount</span>
+																									<p className="text-gray-900 font-semibold">{formatCurrency(repayment.amount)}</p>
+																								</div>
+																								<div>
+																									<span className="font-medium text-gray-600 block">Channel</span>
+																									<p className="text-gray-900">{repayment.channel}</p>
+																								</div>
+																								<div>
+																									<span className="font-medium text-gray-600 block">Date</span>
+																									<p className="text-gray-900">{formatDate(repayment.createdAt)}</p>
+																								</div>
+																								<div>
+																									<span className="font-medium text-gray-600 block">Reference</span>
+																									<p className="text-gray-900 font-mono text-xs break-all">{repayment.paymentReference}</p>
+																								</div>
+																								{repayment.paymentDescription && (
+																	<div className="col-span-2 md:col-span-4">
+																		<span className="font-medium text-gray-600 block">Description</span>
+																		<p className="text-gray-900 text-xs">{repayment.paymentDescription}</p>
+																	</div>
+																)}
+																							</div>
+																						</div>
+																					))}
+																				</div>
+																			</details>
+																		</div>
+																	)}
+																</div>
+															</div>
+														</div>
+														))}
+													</div>
+												</div>
+											) : (
+												/* Grid View - Compact Cards */
+												<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+													{repaymentSchedule.schedules?.map((schedule: RepaymentScheduleItem) => (
+														<div key={schedule.id} className={`bg-white rounded-lg border-2 p-4 hover:shadow-lg transition-all duration-200 ${
+															schedule.status === "COMPLETED" 
+																? "border-green-200 bg-green-50/30" 
+																: schedule.status === "PENDING"
+																? "border-yellow-200 bg-yellow-50/30"
+																: "border-orange-200 bg-orange-50/30"
+														}`}>
+															{/* Header */}
+															<div className="flex items-center justify-between mb-3">
+																<div className="flex items-center space-x-2">
+																	<div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+																		schedule.status === "COMPLETED" 
+																			? "bg-green-100" 
+																			: schedule.status === "PENDING"
+																			? "bg-yellow-100"
+																			: "bg-orange-100"
+																	}`}>
+																		{getStatusIcon(schedule.status)}
+																	</div>
+																	<div>
+																		<h4 className="font-semibold text-gray-900">#{schedule.installmentNumber}</h4>
+																		<p className="text-xs text-gray-500">{formatDate(schedule.dueDate)}</p>
+																	</div>
+																</div>
+																<Chip
+																	color={getStatusColor(schedule.status)}
+																	variant="flat"
+																	size="sm"
+																	className="text-xs"
 																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={2}
-																		d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-																	/>
-																</svg>
-															}
-														/>
-													</td>
-												</tr>
+																	{schedule.status}
+																</Chip>
+															</div>
+
+															{/* Amount */}
+															<div className="mb-3">
+																<p className="text-lg font-bold text-gray-900">{formatCurrency(schedule.amount)}</p>
+																<p className="text-xs text-gray-500">
+																	Paid: {formatCurrency(schedule.amountPaid)}
+																</p>
+															</div>
+
+															{/* Progress Bar */}
+															<div className="mb-3">
+																<div className="flex justify-between text-xs text-gray-600 mb-1">
+																	<span>Progress</span>
+																	<span>{Math.round(calculateProgressPercentage(schedule.amountPaid, schedule.amount))}%</span>
+																</div>
+																<div className="bg-gray-200 rounded-full h-1.5">
+																	<div 
+																		className={`h-1.5 rounded-full transition-all duration-300 ${
+																			schedule.status === "COMPLETED" 
+																				? "bg-gradient-to-r from-green-400 to-green-600" 
+																				: schedule.status === "PENDING"
+																				? "bg-gradient-to-r from-yellow-400 to-yellow-600"
+																				: "bg-gradient-to-r from-orange-400 to-orange-600"
+																		}`}
+																		style={{ width: `${calculateProgressPercentage(schedule.amountPaid, schedule.amount)}%` }}
+																	></div>
+																</div>
+															</div>
+
+															{/* Payment Details - Collapsible */}
+															{schedule.repayments && schedule.repayments.length > 0 && (
+																<div className="border-t border-gray-200 pt-3">
+																	<details className="group">
+																		<summary className="flex items-center justify-between cursor-pointer text-xs font-medium text-gray-700 hover:text-gray-900">
+																			<span className="flex items-center space-x-1">
+																				<CreditCard className="w-3 h-3" />
+																				<span>{schedule.repayments.length} Payment{schedule.repayments.length > 1 ? 's' : ''}</span>
+																			</span>
+																			<ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+																		</summary>
+																		<div className="mt-2 space-y-1">
+																			{schedule.repayments.map((repayment) => (
+																				<div key={repayment.id} className="bg-gray-50 p-2 rounded text-xs">
+																					<div className="grid grid-cols-2 gap-1">
+																						<div>
+																							<span className="font-medium text-gray-600">Amount:</span>
+																							<p className="text-gray-900 font-semibold">{formatCurrency(repayment.amount)}</p>
+																						</div>
+																						<div>
+																							<span className="font-medium text-gray-600">Channel:</span>
+																							<p className="text-gray-900">{repayment.channel}</p>
+																						</div>
+																						<div className="col-span-2">
+																							<span className="font-medium text-gray-600">Date:</span>
+																							<p className="text-gray-900">{formatDate(repayment.createdAt)}</p>
+																						</div>
+																						<div className="col-span-2">
+																							<span className="font-medium text-gray-600">Ref:</span>
+																							<p className="text-gray-900 font-mono text-xs break-all">{repayment.paymentReference}</p>
+																						</div>
+																					</div>
+																				</div>
+																			))}
+																		</div>
+																	</details>
+																</div>
+															)}
+
+															{schedule.completedAt && (
+																<div className="mt-2 text-xs text-gray-500">
+																	Completed {formatDate(schedule.completedAt)}
+																</div>
+															)}
+														</div>
+													))}
+												</div>
 											)}
-										</tbody>
-									</table>
+										</div>
+									</div>
+								) : (
+									<div className="text-center py-12">
+														<EmptyState
+											title="No Repayment Schedule"
+											description="No repayment schedule data available for this customer."
+															icon={
+												<Calendar className="w-12 h-12 mb-4 text-default-300" />
+											}
+										/>
 								</div>
+								)}
 							</InfoCard>
 						)}
 

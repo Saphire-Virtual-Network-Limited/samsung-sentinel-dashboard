@@ -323,3 +323,64 @@ export type CustomerRecord = {
 		CustomerAccounts: any[];
 	};
 };
+
+// Repayment Schedule Types
+export interface RepaymentScheduleSummary {
+	totalSchedules: number;
+	completedSchedules: number;
+	pendingSchedules: number;
+	partialSchedules: number;
+	overdueSchedules: number;
+	totalDue: number;
+	totalPaid: number;
+	remainingBalance: number;
+	percentagePaid: string;
+}
+
+export interface RepaymentDetail {
+	id: string;
+	transactionHistoryId: string;
+	amount: number;
+	channel: string;
+	paymentReference: string;
+	paymentDescription: string;
+	createdAt: string;
+}
+
+export interface RepaymentScheduleItem {
+	id: string;
+	installmentNumber: number;
+	dueDate: string;
+	amount: number;
+	amountPaid: number;
+	status: "PENDING" | "PARTIAL" | "COMPLETED";
+	completedAt: string | null;
+	repayments: RepaymentDetail[];
+}
+
+export interface RepaymentScheduleLoan {
+	loanRecordId: string;
+	customerId: string;
+	loanAmount: number;
+	monthlyRepayment: number;
+	duration: number;
+	loanStatus: string;
+	channel: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface RepaymentScheduleData {
+	loanId: string;
+	loan: RepaymentScheduleLoan;
+	schedules: RepaymentScheduleItem[];
+	summary: RepaymentScheduleSummary;
+}
+
+export interface RepaymentScheduleResponse {
+	statusCode: number;
+	statusType: string;
+	message: string;
+	data: RepaymentScheduleData;
+	responseTime: string;
+}
