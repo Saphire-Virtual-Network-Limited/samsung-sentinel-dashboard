@@ -288,6 +288,10 @@ export async function getCustomerRecordById(customerId: string) {
 	return apiCall(`/admin/customers/view/${customerId}`, "GET");
 }
 
+export async function getcustomerRepaymentSchedule(loanId: string) {
+	return apiCall(`/admin/repayment/loan/${loanId}`, "GET");
+}
+
 // New optimized customer record functions
 export interface CustomerRecordParams {
 	page?: number;
