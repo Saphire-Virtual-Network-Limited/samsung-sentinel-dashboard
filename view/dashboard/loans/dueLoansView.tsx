@@ -221,6 +221,7 @@ type DueLoanRecord = {
 				dueDate?: string;
 				startDate?: string;
 				endDate?: string;
+				nextDueDate?: string;
 			}
 		];
 		regBy: {
@@ -546,8 +547,8 @@ export default function DueLoansView() {
 					customer.repaymentData?.summary?.repaymentCount || "0",
 				numberOfMissedRepayments:
 					customer.repaymentData?.summary?.loanInfo?.repaymentsLeft || "0",
-				DueDate: loanRecord?.dueDate
-					? new Date(loanRecord.dueDate).toLocaleDateString("en-GB")
+				DueDate: loanRecord?.nextDueDate
+					? new Date(loanRecord.nextDueDate).toLocaleDateString("en-GB")
 					: "N/A",
 				Status: "Running",
 				deviceName: loanRecord?.deviceName || "N/A",
@@ -726,8 +727,8 @@ export default function DueLoansView() {
 								customer.repaymentData?.summary?.repaymentCount || "0",
 							numberOfMissedRepayments:
 								customer.repaymentData?.summary?.loanInfo?.repaymentsLeft || "0",
-							DueDate: loanRecord?.dueDate
-								? new Date(loanRecord.dueDate).toLocaleDateString("en-GB")
+							DueDate: loanRecord?.nextDueDate
+								? new Date(loanRecord.nextDueDate).toLocaleDateString("en-GB")
 								: "N/A",
 							Status: "Running",
 							deviceName: loanRecord?.deviceName || "N/A",
