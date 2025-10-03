@@ -198,9 +198,11 @@ export async function getAllDefaultedRecord(
 	return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
-export async function getAllDueLoanRecord(fromDate?: string, toDate?: string) {
-	const query =
+export async function getAllDueLoanRecord(fromDate?: string, toDate?: string, page?: number, limit?: number) {
+	let query =
 		fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
+	if (page) query += `&page=${page}`;	
+	if (limit) query += `&limit=${limit}`;	
 	return apiCall(`/admin/loan/due${query}`, "GET");
 }
 

@@ -318,6 +318,20 @@ type DueLoanRecord = {
 			};
 		};
 	}>;
+
+	summary: {
+		totalDue: number;
+		totalWithRepaymentData: number;
+		totalWithoutRepaymentData: number;
+	};
+	pagination: {	
+		page: number;
+		limit: number;
+		totalCount: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	}
 };
 
 type TransformedDueLoanRecord = {
@@ -362,12 +376,23 @@ export default function DueLoansView() {
 	// --- modal state ---
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [modalMode, setModalMode] = useState<"view" | null>(null);
+
 	const [selectedItem, setSelectedItem] =
 		useState<TransformedDueLoanRecord | null>(null);
 
 	// --- date filter state ---
-	const [startDate, setStartDate] = useState<string | undefined>(undefined);
-	const [endDate, setEndDate] = useState<string | undefined>(undefined);
+	// Set default dates to last month 1st to 10th
+	const getLastMonthDates = () => {
+		const now = new Date();
+		const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+		const start = lastMonth.toISOString().split('T')[0]; // YYYY-MM-DD format
+		const end = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 10).toISOString().split('T')[0];
+		return { start, end };
+	};
+
+	const { start: defaultStartDate, end: defaultEndDate } = getLastMonthDates();
+	const [startDate, setStartDate] = useState<string | undefined>(defaultStartDate);
+	const [endDate, setEndDate] = useState<string | undefined>(defaultEndDate);
 	const [hasNoRecords, setHasNoRecords] = useState(false);
 
 	// --- table state ---
@@ -378,12 +403,20 @@ export default function DueLoansView() {
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
-	const rowsPerPage = 10;
+	const [rowsPerPage, setRowsPerPage] = useState(50);
+	const [totalCount, setTotalCount] = useState<number>(0);
+
+	// Debug totalCount changes
+	useEffect(() => {
+		console.log("totalCount changed to:", totalCount);
+	}, [totalCount]);
 
 	// --- handle date filter ---
 	const handleDateFilter = (start: string, end: string) => {
 		setStartDate(start);
 		setEndDate(end);
+		setPage(1);
+		setRowsPerPage(50);
 	};
 
 	const fromDate = startDate;
@@ -392,21 +425,39 @@ export default function DueLoansView() {
 	// Fetch data based on date filter
 	const { data: raw = [], isLoading } = useSWR(
 		fromDate && toDate
-			? ["due-loans-records", fromDate, toDate]
-			: "due-loans-records",
+			? ["due-loans-records", fromDate, toDate, page, rowsPerPage]
+			: ["due-loans-records", page, rowsPerPage],
 		() =>
-			getAllDueLoanRecord(fromDate, toDate)
+			getAllDueLoanRecord(fromDate, toDate, page, rowsPerPage)
 				.then((r) => {
-					if (!r.data || r.data.length === 0) {
+					console.log("API Response:", r); // Debug log
+					console.log("r.pagination:", r.pagination); // Debug log
+					console.log("r.data.pagination:", r.data?.pagination); // Debug log
+					console.log("r.data?.pagination?.totalCount:", r.data?.pagination?.totalCount); // Debug log
+					
+					if (!r.data || !r.data.customers || r.data.customers.length === 0) {
 						setHasNoRecords(true);
+						setTotalCount(0);
 						return [];
 					}
 					setHasNoRecords(false);
+					// Set total count from the response if available
+					// Try both possible locations for pagination
+					if (r.data?.pagination?.totalCount) {
+						setTotalCount(r.data.pagination.totalCount);
+						console.log("Total count set to (from r.data.pagination):", r.data.pagination.totalCount);
+					} else if (r.pagination?.totalCount) {
+						setTotalCount(r.pagination.totalCount);
+						console.log("Total count set to (from r.pagination):", r.pagination.totalCount);
+					} else {
+						console.log("No pagination.totalCount found in response");
+					}
 					return r.data;
 				})
 				.catch((error) => {
 					console.error("Error fetching due loans records:", error);
 					setHasNoRecords(true);
+					setTotalCount(0);
 					return [];
 				}),
 		{
@@ -567,7 +618,7 @@ export default function DueLoansView() {
 	const paged = useMemo(() => {
 		const start = (page - 1) * rowsPerPage;
 		return filtered.slice(start, start + rowsPerPage);
-	}, [filtered, page]);
+	}, [filtered, page, rowsPerPage]);
 
 	// Sort the data
 	const sorted = React.useMemo(() => {
@@ -585,48 +636,215 @@ export default function DueLoansView() {
 
 	// Export all filtered
 	const exportFn = async (data: TransformedDueLoanRecord[]) => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Due_Loans");
-		ws.columns = columns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+		try {
+			// If we have a total count, fetch all records for export
+			let exportData = data;
+			console.log("Current totalCount:", totalCount);
+			
+			// Try to get total count from current response if totalCount is still 0
+			let actualTotalCount = totalCount;
+			if (actualTotalCount === 0 && raw && raw.pagination?.totalCount) {
+				actualTotalCount = raw.pagination.totalCount;
+				console.log("Using raw.pagination.totalCount as fallback:", actualTotalCount);
+			}
+			
+			if (actualTotalCount > 0) {
+				console.log(`Fetching all ${actualTotalCount} records for export...`);
+				console.log("Export parameters:", { fromDate, toDate, page: 1, limit: actualTotalCount });
+				
+				const allRecordsResponse = await getAllDueLoanRecord(fromDate, toDate, 1, actualTotalCount);
+				console.log("Export API Response:", allRecordsResponse);
+				
+				if (allRecordsResponse.data && allRecordsResponse.data.customers) {
+					// Transform the complete dataset
+					const allCustomers = allRecordsResponse.data.customers.map((customer: any): TransformedDueLoanRecord => {
+						const loanRecord = customer.LoanRecord?.[0];
+						const device = loanRecord?.device;
+						const store = loanRecord?.store;
+						const age = customer.dob ? calculateAge(customer.dob) : "N/A";
 
-		// Columns to format as currency (Naira)
-		const currencyCols = [
-			"loanBalance",
-			"AmountPaid",
-			"totalAmount",
-			"PrincipalRepaid",
-			"interestRepaid",
-			"monthlyRepayment",
-			"downPayment",
-			"devicePrice",
-			"loanAmount",
-		];
+						return {
+							customerId: customer.customerId || "N/A",
+							fullName:
+								(customer.firstName
+									? customer.firstName[0].toUpperCase() +
+									  customer.firstName.slice(1).toLowerCase()
+									: "") +
+									" " +
+									(customer.lastName
+										? customer.lastName[0].toUpperCase() +
+										  customer.lastName.slice(1).toLowerCase()
+										: "") || "N/A",
+							age: age,
+							email: customer.email || "N/A",
+							phone: customer.bvnPhoneNumber || "N/A",
+							altPhone: customer.mainPhoneNumber || "N/A",
+							state: loanRecord?.store?.state || "N/A",
+							loanAmount: loanRecord?.loanAmount
+								? `₦${loanRecord.loanAmount.toLocaleString("en-GB")}`
+								: "N/A",
+							duration: loanRecord?.duration || "N/A",
+							startDate: loanRecord?.startDate
+								? new Date(loanRecord.startDate).toLocaleDateString("en-GB", {
+										day: "2-digit",
+										month: "2-digit",
+										year: "numeric",
+								  })
+								: "N/A",
+							endDate: loanRecord?.endDate
+								? new Date(loanRecord.endDate).toLocaleDateString("en-GB", {
+										day: "2-digit",
+										month: "2-digit",
+										year: "numeric",
+								  })
+								: "N/A",
+							interest: "9.50%",
+							loanBalance: loanRecord?.loanAmount
+								? `₦${loanRecord.loanAmount.toLocaleString("en-GB")}`
+								: "N/A",
+							AmountPaid: customer.repaymentData?.summary?.loanInfo?.totalRepaid
+								? `₦${customer.repaymentData.summary.loanInfo.totalRepaid.toLocaleString(
+										"en-GB"
+								  )}`
+								: "0",
+							totalAmount: loanRecord?.monthlyRepayment
+								? `₦${loanRecord.monthlyRepayment.toLocaleString("en-GB")}`
+								: "N/A",
+							PrincipalRepaid:
+								loanRecord?.monthlyRepayment && loanRecord?.interestAmount
+									? `₦${(
+											loanRecord.monthlyRepayment - loanRecord.interestAmount
+									  ).toLocaleString("en-GB")}`
+									: "N/A",
+							interestRepaid: loanRecord?.interestAmount
+								? `₦${loanRecord.interestAmount.toLocaleString("en-GB")}`
+								: "N/A",
+							monthlyRepayment: loanRecord?.monthlyRepayment
+								? `₦${loanRecord.monthlyRepayment.toLocaleString("en-GB")}`
+								: "N/A",
+							numberOfRepayments:
+								customer.repaymentData?.summary?.repaymentCount || "0",
+							numberOfMissedRepayments:
+								customer.repaymentData?.summary?.loanInfo?.repaymentsLeft || "0",
+							DueDate: loanRecord?.dueDate
+								? new Date(loanRecord.dueDate).toLocaleDateString("en-GB")
+								: "N/A",
+							Status: "Running",
+							deviceName: loanRecord?.deviceName || "N/A",
+							deviceImei: loanRecord?.DeviceOnLoan?.[0]?.imei || "N/A",
+							service: loanRecord?.channel || "N/A",
+							saleChannel: customer.regBy?.title || "N/A",
+							sale_Rep:
+								customer.regBy?.firstname && customer.regBy?.lastname
+									? `${customer.regBy.firstname} ${customer.regBy.lastname}`
+									: "N/A",
+							sale_Rep_Phone_Number: customer.regBy?.phone || "N/A",
+							storeName: loanRecord?.store?.storeName || "N/A",
+							downPayment: loanRecord?.downPayment
+								? `₦${loanRecord.downPayment.toLocaleString("en-GB")}`
+								: "N/A",
+							devicePrice: loanRecord?.devicePrice
+								? `₦${loanRecord.devicePrice.toLocaleString("en-GB")}`
+								: "N/A",
+							loanStatus: loanRecord?.loanStatus || "N/A",
+							customer: customer,
+							device: device,
+							store: store,
+						};
+					});
+					exportData = allCustomers;
+					console.log(`Exporting ${exportData.length} records`);
+				} else {
+					console.log("No customers data in export response, using current page data");
+				}
+			} else {
+				console.log("No totalCount available, using current page data for export");
+			}
 
-		data.forEach((r) => {
-			// Prepare row object, removing Naira sign and formatting as number for currency columns
-			const rowObj: any = { ...r, Status: capitalize(r.Status || "") };
+			const wb = new ExcelJS.Workbook();
+			const ws = wb.addWorksheet("Due_Loans");
+			ws.columns = columns
+				.filter((c) => c.uid !== "actions")
+				.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
+
+			// Columns to format as currency (Naira)
+			const currencyCols = [
+				"loanBalance",
+				"AmountPaid",
+				"totalAmount",
+				"PrincipalRepaid",
+				"interestRepaid",
+				"monthlyRepayment",
+				"downPayment",
+				"devicePrice",
+				"loanAmount",
+			];
+
+			exportData.forEach((r) => {
+				// Prepare row object, removing Naira sign and formatting as number for currency columns
+				const rowObj: any = { ...r, Status: capitalize(r.Status || "") };
+				currencyCols.forEach((col) => {
+					if (rowObj[col]) {
+						// Remove any non-numeric characters (except dot and minus)
+						const num = String(rowObj[col]).replace(/[^\d.-]/g, "");
+						rowObj[col] = num ? Number(num) : null;
+					}
+				});
+				ws.addRow(rowObj);
+			});
+
+			// Apply currency format to relevant columns
 			currencyCols.forEach((col) => {
-				if (rowObj[col]) {
-					// Remove any non-numeric characters (except dot and minus)
-					const num = String(rowObj[col]).replace(/[^\d.-]/g, "");
-					rowObj[col] = num ? Number(num) : null;
+				const colIdx = ws.columns.findIndex((c) => c.key === col) + 1;
+				if (colIdx > 0) {
+					ws.getColumn(colIdx).numFmt = "#,##0.00";
 				}
 			});
-			ws.addRow(rowObj);
-		});
 
-		// Apply currency format to relevant columns
-		currencyCols.forEach((col) => {
-			const colIdx = ws.columns.findIndex((c) => c.key === col) + 1;
-			if (colIdx > 0) {
-				ws.getColumn(colIdx).numFmt = "#,##0.00";
-			}
-		});
+			const buf = await wb.xlsx.writeBuffer();
+			saveAs(new Blob([buf]), "Due_Loans.xlsx");
+		} catch (error) {
+			console.error("Error during export:", error);
+			// Fallback to current page data if export fails
+			const wb = new ExcelJS.Workbook();
+			const ws = wb.addWorksheet("Due_Loans");
+			ws.columns = columns
+				.filter((c) => c.uid !== "actions")
+				.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
 
-		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Due_Loans.xlsx");
+			const currencyCols = [
+				"loanBalance",
+				"AmountPaid",
+				"totalAmount",
+				"PrincipalRepaid",
+				"interestRepaid",
+				"monthlyRepayment",
+				"downPayment",
+				"devicePrice",
+				"loanAmount",
+			];
+
+			data.forEach((r) => {
+				const rowObj: any = { ...r, Status: capitalize(r.Status || "") };
+				currencyCols.forEach((col) => {
+					if (rowObj[col]) {
+						const num = String(rowObj[col]).replace(/[^\d.-]/g, "");
+						rowObj[col] = num ? Number(num) : null;
+					}
+				});
+				ws.addRow(rowObj);
+			});
+
+			currencyCols.forEach((col) => {
+				const colIdx = ws.columns.findIndex((c) => c.key === col) + 1;
+				if (colIdx > 0) {
+					ws.getColumn(colIdx).numFmt = "#,##0.00";
+				}
+			});
+
+			const buf = await wb.xlsx.writeBuffer();
+			saveAs(new Blob([buf]), "Due_Loans.xlsx");
+		}
 	};
 
 	// When action clicked:
