@@ -87,7 +87,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		// canUpdateLoanStatus: true,
 		// canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		// canViewDeviceActivityLog: true,
 		// canViewCommunicationLog: true,
 		createDashboardUser: true,
@@ -143,11 +143,11 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canInjectTransaction: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canSendSms: true,
 	},
 	"collection-officer": {
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canTriggerDeviceActions: true,
@@ -161,7 +161,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
 		canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		suspendDashboardUser: true,
@@ -177,7 +177,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		suspendDashboardUser: true,
@@ -189,11 +189,13 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 	},
 	finance: {
 		canAccessPayoutScheduler: true,
+		canViewOverDuePayments: true,
 		// Finance has no special permissions
 		// All permissions default to false
 	},
 	audit: {
 		canAccessPayoutScheduler: true,
+		canViewOverDuePayments: true,
 		// Audit has no special permissions
 		// All permissions default to false
 	},
@@ -214,16 +216,19 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		// All permissions default to false
 	},
 	support: {
+		canViewOverDuePayments: true,
 		// Support has no special permissions
 		// All permissions default to false
 	},
 	verify: {
+		canViewOverDuePayments: true,
 		// Verify has no special permissions
 		// All permissions default to false
 	},
 	"verification-officer": {
 		updateGuarantorStatus: true,
 		updateAddressStatus: true,
+		canViewOverDuePayments: true,
 	},
 };
 
@@ -235,7 +240,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
 		canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canUpdateDeviceImei: true,
@@ -252,7 +257,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
 		canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canCreate: true,
@@ -274,7 +279,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canApproveStore: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canUpdateWalletBalance: true,
 		canUpdateLastPoint: true,
 		canUpdateLoanStatus: true,
@@ -287,7 +292,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateLoanStatus: true,
 		canTriggerDeviceActions: true,
 		canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canCreate: true,
@@ -329,14 +334,17 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		canTriggerDeviceActions: true,
+		canViewOverDuePayments: true,
 	},
 	"william@sapphirevirtual.com": {
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		canTriggerDeviceActions: true,
+		canViewOverDuePayments: true,
 	},
 	"kemi.adeniran@sapphirevirtual.com": {
 		canAssignAgent: true,
+		canViewOverDuePayments: true,
 	},
 };
 
