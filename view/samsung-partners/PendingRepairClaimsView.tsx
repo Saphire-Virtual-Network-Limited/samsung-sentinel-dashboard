@@ -11,9 +11,14 @@ import {
 	Textarea,
 	useDisclosure,
 	Chip,
+	Dropdown,
+	DropdownTrigger,
+	DropdownMenu,
+	DropdownItem,
 } from "@heroui/react";
-import SimpleTable from "@/components/reususables/custom-ui/SimpleTable";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import GenericTable from "@/components/reususables/custom-ui/tableUi";
+import DocumentsCell from "@/components/reususables/DocumentsCell";
+import { Eye, CheckCircle, XCircle, MoreHorizontal } from "lucide-react";
 import { showToast } from "@/lib/showNotification";
 import {
 	useRepairClaims,
@@ -40,18 +45,125 @@ const PendingRepairClaimsView = () => {
 	const { approveClaim, rejectClaim, bulkApproveClaims } =
 		useRepairClaimActions();
 
+	const formatDate = (dateString: string) => {
+		return new Date(dateString).toLocaleDateString();
+	};
+
 	const columns = [
-		{ key: "id", label: "Claim ID" },
-		{ key: "imei", label: "IMEI" },
-		{ key: "customerName", label: "Customer Name" },
-		{ key: "customerPhone", label: "Phone" },
-		{ key: "serviceCenter", label: "Service Center" },
-		{ key: "deviceModel", label: "Device Model" },
-		{ key: "faultType", label: "Fault Type" },
-		{ key: "repairCost", label: "Repair Cost" },
-		{ key: "dateSubmitted", label: "Date Submitted" },
-		{ key: "deviceStatus", label: "Device Status" },
-		{ key: "actions", label: "Actions" },
+		{
+			header: "Claim ID",
+			accessorKey: "id",
+			cell: ({ row }: any) => (
+				<span className="font-medium">{row.original.id}</span>
+			),
+		},
+		{
+			header: "Customer",
+			accessorKey: "customerName",
+		},
+		{
+			header: "IMEI",
+			accessorKey: "imei",
+		},
+		{
+			header: "Service Center",
+			accessorKey: "serviceCenter",
+		},
+		{
+			header: "Device",
+			accessorKey: "deviceModel",
+			cell: ({ row }: any) => (
+				<div>
+					<div className="font-medium">{row.original.deviceModel}</div>
+					<div className="text-sm text-muted-foreground">
+						{row.original.deviceBrand}
+					</div>
+				</div>
+			),
+		},
+		{
+			header: "Fault Type",
+			accessorKey: "faultType",
+			cell: ({ row }: any) => (
+				<Chip variant="bordered" size="sm">
+					{row.original.faultType?.replace("-", " ").toUpperCase()}
+				</Chip>
+			),
+		},
+		{
+			header: "Repair Cost",
+			accessorKey: "repairCost",
+			cell: ({ row }: any) => (
+				<span className="font-medium">
+					₦{Number(row.original.repairCost).toLocaleString()}
+				</span>
+			),
+		},
+		{
+			header: "Date Submitted",
+			accessorKey: "dateSubmitted",
+			cell: ({ row }: any) => formatDate(row.original.dateSubmitted),
+		},
+		{
+			header: "Device Status",
+			accessorKey: "deviceStatus",
+			cell: ({ row }: any) => (
+				<Chip color="primary" variant="flat" size="sm">
+					{row.original.deviceStatus}
+				</Chip>
+			),
+		},
+		{
+			header: "Documents",
+			id: "documents",
+			cell: ({ row }: any) => {
+				const claim = row.original;
+				return (
+					<DocumentsCell
+						documents={claim.documents || []}
+						deviceImages={claim.deviceImages || []}
+						claimId={claim.id}
+					/>
+				);
+			},
+		},
+		{
+			header: "Actions",
+			id: "actions",
+			cell: ({ row }: any) => {
+				const claim = row.original;
+				return (
+					<div className="flex items-center gap-2">
+						<Button
+							isIconOnly
+							size="sm"
+							variant="light"
+							onPress={() => handleViewClaim(claim.id)}
+						>
+							<Eye size={16} />
+						</Button>
+						<Button
+							isIconOnly
+							size="sm"
+							color="success"
+							variant="light"
+							onPress={() => handleApprove(claim.id)}
+						>
+							<CheckCircle size={16} />
+						</Button>
+						<Button
+							isIconOnly
+							size="sm"
+							color="danger"
+							variant="light"
+							onPress={() => handleReject(claim.id)}
+						>
+							<XCircle size={16} />
+						</Button>
+					</div>
+				);
+			},
+		},
 	];
 
 	const handleApprove = async (claimId: string) => {
@@ -131,54 +243,6 @@ const PendingRepairClaimsView = () => {
 		router.push(`/access/samsung-partners/repair-claims/view/${claimId}`);
 	};
 
-	const renderCell = (item: any, columnKey: string) => {
-		switch (columnKey) {
-			case "repairCost":
-				return `₦${item.repairCost?.toLocaleString()}`;
-			case "dateSubmitted":
-				return new Date(item.dateSubmitted).toLocaleDateString();
-			case "deviceStatus":
-				return (
-					<Chip color="primary" variant="flat" size="sm">
-						{item.deviceStatus}
-					</Chip>
-				);
-			case "actions":
-				return (
-					<div className="flex items-center gap-2">
-						<Button
-							isIconOnly
-							size="sm"
-							variant="light"
-							onPress={() => handleViewClaim(item.id)}
-						>
-							<Eye size={16} />
-						</Button>
-						<Button
-							isIconOnly
-							size="sm"
-							color="success"
-							variant="light"
-							onPress={() => handleApprove(item.id)}
-						>
-							<CheckCircle size={16} />
-						</Button>
-						<Button
-							isIconOnly
-							size="sm"
-							color="danger"
-							variant="light"
-							onPress={() => handleReject(item.id)}
-						>
-							<XCircle size={16} />
-						</Button>
-					</div>
-				);
-			default:
-				return item[columnKey];
-		}
-	};
-
 	return (
 		<div className="p-6">
 			<div className="mb-6">
@@ -203,14 +267,32 @@ const PendingRepairClaimsView = () => {
 				</div>
 			)}
 
-			<SimpleTable
-				data={claims}
-				columns={columns}
+			<GenericTable
+				data={claims || []}
+				columns={columns.map((col) => ({
+					name: typeof col.header === "string" ? col.header : "",
+					uid: col.accessorKey || "",
+					sortable: true,
+				}))}
+				allCount={claims?.length || 0}
+				exportData={claims || []}
 				isLoading={isLoading}
-				searchable={true}
-				searchPlaceholder="Search by customer name, IMEI, or device model..."
-				emptyMessage="No pending repair claims found"
-				selectable={false}
+				filterValue=""
+				onFilterChange={() => {}}
+				sortDescriptor={{ column: "id", direction: "ascending" }}
+				onSortChange={() => {}}
+				page={1}
+				pages={1}
+				onPageChange={() => {}}
+				exportFn={() => {}}
+				renderCell={(item: any, columnKey: any) => {
+					const column = columns.find((c) => c.accessorKey === columnKey);
+					if (column?.cell) {
+						return column.cell({ row: { original: item } });
+					}
+					return item[columnKey as keyof typeof item] || "-";
+				}}
+				hasNoRecords={!claims || claims.length === 0}
 			/>
 
 			{/* Rejection Modal */}

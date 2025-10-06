@@ -26,7 +26,7 @@ interface ServiceCenterClaim {
 interface UseServiceCenterClaimsOptions {
 	status?: string;
 	search?: string;
-	dateRange?: { start: string; end: string };
+	dateRange?: { from: string; to: string };
 	page?: number;
 	limit?: number;
 }
@@ -87,8 +87,8 @@ export const useServiceCenterClaims = (
 		page: page.toString(),
 		limit: limit.toString(),
 		...(dateRange && {
-			startDate: dateRange.start,
-			endDate: dateRange.end,
+			startDate: dateRange.from,
+			endDate: dateRange.to,
 		}),
 	});
 

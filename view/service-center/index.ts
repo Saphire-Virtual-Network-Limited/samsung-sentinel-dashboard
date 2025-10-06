@@ -1,3 +1,10 @@
 export { default as ServiceCenterClaimsView } from "./ServiceCenterClaimsView";
 export { default as ViewServiceCenterClaimView } from "./ViewServiceCenterClaimView";
 export { default as ValidateClaimsView } from "./ValidateClaimsView";
+export { default as CreateClaimView } from "./CreateClaimView";
+export { default as ApprovedClaimsView } from "./ApprovedClaimsView";
+export { default as PendingClaimsView } from "./PendingClaimsView";
+export { default as RejectedClaimsView } from "./RejectedClaimsView";
+export { default as CompletedRepairsView } from "./CompletedRepairsView";
+export { default as PaidRepairsView } from "./PaidRepairsView";
+export { default as UnpaidRepairsView } from "./UnpaidRepairsView";

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Modal,
 	ModalContent,
@@ -15,8 +15,13 @@ import {
 	Switch,
 	Divider,
 } from "@heroui/react";
-import { useDebug, AVAILABLE_ROLES, type Role } from "@/lib/debugContext";
-import { getAvailablePermissions } from "@/lib/permissions";
+import { useDebug, type Role } from "@/lib/debugContext";
+import {
+	getAvailablePermissions,
+	getCurrentPermissions,
+} from "@/lib/permissions";
+import { useAuthWithDebug } from "@/hooks/useAuthWithDebug";
+import { DEBUG_AVAILABLE_ROLES } from "@/lib/roleMapping";
 import { Bug, RotateCcw, Settings2 } from "lucide-react";
 
 interface DebugModalProps {
@@ -34,11 +39,53 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 		resetDebugOverrides,
 		enableDebugMode,
 		disableDebugMode,
+		extendDebugSession,
 	} = useDebug();
 
+	const { userResponse } = useAuthWithDebug();
+	const currentUserEmail = userResponse?.data?.email;
+	const currentUserRole = userResponse?.data?.role;
+
+	// Initialize with current user permissions + any debug overrides
 	const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
-		new Set(debugOverrides.permissions || [])
+		() => {
+			const effectiveRole = debugOverrides.role || currentUserRole || "";
+			const currentPermissions = getCurrentPermissions(
+				effectiveRole,
+				currentUserEmail
+			);
+			const debugPermissions = debugOverrides.permissions || [];
+
+			// Combine current permissions with debug overrides
+			const allPermissions = new Set([
+				...currentPermissions,
+				...debugPermissions,
+			]);
+			return allPermissions;
+		}
 	);
+
+	// Sync selected permissions with debug overrides and current role
+	useEffect(() => {
+		const effectiveRole = debugOverrides.role || currentUserRole || "";
+		const currentPermissions = getCurrentPermissions(
+			effectiveRole,
+			currentUserEmail
+		);
+		const debugPermissions = debugOverrides.permissions || [];
+
+		// Show current role permissions as "on" by default
+		const allPermissions = new Set([
+			...currentPermissions,
+			...debugPermissions,
+		]);
+		setSelectedPermissions(allPermissions);
+	}, [
+		debugOverrides.permissions,
+		debugOverrides.role,
+		currentUserRole,
+		currentUserEmail,
+	]);
 
 	const availablePermissions = getAvailablePermissions();
 
@@ -142,7 +189,7 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
 										>
 											<option value="">No Override (Use Original Role)</option>
-											{AVAILABLE_ROLES.map((role) => (
+											{DEBUG_AVAILABLE_ROLES.map((role) => (
 												<option key={role} value={role}>
 													{role
 														.replace(/_/g, " ")
@@ -164,19 +211,40 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 										<label className="text-sm font-medium text-gray-300">
 											Override Email (for permission checks)
 										</label>
-										<Input
-											placeholder="Enter email for permission overrides"
-											value={debugOverrides.email || ""}
-											onChange={(e) => handleEmailChange(e.target.value)}
-											classNames={{
-												base: "text-white",
-												input: "bg-gray-700 border-gray-600 text-white",
-											}}
-										/>
+										<div className="flex gap-2">
+											<Input
+												placeholder={
+													currentUserEmail ||
+													"Enter email for permission overrides"
+												}
+												value={debugOverrides.email || ""}
+												onChange={(e) => handleEmailChange(e.target.value)}
+												classNames={{
+													base: "text-white flex-1",
+													input: "bg-gray-700 border-gray-600 text-white",
+												}}
+											/>
+											{currentUserEmail && (
+												<Button
+													size="sm"
+													color="secondary"
+													variant="flat"
+													onPress={() => setDebugEmail(currentUserEmail)}
+													className="shrink-0"
+												>
+													Use Current
+												</Button>
+											)}
+										</div>
 										{debugOverrides.email && (
 											<p className="text-xs text-orange-400">
 												Permission checks will use:{" "}
 												<strong>{debugOverrides.email}</strong>
+											</p>
+										)}
+										{!debugOverrides.email && currentUserEmail && (
+											<p className="text-xs text-gray-400">
+												Default: <strong>{currentUserEmail}</strong>
 											</p>
 										)}
 									</div>
@@ -225,6 +293,39 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 												))}
 											</div>
 										)}
+									</div>
+
+									{/* Debug Session Info */}
+									<Divider className="bg-gray-700" />
+									<div className="space-y-2">
+										<h4 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
+											<Bug size={16} />
+											Debug Session Info
+										</h4>
+										{debugOverrides.expiresAt && (
+											<p className="text-xs text-gray-300">
+												<strong>Expires:</strong>{" "}
+												{new Date(
+													debugOverrides.expiresAt
+												).toLocaleTimeString()}{" "}
+												(
+												{Math.round(
+													(debugOverrides.expiresAt - Date.now()) / (1000 * 60)
+												)}{" "}
+												minutes remaining)
+											</p>
+										)}
+										<div className="flex gap-2">
+											<Button
+												size="sm"
+												color="secondary"
+												variant="flat"
+												onPress={extendDebugSession}
+												className="text-xs"
+											>
+												Extend Session (+3hrs)
+											</Button>
+										</div>
 									</div>
 
 									{/* Active Overrides Summary */}

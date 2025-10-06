@@ -27,6 +27,7 @@ import {
 	CheckCircle,
 	FileText,
 	Bug,
+	Shield,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -42,7 +43,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/lib";
+import { useAuthWithDebug } from "@/hooks/useAuthWithDebug";
 import { useState } from "react";
 import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
@@ -66,7 +67,7 @@ type MenuItem = {
 };
 
 export function AppSidebar() {
-	const { logout, userResponse } = useAuth();
+	const { userResponse, debugInfo, logout } = useAuthWithDebug();
 	const { setOpenMobile, isMobile } = useSidebar();
 	const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 	const [openNestedMenus, setOpenNestedMenus] = useState<{
@@ -325,6 +326,12 @@ export function AppSidebar() {
 				{ title: "TVs", url: "/access/admin/inventory/tvs" },
 				{ title: "Solar", url: "/access/admin/inventory/solar" },
 			],
+		},
+		{
+			icon: Shield,
+			title: "Samsung Sentinel",
+			id: "admin-samsung-sentinel",
+			url: "/access/admin/samsung-sentinel",
 		},
 		{
 			icon: Package2Icon,
@@ -700,6 +707,12 @@ export function AppSidebar() {
 							{ title: "TVs", url: "/access/sub-admin/inventory/tvs" },
 							{ title: "Solar", url: "/access/sub-admin/inventory/solar" },
 						],
+					},
+					{
+						icon: Shield,
+						title: "Samsung Sentinel",
+						id: "sub-admin-samsung-sentinel",
+						url: "/access/sub-admin/samsung-sentinel",
 					},
 			  ];
 
@@ -1374,6 +1387,57 @@ export function AppSidebar() {
 		},
 	];
 
+	const samsungPartnersItems: MenuItem[] = [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/samsung-partners/",
+			id: "samsung-partners-dashboard",
+		},
+		{
+			icon: FileText,
+			title: "Repair Claims",
+			id: "samsung-partners-repair-claims",
+			subItems: [
+				{
+					title: "All Claims",
+					url: "/access/samsung-partners/repair-claims",
+				},
+				{
+					title: "Pending",
+					url: "/access/samsung-partners/repair-claims/pending",
+				},
+				{
+					title: "Approved",
+					url: "/access/samsung-partners/repair-claims/approved",
+				},
+				{
+					title: "Rejected",
+					url: "/access/samsung-partners/repair-claims/rejected",
+				},
+			],
+		},
+		{
+			icon: Wrench,
+			title: "Processed Claims",
+			id: "samsung-partners-processed-claims",
+			subItems: [
+				{
+					title: "All Processed",
+					url: "/access/samsung-partners/processed-claims",
+				},
+				{
+					title: "Paid",
+					url: "/access/samsung-partners/processed-claims/paid",
+				},
+				{
+					title: "Unpaid",
+					url: "/access/samsung-partners/processed-claims/unpaid",
+				},
+			],
+		},
+	];
+
 	// Get items based on user role
 	const items: MenuItem[] = (() => {
 		const role = userResponse?.data?.role;
@@ -1403,6 +1467,9 @@ export function AppSidebar() {
 				return scanParterItems;
 			case "SERVICE_CENTER":
 				return serviceCenterItems;
+			case "SAMSUNG_PARTNERS":
+			case "SAMSUNG_PARTNER":
+				return samsungPartnersItems;
 			default:
 				return [];
 		}
@@ -1453,6 +1520,15 @@ export function AppSidebar() {
 											<span className="text-white font-bold text-lg sm:text-xl sidebar-text">
 												Sapphire Credit
 											</span>
+											{isDebugMode && (
+												<div className="flex items-center gap-1 mt-1">
+													<Bug className="text-orange-400" size={12} />
+													<span className="text-orange-400 text-xs font-medium">
+														Debug Mode
+														{debugOverrides.role && ` (${debugOverrides.role})`}
+													</span>
+												</div>
+											)}
 										</div>
 									</div>
 								</Link>

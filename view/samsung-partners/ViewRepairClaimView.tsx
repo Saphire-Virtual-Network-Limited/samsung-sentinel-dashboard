@@ -33,10 +33,14 @@ import {
 	useRepairClaimActions,
 } from "@/hooks/samsung-partners/useRepairClaims";
 
-const ViewRepairClaimView = () => {
-	const params = useParams();
+interface ViewRepairClaimViewProps {
+	claimId: string;
+}
+
+const ViewRepairClaimView: React.FC<ViewRepairClaimViewProps> = ({
+	claimId,
+}) => {
 	const router = useRouter();
-	const claimId = params?.id as string;
 
 	const [rejectionReason, setRejectionReason] = useState("");
 	const {

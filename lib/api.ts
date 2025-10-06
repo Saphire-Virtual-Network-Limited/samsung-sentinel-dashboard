@@ -3563,3 +3563,75 @@ export async function getCustomerSmsTotalSent() {
 export async function getCustomerEmailTotalSent() {
 	return apiCall(`/resources/email-logs`, "GET");
 }
+
+// *** Samsung Sentinel IMEI Management ***
+
+export interface IMEIUploadRecord {
+	id: string;
+	deviceModel: string;
+	uploadedBy: string;
+	totalRecords: number;
+	fileName: string;
+	createdAt: string;
+	updatedAt: string;
+	processedAt?: string;
+	imeiRecords: IMEIRecord[];
+}
+
+export interface IMEIRecord {
+	recordId: string;
+	deviceImei: string;
+	distributor?: string;
+	expiryDate?: string;
+	status: 'active' | 'used';
+}
+
+export interface UploadIMEIRequest {
+	csvFile: File;
+	deviceModel: string;
+}
+
+// Get all IMEI upload records
+export async function getSamsungSentinelUploads(params?: {
+	page?: number;
+	limit?: number;
+	search?: string;
+	deviceModel?: string;
+	uploadedBy?: string;
+	startDate?: string;
+	endDate?: string;
+}) {
+	const queryParams = new URLSearchParams();
+	if (params?.page) queryParams.append('page', params.page.toString());
+	if (params?.limit) queryParams.append('limit', params.limit.toString());
+	if (params?.search) queryParams.append('search', params.search);
+	if (params?.deviceModel) queryParams.append('deviceModel', params.deviceModel);
+	if (params?.uploadedBy) queryParams.append('uploadedBy', params.uploadedBy);
+	if (params?.startDate) queryParams.append('startDate', params.startDate);
+	if (params?.endDate) queryParams.append('endDate', params.endDate);
+	
+	const endpoint = `/admin/samsung-sentinel/uploads${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+	return apiCall(endpoint, "GET");
+}
+
+// Get specific upload record with IMEI details
+export async function getSamsungSentinelUploadDetails(uploadId: string) {
+	return apiCall(`/admin/samsung-sentinel/uploads/${uploadId}`, "GET");
+}
+
+// Upload IMEI CSV file
+export async function uploadIMEIFile(data: UploadIMEIRequest) {
+	const formData = new FormData();
+	formData.append('csvFile', data.csvFile);
+	formData.append('deviceModel', data.deviceModel);
+	
+	return apiCall("/admin/samsung-sentinel/upload-imei", "POST", formData);
+}
+
+// Delete upload record
+export async function deleteSamsungSentinelUpload(uploadId: string) {
+	return apiCall(`/admin/samsung-sentinel/uploads/${uploadId}`, "DELETE");
+}
+
+// Export apiCall for direct use
+export { apiCall };
