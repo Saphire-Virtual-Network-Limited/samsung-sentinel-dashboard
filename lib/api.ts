@@ -2932,26 +2932,64 @@ export async function getSingleCollectionCustomerData(
 
 //Get loan repayment(excluding down payment and card tokenization)
 export async function getLoanRepaymentData(
+	channel?: string,
 	startDate?: string,
 	endDate?: string
 ) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/loan-repayments${query1}${query2}`, "GET");
+	let query = "";
+
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+
+	return apiCall(`/collections/loan-repayments${query}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPaymentData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/down-payments${query1}${query2}`, "GET");
+export async function getDownPaymentData(
+	channel?: string,
+	startDate?: string,
+	endDate?: string
+) {
+	let query = "";
+
+	if (channel) {
+		query += `?channel=${channel}`;
+		if (startDate) query += `&startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+	} else {
+		if (startDate) query += `?startDate=${startDate}`;
+		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
+	}
+
+	return apiCall(`/collections/down-payments${query}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(startDate?: string, endDate?: string) {
-	const query1 = startDate ? `?startDate=${startDate}` : "";
-	const query2 = endDate ? `&endDate=${endDate}` : "";
-	return apiCall(`/collections/all${query1}${query2}`, "GET");
+export async function getTransactionData(
+	startDate?: string,
+	endDate?: string,
+	channel?: string
+) {
+	let query = "";
+
+	if (startDate) {
+		query += `?startDate=${startDate}`;
+		if (endDate) query += `&endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (endDate) {
+		query += `?endDate=${endDate}`;
+		if (channel) query += `&channel=${channel}`;
+	} else if (channel) {
+		query += `?channel=${channel}`;
+	}
+
+	return apiCall(`/collections/all${query}`, "GET");
 }
 
 // SENTINEL INTEGRATION PART
@@ -3129,7 +3167,7 @@ export async function getAdminPayouts(
 	page: number = 1,
 	limit: number = 20
 ): Promise<GetAdminPayoutsResponse> {
-	return apiCall(`/payouts?page=${page}&limit=${limit}`, "GET");
+	return apiCall(`/admin/payouts?page=${page}&limit=${limit}`, "GET");
 }
 
 // Get payout statistics
@@ -3157,7 +3195,7 @@ export interface GetAdminPayoutStatsResponse {
 
 // Get payout statistics
 export async function getAdminPayoutStats(): Promise<GetAdminPayoutStatsResponse> {
-	return apiCall("/payouts/stats", "GET");
+	return apiCall("/admin/payouts/stats", "GET");
 }
 
 /**
@@ -3564,6 +3602,95 @@ export async function getCustomerEmailTotalSent() {
 	return apiCall(`/resources/email-logs`, "GET");
 }
 
+// Cluster management //////////////////////////////////////////////////////////////
+
+// create cluster supervisor
+
+export interface createClusterSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	clusterId: string;
+	clusterName?: string;
+}
+
+export async function clusterSupervisor(
+	createClusterSupervisor: createClusterSupervisor
+) {
+	return apiCall(
+		`/admin/cluster/supervisor/create`,
+		"POST",
+		createClusterSupervisor
+	);
+}
+
+// create state manager
+
+export interface createStateManager {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateManager(createStateManager: createStateManager) {
+	return apiCall(
+		`/admin/cluster/state-manager/create`,
+		"POST",
+		createStateManager
+	);
+}
+
+// create state Supervisor
+
+export interface createStateSupervisor {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	stateName: string;
+}
+
+export async function stateSupervisor(
+	createStateSupervisor: createStateSupervisor
+) {
+	return apiCall(
+		`/admin/cluster/state-supervisor/create`,
+		"POST",
+		createStateSupervisor
+	);
+}
+
+// Get all cluster supervisors
+
+export async function getClusterSupervisors() {
+	return apiCall(`/admin/cluster/supervisors`, "GET");
+}
+
+// Get all state managers
+export async function getStateManagers() {
+	return apiCall(`/admin/cluster/state-managers`, "GET");
+}
+
+// Get all state supervisors
+export async function getStateSupervisors() {
+	return apiCall(`/admin/cluster/state-supervisors`, "GET");
+}
+
+// Assign cluster supervisor to a cluster
+
+export async function assignClusterSupervisorToCluster(userId: string) {
+	return apiCall(`/admin/cluster/assign-supervisor/${userId}`, "PUT");
+}
+
+// get all cluster for assignment
+
+export async function getClustersForAssignment() {
+	return apiCall(`/admin/cluster/clusters`, "GET");
+}
+
 // *** Samsung Sentinel IMEI Management ***
 
 export interface IMEIUploadRecord {
@@ -3583,7 +3710,7 @@ export interface IMEIRecord {
 	deviceImei: string;
 	distributor?: string;
 	expiryDate?: string;
-	status: 'active' | 'used';
+	status: "active" | "used";
 }
 
 export interface UploadIMEIRequest {
@@ -3602,15 +3729,18 @@ export async function getSamsungSentinelUploads(params?: {
 	endDate?: string;
 }) {
 	const queryParams = new URLSearchParams();
-	if (params?.page) queryParams.append('page', params.page.toString());
-	if (params?.limit) queryParams.append('limit', params.limit.toString());
-	if (params?.search) queryParams.append('search', params.search);
-	if (params?.deviceModel) queryParams.append('deviceModel', params.deviceModel);
-	if (params?.uploadedBy) queryParams.append('uploadedBy', params.uploadedBy);
-	if (params?.startDate) queryParams.append('startDate', params.startDate);
-	if (params?.endDate) queryParams.append('endDate', params.endDate);
-	
-	const endpoint = `/admin/samsung-sentinel/uploads${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+	if (params?.page) queryParams.append("page", params.page.toString());
+	if (params?.limit) queryParams.append("limit", params.limit.toString());
+	if (params?.search) queryParams.append("search", params.search);
+	if (params?.deviceModel)
+		queryParams.append("deviceModel", params.deviceModel);
+	if (params?.uploadedBy) queryParams.append("uploadedBy", params.uploadedBy);
+	if (params?.startDate) queryParams.append("startDate", params.startDate);
+	if (params?.endDate) queryParams.append("endDate", params.endDate);
+
+	const endpoint = `/admin/samsung-sentinel/uploads${
+		queryParams.toString() ? `?${queryParams.toString()}` : ""
+	}`;
 	return apiCall(endpoint, "GET");
 }
 
@@ -3622,9 +3752,9 @@ export async function getSamsungSentinelUploadDetails(uploadId: string) {
 // Upload IMEI CSV file
 export async function uploadIMEIFile(data: UploadIMEIRequest) {
 	const formData = new FormData();
-	formData.append('csvFile', data.csvFile);
-	formData.append('deviceModel', data.deviceModel);
-	
+	formData.append("csvFile", data.csvFile);
+	formData.append("deviceModel", data.deviceModel);
+
 	return apiCall("/admin/samsung-sentinel/upload-imei", "POST", formData);
 }
 

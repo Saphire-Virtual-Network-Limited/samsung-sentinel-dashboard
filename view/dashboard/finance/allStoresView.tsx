@@ -456,15 +456,15 @@ export default function AllStoresView() {
 							window.open(createUrl, "_blank");
 						},
 					}}
-					additionalButtons={[
-						{
-							text: "Sync Stores",
-							onClick: () => {
-								syncStoresFn();
-							},
-							isLoading: isSyncing,
-						},
-					]}
+					// additionalButtons={[
+					// 	{
+					// 		text: "Sync Stores",
+					// 		onClick: () => {
+					// 			syncStoresFn();
+					// 		},
+					// 		isLoading: isSyncing,
+					// 	},
+					// ]}
 				/>
 			)}
 			{/* Confirmation Modal for Suspend/Deactivate */}

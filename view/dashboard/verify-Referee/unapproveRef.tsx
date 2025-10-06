@@ -38,12 +38,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
+	{ name: "Customer ID", uid: "customerId", sortable: true },
 	{ name: "Name", uid: "fullName", sortable: true },
-	{ name: "Contact No.", uid: "mainPhoneNumber" },
 	{ name: "Age", uid: "age", sortable: true },
-	{ name: "Referee No.", uid: "phone2" },
 	{ name: "Status", uid: "generalStatus" },
-	{ name: "Actions", uid: "actions" },
+	{ name: "Date", uid: "updatedAt", sortable: true },
+	{ name: "Updated By", uid: "updated_by" },
+	{ name: "Reason", uid: "reason" },
+	{ name: "Actions", uid: "actions" }
 ];
 
 const statusOptions = [
@@ -98,9 +100,44 @@ type UnapprovedRefereeRecord = {
 		status2Comment?: string | null;
 		status3Comment?: string | null;
 		generalStatus?: string;
+		generalComment?: string;
 		channel?: string;
 		phone2Status?: string;
 		phone3Status?: string;
+		updated_by: {
+			adminid: string;
+			inviteStatus: string;
+			mbeId: string | null;
+			password: string;
+			user: {
+				accountStatus: string;
+				accountType: string;
+				companyAddress: string | null;
+				companyCity: string | null;
+				companyLGA: string | null;
+				companyName: string | null;
+				companyState: string | null;
+				createdAt: string;
+				dob: string | null;
+				email: string;
+				firstName: string;
+				gender: string | null;
+				isActive: boolean;
+				lastName: string;
+				otp: string | null;
+				otpExpiry: string | null;
+				profile_picture: string | null;
+				referralCode: string | null;
+				role: string;
+				telephoneNumber: string;
+				tokenVersion: number;
+				updatedAt: string;
+				userId: string;
+			};
+			userid: string;
+		} | null;
+		updated_by_id: string | null;
+
 	}>;
 	LoanRecord?: Array<{
 		loanRecordId?: string;
@@ -212,14 +249,37 @@ export default function UnapprovedRefereesPage() {
 		() =>
 			raw.map((r: UnapprovedRefereeRecord) => ({
 				...r,
-				fullName: `${capitalize(r.firstName || "")} ${capitalize(
-					r.lastName || ""
-				)}`,
-				email: r.email,
-				generalStatus: r.CustomerKYC?.[0]?.generalStatus || "pending",
-				color: statusColorMap[r.CustomerKYC?.[0]?.generalStatus || "pending"],
-				phone2: r.CustomerKYC?.[0]?.phone2 || "N/A",
+				customerId: r.customerId,
+				fullName: `${capitalize(r.firstName || "")} ${capitalize(r.lastName || "")}`,
+				generalStatus:
+					r.CustomerKYC?.[0]?.generalStatus ||
+					"pending" ||
+					"approved" ||
+					"rejected",
+				color:
+					statusColorMap[
+						r.CustomerKYC?.[0]?.generalStatus ||
+							"pending" ||
+							"approved" ||
+							"rejected"
+					],
+				updatedAt: new Date(r.updatedAt || "").toLocaleDateString("en-US", {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+					hour: "2-digit",
+					minute: "2-digit",
+				}),
 				age: calculateAge(r.dob || ""),
+				updated_by: (() => {
+					const updatedBy = r.CustomerKYC?.[0]?.updated_by;
+					console.log("Updated by data:", updatedBy);
+					if (!updatedBy || !updatedBy.user) return "N/A";
+					const fullName = `${updatedBy.user.firstName} ${updatedBy.user.lastName}`;
+					console.log("Generated full name:", fullName);
+					return fullName;
+				})(),
+				reason: r.CustomerKYC?.[0]?.generalComment || "N/A",
 			})),
 		[raw]
 	);
@@ -242,7 +302,9 @@ export default function UnapprovedRefereesPage() {
 					(c.CustomerKYC?.[0]?.phone2 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone3 || "").includes(f) ||
 					(c.CustomerKYC?.[0]?.phone4 || "").includes(f) ||
-					(c.CustomerKYC?.[0]?.phone5 || "").includes(f)
+					(c.CustomerKYC?.[0]?.phone5 || "").includes(f) ||
+					(c.updated_by || "").includes(f) ||
+					(c.reason || "").includes(f)
 			);
 		}
 		if (statusFilter.size > 0) {

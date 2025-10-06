@@ -267,6 +267,19 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	},
 	"ebunifeoluwa@sapphirevirtual.com": {
 		canCreate: true,
+		canEdit: true,
+		canAssignAgent: true,
+		canUpdateDeviceImei: true,
+		canInjectTransaction: true,
+		canApproveStore: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canViewOverDuePayments: true,
+		canUpdateWalletBalance: true,
+		canUpdateLastPoint: true,
+		canUpdateLoanStatus: true,
+		canTriggerDeviceActions: true,
+		canDeleteCustomers: true,
 	},
 	"greatnessabolade@gmail.com": {
 		canUpdateWalletBalance: true,
@@ -321,6 +334,9 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		canTriggerDeviceActions: true,
+	},
+	"kemi.adeniran@sapphirevirtual.com": {
+		canAssignAgent: true,
 	},
 };
 
