@@ -1155,6 +1155,22 @@ export default function SingleRefereeView({
 											label: "Bad credit history",
 											value: "Bad credit history",
 										},
+										{
+											label: "Customer is the same at referee",
+											value: "Customer is the same at referee",
+										},
+										{
+											label: "Customer not in store ",
+											value: "Customer not in store ",
+										},
+										{
+											label: "Cusomer not answering calls",
+											value: "Cusomer not answering calls",
+										},
+										{
+											label: "Customer with mismatched details",
+											value: "Customer with mismatched details",
+										},
 										{ label: "Others", value: "Others" },
 									]}
 									htmlFor="reason"
