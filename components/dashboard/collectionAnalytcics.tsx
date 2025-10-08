@@ -106,7 +106,7 @@ const cardData = [
     valueFn: (summary: any) => summary?.collectedRepayments ?? 0,
   },
   {
-    label: "No. of Repayments %",
+    label: "No. of collection %",
     key: "percentage",
     icon: <Percent className="w-6 h-6 text-fuchsia-500" />,
     color: "text-fuchsia-700",
