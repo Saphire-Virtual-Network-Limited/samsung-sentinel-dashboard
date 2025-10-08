@@ -339,7 +339,6 @@ export default function SamsungSentinelUploadDetailsView({ uploadId }: Props) {
 					<ArrowLeft size={20} />
 				</Button>
 				<div>
-					<h1 className="text-2xl font-bold">Upload Details</h1>
 					<p className="text-muted-foreground">{uploadDetails.fileName}</p>
 				</div>
 			</div>

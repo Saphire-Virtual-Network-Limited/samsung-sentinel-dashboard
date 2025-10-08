@@ -174,9 +174,7 @@ const ViewServiceCenterClaimView = () => {
 						<ArrowLeft size={20} />
 					</Button>
 					<div>
-						<h1 className="text-2xl font-bold text-gray-900">
-							Service Center Claim Details
-						</h1>
+						<h1 className="text-2xl font-bold text-gray-900"></h1>
 						<p className="text-gray-600">Claim ID: {claim?.id}</p>
 					</div>
 				</div>

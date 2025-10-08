@@ -20,6 +20,8 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
+	Tabs,
+	Tab,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -33,7 +35,15 @@ import {
 	showToast,
 	capitalize,
 } from "@/lib";
-import { Upload, Download, Eye, Trash2, EllipsisVertical } from "lucide-react";
+import {
+	Upload,
+	Download,
+	Eye,
+	Trash2,
+	EllipsisVertical,
+	FileText,
+	AlertTriangle,
+} from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -44,7 +54,8 @@ const DEVICE_MODELS = [
 	{ label: "Samsung A07", value: "SAMSUNG_A07" },
 ];
 
-const columns: ColumnDef[] = [
+// Upload columns
+const uploadColumns: ColumnDef[] = [
 	{ name: "File Name", uid: "fileName", sortable: true },
 	{ name: "Device Model", uid: "deviceModel", sortable: true },
 	{ name: "Total Records", uid: "totalRecords", sortable: true },
@@ -52,6 +63,14 @@ const columns: ColumnDef[] = [
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
+];
+
+// Unverified IMEI columns
+const unverifiedIMEIColumns: ColumnDef[] = [
+	{ name: "IMEI", uid: "imei", sortable: true },
+	{ name: "Distributor", uid: "distributor", sortable: true },
+	{ name: "Service Center", uid: "serviceCenter", sortable: true },
+	{ name: "Date", uid: "date", sortable: true },
 ];
 
 const statusOptions = [
@@ -78,11 +97,22 @@ interface UploadRecord {
 	status: "processing" | "completed" | "failed";
 }
 
+interface UnverifiedIMEIRecord {
+	id: string;
+	imei: string;
+	distributor: string;
+	serviceCenter: string;
+	date: string;
+}
+
 export default function SamsungSentinelIMEIView() {
 	const router = useRouter();
 	const pathname = usePathname();
 	// Get the role from the URL path (e.g., /access/admin/samsung-sentinel -> admin)
 	const role = pathname.split("/")[2];
+
+	// Tab state
+	const [activeTab, setActiveTab] = useState("uploads");
 
 	// Upload modal state
 	const {
@@ -94,26 +124,17 @@ export default function SamsungSentinelIMEIView() {
 	const [selectedDeviceModel, setSelectedDeviceModel] = useState<string>("");
 	const [isUploading, setIsUploading] = useState(false);
 
-	// --- date filter state ---
+	// --- date filter state managed by GenericTable ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
 	const [endDate, setEndDate] = useState<string | undefined>(undefined);
 	const [hasNoRecords, setHasNoRecords] = useState(false);
 
-	// --- table state ---
+	// --- table state managed by GenericTable ---
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
-	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-		column: "createdAt",
-		direction: "descending",
-	});
-	const [page, setPage] = useState(1);
+	const [imeiFilterValue, setImeiFilterValue] = useState("");
 
-	// Handler to properly manage sort descriptor changes
-	const handleSortChange = (sd: SortDescriptor) => {
-		setSortDescriptor(sd);
-	};
-
-	// --- handle date filter ---
+	// --- handle date filter (managed by GenericTable) ---
 	const handleDateFilter = (start: string, end: string) => {
 		setStartDate(start);
 		setEndDate(end);
@@ -186,37 +207,80 @@ export default function SamsungSentinelIMEIView() {
 		[role]
 	);
 
+	// Mock unverified IMEI data
+	const unverifiedIMEIData: UnverifiedIMEIRecord[] = useMemo(
+		() => [
+			{
+				id: "imei_001",
+				imei: "123456789012345",
+				distributor: "Sapphire Distributors Ltd",
+				serviceCenter: "TechFix Lagos",
+				date: "2024-10-01",
+			},
+			{
+				id: "imei_002",
+				imei: "234567890123456",
+				distributor: "Global Tech Solutions",
+				serviceCenter: "Samsung Care Abuja",
+				date: "2024-10-02",
+			},
+			{
+				id: "imei_003",
+				imei: "345678901234567",
+				distributor: "Metro Electronics",
+				serviceCenter: "Mobile Masters Port Harcourt",
+				date: "2024-10-03",
+			},
+			{
+				id: "imei_004",
+				imei: "456789012345678",
+				distributor: "Digital Plus Nigeria",
+				serviceCenter: "Galaxy Repairs Kano",
+				date: "2024-10-04",
+			},
+			{
+				id: "imei_005",
+				imei: "567890123456789",
+				distributor: "Sapphire Distributors Ltd",
+				serviceCenter: "TechFix Lagos",
+				date: "2024-10-05",
+			},
+			{
+				id: "imei_006",
+				imei: "678901234567890",
+				distributor: "Prime Electronics",
+				serviceCenter: "Smart Repair Ibadan",
+				date: "2024-10-06",
+			},
+			{
+				id: "imei_007",
+				imei: "789012345678901",
+				distributor: "NextGen Mobile",
+				serviceCenter: "Fix It Pro Kaduna",
+				date: "2024-10-07",
+			},
+		],
+		[]
+	);
+
 	// Update hasNoRecords when data changes
 	React.useEffect(() => {
 		setHasNoRecords(uploads.length === 0);
 	}, [uploads]);
 
-	// Apply filters and search (let GenericTable handle this)
-	const filtered = useMemo(() => {
-		let list = [...uploads];
-		if (filterValue) {
-			const f = filterValue.toLowerCase();
-			list = list.filter(
-				(upload) =>
-					upload.fileName.toLowerCase().includes(f) ||
-					upload.uploadedBy.toLowerCase().includes(f) ||
-					upload.deviceModel.toLowerCase().includes(f)
-			);
-		}
-		if (statusFilter.size > 0) {
-			list = list.filter((upload) => statusFilter.has(upload.status));
-		}
-		return list;
-	}, [uploads, filterValue, statusFilter]);
+	// Let GenericTable handle filtering internally
+	const filteredUploads = uploads;
 
-	// Pagination and sorting handled by GenericTable
-	const pages = Math.ceil(filtered.length / 10) || 1;
+	// Let GenericTable handle filtering internally
+	const filteredUnverifiedIMEI = unverifiedIMEIData;
 
-	// Export function (for GenericTable)
-	const exportFn = async (data: UploadRecord[]) => {
+	// Pagination handled by GenericTable
+
+	// Export function for uploads (for GenericTable)
+	const exportUploadsFn = async (data: UploadRecord[]) => {
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Samsung Sentinel Uploads");
-		ws.columns = columns
+		ws.columns = uploadColumns
 			.filter((c) => c.uid !== "actions")
 			.map((c) => ({
 				header: c.name,
@@ -235,6 +299,25 @@ export default function SamsungSentinelIMEIView() {
 		);
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Samsung_Sentinel_Uploads.xlsx");
+	};
+
+	// Export function for unverified IMEI
+	const exportUnverifiedIMEIFn = async (data: UnverifiedIMEIRecord[]) => {
+		const wb = new ExcelJS.Workbook();
+		const ws = wb.addWorksheet("Unverified IMEI");
+		ws.columns = unverifiedIMEIColumns.map((c) => ({
+			header: c.name,
+			key: c.uid,
+			width: 20,
+		}));
+		data.forEach((r) =>
+			ws.addRow({
+				...r,
+				date: new Date(r.date).toLocaleDateString(),
+			})
+		);
+		const buf = await wb.xlsx.writeBuffer();
+		saveAs(new Blob([buf]), "Unverified_IMEI.xlsx");
 	};
 
 	// Handle delete action
@@ -303,8 +386,8 @@ export default function SamsungSentinelIMEIView() {
 		}
 	};
 
-	// Render cell content (following customerView pattern)
-	const renderCell = (row: UploadRecord, key: string) => {
+	// Render cell content for uploads (following customerView pattern)
+	const renderUploadCell = (row: UploadRecord, key: string) => {
 		if (key === "actions") {
 			return (
 				<div className="flex justify-end">
@@ -319,7 +402,7 @@ export default function SamsungSentinelIMEIView() {
 								key="view"
 								onPress={() =>
 									router.push(
-										`/access/${role}/samsung-sentinel/upload/${row.id}`
+										`/access/${role}/samsung-sentinel/imei/upload/${row.id}`
 									)
 								}
 							>
@@ -380,9 +463,35 @@ export default function SamsungSentinelIMEIView() {
 		return <p className="text-sm">{(row as any)[key]}</p>;
 	};
 
+	// Render cell content for unverified IMEI
+	const renderUnverifiedIMEICell = (row: UnverifiedIMEIRecord, key: string) => {
+		if (key === "imei") {
+			return <p className="text-sm font-mono">{row.imei}</p>;
+		}
+		if (key === "distributor") {
+			return (
+				<Chip variant="flat" color="secondary" size="sm">
+					{row.distributor}
+				</Chip>
+			);
+		}
+		if (key === "serviceCenter") {
+			return (
+				<Chip variant="flat" color="primary" size="sm">
+					{row.serviceCenter}
+				</Chip>
+			);
+		}
+		if (key === "date") {
+			return (
+				<p className="text-sm">{new Date(row.date).toLocaleDateString()}</p>
+			);
+		}
+		return <p className="text-sm">{(row as any)[key]}</p>;
+	};
+
 	return (
 		<div className="space-y-6">
-			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div></div>
 				<div className="flex items-center gap-3">
@@ -403,40 +512,70 @@ export default function SamsungSentinelIMEIView() {
 				</div>
 			</div>
 
-			{/* Table using GenericTable with all built-in features */}
-			{isLoading ? (
-				<TableSkeleton columns={columns.length} rows={10} />
-			) : (
-				<GenericTable<UploadRecord>
-					columns={columns}
-					data={filtered}
-					allCount={filtered.length}
-					exportData={filtered}
-					isLoading={isLoading}
-					filterValue={filterValue}
-					onFilterChange={(v) => {
-						setFilterValue(v);
-						setPage(1);
-					}}
-					statusOptions={statusOptions}
-					statusFilter={statusFilter}
-					onStatusChange={setStatusFilter}
-					statusColorMap={statusColorMap}
-					showStatus={true}
-					sortDescriptor={sortDescriptor}
-					onSortChange={handleSortChange}
-					page={page}
-					pages={pages}
-					onPageChange={setPage}
-					exportFn={exportFn}
-					renderCell={renderCell}
-					hasNoRecords={hasNoRecords}
-					onDateFilterChange={handleDateFilter}
-					initialStartDate={startDate}
-					initialEndDate={endDate}
-					searchPlaceholder="Search by file name, uploaded by, or device model..."
-				/>
-			)}
+			{/* Tabs Container */}
+			<Tabs
+				selectedKey={activeTab}
+				onSelectionChange={(key) => setActiveTab(key as string)}
+			>
+				<Tab key="uploads" title="Uploads">
+					{/* Table using GenericTable with all built-in features */}
+					{isLoading ? (
+						<TableSkeleton columns={uploadColumns.length} rows={10} />
+					) : (
+						<GenericTable<UploadRecord>
+							columns={uploadColumns}
+							data={uploads}
+							allCount={uploads.length}
+							exportData={uploads}
+							isLoading={isLoading}
+							filterValue={filterValue}
+							onFilterChange={setFilterValue}
+							statusOptions={statusOptions}
+							statusFilter={statusFilter}
+							onStatusChange={setStatusFilter}
+							statusColorMap={statusColorMap}
+							showStatus={true}
+							sortDescriptor={{ column: "createdAt", direction: "descending" }}
+							onSortChange={() => {}}
+							page={1}
+							pages={1}
+							onPageChange={() => {}}
+							exportFn={exportUploadsFn}
+							renderCell={renderUploadCell}
+							hasNoRecords={hasNoRecords}
+							onDateFilterChange={handleDateFilter}
+							initialStartDate={startDate}
+							initialEndDate={endDate}
+							searchPlaceholder="Search by file name, uploaded by, or device model..."
+							showRowsPerPageSelector={true}
+						/>
+					)}
+				</Tab>
+
+				<Tab key="unverified" title="Unverified IMEI">
+					{/* Unverified IMEI Table */}
+					<GenericTable<UnverifiedIMEIRecord>
+						columns={unverifiedIMEIColumns}
+						data={unverifiedIMEIData}
+						allCount={unverifiedIMEIData.length}
+						exportData={unverifiedIMEIData}
+						isLoading={false}
+						filterValue={imeiFilterValue}
+						onFilterChange={setImeiFilterValue}
+						showStatus={false}
+						sortDescriptor={{ column: "date", direction: "descending" }}
+						onSortChange={() => {}}
+						page={1}
+						pages={1}
+						onPageChange={() => {}}
+						exportFn={exportUnverifiedIMEIFn}
+						renderCell={renderUnverifiedIMEICell}
+						hasNoRecords={unverifiedIMEIData.length === 0}
+						searchPlaceholder="Search by IMEI, distributor, or service center..."
+						showRowsPerPageSelector={true}
+					/>
+				</Tab>
+			</Tabs>
 
 			{/* Upload Modal */}
 			<Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose} size="2xl">

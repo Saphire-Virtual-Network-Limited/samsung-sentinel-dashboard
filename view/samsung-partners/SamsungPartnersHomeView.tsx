@@ -2,15 +2,15 @@
 
 import React from "react";
 import { Card, CardBody, CardHeader, Chip } from "@heroui/react";
-import { 
-	Home, 
-	FileText, 
-	CheckCircle, 
-	XCircle, 
-	Clock, 
+import {
+	Home,
+	FileText,
+	CheckCircle,
+	XCircle,
+	Clock,
 	DollarSign,
 	Wrench,
-	TrendingUp 
+	TrendingUp,
 } from "lucide-react";
 import { useRepairClaims } from "@/hooks/samsung-partners/useRepairClaims";
 import { useProcessedClaims } from "@/hooks/samsung-partners/useProcessedClaims";
@@ -27,27 +27,40 @@ interface ProcessedClaim {
 }
 
 export default function SamsungPartnersHomeView() {
-	const { claims: repairClaims, isLoading: repairClaimsLoading } = useRepairClaims();
-	const { claims: processedClaims, isLoading: processedClaimsLoading } = useProcessedClaims();
+	const { claims: repairClaims, isLoading: repairClaimsLoading } =
+		useRepairClaims();
+	const { claims: processedClaims, isLoading: processedClaimsLoading } =
+		useProcessedClaims();
 
 	const getClaimsStats = () => {
-		if (!repairClaims) return { total: 0, pending: 0, approved: 0, rejected: 0 };
-		
+		if (!repairClaims)
+			return { total: 0, pending: 0, approved: 0, rejected: 0 };
+
 		return {
 			total: repairClaims.length,
-			pending: repairClaims.filter((claim: RepairClaim) => claim.status === 'pending').length,
-			approved: repairClaims.filter((claim: RepairClaim) => claim.status === 'approved').length,
-			rejected: repairClaims.filter((claim: RepairClaim) => claim.status === 'rejected').length,
+			pending: repairClaims.filter(
+				(claim: RepairClaim) => claim.status === "pending"
+			).length,
+			approved: repairClaims.filter(
+				(claim: RepairClaim) => claim.status === "approved"
+			).length,
+			rejected: repairClaims.filter(
+				(claim: RepairClaim) => claim.status === "rejected"
+			).length,
 		};
 	};
 
 	const getProcessedStats = () => {
 		if (!processedClaims) return { total: 0, paid: 0, unpaid: 0 };
-		
+
 		return {
 			total: processedClaims.length,
-			paid: processedClaims.filter((claim: ProcessedClaim) => claim.paymentStatus === 'paid').length,
-			unpaid: processedClaims.filter((claim: ProcessedClaim) => claim.paymentStatus === 'unpaid').length,
+			paid: processedClaims.filter(
+				(claim: ProcessedClaim) => claim.paymentStatus === "paid"
+			).length,
+			unpaid: processedClaims.filter(
+				(claim: ProcessedClaim) => claim.paymentStatus === "unpaid"
+			).length,
 		};
 	};
 
@@ -116,25 +129,6 @@ export default function SamsungPartnersHomeView() {
 
 	return (
 		<div className="space-y-6 p-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold text-gray-900 mb-2">
-						Samsung Partners Dashboard
-					</h1>
-					<p className="text-gray-600">
-						Manage repair claims and track processing status
-					</p>
-				</div>
-				<Chip
-					startContent={<Home className="w-4 h-4" />}
-					variant="flat"
-					color="primary"
-					size="lg"
-				>
-					Overview
-				</Chip>
-			</div>
-
 			{/* Stats Cards Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 				{dashboardCards.map((card, index) => {
@@ -171,10 +165,12 @@ export default function SamsungPartnersHomeView() {
 							<FileText className="h-6 w-6 text-blue-500" />
 							<div>
 								<div className="font-medium">All Repair Claims</div>
-								<div className="text-sm text-gray-500">View all repair claims</div>
+								<div className="text-sm text-gray-500">
+									View all repair claims
+								</div>
 							</div>
 						</Link>
-						
+
 						<Link
 							href="/access/samsung-partners/repair-claims/pending"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
@@ -182,10 +178,12 @@ export default function SamsungPartnersHomeView() {
 							<Clock className="h-6 w-6 text-orange-500" />
 							<div>
 								<div className="font-medium">Pending Claims</div>
-								<div className="text-sm text-gray-500">Review pending claims</div>
+								<div className="text-sm text-gray-500">
+									Review pending claims
+								</div>
 							</div>
 						</Link>
-						
+
 						<Link
 							href="/access/samsung-partners/processed-claims"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
@@ -193,7 +191,9 @@ export default function SamsungPartnersHomeView() {
 							<Wrench className="h-6 w-6 text-purple-500" />
 							<div>
 								<div className="font-medium">Processed Claims</div>
-								<div className="text-sm text-gray-500">View processed claims</div>
+								<div className="text-sm text-gray-500">
+									View processed claims
+								</div>
 							</div>
 						</Link>
 					</div>

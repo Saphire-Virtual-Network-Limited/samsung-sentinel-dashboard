@@ -331,7 +331,36 @@ export function AppSidebar() {
 			icon: Shield,
 			title: "Samsung Sentinel",
 			id: "admin-samsung-sentinel",
-			url: "/access/admin/samsung-sentinel",
+			subItems: [
+				{
+					title: "IMEI Management",
+					url: "/access/admin/samsung-sentinel/imei",
+				},
+				{
+					title: "Products",
+					url: "/access/admin/samsung-sentinel/products",
+				},
+				{
+					title: "Service Centers",
+					url: "/access/admin/samsung-sentinel/service-centers",
+				},
+				{
+					title: "Repairs",
+					url: "/access/admin/samsung-sentinel/repairs",
+				},
+				{
+					title: "Completed Repairs",
+					url: "/access/admin/samsung-sentinel/completed-repairs",
+				},
+				{
+					title: "All Repair Reports",
+					url: "/access/admin/samsung-sentinel/repair-reports",
+				},
+				{
+					title: "Statistics",
+					url: "/access/admin/samsung-sentinel/statistics",
+				},
+			],
 		},
 		{
 			icon: Package2Icon,
@@ -712,7 +741,36 @@ export function AppSidebar() {
 						icon: Shield,
 						title: "Samsung Sentinel",
 						id: "sub-admin-samsung-sentinel",
-						url: "/access/sub-admin/samsung-sentinel",
+						subItems: [
+							{
+								title: "IMEI Management",
+								url: "/access/sub-admin/samsung-sentinel/imei",
+							},
+							{
+								title: "Products",
+								url: "/access/sub-admin/samsung-sentinel/products",
+							},
+							{
+								title: "Service Centers",
+								url: "/access/sub-admin/samsung-sentinel/service-centers",
+							},
+							{
+								title: "Repairs",
+								url: "/access/sub-admin/samsung-sentinel/repairs",
+							},
+							{
+								title: "Completed Repairs",
+								url: "/access/sub-admin/samsung-sentinel/completed-repairs",
+							},
+							{
+								title: "All Repair Reports",
+								url: "/access/sub-admin/samsung-sentinel/repair-reports",
+							},
+							{
+								title: "Statistics",
+								url: "/access/sub-admin/samsung-sentinel/statistics",
+							},
+						],
 					},
 			  ];
 
