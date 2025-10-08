@@ -3675,6 +3675,25 @@ export async function getClustersForAssignment() {
 	return apiCall(`/admin/cluster/clusters`, "GET");
 }
 
+// get collection analytics with filters
+export async function getCollectionAnalyticwithFilter(
+	startDate?: string,
+	endDate?: string,
+	period?: string
+) {
+	let query = "";
+	if (startDate && endDate && period) {
+		query = `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&period=${encodeURIComponent(period)}`;
+	} else if (startDate && endDate) {
+		query = `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+	} else if (period) {
+		query = `?period=${encodeURIComponent(period)}`;
+	}
+	return apiCall(`/admin/repayment/analytics${query}`, "GET");
+}
 
-
+//get Repayment analytics for a specific date
+export async function getRepaydateforaSpecificDate(date?: string) {
+	return apiCall(`/admin/repayment/analytics/date/${date}`, "GET");
+}
 
