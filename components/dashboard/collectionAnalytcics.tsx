@@ -10,6 +10,13 @@ import {
   Percent,
   CalendarDays,
   Users,
+  Target,
+  DollarSign,
+  BarChart3,
+  Activity,
+  RefreshCw,
+  AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 
 interface CollectionAnalyticsData {
@@ -45,6 +52,16 @@ function formatCurrency(amount?: number) {
   });
 }
 
+function formatNumber(num?: number) {
+  if (typeof num !== "number" || isNaN(num)) return "0";
+  return num.toLocaleString("en-NG");
+}
+
+function formatPercentage(num?: number, decimals: number = 1) {
+  if (typeof num !== "number" || isNaN(num)) return "0.0%";
+  return `${num.toFixed(decimals)}%`;
+}
+
 function formatDate(dateStr?: string) {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
@@ -65,56 +82,62 @@ const cardData = [
   {
     label: "Expected Amount",
     key: "expectedAmount",
-    icon: <ArrowUpCircle className="w-6 h-6 text-blue-500" />,
-    color: "text-blue-700",
-    bg: "bg-blue-50",
+    icon: <Target className="w-5 h-5" />,
+    color: "text-blue-600",
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+    border: "border-blue-200",
     valueFn: (summary: any) => formatCurrency(summary?.expectedAmount),
+    description: "Total amount expected to be collected",
   },
   {
     label: "Collected Amount",
     key: "collectedAmount",
-    icon: <CheckCircle className="w-6 h-6 text-green-500" />,
-    color: "text-green-700",
-    bg: "bg-green-50",
+    icon: <DollarSign className="w-5 h-5" />,
+    color: "text-green-600",
+    bg: "bg-gradient-to-br from-green-50 to-green-100",
+    border: "border-green-200",
     valueFn: (summary: any) => formatCurrency(summary?.collectedAmount),
+    description: "Amount successfully collected",
   },
   {
     label: "Collection Rate",
     key: "collectionRate",
-    icon: <TrendingUp className="w-6 h-6 text-indigo-500" />,
-    color: "text-indigo-700",
-    bg: "bg-indigo-50",
-    valueFn: (summary: any) =>
-      typeof summary?.collectionRate === "number"
-        ? `${summary.collectionRate.toLocaleString()}%`
-        : "0%",
+    icon: <BarChart3 className="w-5 h-5" />,
+    color: "text-indigo-600",
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
+    border: "border-indigo-200",
+    valueFn: (summary: any) => formatPercentage(summary?.collectionRate, 1),
+    description: "Overall collection performance",
   },
   {
-    label: "No. Expected Repayments",
+    label: "Expected Repayments",
     key: "expectedRepayments",
-    icon: <ArrowUpCircle className="w-6 h-6 text-yellow-500" />,
-    color: "text-yellow-700",
-    bg: "bg-yellow-50",
-    valueFn: (summary: any) => summary?.expectedRepayments ?? 0,
+    icon: <ArrowUpCircle className="w-5 h-5" />,
+    color: "text-amber-600",
+    bg: "bg-gradient-to-br from-amber-50 to-amber-100",
+    border: "border-amber-200",
+    valueFn: (summary: any) => formatNumber(summary?.expectedRepayments),
+    description: "Number of expected repayments",
   },
   {
-    label: "No. Collected Repayments",
+    label: "Collected Repayments",
     key: "collectedRepayments",
-    icon: <ArrowDownCircle className="w-6 h-6 text-emerald-500" />,
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    valueFn: (summary: any) => summary?.collectedRepayments ?? 0,
+    icon: <CheckCircle className="w-5 h-5" />,
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    border: "border-emerald-200",
+    valueFn: (summary: any) => formatNumber(summary?.collectedRepayments),
+    description: "Number of successful repayments",
   },
   {
-    label: "No. of collection %",
+    label: "Collection Percentage",
     key: "percentage",
-    icon: <Percent className="w-6 h-6 text-fuchsia-500" />,
-    color: "text-fuchsia-700",
-    bg: "bg-fuchsia-50",
-    valueFn: (summary: any) =>
-      typeof summary?.percentage === "number"
-        ? `${summary.percentage.toFixed(2)}%`
-        : "0.00%",
+    icon: <Percent className="w-5 h-5" />,
+    color: "text-purple-600",
+    bg: "bg-gradient-to-br from-purple-50 to-purple-100",
+    border: "border-purple-200",
+    valueFn: (summary: any) => formatPercentage(summary?.percentage, 2),
+    description: "Percentage of successful collections",
   },
 ];
 
@@ -123,7 +146,7 @@ const CollectionAnalytcics = () => {
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
-  const { data: rawData, isLoading, error } = useSWR<any>(
+  const { data: rawData, isLoading, error, mutate } = useSWR<any>(
     ["collection-analytics", startDate, endDate, period],
     async () => {
       try {
@@ -164,77 +187,127 @@ const CollectionAnalytcics = () => {
     },
   };
 
+  // Calculate collection efficiency
+  const collectionEfficiency = (analytics.summary?.expectedAmount || 0) > 0 
+    ? ((analytics.summary?.collectedAmount || 0) / (analytics.summary?.expectedAmount || 1)) * 100 
+    : 0;
+
+  const getEfficiencyColor = (efficiency: number) => {
+    if (efficiency >= 80) return "text-green-600";
+    if (efficiency >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getEfficiencyBg = (efficiency: number) => {
+    if (efficiency >= 80) return "bg-green-100";
+    if (efficiency >= 60) return "bg-yellow-100";
+    return "bg-red-100";
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col gap-6 w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-800">Collection Analytics</h2>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <CalendarDays className="w-4 h-4 text-gray-400" />
-            <p className="text-xs text-gray-500 capitalize">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      {/* Mobile-Friendly Header */}
+      <div className="px-3 sm:px-4 py-3 border-b border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">Collection Analytics</h2>
+            <span className="hidden sm:inline text-xs text-gray-500 capitalize">
               {analytics.period} &middot; {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
-            </p>
+            </span>
+          </div>
+          
+          {/* Mobile: Stack controls vertically, Desktop: Horizontal */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="flex items-center gap-2">
+              <select
+                className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1 sm:flex-none min-w-0"
+                value={period}
+                onChange={e => setPeriod(e.target.value as "daily" | "monthly")}
+              >
+                {periodOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              
+              <button
+                onClick={() => mutate()}
+                className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            
+            <DateFilter
+              initialStartDate={startDate}
+              initialEndDate={endDate}
+              onFilterChange={(start: string, end: string) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+              className="text-xs w-full sm:w-auto"
+            />
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          <select
-            className="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200 transition"
-            value={period}
-            onChange={e => setPeriod(e.target.value as "daily" | "monthly")}
-          >
-            {periodOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-          <DateFilter
-            initialStartDate={startDate}
-            initialEndDate={endDate}
-            onFilterChange={(start: string, end: string) => {
-              setStartDate(start);
-              setEndDate(end);
-            }}
-            className="text-xs"
-          />
+        
+        {/* Mobile: Show date range below title */}
+        <div className="sm:hidden mt-2">
+          <span className="text-xs text-gray-500 capitalize">
+            {analytics.period} &middot; {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
+          </span>
         </div>
       </div>
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <svg className="animate-spin h-8 w-8 text-blue-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-          </svg>
-          <span className="text-gray-400 text-sm">Loading analytics...</span>
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <svg className="h-8 w-8 text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
-          </svg>
-          <span className="text-red-500 text-sm">Failed to load analytics.</span>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cardData.map((card, idx) => (
-            <div
-              key={card.key}
-              className={`flex items-center gap-3 rounded-xl p-4 shadow-sm border border-gray-100 bg-white hover:shadow-md transition group`}
-            >
-              <div className={`flex-shrink-0 rounded-full p-2 ${card.bg} group-hover:scale-105 transition`}>
-                {card.icon}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 mb-1">{card.label}</span>
-                <span className={`text-lg font-semibold ${card.color}`}>
-                  {card.valueFn(analytics.summary)}
-                </span>
-              </div>
+
+      {/* Content */}
+      <div className="p-3 sm:p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-6 sm:py-8">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <div className="w-5 h-5 border-2 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+              <span className="text-sm text-gray-600 text-center">Loading analytics...</span>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-6 sm:py-8">
+            <div className="text-center px-4">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-3">Failed to load data</p>
+              <button
+                onClick={() => mutate()}
+                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors touch-manipulation"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3 sm:space-y-4">
+
+            {/* Detailed Metrics - Mobile Optimized Grid */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+              {cardData.map((card, idx) => (
+                <div
+                  key={card.key}
+                  className={`rounded-lg border ${card.border} ${card.bg} p-2.5 sm:p-3 hover:shadow-md transition-all duration-200`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`p-1.5 sm:p-2 rounded-lg ${card.bg} ${card.color} flex-shrink-0`}>
+                      {card.icon}
+                    </div>
+                    <div className="text-right min-w-0 flex-1 ml-2">
+                      <div className={`text-base sm:text-lg font-bold ${card.color} break-words`}>
+                        {card.valueFn(analytics.summary)}
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-xs font-medium text-gray-700 mb-1 leading-tight">{card.label}</h3>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
