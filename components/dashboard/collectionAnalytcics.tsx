@@ -118,7 +118,7 @@ const cardData = [
     description: "Overall collection performance",
   },
   {
-    label: "Expected Repayments",
+    label: "No. Expected Repayments",
     key: "expectedRepayments",
     icon: <ArrowUpCircle className="w-5 h-5" />,
     color: "text-amber-600",
@@ -128,7 +128,7 @@ const cardData = [
     description: "Number of expected repayments",
   },
   {
-    label: "Collected Repayments",
+    label: "No. Collected Repayments",
     key: "collectedRepayments",
     icon: <CheckCircle className="w-5 h-5" />,
     color: "text-emerald-600",
@@ -138,7 +138,7 @@ const cardData = [
     description: "Number of successful repayments",
   },
   {
-    label: "Collection Percentage",
+    label: "No. Collected Percentage",
     key: "percentage",
     icon: <Percent className="w-5 h-5" />,
     color: "text-purple-600",
