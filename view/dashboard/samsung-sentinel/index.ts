@@ -5,3 +5,7 @@ export { default as SamsungSentinelRepairsView } from "./SamsungSentinelRepairsV
 export { default as SamsungSentinelCompletedRepairsView } from "./SamsungSentinelCompletedRepairsView";
 export { default as SamsungSentinelRepairReportsView } from "./SamsungSentinelRepairReportsView";
 export { default as SamsungSentinelStatisticsView } from "./SamsungSentinelStatisticsView";
+export { default as SamsungSentinelProductsView } from "./SamsungSentinelProductsView";
+export { default as SamsungSentinelServiceCentersView } from "./SamsungSentinelServiceCentersView";
+export { default as SingleProductView } from "./SingleProductView";
+export { default as SingleServiceCenterView } from "./SingleServiceCenterView";

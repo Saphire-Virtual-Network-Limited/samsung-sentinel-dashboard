@@ -96,14 +96,9 @@ export default function SamsungSentinelServiceCentersView() {
 	});
 	const [isCreating, setIsCreating] = useState(false);
 
-	// Table states
+	// Filter and selection states (pagination/sorting handled by GenericTable)
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
-	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-		column: "createdAt",
-		direction: "descending",
-	});
-	const [page, setPage] = useState(1);
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
 	// Mock data
@@ -177,31 +172,7 @@ export default function SamsungSentinelServiceCentersView() {
 		[]
 	);
 
-	// Filter data
-	const filteredData = useMemo(() => {
-		let filtered = [...serviceCenters];
-
-		if (filterValue) {
-			const query = filterValue.toLowerCase();
-			filtered = filtered.filter(
-				(center) =>
-					center.name.toLowerCase().includes(query) ||
-					center.state.toLowerCase().includes(query) ||
-					center.lga.toLowerCase().includes(query) ||
-					center.email.toLowerCase().includes(query)
-			);
-		}
-
-		if (statusFilter.size > 0) {
-			filtered = filtered.filter((center) => statusFilter.has(center.status));
-		}
-
-		return filtered;
-	}, [serviceCenters, filterValue, statusFilter]);
-
-	const pages = Math.ceil(filteredData.length / 10) || 1;
-
-	// Statistics
+	// Let GenericTable handle filtering internally	// Statistics
 	const stats = useMemo(
 		() => ({
 			totalCenters: serviceCenters.length,
@@ -219,9 +190,7 @@ export default function SamsungSentinelServiceCentersView() {
 	);
 
 	// Handlers
-	const handleSortChange = (sd: SortDescriptor) => {
-		setSortDescriptor(sd);
-	};
+	// Sort handling managed by GenericTable
 
 	const handleCreateServiceCenter = async () => {
 		const { name, address, state, lga, phoneNumber, email } = formData;
@@ -339,10 +308,12 @@ export default function SamsungSentinelServiceCentersView() {
 	// Selection handler
 	const handleSelectionChange = (keys: any) => {
 		if (keys === "all") {
-			if (selectedKeys.size === filteredData.length) {
+			if (selectedKeys.size === serviceCenters.length) {
 				setSelectedKeys(new Set());
 			} else {
-				setSelectedKeys(new Set(filteredData.map((item) => item.id)));
+				setSelectedKeys(
+					new Set(serviceCenters.map((item: ServiceCenter) => item.id))
+				);
 			}
 		} else {
 			setSelectedKeys(new Set(Array.from(keys)));
@@ -539,7 +510,6 @@ export default function SamsungSentinelServiceCentersView() {
 					</Button>
 				</div>
 			</div>
-
 			{/* Statistics Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 				<StatCard
@@ -563,38 +533,34 @@ export default function SamsungSentinelServiceCentersView() {
 					icon={<CreditCard className="w-5 h-5" />}
 				/>
 			</div>
-
 			{/* Service Centers Table */}
 			<GenericTable<ServiceCenter>
 				columns={columns}
-				data={filteredData}
-				allCount={filteredData.length}
-				exportData={filteredData}
+				data={serviceCenters}
+				allCount={serviceCenters.length}
+				exportData={serviceCenters}
 				isLoading={false}
 				filterValue={filterValue}
-				onFilterChange={(v) => {
-					setFilterValue(v);
-					setPage(1);
-				}}
+				onFilterChange={setFilterValue}
 				statusOptions={statusOptions}
 				statusFilter={statusFilter}
 				onStatusChange={setStatusFilter}
 				statusColorMap={statusColorMap}
 				showStatus={true}
-				sortDescriptor={sortDescriptor}
-				onSortChange={handleSortChange}
-				page={page}
-				pages={pages}
-				onPageChange={setPage}
+				sortDescriptor={{ column: "createdAt", direction: "descending" }}
+				onSortChange={() => {}}
+				page={1}
+				pages={1}
+				onPageChange={() => {}}
 				exportFn={exportFn}
 				renderCell={renderCell}
-				hasNoRecords={filteredData.length === 0}
+				hasNoRecords={serviceCenters.length === 0}
 				searchPlaceholder="Search service centers by name, location, or email..."
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}
 				selectionMode="multiple"
-			/>
-
+				showRowsPerPageSelector={true}
+			/>{" "}
 			{/* Create Service Center Modal */}
 			<Modal isOpen={isCreateModalOpen} onClose={onCreateModalClose} size="2xl">
 				<ModalContent>
