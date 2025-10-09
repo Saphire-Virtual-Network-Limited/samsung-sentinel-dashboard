@@ -3678,16 +3678,11 @@ export async function getClustersForAssignment() {
 // get collection analytics with filters
 export async function getCollectionAnalyticwithFilter(
 	startDate?: string,
-	endDate?: string,
-	period?: string
+	endDate?: string
 ) {
 	let query = "";
-	if (startDate && endDate && period) {
-		query = `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&period=${encodeURIComponent(period)}`;
-	} else if (startDate && endDate) {
-		query = `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-	} else if (period) {
-		query = `?period=${encodeURIComponent(period)}`;
+	if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
 	}
 	return apiCall(`/admin/repayment/analytics${query}`, "GET");
 }
