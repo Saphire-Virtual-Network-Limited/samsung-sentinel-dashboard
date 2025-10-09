@@ -346,6 +346,12 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canAssignAgent: true,
 		canViewOverDuePayments: true,
 	},
+	"joy@sapphirevirtual.com": {
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canTriggerDeviceActions: true,
+	},
 };
 
 /**
