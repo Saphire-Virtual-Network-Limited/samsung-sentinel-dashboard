@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 
 interface CollectionAnalyticsData {
-  period?: string;
   dateRange?: {
     start?: string;
     end?: string;
@@ -73,10 +72,6 @@ function formatDate(dateStr?: string) {
   });
 }
 
-const periodOptions = [
-  { label: "Daily", value: "daily" },
-  { label: "Monthly", value: "monthly" },
-];
 
 const cardData = [
   {
@@ -142,15 +137,14 @@ const cardData = [
 ];
 
 const CollectionAnalytcics = () => {
-  const [period, setPeriod] = useState<"daily" | "monthly">("daily");
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
   const { data: rawData, isLoading, error, mutate } = useSWR<any>(
-    ["collection-analytics", startDate, endDate, period],
+    ["collection-analytics", startDate, endDate],
     async () => {
       try {
-        return await getCollectionAnalyticwithFilter(startDate, endDate, period);
+        return await getCollectionAnalyticwithFilter(startDate, endDate);
       } catch (err) {
         console.error("Error fetching collection analytics:", err);
         throw err;
@@ -166,7 +160,6 @@ const CollectionAnalytcics = () => {
   const data = extractAnalyticsData(rawData);
 
   const analytics: CollectionAnalyticsData = {
-    period: data?.period ?? period,
     dateRange: {
       start:
         data?.dateRange?.start ??
@@ -212,32 +205,20 @@ const CollectionAnalytcics = () => {
           <div className="flex items-center gap-2 min-w-0">
             <Activity className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">Collection Analytics</h2>
-            <span className="hidden sm:inline text-xs text-gray-500 capitalize">
-              {analytics.period} &middot; {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
+            <span className="hidden sm:inline text-xs text-gray-500">
+              {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
             </span>
           </div>
           
-          {/* Mobile: Stack controls vertically, Desktop: Horizontal */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="flex items-center gap-2">
-              <select
-                className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1 sm:flex-none min-w-0"
-                value={period}
-                onChange={e => setPeriod(e.target.value as "daily" | "monthly")}
-              >
-                {periodOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              
-              <button
-                onClick={() => mutate()}
-                className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => mutate()}
+              className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
             
             <DateFilter
               initialStartDate={startDate}
@@ -246,15 +227,15 @@ const CollectionAnalytcics = () => {
                 setStartDate(start);
                 setEndDate(end);
               }}
-              className="text-xs w-full sm:w-auto"
+              className="text-xs"
             />
           </div>
         </div>
         
         {/* Mobile: Show date range below title */}
         <div className="sm:hidden mt-2">
-          <span className="text-xs text-gray-500 capitalize">
-            {analytics.period} &middot; {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
+          <span className="text-xs text-gray-500">
+            {formatDate(analytics.dateRange?.start)} - {formatDate(analytics.dateRange?.end)}
           </span>
         </div>
       </div>
