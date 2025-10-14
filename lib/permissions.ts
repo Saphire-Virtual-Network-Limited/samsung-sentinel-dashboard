@@ -112,7 +112,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateWalletBalance: true,
 		canUpdateLastPoint: true,
 		// canUpdateLoanStatus: true,
-		canTriggerDeviceActions: true,
+		// canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewDeviceActivityLog: true,

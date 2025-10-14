@@ -281,7 +281,7 @@ export default function UtilizationView() {
 					: "N/A",
 				loanStatus: r.loanStatus || "N/A",
 				imei: r.DeviceOnLoan?.[0]?.imei || "N/A",
-				deviceName: r.device?.deviceName || r.device?.deviceModel || "N/A",
+				deviceName: r.deviceName || r.device?.deviceName || r.device?.deviceModelNumber || "N/A",
 				deviceModel: r.device?.deviceModel || "N/A",
 				updatedAt: r.updatedAt
 					? new Date(r.updatedAt).toLocaleDateString('en-GB', {
