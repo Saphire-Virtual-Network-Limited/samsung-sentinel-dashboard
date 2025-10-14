@@ -31,6 +31,8 @@ interface CollectionAnalyticsData {
     expectedRepayments?: number;
     collectedRepayments?: number;
     collectionRate?: number;
+    overallCollectedAmount?: number;
+
   };
 }
 
@@ -100,7 +102,7 @@ const cardData = [
   {
     label: "Collected Amount",
     key: "collectedAmount",
-    icon: <DollarSign className="w-5 h-5" />,
+    icon: <span className="text-lg font-bold">₦</span>,
     color: "text-green-600",
     bg: "bg-gradient-to-br from-green-50 to-green-100",
     border: "border-green-200",
@@ -147,11 +149,24 @@ const cardData = [
     valueFn: (summary: any) => formatPercentage(summary?.percentage, 2),
     description: "Percentage of successful collections",
   },
+  {
+    label: "Overall Collected Amount",
+    key: "overallCollectedAmount",
+    icon: <TrendingUp className="w-5 h-5" />,
+    color: "text-teal-600",
+    bg: "bg-gradient-to-br from-teal-50 to-teal-100",
+    border: "border-teal-200",
+    valueFn: (summary: any) => formatCurrency(summary?.overallCollectedAmount),
+    description: "Total amount collected across all periods",
+  },
 ];
 
 const CollectionAnalytcics = () => {
-  const [startDate, setStartDate] = useState<string | undefined>(undefined);
-  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  // Set default to today's date
+  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  
+  const [startDate, setStartDate] = useState<string | undefined>(today);
+  const [endDate, setEndDate] = useState<string | undefined>(today);
 
   const { data: rawData, isLoading, error, mutate } = useSWR<any>(
     ["collection-analytics", startDate, endDate],
@@ -174,14 +189,8 @@ const CollectionAnalytcics = () => {
 
   const analytics: CollectionAnalyticsData = {
     dateRange: {
-      start:
-        data?.dateRange?.start ??
-        startDate ??
-        new Date().toISOString(),
-      end:
-        data?.dateRange?.end ??
-        endDate ??
-        new Date().toISOString(),
+      start: startDate || data?.dateRange?.start || today,
+      end: endDate || data?.dateRange?.end || today,
     },
     summary: {
       expectedAmount: data?.summary?.expectedAmount || 0,
@@ -190,6 +199,7 @@ const CollectionAnalytcics = () => {
       expectedRepayments: data?.summary?.expectedRepayments || 0,
       collectedRepayments: data?.summary?.collectedRepayments || 0,
       collectionRate: data?.summary?.collectionRate || 0,
+      overallCollectedAmount: data?.summary?.overallCollectedAmount || 0,
     },
   };
 
