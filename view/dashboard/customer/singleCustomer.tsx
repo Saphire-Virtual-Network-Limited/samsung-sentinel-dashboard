@@ -1283,11 +1283,19 @@ export default function CollectionSingleCustomerPage() {
 		},
 	];
 
-	// Filter device actions based on user role
-	const deviceActions =
-		role === "collection-officer"
-			? allDeviceActions.filter((action) => action.value === "lock_device")
-			: allDeviceActions;
+	// Filter device actions based on user permissions
+	const deviceActions = allDeviceActions.filter((action) => {
+		switch (action.value) {
+			case "lock_device":
+				return hasPermission(role, "canLockDevice", userEmail);
+			case "unlock_device":
+				return hasPermission(role, "canTriggerDeviceActions", userEmail);
+			case "release_device":
+				return hasPermission(role, "canTriggerDeviceActions", userEmail);
+			default:
+				return false;
+		}
+	});
 
 	// Debug logging
 	console.log("Current role:", role);
