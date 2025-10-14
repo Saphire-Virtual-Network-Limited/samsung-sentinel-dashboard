@@ -139,8 +139,8 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 	},
 
 	"collection-admin": {
-		canTriggerDeviceActions: true,
-		canInjectTransaction: true,
+		// canTriggerDeviceActions: true,
+		// canInjectTransaction: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canViewOverDuePayments: true,
