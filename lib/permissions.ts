@@ -66,6 +66,7 @@ export interface PermissionConfig {
 	canViewReconciliationHistory: boolean;
 	canSendSms: boolean;
 	canAccessPayoutScheduler: boolean;
+	canLockDevice: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -145,13 +146,14 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewDeviceActivityLog: true,
 		canViewOverDuePayments: true,
 		canSendSms: true,
+		canLockDevice: true,
 	},
 	"collection-officer": {
 		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
-		canTriggerDeviceActions: true,
 		canSendSms: true,
+		canLockDevice: true,
 		// Collection officer has no special permissions
 		// All permissions default to false
 	},
@@ -388,6 +390,7 @@ function getDefaultPermissions(): PermissionConfig {
 		canViewReconciliationHistory: false,
 		canSendSms: false,
 		canAccessPayoutScheduler: false,
+		canLockDevice: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};
@@ -482,6 +485,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
 		"updateScanPartner",
 		"canApproveStore",
 		"canInjectTransaction",
+		"canLockDevice",
 		// 'canViewSensitiveData',
 		// 'canManageCustomers',
 		// 'canManageLoans',
