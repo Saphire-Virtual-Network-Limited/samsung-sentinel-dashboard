@@ -1289,7 +1289,7 @@ export default function CollectionSingleCustomerPage() {
 			case "lock_device":
 				return hasPermission(role, "canLockDevice", userEmail);
 			case "unlock_device":
-				return hasPermission(role, "canTriggerDeviceActions", userEmail);
+				return hasPermission(role, "canUnlockDevice", userEmail);
 			case "release_device":
 				return hasPermission(role, "canTriggerDeviceActions", userEmail);
 			default:
