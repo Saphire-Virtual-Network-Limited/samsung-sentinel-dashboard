@@ -87,7 +87,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		// canUpdateWalletBalance: true,
 		// canUpdateLastPoint: true,
 		// canUpdateLoanStatus: true,
-		// canTriggerDeviceActions: true,
+		canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		// canViewDeviceActivityLog: true,
@@ -115,7 +115,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canUpdateWalletBalance: true,
 		canUpdateLastPoint: true,
 		// canUpdateLoanStatus: true,
-		// canTriggerDeviceActions: true,
+		canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
 		canViewOverDuePayments: true,
 		canViewDeviceActivityLog: true,
@@ -143,7 +143,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 	},
 
 	"collection-admin": {
-		// canTriggerDeviceActions: true,
+		canTriggerDeviceActions: true,
 		// canInjectTransaction: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
@@ -157,6 +157,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewDeviceActivityLog: true,
 		canSendSms: true,
 		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Collection officer has no special permissions
 		// All permissions default to false
 	},
@@ -231,12 +232,14 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 	support: {
 		canViewOverDuePayments: true,
 		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Support has no special permissions
 		// All permissions default to false
 	},
 	verify: {
 		canViewOverDuePayments: true,
 		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Verify has no special permissions
 		// All permissions default to false
 	},
@@ -244,6 +247,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		updateGuarantorStatus: true,
 		updateAddressStatus: true,
 		canViewOverDuePayments: true,
+		canTriggerDeviceActions: true,
 		canLockDevice: true,
 	},
 };
