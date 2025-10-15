@@ -3692,3 +3692,8 @@ export async function getRepaydateforaSpecificDate(date?: string) {
 	return apiCall(`/admin/repayment/analytics/date/${date}`, "GET");
 }
 
+//get Repayment analytics for a specific date
+export async function manualChargeCustomerRepayment(scheduleId: string) {
+	return apiCall(`/admin/auto-debit/retry/${scheduleId}`, "POST");
+}
+
