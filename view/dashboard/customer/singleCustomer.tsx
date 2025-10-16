@@ -50,6 +50,7 @@ import {
 	deleteCustomerMandateAndUpdateLastPoint,
 	sendSms,
 	getcustomerRepaymentSchedule,
+	manualChargeCustomerRepayment,
 } from "@/lib";
 import { hasPermission } from "@/lib/permissions";
 import {
@@ -893,6 +894,28 @@ export default function CollectionSingleCustomerPage() {
 		fetchRepaymentSchedule();
 	}, [loanRecordId]);
 
+
+	const handleManualChargeCustomerRepayment = async (scheduleId: string) => {
+		setIsButtonLoading(true);
+		try {
+			const response = await manualChargeCustomerRepayment(scheduleId);
+			console.log(response);
+			showToast({
+				type: "success",
+				message: response.message || "Customer repayment charged successfully",
+				duration: 8000,
+			});
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error.message || "Failed to charge customer repayment",
+				duration: 8000,
+			});
+		} finally {
+			setIsButtonLoading(false);
+		}
+	};
+
 	// Helper functions for repayment schedule
 	const formatCurrency = useCallback((amount: number | undefined): string => {
 		return amount ? `₦${amount.toLocaleString("en-GB")}` : "₦0";
@@ -956,6 +979,24 @@ export default function CollectionSingleCustomerPage() {
 	const calculateProgressPercentage = useCallback((amountPaid: number, amount: number): number => {
 		if (!amount || amount === 0) return 0;
 		return Math.min((amountPaid / amount) * 100, 100);
+	}, []);
+
+	// Helper function to check if payment is due within 24 hours, on due date, or overdue
+	const isPaymentDueOrOverdue = useCallback((dueDate: string): boolean => {
+		if (!dueDate) return false;
+		
+		try {
+			const due = new Date(dueDate);
+			const now = new Date();
+			const timeDiff = due.getTime() - now.getTime();
+			const hoursDiff = timeDiff / (1000 * 3600);
+			
+			// Return true if payment is due within 24 hours, on due date, or overdue
+			return hoursDiff <= 24;
+		} catch (error) {
+			console.error("Error parsing due date:", error);
+			return false;
+		}
 	}, []);
 
 	// Helper function to convert datetime-local format to CalendarDateTime
@@ -3383,7 +3424,7 @@ export default function CollectionSingleCustomerPage() {
 						</InfoCard>
 
 						{/* Repayment Schedule */}
-						{hasPermission(role, "canViewOverDuePayments", userEmail) && (
+
 							<InfoCard
 								title="Repayment Schedule"
 								icon={<Calendar className="w-5 h-5 text-default-600" />}
@@ -3602,6 +3643,30 @@ export default function CollectionSingleCustomerPage() {
 																		</div>
 																	</div>
 
+																	{/* Manual Charge Button - Show only if payment is due within 24 hours, on due date, or overdue */}
+																	{isPaymentDueOrOverdue(schedule.dueDate) && schedule.status !== "COMPLETED" && (
+																		<div className="mb-3 flex justify-end">
+																			<Button
+																				onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
+																				disabled={isButtonLoading}
+																				size="sm"
+																				className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-1"
+																			>
+																				{isButtonLoading ? (
+																					<>
+																						<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+																						<span>Processing...</span>
+																					</>
+																				) : (
+																					<>
+																						<CreditCard className="w-3 h-3" />
+																						<span>Manual Charge</span>
+																					</>
+																				)}
+																			</Button>
+																		</div>
+																	)}
+
 																	{/* Payment Details - Collapsible */}
 																	{schedule.repayments && schedule.repayments.length > 0 && (
 																		<div className="border-t border-gray-200 pt-3">
@@ -3780,7 +3845,7 @@ export default function CollectionSingleCustomerPage() {
 								</div>
 								)}
 							</InfoCard>
-						)}
+						
 
 
 						{/* Device Activity Log */}
