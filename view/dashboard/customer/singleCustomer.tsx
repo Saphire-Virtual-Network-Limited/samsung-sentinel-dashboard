@@ -827,6 +827,8 @@ export default function CollectionSingleCustomerPage() {
 
 				if (response && response.data) {
 					setCustomer(response.data);
+
+					console.log(response.data);
 				} else {
 					showToast({
 						type: "error",
@@ -2442,7 +2444,7 @@ export default function CollectionSingleCustomerPage() {
 									/>
 									<InfoField
 										label="Device ID"
-										value={customer.LoanRecord?.[0]?.deviceId || "N/A"}
+										value={customer.LoanRecord?.[0]?.deviceId || customer.LoanRecord?.[0]?.newDeviceId || "N/A"}
 									/>
 									<InfoField
 										label="Loan Disk ID"
@@ -2691,7 +2693,7 @@ export default function CollectionSingleCustomerPage() {
 																	Device ID
 																</div>
 																<div className="font-medium text-default-900">
-																	{device.deviceId || "N/A"}
+																	{device.deviceId || device.newDeviceId || "N/A"}
 																</div>
 															</div>
 															<div>
@@ -2720,6 +2722,14 @@ export default function CollectionSingleCustomerPage() {
 																</div>
 																<div className="font-medium text-default-900">
 																	{device.imei || "N/A"}
+																</div>
+															</div>
+															<div>
+																<div className="text-sm text-default-500 mb-1">
+																	Lock Type
+																</div>
+																<div className="font-medium text-default-900">
+																	{device.lockType || "N/A"}
 																</div>
 															</div>
 															<div>
