@@ -172,6 +172,7 @@ export type CustomerRecord = {
 		updatedAt: string;
 		loanAmount: number;
 		deviceId: string;
+		newDeviceId: string | null;
 		downPayment: number;
 		insurancePackage: string;
 		insurancePrice: number;
@@ -248,10 +249,12 @@ export type CustomerRecord = {
 			deviceId: string;
 			loanRecordId: string;
 			status: string;
+			lockType: string;
 			createdAt: string;
 			updatedAt: string;
 			channel: string;
 			imei: string | null;
+			newDeviceId: string | null;
 			amount: number;
 			devicePrice: number;
 		}>;
