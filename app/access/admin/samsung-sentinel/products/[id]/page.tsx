@@ -1,9 +1,10 @@
 import SingleProductView from "@/view/dashboard/samsung-sentinel/SingleProductView";
 
-export default function ProductDetailsPage({
+export default async function ProductDetailsPage({
 	params,
 }: {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }) {
-	return <SingleProductView productId={params.id} />;
+	const { id } = await params;
+	return <SingleProductView productId={id} />;
 }
