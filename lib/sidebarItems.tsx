@@ -797,7 +797,7 @@ export function getSubAdminItems(options: MenuOptions): MenuItem[] {
 		{
 			icon: CreditCard,
 			title: "Payout Scheduler",
-			url: "/access/admin/payout-scheduler",
+			url: "/access/sub-admin/payout-scheduler",
 			id: "admin-payout-scheduler",
 		},
 		{
