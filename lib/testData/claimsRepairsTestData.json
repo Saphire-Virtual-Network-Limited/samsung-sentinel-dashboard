@@ -1,0 +1,475 @@
+{
+	"claims": [
+		{
+			"id": "1",
+			"claimId": "CLM-2025-001",
+			"customerName": "John Doe",
+			"imei": "356789012345678",
+			"deviceName": "Samsung Galaxy S23 Ultra",
+			"brand": "Samsung",
+			"model": "Galaxy S23 Ultra",
+			"faultType": "Screen Damage",
+			"repairCost": 45000,
+			"status": "pending",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-01T10:30:00Z",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": "Michael Obi",
+			"documents": [
+				{
+					"id": "doc1",
+					"name": "device_front.jpg",
+					"url": "/images/sample-device.jpg",
+					"type": "image"
+				}
+			],
+			"deviceImages": [
+				{
+					"id": "img1",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "2",
+			"claimId": "CLM-2025-002",
+			"customerName": "Jane Smith",
+			"imei": "357890123456789",
+			"deviceName": "Samsung Galaxy A54",
+			"brand": "Samsung",
+			"model": "Galaxy A54",
+			"faultType": "Battery Issue",
+			"repairCost": 25000,
+			"status": "approved",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-02T14:20:00Z",
+			"approvedAt": "2025-10-03T09:15:00Z",
+			"serviceCenterName": "Mobile Masters Abuja",
+			"serviceCenterId": "SC002",
+			"engineerName": "Adebayo Johnson",
+			"documents": [
+				{
+					"id": "doc2",
+					"name": "battery_report.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "3",
+			"claimId": "CLM-2025-003",
+			"customerName": "Ahmed Musa",
+			"imei": "358901234567890",
+			"deviceName": "Samsung Galaxy Z Fold 5",
+			"brand": "Samsung",
+			"model": "Galaxy Z Fold 5",
+			"faultType": "Hinge Problem",
+			"repairCost": 120000,
+			"status": "in-progress",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-03T08:45:00Z",
+			"approvedAt": "2025-10-04T11:30:00Z",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": "Michael Obi",
+			"documents": [],
+			"deviceImages": [
+				{
+					"id": "img3",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "4",
+			"claimId": "CLM-2025-004",
+			"customerName": "Fatima Hassan",
+			"imei": "359012345678901",
+			"deviceName": "Samsung Galaxy S22",
+			"brand": "Samsung",
+			"model": "Galaxy S22",
+			"faultType": "Water Damage",
+			"repairCost": 55000,
+			"status": "completed",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-09-25T16:00:00Z",
+			"approvedAt": "2025-09-26T10:00:00Z",
+			"completedAt": "2025-09-30T15:30:00Z",
+			"serviceCenterName": "Phone Clinic Port Harcourt",
+			"serviceCenterId": "SC003",
+			"engineerName": "Chidi Eze",
+			"documents": [
+				{
+					"id": "doc4",
+					"name": "repair_complete.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": true
+		},
+		{
+			"id": "5",
+			"claimId": "CLM-2025-005",
+			"customerName": "Emeka Nwankwo",
+			"imei": "360123456789012",
+			"deviceName": "Samsung Galaxy A34",
+			"brand": "Samsung",
+			"model": "Galaxy A34",
+			"faultType": "Charging Port",
+			"repairCost": 18000,
+			"status": "completed",
+			"paymentStatus": "paid",
+			"transactionRef": "TRX-2025-001234",
+			"sessionId": "SES-20251005-001",
+			"createdAt": "2025-09-20T11:15:00Z",
+			"approvedAt": "2025-09-21T09:00:00Z",
+			"completedAt": "2025-09-25T14:00:00Z",
+			"serviceCenterName": "Mobile Masters Abuja",
+			"serviceCenterId": "SC002",
+			"engineerName": "Adebayo Johnson",
+			"documents": [],
+			"deviceImages": [],
+			"authorizedForPayment": true
+		},
+		{
+			"id": "6",
+			"claimId": "CLM-2025-006",
+			"customerName": "Blessing Okonkwo",
+			"imei": "361234567890123",
+			"deviceName": "Samsung Galaxy Z Flip 5",
+			"brand": "Samsung",
+			"model": "Galaxy Z Flip 5",
+			"faultType": "Display Issue",
+			"repairCost": 85000,
+			"status": "rejected",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-05T13:20:00Z",
+			"rejectedAt": "2025-10-06T10:45:00Z",
+			"rejectionReason": "Device shows signs of physical tampering. Warranty void.",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": null,
+			"documents": [
+				{
+					"id": "doc6",
+					"name": "inspection_report.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [
+				{
+					"id": "img6",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "7",
+			"claimId": "CLM-2025-007",
+			"customerName": "Chidinma Okeke",
+			"imei": "362345678901234",
+			"deviceName": "Samsung Galaxy S21",
+			"brand": "Samsung",
+			"model": "Galaxy S21",
+			"faultType": "Camera Fault",
+			"repairCost": 35000,
+			"status": "pending",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-06T09:30:00Z",
+			"serviceCenterName": "Phone Clinic Port Harcourt",
+			"serviceCenterId": "SC003",
+			"engineerName": null,
+			"documents": [],
+			"deviceImages": [
+				{
+					"id": "img7",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "8",
+			"claimId": "CLM-2025-008",
+			"customerName": "Ibrahim Yusuf",
+			"imei": "363456789012345",
+			"deviceName": "Samsung Galaxy A73",
+			"brand": "Samsung",
+			"model": "Galaxy A73",
+			"faultType": "Speaker Problem",
+			"repairCost": 22000,
+			"status": "approved",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-04T15:45:00Z",
+			"approvedAt": "2025-10-05T11:20:00Z",
+			"serviceCenterName": "Mobile Masters Abuja",
+			"serviceCenterId": "SC002",
+			"engineerName": "Adebayo Johnson",
+			"documents": [
+				{
+					"id": "doc8",
+					"name": "audio_test.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "9",
+			"claimId": "CLM-2025-009",
+			"customerName": "Grace Adeyemi",
+			"imei": "364567890123456",
+			"deviceName": "Samsung Galaxy Note 20",
+			"brand": "Samsung",
+			"model": "Galaxy Note 20",
+			"faultType": "Software Issue",
+			"repairCost": 15000,
+			"status": "completed",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-09-28T10:00:00Z",
+			"approvedAt": "2025-09-29T09:30:00Z",
+			"completedAt": "2025-10-02T16:00:00Z",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": "Michael Obi",
+			"documents": [],
+			"deviceImages": [],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "10",
+			"claimId": "CLM-2025-010",
+			"customerName": "Olusegun Balogun",
+			"imei": "365678901234567",
+			"deviceName": "Samsung Galaxy M34",
+			"brand": "Samsung",
+			"model": "Galaxy M34",
+			"faultType": "Network Problem",
+			"repairCost": 28000,
+			"status": "in-progress",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-07T12:30:00Z",
+			"approvedAt": "2025-10-08T10:15:00Z",
+			"serviceCenterName": "Phone Clinic Port Harcourt",
+			"serviceCenterId": "SC003",
+			"engineerName": "Chidi Eze",
+			"documents": [
+				{
+					"id": "doc10",
+					"name": "network_diagnostics.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "11",
+			"claimId": "CLM-2025-011",
+			"customerName": "Aisha Mohammed",
+			"imei": "366789012345678",
+			"deviceName": "Samsung Galaxy S23",
+			"brand": "Samsung",
+			"model": "Galaxy S23",
+			"faultType": "Screen Damage",
+			"repairCost": 42000,
+			"status": "completed",
+			"paymentStatus": "paid",
+			"transactionRef": "TRX-2025-001235",
+			"sessionId": "SES-20251008-002",
+			"createdAt": "2025-09-22T14:20:00Z",
+			"approvedAt": "2025-09-23T10:30:00Z",
+			"completedAt": "2025-09-27T13:45:00Z",
+			"serviceCenterName": "Mobile Masters Abuja",
+			"serviceCenterId": "SC002",
+			"engineerName": "Adebayo Johnson",
+			"documents": [],
+			"deviceImages": [
+				{
+					"id": "img11",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": true
+		},
+		{
+			"id": "12",
+			"claimId": "CLM-2025-012",
+			"customerName": "Tunde Adeleke",
+			"imei": "367890123456789",
+			"deviceName": "Samsung Galaxy A14",
+			"brand": "Samsung",
+			"model": "Galaxy A14",
+			"faultType": "Battery Issue",
+			"repairCost": 12000,
+			"status": "rejected",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-08T16:10:00Z",
+			"rejectedAt": "2025-10-09T11:00:00Z",
+			"rejectionReason": "Customer refused to pay diagnostic fee. Claim cancelled.",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": null,
+			"documents": [],
+			"deviceImages": [],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "13",
+			"claimId": "CLM-2025-013",
+			"customerName": "Ngozi Ibe",
+			"imei": "368901234567890",
+			"deviceName": "Samsung Galaxy A54 5G",
+			"brand": "Samsung",
+			"model": "Galaxy A54 5G",
+			"faultType": "Charging Port",
+			"repairCost": 19000,
+			"status": "completed",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-09-30T11:50:00Z",
+			"approvedAt": "2025-10-01T09:20:00Z",
+			"completedAt": "2025-10-05T14:30:00Z",
+			"serviceCenterName": "Phone Clinic Port Harcourt",
+			"serviceCenterId": "SC003",
+			"engineerName": "Chidi Eze",
+			"documents": [
+				{
+					"id": "doc13",
+					"name": "repair_summary.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": true
+		},
+		{
+			"id": "14",
+			"claimId": "CLM-2025-014",
+			"customerName": "Biodun Lawal",
+			"imei": "369012345678901",
+			"deviceName": "Samsung Galaxy S22 Ultra",
+			"brand": "Samsung",
+			"model": "Galaxy S22 Ultra",
+			"faultType": "Camera Fault",
+			"repairCost": 65000,
+			"status": "pending",
+			"paymentStatus": "unpaid",
+			"createdAt": "2025-10-09T10:40:00Z",
+			"serviceCenterName": "Mobile Masters Abuja",
+			"serviceCenterId": "SC002",
+			"engineerName": null,
+			"documents": [
+				{
+					"id": "doc14",
+					"name": "initial_assessment.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [
+				{
+					"id": "img14",
+					"url": "/images/sample-device.jpg"
+				}
+			],
+			"authorizedForPayment": false
+		},
+		{
+			"id": "15",
+			"claimId": "CLM-2025-015",
+			"customerName": "Kemi Ogunleye",
+			"imei": "370123456789012",
+			"deviceName": "Samsung Galaxy Z Fold 4",
+			"brand": "Samsung",
+			"model": "Galaxy Z Fold 4",
+			"faultType": "Hinge Problem",
+			"repairCost": 110000,
+			"status": "completed",
+			"paymentStatus": "paid",
+			"transactionRef": "TRX-2025-001236",
+			"sessionId": "SES-20251010-003",
+			"createdAt": "2025-09-18T09:00:00Z",
+			"approvedAt": "2025-09-19T10:45:00Z",
+			"completedAt": "2025-09-24T16:20:00Z",
+			"serviceCenterName": "Tech Fix Lagos",
+			"serviceCenterId": "SC001",
+			"engineerName": "Michael Obi",
+			"documents": [
+				{
+					"id": "doc15",
+					"name": "hinge_replacement.pdf",
+					"url": "/docs/sample-report.pdf",
+					"type": "document"
+				}
+			],
+			"deviceImages": [],
+			"authorizedForPayment": true
+		}
+	],
+	"serviceCenters": [
+		{
+			"id": "SC001",
+			"name": "Tech Fix Lagos",
+			"location": "Lagos",
+			"bankDetails": {
+				"bankName": "GTBank",
+				"accountNumber": "0123456789",
+				"accountName": "Tech Fix Lagos Ltd"
+			}
+		},
+		{
+			"id": "SC002",
+			"name": "Mobile Masters Abuja",
+			"location": "Abuja",
+			"bankDetails": {
+				"bankName": "Access Bank",
+				"accountNumber": "0234567890",
+				"accountName": "Mobile Masters Abuja"
+			}
+		},
+		{
+			"id": "SC003",
+			"name": "Phone Clinic Port Harcourt",
+			"location": "Port Harcourt",
+			"bankDetails": {
+				"bankName": "First Bank",
+				"accountNumber": "0345678901",
+				"accountName": "Phone Clinic PH Ltd"
+			}
+		}
+	],
+	"engineers": [
+		{
+			"id": "ENG001",
+			"name": "Michael Obi",
+			"serviceCenterId": "SC001",
+			"specialization": "Screen & Hardware"
+		},
+		{
+			"id": "ENG002",
+			"name": "Adebayo Johnson",
+			"serviceCenterId": "SC002",
+			"specialization": "Battery & Charging"
+		},
+		{
+			"id": "ENG003",
+			"name": "Chidi Eze",
+			"serviceCenterId": "SC003",
+			"specialization": "Water Damage & Software"
+		}
+	]
+}

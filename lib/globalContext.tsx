@@ -6,6 +6,7 @@ import React, {
 	useEffect,
 	useState,
 	useCallback,
+	useRef,
 	Suspense,
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -24,6 +25,7 @@ import {
 	clearPasswordSecurityStatus,
 } from "@/lib";
 import { Loader2 } from "lucide-react";
+import { getRoleBasePath, isValidPathForRole } from "@/lib/roleConfig";
 
 // Types
 interface UserData {
@@ -41,6 +43,7 @@ interface AuthContextType {
 	login: (email: string, password: string) => Promise<void>;
 	logout: () => void;
 	getAllProducts: () => Promise<{ label: string; value: string }[] | undefined>;
+	_debugOverrides?: any; // Internal use for debug system
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,12 +70,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	const [isLoading, setIsLoading] = useState(true);
 	const [callbackUrl, setCallbackUrl] = useState("/");
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const isNavigatingRef = useRef(false);
 	const [products, setProducts] = useState<
 		{ label: string; value: string }[] | null
 	>(null);
 
 	const router = useRouter();
 	const pathName = usePathname();
+
+	// Debug overrides state
+	const [debugOverrides, setDebugOverrides] = useState<any>({});
+
+	// Helper function to get debug overrides from cookies
+	const getDebugOverrides = useCallback(() => {
+		if (
+			typeof document === "undefined" ||
+			process.env.NODE_ENV !== "development"
+		)
+			return {};
+		try {
+			const cookieData = document.cookie
+				.split("; ")
+				.find((row) => row.startsWith("debug_overrides="));
+			if (cookieData) {
+				const parsed = JSON.parse(decodeURIComponent(cookieData.split("=")[1]));
+				if (
+					parsed.enabled &&
+					parsed.overrides &&
+					parsed.overrides.expiresAt &&
+					Date.now() < parsed.overrides.expiresAt
+				) {
+					return parsed.overrides;
+				}
+			}
+		} catch (error) {
+			console.warn("Failed to parse debug overrides:", error);
+		}
+		return {};
+	}, []);
+
+	// Update debug overrides periodically
+	useEffect(() => {
+		const updateDebugOverrides = () => {
+			const overrides = getDebugOverrides();
+			setDebugOverrides(overrides);
+		};
+		updateDebugOverrides();
+		const interval = setInterval(updateDebugOverrides, 1000); // Check every second
+		return () => clearInterval(interval);
+	}, [getDebugOverrides]);
 
 	const logout = useCallback(async () => {
 		setIsLoggingOut(true);
@@ -96,13 +142,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	const fetchUserProfile = useCallback(async () => {
 		try {
 			const response = await getAdminProfile();
-			const userRole = response.data.role;
-			const userEmail = response.data.email;
+			const originalRole = response.data.role;
+			const originalEmail = response.data.email;
 			const currentPath = pathName;
 
-			setUserResponse(response);
+			// Get current debug overrides
+			const currentDebugOverrides = getDebugOverrides();
 
-			// Check password security status for users without cookie
+			// Use debug role if available and valid, otherwise use original role
+			const userRole =
+				process.env.NODE_ENV === "development" && currentDebugOverrides.role
+					? currentDebugOverrides.role
+					: originalRole;
+			const userEmail =
+				process.env.NODE_ENV === "development" && currentDebugOverrides.email
+					? currentDebugOverrides.email
+					: originalEmail;
+
+			// Update user response with debug overrides if applicable
+			const modifiedResponse = {
+				...response,
+				data: {
+					...response.data,
+					role: userRole,
+					email: userEmail,
+				},
+			};
+
+			setUserResponse(modifiedResponse); // Check password security status for users without cookie
 			const passwordStatus = getPasswordSecurityStatus();
 			if (
 				passwordStatus === PasswordStatus.UNKNOWN &&
@@ -133,52 +200,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				return;
 			}
 
+			// Check if current path is allowed for the user's role
 			const isAllowedRoute = (() => {
 				// Allow settings route for all authenticated users
 				if (currentPath.startsWith("/access/settings")) {
 					return true;
 				}
 
-				switch (userRole) {
-					case "SUPER_ADMIN":
-						return currentPath.startsWith("/access/admin");
-					case "ADMIN":
-						return currentPath.startsWith("/access/sub-admin");
-					case "DEVELOPER":
-						return currentPath.startsWith("/access/dev");
-					case "FINANCE":
-						return currentPath.startsWith("/access/finance");
-					case "AUDIT":
-						return currentPath.startsWith("/access/audit");
-					case "VERIFICATION":
-					case "VERIFICATION_OFFICER":
-						return currentPath.startsWith("/access/verify");
-					case "SUPPORT":
-						return currentPath.startsWith("/access/support");
-					case "HUMAN_RESOURCE":
-						return currentPath.startsWith("/access/hr");
-					case "INVENTORY_MANAGER":
-						return currentPath.startsWith("/access/inventory");
-					case "SALES":
-						return currentPath.startsWith("/access/sales");
-					case "COLLECTION_ADMIN":
-						return currentPath.startsWith("/access/collection-admin");
-					case "COLLECTION_OFFICER":
-						return currentPath.startsWith("/access/collection-officer");
-					case "SCAN_PARTNER":
-						return currentPath.startsWith("/access/scan-partner");
-					case "USER":
-					case "MERCHANT":
-					case "AGENT":
-					case "STORE_BRANCH_MANAGER":
-					case "STORE_MANAGER":
-						return false;
-					default:
-						return false;
-				}
-			})();
+				// Use role mapping function for consistent validation
+				const isValid = isValidPathForRole(userRole, currentPath);
 
-			if (!isAllowedRoute) {
+				// Debug logging
+				if (process.env.NODE_ENV === "development") {
+					console.log(
+						`[DEBUG AUTH] Role: '${userRole}', Path: '${currentPath}', IsValid: ${isValid}`
+					);
+					if (currentDebugOverrides.role) {
+						console.log(
+							`[DEBUG AUTH] Using debug role '${currentDebugOverrides.role}' instead of original '${originalRole}'`
+						);
+					}
+					const basePath = getRoleBasePath(userRole);
+					console.log(
+						`[DEBUG AUTH] Base path for role '${userRole}': '${basePath}'`
+					);
+				}
+
+				return isValid;
+			})();
+			if (!isAllowedRoute && !isNavigatingRef.current) {
+				const targetPath = getRoleBasePath(userRole);
+
+				if (process.env.NODE_ENV === "development") {
+					console.log(
+						`[DEBUG] Unauthorized path '${currentPath}' for role '${userRole}', redirecting to '${targetPath}'`
+					);
+					if (currentDebugOverrides.role) {
+						console.log(
+							`[DEBUG] This is a debug role redirect from actual role '${originalRole}' to debug role '${userRole}'`
+						);
+					}
+				}
+
+				isNavigatingRef.current = true;
+				setTimeout(() => {
+					isNavigatingRef.current = false;
+				}, 2000); // Reset flag after 2 seconds
+				router.replace(targetPath);
+				return;
+			} // Legacy fallback (should not be reached with role mapping)
+			if (false) {
 				switch (userRole) {
 					case "SUPER_ADMIN":
 						router.replace("/access/admin");
@@ -249,7 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [logout, pathName, router]);
+	}, [logout, pathName, router, getDebugOverrides]);
 
 	useEffect(() => {
 		const isAuthRoute = pathName.startsWith("/auth");
@@ -272,8 +343,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			return;
 		}
 
-		fetchUserProfile();
-	}, [fetchUserProfile, pathName]);
+		// Only fetch profile if we don't have user data yet
+		// This prevents unnecessary API calls and redirects on navigation
+		if (!userResponse) {
+			fetchUserProfile();
+		}
+	}, [fetchUserProfile, pathName, userResponse]);
 	const login = async (email: string, password: string) => {
 		setUserResponse(null);
 		try {
@@ -335,7 +410,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	return (
 		<AuthContext.Provider
-			value={{ userResponse, isLoading, login, logout, getAllProducts }}
+			value={{
+				userResponse,
+				isLoading,
+				login,
+				logout,
+				getAllProducts,
+				_debugOverrides: debugOverrides,
+			}}
 		>
 			<Suspense fallback={null}>
 				<AuthInitializer onReady={setCallbackUrl} />

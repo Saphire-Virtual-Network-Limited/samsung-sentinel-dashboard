@@ -479,6 +479,62 @@ export function hasPermission(
 	permission: keyof PermissionConfig,
 	userEmail?: string
 ): boolean {
+	// Check for debug overrides in development mode
+	if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+		try {
+			// Helper to get cookie value
+			const getCookie = (name: string): string | null => {
+				const nameEQ = name + "=";
+				const ca = document.cookie.split(";");
+				for (let i = 0; i < ca.length; i++) {
+					let c = ca[i];
+					while (c.charAt(0) === " ") c = c.substring(1, c.length);
+					if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+				}
+				return null;
+			};
+
+			// Try cookies first, then localStorage
+			let debugState = null;
+			const cookieData = getCookie("debug_overrides");
+			if (cookieData) {
+				debugState = JSON.parse(decodeURIComponent(cookieData));
+			} else {
+				const localData = localStorage.getItem("debug-overrides");
+				if (localData) {
+					debugState = JSON.parse(localData);
+				}
+			}
+
+			if (debugState && debugState.enabled && debugState.overrides) {
+				// Check if debug session has expired
+				if (debugState.overrides.expiresAt && Date.now() > debugState.overrides.expiresAt) {
+					return getPermissions(role, userEmail)[permission] || false;
+				}
+
+				// Use debug role if set
+				const debugRole = debugState.overrides.role;
+				const debugEmail = debugState.overrides.email;
+				const debugPermissions = debugState.overrides.permissions;
+
+				// If permission is explicitly granted in debug overrides
+				if (debugPermissions && debugPermissions.includes(permission)) {
+					return true;
+				}
+
+				// Use debug role and email for regular permission check
+				const effectiveRole = debugRole || role;
+				const effectiveEmail = debugEmail || userEmail;
+				const permissions = getPermissions(effectiveRole, effectiveEmail);
+				return permissions[permission] || false;
+			}
+		} catch (error) {
+			// Ignore errors in debug override parsing
+			console.warn("Failed to parse debug overrides:", error);
+		}
+	}
+
+	// Normal permission check
 	const permissions = getPermissions(role, userEmail);
 	return permissions[permission] || false;
 }
@@ -565,6 +621,19 @@ export function getRolesWithPermission(
 }
 
 /**
+ * Get currently granted permissions for a role (permissions that are true)
+ * @param role - The role to check
+ * @param userEmail - Optional user email for overrides
+ * @returns Array of permission names that are granted
+ */
+export function getCurrentPermissions(role: string, userEmail?: string): string[] {
+	const permissions = getPermissions(role, userEmail);
+	return Object.entries(permissions)
+		.filter(([_, value]) => value === true)
+		.map(([key, _]) => key);
+}
+
+/**
  * Debug function to log all permissions for a role
  * @param role - The role to debug
  * @param userEmail - Optional user email for overrides
@@ -573,10 +642,7 @@ export function debugRolePermissions(role: string, userEmail?: string): void {
 	const permissions = getPermissions(role, userEmail);
 	console.log(`Permissions for role "${role}":`, permissions);
 
-	const grantedPermissions = Object.entries(permissions)
-		.filter(([_, value]) => value === true)
-		.map(([key, _]) => key);
-
+	const grantedPermissions = getCurrentPermissions(role, userEmail);
 	console.log(`Granted permissions:`, grantedPermissions);
 }
 

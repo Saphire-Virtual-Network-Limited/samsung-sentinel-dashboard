@@ -24,6 +24,10 @@ import {
 	Receipt,
 	Package,
 	MessageSquare,
+	CheckCircle,
+	FileText,
+	Bug,
+	Shield,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple } from "react-icons/io5";
 import { getUserRole } from "@/lib";
@@ -39,35 +43,58 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/lib";
-import { useState } from "react";
+import { useAuthWithDebug } from "@/hooks/useAuthWithDebug";
+import { useState, useEffect } from "react";
 import { IoBusiness } from "react-icons/io5";
 import { getSelectedProduct } from "@/utils";
 import { hasPermission } from "@/lib/permissions";
-
-// Define types for menu items
-type SubItem = {
-	title: string;
-	url?: string;
-	subItems?: SubItem[];
-};
-
-type MenuItem = {
-	title: string;
-	icon: React.FC<any>;
-	url?: string;
-	subItems?: SubItem[];
-	id?: string;
-};
+import { useDebug } from "@/lib/debugContext";
+import DebugModal from "@/components/modals/DebugModal";
+import { getSidebarItemsForRole, type MenuItem } from "@/lib/sidebarItems";
 
 export function AppSidebar() {
-	const { logout, userResponse } = useAuth();
+	const { userResponse, debugInfo, logout } = useAuthWithDebug();
 	const { setOpenMobile, isMobile } = useSidebar();
 	const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 	const [openNestedMenus, setOpenNestedMenus] = useState<{
 		[key: string]: boolean;
 	}>({});
+	const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
+	const [forceUpdate, setForceUpdate] = useState(0); // Force re-render on debug role change
 	const { label: selectedProduct } = getSelectedProduct();
+	const { isDebugMode, debugOverrides } = useDebug();
+
+	// Force sidebar to re-render when debug role changes
+	useEffect(() => {
+		const handleDebugRoleChange = () => {
+			console.log("Sidebar: Debug role changed, forcing re-render");
+			setForceUpdate((prev) => prev + 1);
+		};
+
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === "debug-role-update") {
+				console.log("Sidebar: Storage event detected, forcing re-render");
+				setForceUpdate((prev) => prev + 1);
+			}
+		};
+
+		if (typeof window !== "undefined") {
+			window.addEventListener(
+				"debug-role-changed",
+				handleDebugRoleChange as EventListener
+			);
+			window.addEventListener("storage", handleStorageChange);
+
+			return () => {
+				window.removeEventListener(
+					"debug-role-changed",
+					handleDebugRoleChange as EventListener
+				);
+				window.removeEventListener("storage", handleStorageChange);
+			};
+		}
+	}, []);
+
 	const handleLogout = async () => {
 		try {
 			logout();
@@ -85,1270 +112,22 @@ export function AppSidebar() {
 
 	const apiDocsUrl = process.env.NEXT_PUBLIC_API_DOCS_URL;
 	const accessRole = getUserRole(userResponse?.data?.role);
+	const userEmail = userResponse?.data?.email;
 	const canVerifyMobiflex = hasPermission(
 		accessRole,
 		"verifyMobiflex",
-		userResponse?.data?.email
+		userEmail
 	);
-	const conditionalSentinelItems: MenuItem[] =
-		//    selectedProduct === "Sentinel"
-		//     ?
-		[
-			{
-				icon: BriefcaseBusiness,
-				title: "Activities",
-				id: "finance-stores",
-				subItems: [
-					{
-						title: "Activation OTP",
-						url: "/access/sales/activities/activation-otp",
-					},
-					{
-						title: "Approved",
-						url: "/access/sales/referees/approved-referees",
-					},
-					{
-						title: "Rejected",
-						url: "/access/sales/referees/rejected-referees",
-					},
-				],
-			},
-			{
-				icon: IoLogoAndroid,
-				title: "Android Tools",
-				id: "android-tools",
-				subItems: [
-					{
-						title: "Android Activation",
-						url: "/access/sales/android-tools/android-activation",
-					},
-					{
-						title: "Approved",
-						url: "/access/sales/referees/approved-referees",
-					},
-					{
-						title: "Rejected",
-						url: "/access/sales/referees/rejected-referees",
-					},
-				],
-			},
-			{
-				icon: IoLogoApple,
-				title: "IOS Tools",
-				id: "ios-tools",
-				subItems: [
-					{
-						title: "IOS Activation",
-						url: "/access/sales/ios-tools/ios-activation",
-					},
-					{
-						title: "Approved",
-						url: "/access/sales/referees/approved-referees",
-					},
-					{
-						title: "Rejected",
-						url: "/access/sales/referees/rejected-referees",
-					},
-				],
-			},
-		];
-	// : [];
 
-	const scanParterItems: MenuItem[] = [
-		{
-			icon: IoBusiness,
-			title: "Profile",
-			url: "/access/scan-partner/profile",
-			id: "scan-partner-profile",
-		},
-	];
-
-	const adminRootItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/admin/",
-			id: "admin-dashboard",
-		},
-		{
-			icon: CreditCard,
-			title: "Loans",
-			id: "admin-loans",
-			subItems: [
-				{
-					title: "All Loans",
-					url: "/access/admin/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/admin/loans/repayment",
-				},
-			],
-		},
-		{
-			icon: Users,
-			title: "Customers",
-			url: "/access/admin/customers",
-			id: "admin-customers",
-		},
-		{
-			icon: UserCheck,
-			title: "Verification",
-			id: "admin-referees",
-			subItems: [
-				{
-					title: "Pending",
-					url: "/access/admin/referees/unapproved-referees",
-				},
-				{
-					title: "Approved",
-					url: "/access/admin/referees/approved-referees",
-				},
-				{
-					title: "Rejected",
-					url: "/access/admin/referees/rejected-referees",
-				},
-			],
-		},
-		{
-			icon: Store,
-			title: "Stores",
-			url: "/access/admin/stores",
-			id: "admin-stores",
-		},
-		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-			? [
-					{
-						icon: MessageSquare,
-						title: "SMS",
-						url: "/access/admin/sms",
-						id: "admin-sms",
-					},
-			  ]
-			: []),
-		{
-			icon: IoBusiness,
-			title: "Staff",
-			url: "/access/admin/staff",
-			id: "admin-staff",
-			subItems: [
-				{
-					title: "Mobiflex Sales Agent",
-					url: "/access/admin/staff/agents",
-				},
-				{
-					title: "MBE",
-					url: "/access/admin/staff/mbe",
-				},
-
-				{
-					title: "SCAN Partners",
-					url: "/access/admin/staff/scan-partners",
-				},
-			],
-		},
-		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "admin-reports",
-			subItems: [
-				{
-					title: "Sales",
-					subItems: [
-						{
-							title: "Overview",
-							url: "/access/admin/reports/sales/overview",
-						},
-						{
-							title: "MBE Report",
-							url: "/access/admin/reports/sales/mbe",
-						},
-						{
-							title: "Samsung Report",
-							url: "/access/admin/reports/sales/samsung",
-						},
-						{
-							title: "Xiaomi Report",
-							url: "/access/admin/reports/sales/xiaomi",
-						},
-						{
-							title: "Oppo Report",
-							url: "/access/admin/reports/sales/oppo",
-						},
-						{
-							title: "Sentinel Report",
-							url: "/access/admin/reports/sales/sentinel",
-						},
-						{
-							title: "Low Downpayment",
-							url: "/access/admin/reports/sales/low-downpayment",
-						},
-						{
-							title: "Mobiflex Report",
-							url: "/access/admin/reports/mobiflex",
-						},
-					],
-				},
-				{
-					title: "Commissions",
-					url: "/access/admin/reports/commissions",
-				},
-				{ title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
-				{ title: "Tracker", url: "/access/admin/reports/tracker" },
-			],
-		},
-		{
-			icon: Users2,
-			title: "Users",
-			id: "admin-users",
-			url: "/access/admin/users/",
-		},
-		{
-			icon: CreditCard,
-			title: "Payout Scheduler",
-			url: "/access/admin/payout-scheduler",
-			id: "admin-payout-scheduler",
-		},
-		{
-			icon: Package2Icon,
-			title: "Inventory",
-			id: "admin-inventory",
-			subItems: [
-				{ title: "Devices", url: "/access/admin/inventory/devices" },
-				{ title: "TVs", url: "/access/admin/inventory/tvs" },
-				{ title: "Solar", url: "/access/admin/inventory/solar" },
-			],
-		},
-		{
-			icon: Package2Icon,
-			title: "PowerFlex",
-			id: "admin-powerflex",
-			url: "/access/admin/powerflex",
-		},
-	];
-
-	const adminAndroidItems: MenuItem[] =
-		selectedProduct === "Android"
-			? [
-					{
-						title: "Dashboard",
-						icon: Home,
-						url: "/access/admin/android/",
-						id: "admin-android-dashboard",
-					},
-					{
-						icon: ChartBar,
-						title: "Reports",
-						id: "admin-android-reports",
-						subItems: [
-							{
-								title: "Sales",
-								subItems: [
-									{
-										title: "All Activation Report",
-										url: "/access/sales/reports/sales/overview",
-									},
-									{
-										title: "Sentiflex Activation Report",
-										url: "/access/sales/reports/sales/mbe",
-									},
-									{
-										title: "Sentinel Activation Report",
-										url: "/access/sales/reports/sales/samsung",
-									},
-								],
-							},
-
-							{ title: "Tracker", url: "/access/sales/reports/tracker" },
-						],
-					},
-					{
-						title: "Claims",
-						icon: BriefcaseBusiness,
-						url: "/access/sales/reports/drop-offs",
-						subItems: [
-							{
-								title: "All Device Claim Requests",
-								url: "/access/sales/reports/drop-offs",
-							},
-						],
-					},
-					{
-						title: "Tools",
-						icon: Wrench,
-						url: "/access/sales/reports/drop-offs",
-					},
-					{
-						title: "Statistics",
-						icon: BarChart3,
-						url: "/access/sales/reports/drop-offs",
-					},
-			  ]
-			: [];
-
-	const adminRelayItems: MenuItem[] =
-		selectedProduct === "Relay"
-			? [
-					{
-						title: "Dashboard",
-						icon: Home,
-						url: "/access/admin/relay/",
-						id: "admin-relay-dashboard",
-					},
-					{
-						icon: ChartBar,
-						title: "Reports",
-						id: "admin-relay-reports",
-						subItems: [
-							{
-								title: "Sales",
-								subItems: [
-									{
-										title: "All Sales Report",
-										url: "/access/sales/reports/sales/overview",
-									},
-									{
-										title: "MBE Sales Report",
-										url: "/access/sales/reports/sales/mbe",
-									},
-								],
-							},
-						],
-					},
-					{
-						title: "Tools",
-						icon: Wrench,
-						url: "/access/sales/reports/drop-offs",
-						subItems: [
-							{
-								title: "Item Manager",
-								url: "/access/sales/reports/drop-offs",
-							},
-							{
-								title: "Active Sales User",
-								url: "/access/sales/reports/drop-offs",
-							},
-						],
-					},
-					{
-						title: "Statistics",
-						icon: BarChart3,
-						url: "/access/sales/reports/drop-offs",
-						subItems: [
-							{
-								title: "Daily Analytics",
-								url: "/access/sales/reports/drop-offs",
-							},
-							{
-								title: "MTD Analytics",
-								url: "/access/sales/reports/drop-offs",
-							},
-						],
-					},
-			  ]
-			: [];
-
-	const adminCreditflexItems: MenuItem[] =
-		selectedProduct === "Creditflex"
-			? [
-					{
-						title: "Dashboard",
-						icon: LayoutDashboard,
-						url: `/access/${accessRole}/creditflex`,
-						id: `${accessRole}-creditflex-dashboard`,
-					},
-					{
-						icon: IdCard,
-						title: "Loan Management",
-						id: `${accessRole}-creditflex-loan-management`,
-						subItems: [
-							{
-								title: "All Loans",
-								url: `/access/${accessRole}/creditflex/all-loans`,
-							},
-							{
-								title: "Disbursed Loans",
-								url: `/access/${accessRole}/creditflex/all-loans?status=active`,
-							},
-						],
-					},
-					{
-						title: "Customers",
-						icon: Users,
-						url: `/access/${accessRole}/creditflex/customers`,
-						id: `${accessRole}-creditflex-customers`,
-					},
-					{
-						title: "Loan Products",
-						icon: Receipt,
-						url: `/access/${accessRole}/creditflex/loan-products`,
-						id: `${accessRole}-creditflex-loan-products`,
-					},
-					{
-						title: "Invoice",
-						icon: Package,
-						url: `/access/${accessRole}/creditflex/invoices`,
-						id: `${accessRole}-creditflex-invoices`,
-					},
-					{
-						title: "Repayment",
-						icon: Package,
-						url: `/access/${accessRole}/creditflex/repayments`,
-						id: `${accessRole}-creditflex-repayments`,
-					},
-					{
-						title: "Liquidation Request",
-						icon: Package,
-						url: `/access/${accessRole}`, ///creditflex/liquidation-requests`,
-						id: `${accessRole}-creditflex-liquidation-requests`,
-					},
-					{
-						title: "Top-Up Request",
-						icon: Package,
-						url: `/access/${accessRole}`, ///creditflex/topup-requests`,
-						id: `${accessRole}-creditflex-topup-requests`,
-					},
-					{
-						title: "Telesales Agents",
-						icon: Users,
-						url: `/access/${accessRole}/creditflex/telesales-agents`,
-						id: `${accessRole}-creditflex-telesales-agents`,
-					},
-					{
-						title: "Ambassadors",
-						icon: UserCheck,
-						id: `${accessRole}-creditflex-ambassadors`,
-						subItems: [
-							{
-								title: "All Ambassadors",
-								url: `/access/${accessRole}/creditflex/ambassadors`,
-							},
-							{
-								title: "Ambassador Leads",
-								url: `/access/${accessRole}/creditflex/ambassadors/leads`,
-							},
-							{
-								title: "Conversion Rates",
-								url: `/access/${accessRole}/creditflex/ambassadors/conversion-rates`,
-							},
-						],
-					},
-			  ]
-			: [];
-
-	const subAdminItems: MenuItem[] =
-		selectedProduct === "Creditflex"
-			? adminCreditflexItems
-			: [
-					{
-						title: "Dashboard",
-						icon: Home,
-						url: "/access/sub-admin/",
-						id: "sub-admin-dashboard",
-					},
-					{
-						icon: CreditCard,
-						title: "Loans",
-						id: "sub-admin-loans",
-						subItems: [
-							{
-								title: "All Loans",
-								url: "/access/sub-admin/loans/loans",
-							},
-							{
-								title: "Repayment",
-								url: "/access/sub-admin/loans/repayment",
-							},
-						],
-					},
-					{
-						icon: Users,
-						title: "Customers",
-						url: "/access/sub-admin/customers",
-						id: "sub-admin-customers",
-					},
-					{
-						icon: UserCheck,
-						title: "Verification",
-						id: "sub-admin-referees",
-						subItems: [
-							{
-								title: "Pending",
-								url: "/access/sub-admin/referees/unapproved-referees",
-							},
-							{
-								title: "Approved",
-								url: "/access/sub-admin/referees/approved-referees",
-							},
-							{
-								title: "Rejected",
-								url: "/access/sub-admin/referees/rejected-referees",
-							},
-						],
-					},
-					{
-						icon: Store,
-						title: "Stores",
-						url: "/access/sub-admin/stores",
-						id: "sub-admin-stores",
-					},
-					{
-						icon: CreditCard,
-						title: "Payout Scheduler",
-						url: "/access/sub-admin/payout-scheduler",
-						id: "sub-admin-payout-scheduler",
-					},
-					{
-						icon: IoBusiness,
-						title: "Staff",
-						url: "/access/sub-admin/staff",
-						id: "sub-admin-staff",
-						subItems: [
-							{
-								title: "Mobiflex Sales Agent",
-								url: "/access/sub-admin/staff/agents",
-							},
-							{
-								title: "MBE",
-								url: "/access/sub-admin/staff/mbe",
-							},
-							{
-								title: "SCAN Partners",
-								url: "/access/sub-admin/staff/scan-partners",
-							},
-						],
-					},
-					{
-						icon: ChartBar,
-						title: "Reports",
-						id: "sub-admin-reports",
-						subItems: [
-							{
-								title: "Sales",
-								subItems: [
-									{
-										title: "Overview",
-										url: "/access/sub-admin/reports/sales/overview",
-									},
-									{
-										title: "MBE Report",
-										url: "/access/sub-admin/reports/sales/mbe",
-									},
-									{
-										title: "Samsung Report",
-										url: "/access/sub-admin/reports/sales/samsung",
-									},
-									{
-										title: "Xiaomi Report",
-										url: "/access/sub-admin/reports/sales/xiaomi",
-									},
-									{
-										title: "Oppo Report",
-										url: "/access/sub-admin/reports/sales/oppo",
-									},
-									{
-										title: "Sentinel Report",
-										url: "/access/sub-admin/reports/sales/sentinel",
-									},
-									{
-										title: "Mobiflex Report",
-										url: "/access/sub-admin/reports/mobiflex",
-									},
-								],
-							},
-							{
-								title: "Commissions",
-								url: "/access/sub-admin/reports/commissions",
-							},
-							{
-								title: "Drop-offs",
-								url: "/access/sub-admin/reports/drop-offs",
-							},
-							{ title: "Tracker", url: "/access/sub-admin/reports/tracker" },
-						],
-					},
-					{
-						icon: Users2,
-						title: "Users",
-						id: "admin-users",
-						url: "/access/sub-admin/users/",
-					},
-					...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-						? [
-								{
-									icon: MessageSquare,
-									title: "SMS",
-									url: "/access/sub-admin/sms",
-									id: "sub-admin-sms",
-								},
-						  ]
-						: []),
-
-					{
-						icon: Package2Icon,
-						title: "Inventory",
-						id: "sub-admin-inventory",
-						subItems: [
-							{ title: "Devices", url: "/access/sub-admin/inventory/devices" },
-							{ title: "TVs", url: "/access/sub-admin/inventory/tvs" },
-							{ title: "Solar", url: "/access/sub-admin/inventory/solar" },
-						],
-					},
-			  ];
-
-	const adminItems: MenuItem[] =
-		selectedProduct === "Creditflex"
-			? adminCreditflexItems
-			: [...adminRootItems, ...adminRelayItems, ...adminAndroidItems];
-
-	const salesItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/sales/",
-			id: "sales-dashboard",
-		},
-		{
-			title: "Report Sales",
-			icon: ClipboardCheckIcon,
-			url: "/access/sales/report-sales",
-			id: "report-sales",
-			subItems: [
-				{
-					title: "Accessories Sales ",
-					url: "/access/sales/report-sales/accessories-sales",
-				},
-				{
-					title: "Accessories Trade-In ",
-					url: "/access/sales/report-sales/accessories-trade-in",
-				},
-				{ title: "Devices ", url: "/access/sales/report-sales/devices" },
-			],
-		},
-		...conditionalSentinelItems,
-		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "sales-reports",
-			subItems: [
-				{
-					title: "Sales",
-					subItems: [
-						{ title: "Overview", url: "/access/sales/reports/sales/overview" },
-						{ title: "MBE Report", url: "/access/sales/reports/sales/mbe" },
-						{
-							title: "Samsung Report",
-							url: "/access/sales/reports/sales/samsung",
-						},
-						{
-							title: "Xiaomi Report",
-							url: "/access/sales/reports/sales/xiaomi",
-						},
-						{ title: "Oppo Report", url: "/access/sales/reports/sales/oppo" },
-						{
-							title: "Sentinel Report",
-							url: "/access/sales/reports/sales/sentinel",
-						},
-						{ title: "Mobiflex Report", url: "/access/sales/reports/mobiflex" },
-					],
-				},
-				{ title: "Drop-offs", url: "/access/sales/reports/drop-offs" },
-				{ title: "Tracker", url: "/access/sales/reports/tracker" },
-			],
-		},
-		{
-			icon: Package2Icon,
-			title: "Inventory",
-			id: "sales-inventory",
-			subItems: [
-				{ title: "Devices", url: "/access/sales/inventory/devices" },
-				{ title: "TVs", url: "/access/sales/inventory/tvs" },
-				{ title: "Solar", url: "/access/sales/inventory/solar" },
-			],
-		},
-	];
-	const developerItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/dev/",
-			id: "developer-dashboard",
-		},
-		{
-			icon: Users,
-			title: "Customers",
-			url: "/access/dev/customers",
-			id: "developer-customers",
-		},
-		{
-			icon: Users,
-			title: "Referees",
-			id: "developer-referees",
-			subItems: [
-				{ title: "Pending", url: "/access/dev/referees/unapproved-referees" },
-				{ title: "Approved", url: "/access/dev/referees/approved-referees" },
-				{ title: "Rejected", url: "/access/dev/referees/rejected-referees" },
-			],
-		},
-
-		{
-			icon: Phone,
-			title: "Devices",
-			url: "/access/dev/devices",
-			id: "developer-devices",
-		},
-		{
-			icon: CreditCard,
-			title: "Loans",
-			id: "developer-loans",
-			subItems: [
-				{
-					title: "All Loans",
-					url: "/access/dev/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/dev/loans/repayment",
-				},
-			],
-		},
-		{
-			icon: Package2Icon,
-			title: "Products",
-			url: "/access/dev/products",
-			id: "developer-products",
-		},
-		{
-			icon: IoBusiness,
-			title: "Staff",
-			url: "/access/dev/staff",
-			id: "dev-staff",
-			subItems: [
-				{
-					title: "Mobiflex Sales Agent",
-					url: "/access/dev/staff/agents",
-				},
-				{
-					title: "MBE",
-					url: "/access/dev/staff/mbe",
-				},
-				{
-					title: "SCAN Partners",
-					url: "/access/dev/staff/scan-partners",
-				},
-			],
-		},
-		{
-			icon: Users2,
-			title: "Users",
-			id: "admin-users",
-			url: "/access/dev/users",
-		},
-		{
-			icon: Store,
-			title: "Stores",
-			url: "/access/dev/stores",
-			id: "developer-stores",
-		},
-		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-			? [
-					{
-						icon: MessageSquare,
-						title: "SMS",
-						url: "/access/dev/sms",
-						id: "developer-sms",
-					},
-			  ]
-			: []),
-		{
-			icon: Code,
-			title: "API Docs",
-			url: apiDocsUrl,
-			id: "developer-api-docs",
-		},
-		{
-			icon: ChartBar,
-			title: "Drop-offs",
-			url: "/access/dev/drop-offs",
-			id: "developer-drop-offs",
-		},
-		{
-			icon: ChartBar,
-			title: "Sentinel",
-			url: "/access/dev/reports/sales/sentinel",
-			id: "developer-sales",
-		},
-		{
-			icon: ChartBar,
-			title: "PowerFlex",
-			url: "/access/dev/powerflex",
-			id: "developer-powerflex",
-		},
-	];
-
-	const adminVerificationItems: MenuItem[] = [
-		{
-			icon: IoBusiness,
-			title: "Mobiflex Sales Agent",
-			id: "verify-staff-mobiflex",
-			subItems: [
-				{
-					title: "Pending",
-					url: "/access/verify/staff/agents?status=pending",
-				},
-				{
-					title: "Approved",
-					url: "/access/verify/staff/agents?status=approved",
-				},
-				{
-					title: "Rejected",
-					url: "/access/verify/staff/agents?status=rejected",
-				},
-			],
-		},
-	];
-	const verificationItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/verify/",
-			id: "verification-dashboard",
-		},
-		{
-			icon: Users,
-			title: "Pending",
-			url: "/access/verify/referees/unapproved-referees",
-			id: "unapproved-referees",
-		},
-		{
-			icon: Check,
-			title: "Approved",
-			url: "/access/verify/referees/approved-referees",
-			id: "approved-referees",
-		},
-		{
-			icon: X,
-			title: "Rejected",
-			url: "/access/verify/referees/rejected-referees",
-			id: "rejected-referees",
-		},
-		...(canVerifyMobiflex ? adminVerificationItems : []),
-	];
-
-	const financeItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/finance/",
-			id: "finance-dashboard",
-		},
-		{
-			icon: Store,
-			title: "Stores",
-			url: "/access/finance/stores",
-			id: "finance-stores",
-		},
-		{
-			icon: CreditCard,
-			title: "Loans",
-			id: "finance-loans",
-			subItems: [
-				{
-					title: "All Loans",
-					url: "/access/finance/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/finance/loans/repayment",
-				},
-			],
-		},
-		{
-			icon: Store,
-			title: "Customers",
-			url: "/access/finance/customers",
-			id: "finance-customers",
-		},
-		{
-			icon: CreditCard,
-			title: "Payout Scheduler",
-			url: "/access/finance/payout-scheduler",
-			id: "finance-payout-scheduler",
-		},
-		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "sales-reports",
-			subItems: [
-				{
-					title: "Sales",
-					subItems: [
-						{
-							title: "Overview",
-							url: "/access/finance/reports/sales/overview",
-						},
-						{ title: "MBE Report", url: "/access/finance/reports/sales/mbe" },
-						{
-							title: "Samsung Report",
-							url: "/access/finance/reports/sales/samsung",
-						},
-						{
-							title: "Xiaomi Report",
-							url: "/access/finance/reports/sales/xiaomi",
-						},
-						{ title: "Oppo Report", url: "/access/finance/reports/sales/oppo" },
-						{
-							title: "Sentinel Report",
-							url: "/access/finance/reports/sales/sentinel",
-						},
-						{
-							title: "Mobiflex Report",
-							url: "/access/finance/reports/mobiflex",
-						},
-					],
-				},
-				{
-					title: "Commissions",
-					url: "/access/finance/reports/commissions",
-				},
-				{ title: "Drop-offs", url: "/access/finance/reports/drop-offs" },
-				{ title: "Tracker", url: "/access/finance/reports/tracker" },
-			],
-		},
-		{
-			icon: IoBusiness,
-			title: "Staff",
-			url: "/access/finance/staff",
-			id: "finance-staff",
-			subItems: [
-				{
-					title: "Mobiflex Sales Agent",
-					url: "/access/finance/staff/agents",
-				},
-				{
-					title: "MBE",
-					url: "/access/finance/staff/mbe",
-				},
-				{
-					title: "SCAN Partners",
-					url: "/access/finance/staff/scan-partners",
-				},
-			],
-		},
-	];
-
-	const auditItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/audit/",
-			id: "audit-dashboard",
-		},
-		{
-			icon: Store,
-			title: "Stores",
-			url: "/access/audit/stores",
-			id: "audit-stores",
-		},
-		{
-			icon: CreditCard,
-			title: "Loans",
-			id: "audit-loans",
-			subItems: [
-				{
-					title: "All Loans",
-					url: "/access/audit/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/audit/loans/repayment",
-				},
-			],
-		},
-		{
-			icon: Store,
-			title: "Customers",
-			url: "/access/audit/customers",
-			id: "audit-customers",
-		},
-		{
-			icon: CreditCard,
-			title: "Payout Scheduler",
-			url: "/access/audit/payout-scheduler",
-			id: "audit-payout-scheduler",
-		},
-		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "audit-reports",
-			subItems: [
-				{
-					title: "Sales",
-					subItems: [
-						{
-							title: "Overview",
-							url: "/access/audit/reports/sales/overview",
-						},
-						{ title: "MBE Report", url: "/access/audit/reports/sales/mbe" },
-						{
-							title: "Samsung Report",
-							url: "/access/audit/reports/sales/samsung",
-						},
-						{
-							title: "Xiaomi Report",
-							url: "/access/audit/reports/sales/xiaomi",
-						},
-						{ title: "Oppo Report", url: "/access/audit/reports/sales/oppo" },
-						{
-							title: "Sentinel Report",
-							url: "/access/audit/reports/sales/sentinel",
-						},
-						{
-							title: "Mobiflex Report",
-							url: "/access/audit/reports/mobiflex",
-						},
-					],
-				},
-				{
-					title: "Commissions",
-					url: "/access/audit/reports/commissions",
-				},
-				{ title: "Drop-offs", url: "/access/audit/reports/drop-offs" },
-				{ title: "Tracker", url: "/access/audit/reports/tracker" },
-			],
-		},
-		{
-			icon: IoBusiness,
-			title: "Staff",
-			url: "/access/audit/staff",
-			id: "audit-staff",
-			subItems: [
-				{
-					title: "Mobiflex Sales Agent",
-					url: "/access/audit/staff/agents",
-				},
-				{
-					title: "MBE",
-					url: "/access/audit/staff/mbe",
-				},
-				{
-					title: "SCAN Partners",
-					url: "/access/audit/staff/scan-partners",
-				},
-			],
-		},
-	];
-
-	const supportItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/support/",
-			id: "support-dashboard",
-		},
-		{
-			icon: Store,
-			title: "Stores",
-			url: "/access/support/stores",
-			id: "support-stores",
-		},
-		{
-			icon: CreditCard,
-			title: "Customers",
-			url: "/access/support/customers",
-			id: "support-customers",
-		},
-		{
-			icon: CreditCard,
-			title: "Loans",
-			url: "/access/support/loans",
-			id: "support-loans",
-		},
-		{
-			icon: Users,
-			title: "MobiflexAgents",
-			url: "/access/support/agents",
-			id: "support-agents",
-		},
-	];
-
-	const collectionAdminItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/collection-admin/",
-			id: "collection-admin-dashboard",
-		},
-		{
-			title: "Loans",
-			icon: CreditCard,
-			url: "/access/collection-admin/loans",
-			id: "collection-admin-loans",
-			subItems: [
-				{
-					title: "Loans",
-					url: "/access/collection-admin/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/collection-admin/loans/repayment",
-				},
-			],
-		},
-		{
-			icon: CreditCard,
-			title: "Customers",
-			url: "/access/collection-admin/customers",
-			id: "collection-admin-customers",
-		},
-		{
-			icon: UserCheck,
-			title: "Verification",
-			id: "collection-verification",
-			subItems: [
-				{
-					title: "Pending",
-					url: "/access/collection-admin/referees/unapproved-referees",
-				},
-				{
-					title: "Approved",
-					url: "/access/collection-admin/referees/approved-referees",
-				},
-				{
-					title: "Rejected",
-					url: "/access/collection-admin/referees/rejected-referees",
-				},
-			],
-		},
-		{
-			icon: CreditCard,
-			title: "Reports",
-			id: "collection-reports",
-			subItems: [
-				{ title: "Overview", url: "/access/collection-admin/reports/overview" },
-				{ title: "MBE Report", url: "/access/collection-admin/reports/mbe" },
-				{
-					title: "Samsung Report",
-					url: "/access/collection-admin/reports/samsung",
-				},
-				{
-					title: "Xiaomi Report",
-					url: "/access/collection-admin/reports/xiaomi",
-				},
-				{ title: "Oppo Report", url: "/access/collection-admin/reports/oppo" },
-				{
-					title: "Mobiflex Report",
-					url: "/access/collection-admin/reports/mobiflex",
-				},
-			],
-		},
-		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-			? [
-					{
-						icon: MessageSquare,
-						title: "SMS",
-						url: "/access/collection-admin/sms",
-						id: "sub-admin-sms",
-					},
-			  ]
-			: []),
-	];
-	const collectionOfficerItems: MenuItem[] = [
-		{
-			title: "Dashboard",
-			icon: Home,
-			url: "/access/collection-officer/",
-			id: "collection-officer-dashboard",
-		},
-		{
-			icon: CreditCard,
-			title: "Customers",
-			url: "/access/collection-officer/customers",
-			id: "collection-officer-customers",
-		},
-		{
-			title: "Loans",
-			icon: CreditCard,
-			url: "/access/collection-officer/loans",
-			id: "collection-officer-loans",
-			subItems: [
-				{
-					title: "Repayment",
-					url: "/access/collection-officer/loans/repayment",
-				},
-				{
-					title: "Loans",
-					url: "/access/collection-officer/loans/loans",
-				},
-			],
-		},
-		{
-			icon: CreditCard,
-			title: "Reports",
-			id: "collection-reports",
-			subItems: [
-				{
-					title: "Overview",
-					url: "/access/collection-officer/reports/overview",
-				},
-				{ title: "MBE Report", url: "/access/collection-officer/reports/mbe" },
-				{
-					title: "Samsung Report",
-					url: "/access/collection-officer/reports/samsung",
-				},
-				{
-					title: "Xiaomi Report",
-					url: "/access/collection-officer/reports/xiaomi",
-				},
-				{
-					title: "Oppo Report",
-					url: "/access/collection-officer/reports/oppo",
-				},
-			],
-		},
-		...(hasPermission(accessRole, "canSendSms", userResponse?.data?.email)
-			? [
-					{
-						icon: MessageSquare,
-						title: "SMS",
-						url: "/access/collection-officer/sms",
-						id: "collection-officer-sms",
-					},
-			  ]
-			: []),
-	];
-
-	// Get items based on user role
-	const items: MenuItem[] = (() => {
-		const role = userResponse?.data?.role;
-		switch (role) {
-			case "SUPER_ADMIN":
-				return adminItems;
-			case "ADMIN":
-				return subAdminItems;
-			case "VERIFICATION":
-			case "VERIFICATION_OFFICER":
-				return verificationItems;
-			case "DEVELOPER":
-				return developerItems;
-			case "SALES":
-				return salesItems;
-			case "FINANCE":
-				return financeItems;
-			case "AUDIT":
-				return auditItems;
-			case "SUPPORT":
-				return supportItems;
-			case "COLLECTION_ADMIN":
-				return collectionAdminItems;
-			case "COLLECTION_OFFICER":
-				return collectionOfficerItems;
-			case "SCAN_PARTNER":
-				return scanParterItems;
-			default:
-				return [];
-		}
-	})();
+	// Get sidebar items dynamically based on current role (including debug overrides)
+	const currentRole = userResponse?.data?.role || "";
+	const items: MenuItem[] = getSidebarItemsForRole(currentRole, {
+		accessRole,
+		userEmail,
+		selectedProduct: selectedProduct || undefined,
+		hasPermission: hasPermission as any, // Type cast to match expected signature
+		canVerifyMobiflex,
+	});
 
 	const toggleMenu = (id: string) => {
 		setOpenMenus((prev) => ({
@@ -1395,6 +174,15 @@ export function AppSidebar() {
 											<span className="text-white font-bold text-lg sm:text-xl sidebar-text">
 												Sapphire Credit
 											</span>
+											{isDebugMode && (
+												<div className="flex items-center gap-1 mt-1">
+													<Bug className="text-orange-400" size={12} />
+													<span className="text-orange-400 text-xs font-medium">
+														Debug Mode
+														{debugOverrides.role && ` (${debugOverrides.role})`}
+													</span>
+												</div>
+											)}
 										</div>
 									</div>
 								</Link>
@@ -1516,6 +304,33 @@ export function AppSidebar() {
 
 				<SidebarFooter className="bg-black text-white border-t border-gray-800 sidebar-transition">
 					<SidebarMenu className="py-2 px-2 sm:px-3 flex flex-1 flex-col gap-1 sm:gap-2">
+						{/* Debug Button - Only show in development */}
+						{process.env.NODE_ENV === "development" && (
+							<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
+								<SidebarMenuButton
+									className={`hover:bg-orange-600 hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus ${
+										isDebugMode ? "bg-orange-500 text-white" : ""
+									}`}
+									onClick={() => setIsDebugModalOpen(true)}
+								>
+									<div className="flex items-center gap-2.5 sm:gap-3 w-full">
+										<Bug
+											className="sidebar-icon"
+											style={{ width: "16px", height: "16px" }}
+										/>
+										<span className="text-sm sm:text-base font-medium sidebar-transition">
+											Debug
+										</span>
+										{isDebugMode && (
+											<div className="ml-auto">
+												<div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse" />
+											</div>
+										)}
+									</div>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						)}
+
 						<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
 							<SidebarMenuButton
 								asChild
@@ -1560,6 +375,12 @@ export function AppSidebar() {
 					</SidebarMenu>
 				</SidebarFooter>
 			</Sidebar>
+
+			{/* Debug Modal */}
+			<DebugModal
+				isOpen={isDebugModalOpen}
+				onClose={() => setIsDebugModalOpen(false)}
+			/>
 		</>
 	);
 }

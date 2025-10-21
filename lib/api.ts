@@ -198,11 +198,16 @@ export async function getAllDefaultedRecord(
 	return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
-export async function getAllDueLoanRecord(fromDate?: string, toDate?: string, page?: number, limit?: number) {
+export async function getAllDueLoanRecord(
+	fromDate?: string,
+	toDate?: string,
+	page?: number,
+	limit?: number
+) {
 	let query =
 		fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
-	if (page) query += `&page=${page}`;	
-	if (limit) query += `&limit=${limit}`;	
+	if (page) query += `&page=${page}`;
+	if (limit) query += `&limit=${limit}`;
 	return apiCall(`/admin/loan/due${query}`, "GET");
 }
 
@@ -2943,7 +2948,7 @@ export async function getLoanRepaymentData(
 	endDate?: string
 ) {
 	let query = "";
-	
+
 	if (channel) {
 		query += `?channel=${channel}`;
 		if (startDate) query += `&startDate=${startDate}`;
@@ -2952,14 +2957,18 @@ export async function getLoanRepaymentData(
 		if (startDate) query += `?startDate=${startDate}`;
 		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
 	}
-	
+
 	return apiCall(`/collections/loan-repayments${query}`, "GET");
 }
 
 //Get all down Payment
-export async function getDownPaymentData(channel?: string, startDate?: string, endDate?: string) {
+export async function getDownPaymentData(
+	channel?: string,
+	startDate?: string,
+	endDate?: string
+) {
 	let query = "";
-	
+
 	if (channel) {
 		query += `?channel=${channel}`;
 		if (startDate) query += `&startDate=${startDate}`;
@@ -2968,14 +2977,18 @@ export async function getDownPaymentData(channel?: string, startDate?: string, e
 		if (startDate) query += `?startDate=${startDate}`;
 		if (endDate) query += query ? `&endDate=${endDate}` : `?endDate=${endDate}`;
 	}
-	
+
 	return apiCall(`/collections/down-payments${query}`, "GET");
 }
 
 //Extract all transaction data across all customers
-export async function getTransactionData(startDate?: string, endDate?: string, channel?: string) {
+export async function getTransactionData(
+	startDate?: string,
+	endDate?: string,
+	channel?: string
+) {
 	let query = "";
-	
+
 	if (startDate) {
 		query += `?startDate=${startDate}`;
 		if (endDate) query += `&endDate=${endDate}`;
@@ -2986,7 +2999,7 @@ export async function getTransactionData(startDate?: string, endDate?: string, c
 	} else if (channel) {
 		query += `?channel=${channel}`;
 	}
-	
+
 	return apiCall(`/collections/all${query}`, "GET");
 }
 
@@ -3613,8 +3626,14 @@ export interface createClusterSupervisor {
 	clusterName?: string;
 }
 
-export async function clusterSupervisor(createClusterSupervisor: createClusterSupervisor) {
-	return apiCall(`/admin/cluster/supervisor/create`, "POST", createClusterSupervisor);
+export async function clusterSupervisor(
+	createClusterSupervisor: createClusterSupervisor
+) {
+	return apiCall(
+		`/admin/cluster/supervisor/create`,
+		"POST",
+		createClusterSupervisor
+	);
 }
 
 // create state manager
@@ -3628,7 +3647,11 @@ export interface createStateManager {
 }
 
 export async function stateManager(createStateManager: createStateManager) {
-	return apiCall(`/admin/cluster/state-manager/create`, "POST", createStateManager);
+	return apiCall(
+		`/admin/cluster/state-manager/create`,
+		"POST",
+		createStateManager
+	);
 }
 
 // create state Supervisor
@@ -3641,15 +3664,20 @@ export interface createStateSupervisor {
 	stateName: string;
 }
 
-export async function stateSupervisor(createStateSupervisor: createStateSupervisor) {
-	return apiCall(`/admin/cluster/state-supervisor/create`, "POST", createStateSupervisor);
+export async function stateSupervisor(
+	createStateSupervisor: createStateSupervisor
+) {
+	return apiCall(
+		`/admin/cluster/state-supervisor/create`,
+		"POST",
+		createStateSupervisor
+	);
 }
-
 
 // Get all cluster supervisors
 
 export async function getClusterSupervisors() {
-	return apiCall(`/admin/cluster/supervisors`, "GET");	
+	return apiCall(`/admin/cluster/supervisors`, "GET");
 }
 
 // Get all state managers
@@ -3661,7 +3689,6 @@ export async function getStateManagers() {
 export async function getStateSupervisors() {
 	return apiCall(`/admin/cluster/state-supervisors`, "GET");
 }
-
 
 // Assign cluster supervisor to a cluster
 
@@ -3697,3 +3724,77 @@ export async function manualChargeCustomerRepayment(scheduleId: string) {
 	return apiCall(`/admin/auto-debit/retry/${scheduleId}`, "POST");
 }
 
+// *** Samsung Sentinel IMEI Management ***
+
+export interface IMEIUploadRecord {
+	id: string;
+	deviceModel: string;
+	uploadedBy: string;
+	totalRecords: number;
+	fileName: string;
+	createdAt: string;
+	updatedAt: string;
+	processedAt?: string;
+	imeiRecords: IMEIRecord[];
+}
+
+export interface IMEIRecord {
+	recordId: string;
+	deviceImei: string;
+	distributor?: string;
+	expiryDate?: string;
+	status: "active" | "used";
+}
+
+export interface UploadIMEIRequest {
+	csvFile: File;
+	deviceModel: string;
+}
+
+// Get all IMEI upload records
+export async function getSamsungSentinelUploads(params?: {
+	page?: number;
+	limit?: number;
+	search?: string;
+	deviceModel?: string;
+	uploadedBy?: string;
+	startDate?: string;
+	endDate?: string;
+}) {
+	const queryParams = new URLSearchParams();
+	if (params?.page) queryParams.append("page", params.page.toString());
+	if (params?.limit) queryParams.append("limit", params.limit.toString());
+	if (params?.search) queryParams.append("search", params.search);
+	if (params?.deviceModel)
+		queryParams.append("deviceModel", params.deviceModel);
+	if (params?.uploadedBy) queryParams.append("uploadedBy", params.uploadedBy);
+	if (params?.startDate) queryParams.append("startDate", params.startDate);
+	if (params?.endDate) queryParams.append("endDate", params.endDate);
+
+	const endpoint = `/admin/samsung-sentinel/uploads${
+		queryParams.toString() ? `?${queryParams.toString()}` : ""
+	}`;
+	return apiCall(endpoint, "GET");
+}
+
+// Get specific upload record with IMEI details
+export async function getSamsungSentinelUploadDetails(uploadId: string) {
+	return apiCall(`/admin/samsung-sentinel/uploads/${uploadId}`, "GET");
+}
+
+// Upload IMEI CSV file
+export async function uploadIMEIFile(data: UploadIMEIRequest) {
+	const formData = new FormData();
+	formData.append("csvFile", data.csvFile);
+	formData.append("deviceModel", data.deviceModel);
+
+	return apiCall("/admin/samsung-sentinel/upload-imei", "POST", formData);
+}
+
+// Delete upload record
+export async function deleteSamsungSentinelUpload(uploadId: string) {
+	return apiCall(`/admin/samsung-sentinel/uploads/${uploadId}`, "DELETE");
+}
+
+// Export apiCall for direct use
+export { apiCall };
