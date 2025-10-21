@@ -53,7 +53,7 @@ export function useSamsungSentinelProduct(
 ): UseSamsungSentinelProductReturn {
 	// TODO: Replace with actual API calls when backend is ready
 	// For now, return mock data to avoid errors
-	
+
 	// Mock product data based on productId
 	const getMockProduct = (): Product => ({
 		id: productId,
