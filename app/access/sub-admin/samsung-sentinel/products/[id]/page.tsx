@@ -1,3 +1,4 @@
+"use client";
 import SingleProductView from "@/view/dashboard/samsung-sentinel/SingleProductView";
 import { useParams } from "next/navigation";
 
