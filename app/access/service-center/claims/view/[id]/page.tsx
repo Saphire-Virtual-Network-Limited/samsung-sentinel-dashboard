@@ -1,5 +1,5 @@
-import ViewServiceCenterClaimView from "@/view/service-center/ViewServiceCenterClaimView";
+import ServiceCenterClaimDetailPage from "@/view/service-center/ServiceCenterClaimDetailPage";
 
 export default function ServiceCenterClaimDetailsPage() {
-	return <ViewServiceCenterClaimView />;
+	return <ServiceCenterClaimDetailPage />;
 }

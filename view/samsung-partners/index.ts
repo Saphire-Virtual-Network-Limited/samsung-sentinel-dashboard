@@ -1,9 +1,1 @@
 export { default as SamsungPartnersHomeView } from "./SamsungPartnersHomeView";
-export { default as AllRepairClaimsView } from "./AllRepairClaimsView";
-export { default as PendingRepairClaimsView } from "./PendingRepairClaimsView";
-export { default as ApprovedRepairClaimsView } from "./ApprovedRepairClaimsView";
-export { default as RejectedRepairClaimsView } from "./RejectedRepairClaimsView";
-export { default as UnpaidProcessedClaimsView } from "./UnpaidProcessedClaimsView";
-export { default as PaidProcessedClaimsView } from "./PaidProcessedClaimsView";
-export { default as AllProcessedClaimsView } from "./AllProcessedClaimsView";
-export { default as ViewRepairClaimView } from "./ViewRepairClaimView";

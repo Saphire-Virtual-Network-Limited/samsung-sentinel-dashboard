@@ -15,13 +15,17 @@ import {
 	Switch,
 	Divider,
 } from "@heroui/react";
-import { useDebug, type Role } from "@/lib/debugContext";
+import { useDebug } from "@/lib/debugContext";
 import {
 	getAvailablePermissions,
 	getCurrentPermissions,
 } from "@/lib/permissions";
 import { useAuthWithDebug } from "@/hooks/useAuthWithDebug";
-import { DEBUG_AVAILABLE_ROLES } from "@/lib/roleMapping";
+import {
+	getAvailableRoles,
+	getRoleDisplayName,
+	type Role,
+} from "@/lib/roleConfig";
 import { Bug, RotateCcw, Settings2 } from "lucide-react";
 
 interface DebugModalProps {
@@ -177,7 +181,6 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 							{isDebugMode && (
 								<>
 									<Divider className="bg-gray-700" />
-
 									{/* Role Override */}
 									<div className="space-y-2">
 										<label className="text-sm font-medium text-gray-300">
@@ -189,23 +192,21 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
 										>
 											<option value="">No Override (Use Original Role)</option>
-											{DEBUG_AVAILABLE_ROLES.map((role) => (
+											{getAvailableRoles().map((role) => (
 												<option key={role} value={role}>
-													{role
-														.replace(/_/g, " ")
-														.toLowerCase()
-														.replace(/\b\w/g, (l) => l.toUpperCase())}
+													{getRoleDisplayName(role)}
 												</option>
 											))}
 										</select>
 										{debugOverrides.role && (
 											<p className="text-xs text-orange-400">
 												Currently overriding role to:{" "}
-												<strong>{debugOverrides.role}</strong>
+												<strong>
+													{getRoleDisplayName(debugOverrides.role)}
+												</strong>
 											</p>
 										)}
-									</div>
-
+									</div>{" "}
 									{/* Email Override */}
 									<div className="space-y-2">
 										<label className="text-sm font-medium text-gray-300">
@@ -248,7 +249,6 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											</p>
 										)}
 									</div>
-
 									{/* Permission Overrides */}
 									<div className="space-y-2">
 										<label className="text-sm font-medium text-gray-300">
@@ -294,7 +294,6 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											</div>
 										)}
 									</div>
-
 									{/* Debug Session Info */}
 									<Divider className="bg-gray-700" />
 									<div className="space-y-2">
@@ -327,7 +326,6 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											</Button>
 										</div>
 									</div>
-
 									{/* Active Overrides Summary */}
 									{(debugOverrides.role ||
 										debugOverrides.email ||

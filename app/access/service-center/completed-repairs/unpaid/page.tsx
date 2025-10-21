@@ -1,5 +1,5 @@
-import { UnpaidRepairsView } from "@/view/service-center";
+import { redirect } from "next/navigation";
 
 export default function UnpaidRepairsPage() {
-	return <UnpaidRepairsView />;
+	redirect("/access/service-center/claims?status=completed&payment=unpaid");
 }

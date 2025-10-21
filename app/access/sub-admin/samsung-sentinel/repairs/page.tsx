@@ -1,5 +1,5 @@
-import { SamsungSentinelRepairsView } from "@/view/dashboard/samsung-sentinel";
+import UnifiedClaimsView from "@/components/shared/UnifiedClaimsView";
 
 export default function RepairsPage() {
-	return <SamsungSentinelRepairsView />;
+	return <UnifiedClaimsView role="samsung-sentinel" showPaymentTabs />;
 }

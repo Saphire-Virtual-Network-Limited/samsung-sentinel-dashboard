@@ -25,7 +25,7 @@ import {
 	clearPasswordSecurityStatus,
 } from "@/lib";
 import { Loader2 } from "lucide-react";
-import { getRoleBasePath, isValidPathForRole } from "@/lib/roleMapping";
+import { getRoleBasePath, isValidPathForRole } from "@/lib/roleConfig";
 
 // Types
 interface UserData {

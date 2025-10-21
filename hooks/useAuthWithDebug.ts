@@ -3,7 +3,7 @@ import { useDebug } from "@/lib/debugContext";
 import { getUserRole } from "@/lib/helper";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getRoleBasePath, isValidPathForRole } from "@/lib/roleMapping";
+import { getRoleBasePath, isValidPathForRole } from "@/lib/roleConfig";
 
 export const useAuthWithDebug = () => {
 	const auth = useOriginalAuth();

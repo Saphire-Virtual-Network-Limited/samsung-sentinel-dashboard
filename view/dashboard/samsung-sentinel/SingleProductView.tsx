@@ -50,40 +50,12 @@ import {
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
-
-interface RepairType {
-	id: string;
-	name: string;
-	category: string;
-	price: number;
-	status: "active" | "inactive";
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
-	lastUpdatedBy: string;
-}
-
-interface Product {
-	id: string;
-	name: string;
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
-	lastUpdatedBy: string;
-	status: "active" | "inactive";
-	repairTypesCount: number;
-	repairTypes: RepairType[];
-}
-
-interface AuditHistory {
-	id: string;
-	action: string;
-	field: string;
-	oldValue: string;
-	newValue: string;
-	modifiedBy: string;
-	modifiedAt: string;
-}
+import {
+	useSamsungSentinelProduct,
+	type RepairType,
+	type Product,
+	type AuditHistory,
+} from "@/hooks/shared/useSamsungSentinelProduct";
 
 const repairTypeColumns: ColumnDef[] = [
 	{ name: "Repair Type", uid: "name", sortable: true },
@@ -132,6 +104,15 @@ export default function SingleProductView({
 	const pathname = usePathname();
 	const role = pathname.split("/")[2];
 
+	// Fetch product data using the hook
+	const {
+		product,
+		auditHistory,
+		isLoading: isLoadingData,
+		isError,
+		mutate,
+	} = useSamsungSentinelProduct(productId);
+
 	// Modal states
 	const {
 		isOpen: isEditModalOpen,
@@ -160,134 +141,28 @@ export default function SingleProductView({
 		useState<RepairType | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
-	// Mock product data - replace with actual API call
-	const product: Product = useMemo(
-		() => ({
-			id: productId,
-			name:
-				productId === "samsung_a05"
-					? "Samsung Galaxy A05"
-					: productId === "samsung_a06"
-					? "Samsung Galaxy A06"
-					: productId === "samsung_a07"
-					? "Samsung Galaxy A07"
-					: "Unknown Product",
-			createdBy: "admin@sapphire.com",
-			createdAt: "2024-01-15T10:30:00Z",
-			lastUpdatedAt: "2024-10-01T14:22:00Z",
-			lastUpdatedBy: "subadmin@sapphire.com",
-			status: "active",
-			repairTypesCount: 8,
-			repairTypes: [
-				{
-					id: "repair_001",
-					name: "Screen Replacement",
-					category: "screen",
-					price: 25000,
-					status: "active",
-					createdBy: "admin@sapphire.com",
-					createdAt: "2024-01-15T10:35:00Z",
-					lastUpdatedAt: "2024-09-15T09:20:00Z",
-					lastUpdatedBy: "admin@sapphire.com",
-				},
-				{
-					id: "repair_002",
-					name: "Battery Replacement",
-					category: "battery",
-					price: 15000,
-					status: "active",
-					createdBy: "admin@sapphire.com",
-					createdAt: "2024-01-15T10:40:00Z",
-					lastUpdatedAt: "2024-08-20T16:45:00Z",
-					lastUpdatedBy: "subadmin@sapphire.com",
-				},
-				{
-					id: "repair_003",
-					name: "Camera Repair",
-					category: "camera",
-					price: 18000,
-					status: "active",
-					createdBy: "subadmin@sapphire.com",
-					createdAt: "2024-02-01T11:15:00Z",
-					lastUpdatedAt: "2024-09-10T13:30:00Z",
-					lastUpdatedBy: "admin@sapphire.com",
-				},
-				{
-					id: "repair_004",
-					name: "Charging Port Fix",
-					category: "charging_port",
-					price: 12000,
-					status: "active",
-					createdBy: "admin@sapphire.com",
-					createdAt: "2024-02-15T14:20:00Z",
-					lastUpdatedAt: "2024-09-05T10:15:00Z",
-					lastUpdatedBy: "admin@sapphire.com",
-				},
-				{
-					id: "repair_005",
-					name: "Speaker Replacement",
-					category: "speaker",
-					price: 10000,
-					status: "inactive",
-					createdBy: "subadmin@sapphire.com",
-					createdAt: "2024-03-01T09:45:00Z",
-					lastUpdatedAt: "2024-09-20T15:30:00Z",
-					lastUpdatedBy: "admin@sapphire.com",
-				},
-			],
-		}),
-		[productId]
-	);
-
-	// Mock audit history - replace with actual API call
-	const auditHistory: AuditHistory[] = useMemo(
-		() => [
-			{
-				id: "audit_001",
-				action: "UPDATE",
-				field: "name",
-				oldValue: "Samsung A05",
-				newValue: "Samsung Galaxy A05",
-				modifiedBy: "subadmin@sapphire.com",
-				modifiedAt: "2024-10-01T14:22:00Z",
-			},
-			{
-				id: "audit_002",
-				action: "CREATE",
-				field: "repair_type",
-				oldValue: "",
-				newValue: "Speaker Replacement - ₦10,000",
-				modifiedBy: "subadmin@sapphire.com",
-				modifiedAt: "2024-03-01T09:45:00Z",
-			},
-			{
-				id: "audit_003",
-				action: "UPDATE",
-				field: "repair_price",
-				oldValue: "₦20,000",
-				newValue: "₦25,000",
-				modifiedBy: "admin@sapphire.com",
-				modifiedAt: "2024-09-15T09:20:00Z",
-			},
-		],
-		[]
-	);
-
 	// Statistics
-	const stats = useMemo(
-		() => ({
+	const stats = useMemo(() => {
+		if (!product)
+			return {
+				totalRepairTypes: 0,
+				activeRepairTypes: 0,
+				averagePrice: 0,
+				totalValue: 0,
+			};
+
+		return {
 			totalRepairTypes: product.repairTypes.length,
 			activeRepairTypes: product.repairTypes.filter(
 				(rt) => rt.status === "active"
 			).length,
 			averagePrice: Math.round(
 				product.repairTypes.reduce((sum, rt) => sum + rt.price, 0) /
-					product.repairTypes.length
+					product.repairTypes.length || 0
 			),
 			totalValue: product.repairTypes.reduce((sum, rt) => sum + rt.price, 0),
-		}),
-		[product.repairTypes]
-	);
+		};
+	}, [product]);
 
 	// Handle edit product
 	const handleEditProduct = async () => {
@@ -302,6 +177,7 @@ export default function SingleProductView({
 			showToast({ message: "Product updated successfully", type: "success" });
 			onEditModalClose();
 			setProductName("");
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({ message: "Failed to update product", type: "error" });
 		} finally {
@@ -326,6 +202,7 @@ export default function SingleProductView({
 			showToast({ message: "Repair type added successfully", type: "success" });
 			onAddRepairModalClose();
 			setRepairFormData({ name: "", category: "", price: "" });
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({ message: "Failed to add repair type", type: "error" });
 		} finally {
@@ -355,6 +232,7 @@ export default function SingleProductView({
 			onEditRepairModalClose();
 			setSelectedRepairType(null);
 			setRepairFormData({ name: "", category: "", price: "" });
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({ message: "Failed to update repair type", type: "error" });
 		} finally {
@@ -369,10 +247,11 @@ export default function SingleProductView({
 			// API call to toggle product status
 			showToast({
 				message: `Product ${
-					product.status === "active" ? "disabled" : "enabled"
+					product!.status === "active" ? "disabled" : "enabled"
 				} successfully`,
 				type: "success",
 			});
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({ message: "Failed to update product status", type: "error" });
 		} finally {
@@ -393,6 +272,7 @@ export default function SingleProductView({
 				} successfully`,
 				type: "success",
 			});
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({
 				message: "Failed to update repair type status",
@@ -409,6 +289,7 @@ export default function SingleProductView({
 				message: "Repair type deleted successfully",
 				type: "success",
 			});
+			mutate(); // Refresh product data
 		} catch (error) {
 			showToast({ message: "Failed to delete repair type", type: "error" });
 		}
@@ -545,6 +426,19 @@ export default function SingleProductView({
 		}
 	};
 
+	// Loading state
+	if (isLoadingData) {
+		return <LoadingSpinner />;
+	}
+
+	// Error state
+	if (isError) {
+		return (
+			<NotFound title="Error Loading Product" onGoBack={() => router.back()} />
+		);
+	}
+
+	// Product not found
 	if (!product) {
 		return <NotFound onGoBack={() => router.back()} />;
 	}

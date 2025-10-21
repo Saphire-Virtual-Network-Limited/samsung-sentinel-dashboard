@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
 	Button,
 	Card,
@@ -29,11 +30,14 @@ import {
 	Wrench,
 	FileText,
 } from "lucide-react";
+import UploadArea from "@/components/reususables/UploadArea";
 import { showToast } from "@/lib/showNotification";
 import {
 	useServiceCenterClaim,
 	useServiceCenterClaimActions,
 } from "@/hooks/service-center/useServiceCenterClaim";
+
+import { ConfirmationModal } from "@/components/reususables";
 
 const ViewServiceCenterClaimView = () => {
 	const params = useParams();
@@ -56,7 +60,29 @@ const ViewServiceCenterClaimView = () => {
 	} = useDisclosure();
 
 	const { claim, isLoading, error, mutate } = useServiceCenterClaim(claimId);
-	const { updateStatus, uploadDocument } = useServiceCenterClaimActions();
+	const { updateStatus, uploadDocument, replaceDocument, deleteDocument } =
+		useServiceCenterClaimActions();
+
+	// Document modals
+	const {
+		isOpen: isPreviewOpen,
+		onOpen: onPreviewOpen,
+		onClose: onPreviewClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isReplaceOpen,
+		onOpen: onReplaceOpen,
+		onClose: onReplaceClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isDeleteOpen,
+		onOpen: onDeleteOpen,
+		onClose: onDeleteClose,
+	} = useDisclosure();
+
+	const [activeDoc, setActiveDoc] = useState<any | null>(null);
 
 	const statusOptions = [
 		{ key: "in-progress", label: "In Progress" },
@@ -395,32 +421,67 @@ const ViewServiceCenterClaimView = () => {
 						</CardBody>
 					</Card>
 
-					{/* Documents */}
-					{claim?.documents && claim.documents.length > 0 && (
-						<Card>
-							<CardHeader>
-								<h3 className="text-lg font-semibold">Documents</h3>
-							</CardHeader>
-							<CardBody>
-								<div className="space-y-2">
-									{claim.documents.map((doc: any) => (
-										<div
-											key={doc.id}
-											className="flex items-center justify-between p-2 border rounded"
-										>
-											<div className="flex items-center gap-2">
-												<FileText size={16} />
-												<span className="text-sm">{doc.name}</span>
-											</div>
-											<Button size="sm" variant="light" isIconOnly>
-												<Eye size={14} />
-											</Button>
-										</div>
-									))}
-								</div>
-							</CardBody>
-						</Card>
-					)}
+					{/* Documents / Upload Areas */}
+					<UploadArea
+						title="Images & Receipts"
+						accept="image/*,application/pdf"
+						files={claim?.documents || []}
+						filter={(d) =>
+							!!d.type &&
+							(/(image|jpg|png|jpeg)/i.test(d.type) || /pdf/i.test(d.type))
+						}
+						onUpload={async (file: File) => {
+							const uploaded = await uploadDocument(claimId, file);
+							return {
+								id: uploaded.id,
+								name: uploaded.name,
+								url: uploaded.url,
+								type: uploaded.type,
+							};
+						}}
+						onReplace={async (docId: string, file: File) => {
+							const replaced = await replaceDocument(claimId, docId, file);
+							return {
+								id: replaced.id,
+								name: replaced.name,
+								url: replaced.url,
+								type: replaced.type,
+							};
+						}}
+						onDelete={async (docId: string) => {
+							await deleteDocument(claimId, docId);
+						}}
+					/>
+
+					<div className="h-4" />
+
+					<UploadArea
+						title="Other Documents"
+						accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+						files={claim?.documents || []}
+						filter={(d) => !!d.type && !/(image|jpg|png|jpeg)/i.test(d.type)}
+						onUpload={async (file: File) => {
+							const uploaded = await uploadDocument(claimId, file);
+							return {
+								id: uploaded.id,
+								name: uploaded.name,
+								url: uploaded.url,
+								type: uploaded.type,
+							};
+						}}
+						onReplace={async (docId: string, file: File) => {
+							const replaced = await replaceDocument(claimId, docId, file);
+							return {
+								id: replaced.id,
+								name: replaced.name,
+								url: replaced.url,
+								type: replaced.type,
+							};
+						}}
+						onDelete={async (docId: string) => {
+							await deleteDocument(claimId, docId);
+						}}
+					/>
 
 					{/* Status History */}
 					<Card>
@@ -533,6 +594,181 @@ const ViewServiceCenterClaimView = () => {
 						</Button>
 						<Button color="primary" onPress={handleFileUpload}>
 							Upload
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Document Preview Modal */}
+			<Modal isOpen={isPreviewOpen} onClose={onPreviewClose} size="lg">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Document Preview</h3>
+					</ModalHeader>
+					<ModalBody>
+						{activeDoc ? (
+							<div>
+								<p className="text-sm mb-2">{activeDoc.name}</p>
+								{activeDoc.type === "image" ? (
+									<div className="w-full relative h-96">
+										<Image
+											src={activeDoc.url}
+											alt={activeDoc.name}
+											fill
+											style={{ objectFit: "contain" }}
+										/>
+									</div>
+								) : (
+									<iframe
+										src={activeDoc.url}
+										className="w-full h-96"
+										sandbox="allow-same-origin allow-scripts"
+									/>
+								)}
+							</div>
+						) : (
+							<p>No document selected</p>
+						)}
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="light" onPress={onPreviewClose}>
+							Close
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Replace Document Modal */}
+			<Modal isOpen={isReplaceOpen} onClose={onReplaceClose} size="md">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Replace Document</h3>
+					</ModalHeader>
+					<ModalBody>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">
+								Select File
+							</label>
+							<input
+								type="file"
+								onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+								className="block w-full text-sm text-gray-500"
+							/>
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="light" onPress={onReplaceClose}>
+							Cancel
+						</Button>
+						<Button
+							color="primary"
+							onPress={async () => {
+								if (!selectedFile || !activeDoc) return;
+								try {
+									await replaceDocument(claimId, activeDoc.id, selectedFile);
+									// locally update claim: replace document and add statusHistory entry
+									mutate(
+										(current: any) => {
+											if (!current) return current;
+											const newDocs = current.documents.map((d: any) =>
+												d.id === activeDoc.id
+													? {
+															...d,
+															name: selectedFile.name,
+															url: `/files/${selectedFile.name}`,
+													  }
+													: d
+											);
+											const historyEntry = {
+												id: `ST${Date.now()}`,
+												date: new Date().toISOString(),
+												status: "document-replaced",
+												user: "Service Center Staff",
+												notes: `Replaced ${activeDoc.name} with ${selectedFile.name}`,
+											};
+											return {
+												...current,
+												documents: newDocs,
+												statusHistory: [
+													historyEntry,
+													...(current.statusHistory || []),
+												],
+											};
+										},
+										{ revalidate: false }
+									);
+									showToast({ type: "success", message: "Document replaced" });
+									onReplaceClose();
+									setSelectedFile(null);
+								} catch (err) {
+									showToast({
+										type: "error",
+										message: "Failed to replace document",
+									});
+								}
+							}}
+						>
+							Replace
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Delete Confirm Modal */}
+			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} size="sm">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Delete Document</h3>
+					</ModalHeader>
+					<ModalBody>
+						<p>Are you sure you want to delete {activeDoc?.name}?</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="light" onPress={onDeleteClose}>
+							Cancel
+						</Button>
+						<Button
+							color="danger"
+							onPress={async () => {
+								if (!activeDoc) return;
+								try {
+									await deleteDocument(claimId, activeDoc.id);
+									// locally update claim: remove document and add statusHistory
+									mutate(
+										(current: any) => {
+											if (!current) return current;
+											const newDocs = (current.documents || []).filter(
+												(d: any) => d.id !== activeDoc.id
+											);
+											const historyEntry = {
+												id: `ST${Date.now()}`,
+												date: new Date().toISOString(),
+												status: "document-deleted",
+												user: "Service Center Staff",
+												notes: `Deleted ${activeDoc.name}`,
+											};
+											return {
+												...current,
+												documents: newDocs,
+												statusHistory: [
+													historyEntry,
+													...(current.statusHistory || []),
+												],
+											};
+										},
+										{ revalidate: false }
+									);
+									showToast({ type: "success", message: "Document deleted" });
+									onDeleteClose();
+								} catch (err) {
+									showToast({
+										type: "error",
+										message: "Failed to delete document",
+									});
+								}
+							}}
+						>
+							Delete
 						</Button>
 					</ModalFooter>
 				</ModalContent>

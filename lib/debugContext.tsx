@@ -1,11 +1,21 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+	createContext,
+	useContext,
+	useState,
+	useEffect,
+	useCallback,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { DEBUG_AVAILABLE_ROLES, getRoleBasePath, isValidPathForRole } from "./roleMapping";
+import {
+	getAvailableRoles,
+	getRoleBasePath,
+	isValidPathForRole,
+} from "./roleConfig";
 
-// Available roles from the role mapping system
-const AVAILABLE_ROLES = DEBUG_AVAILABLE_ROLES;
+// Available roles from the centralized role configuration
+const AVAILABLE_ROLES = getAvailableRoles();
 
 type Role = string;
 
@@ -76,8 +86,14 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	const pathname = usePathname();
 
 	// Initialize debug state from cookies and localStorage
-	const initializeDebugState = (): { enabled: boolean; overrides: DebugOverrides } => {
-		if (typeof window === "undefined" || process.env.NODE_ENV !== "development") {
+	const initializeDebugState = (): {
+		enabled: boolean;
+		overrides: DebugOverrides;
+	} => {
+		if (
+			typeof window === "undefined" ||
+			process.env.NODE_ENV !== "development"
+		) {
 			return { enabled: false, overrides: {} };
 		}
 
@@ -87,7 +103,10 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 			if (cookieData) {
 				const parsed = JSON.parse(decodeURIComponent(cookieData));
 				if (parsed.expiresAt && Date.now() < parsed.expiresAt) {
-					return { enabled: parsed.enabled || false, overrides: parsed.overrides || {} };
+					return {
+						enabled: parsed.enabled || false,
+						overrides: parsed.overrides || {},
+					};
 				}
 			}
 
@@ -95,7 +114,10 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 			const savedDebugState = localStorage.getItem("debug-overrides");
 			if (savedDebugState) {
 				const parsed = JSON.parse(savedDebugState);
-				return { enabled: parsed.enabled || false, overrides: parsed.overrides || {} };
+				return {
+					enabled: parsed.enabled || false,
+					overrides: parsed.overrides || {},
+				};
 			}
 		} catch (error) {
 			console.warn("Failed to parse debug state:", error);
@@ -104,8 +126,12 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 		return { enabled: false, overrides: {} };
 	};
 
-	const [isDebugMode, setIsDebugMode] = useState(() => initializeDebugState().enabled);
-	const [debugOverrides, setDebugOverrides] = useState<DebugOverrides>(() => initializeDebugState().overrides);
+	const [isDebugMode, setIsDebugMode] = useState(
+		() => initializeDebugState().enabled
+	);
+	const [debugOverrides, setDebugOverrides] = useState<DebugOverrides>(
+		() => initializeDebugState().overrides
+	);
 
 	// Save debug state to both cookies and localStorage
 	const saveDebugState = (enabled: boolean, overrides: DebugOverrides) => {
@@ -118,7 +144,11 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 		};
 
 		// Save to cookies (primary storage)
-		setCookie(COOKIE_NAME, encodeURIComponent(JSON.stringify(stateData)), DEBUG_DURATION_HOURS);
+		setCookie(
+			COOKIE_NAME,
+			encodeURIComponent(JSON.stringify(stateData)),
+			DEBUG_DURATION_HOURS
+		);
 
 		// Save to localStorage (backup)
 		localStorage.setItem("debug-overrides", JSON.stringify(stateData));
@@ -139,7 +169,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	const extendDebugSession = () => {
 		if (process.env.NODE_ENV === "development") {
 			const newExpiresAt = Date.now() + DEBUG_DURATION_HOURS * 60 * 60 * 1000;
-			setDebugOverrides(prev => ({ ...prev, expiresAt: newExpiresAt }));
+			setDebugOverrides((prev) => ({ ...prev, expiresAt: newExpiresAt }));
 		}
 	};
 
@@ -169,15 +199,28 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 
 			// Only navigate if we're not already on a valid path for this role
 			if (!isValidPathForRole(role, currentPath)) {
-				console.log(`Debug: Navigating from ${currentPath} to ${targetPath} for role ${role}`);
+				console.log(
+					`Debug: Navigating from ${currentPath} to ${targetPath} for role ${role}`
+				);
 				router.push(targetPath);
 			}
 		}
 
 		// Dispatch event to trigger updates in components that need it
+		// This ensures sidebar and other components re-render immediately
 		if (typeof window !== "undefined") {
 			setTimeout(() => {
-				window.dispatchEvent(new CustomEvent('debug-role-changed', { detail: { role } }));
+				window.dispatchEvent(
+					new CustomEvent("debug-role-changed", { detail: { role } })
+				);
+				// Also dispatch a storage event to trigger sidebar reactivity
+				window.dispatchEvent(
+					new StorageEvent("storage", {
+						key: "debug-role-update",
+						newValue: role || "",
+						url: window.location.href,
+					})
+				);
 			}, 50);
 		}
 	};
@@ -204,7 +247,10 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	};
 
 	const value: DebugContextType = {
-		isDebugMode: process.env.NODE_ENV === "development" && isDebugMode && !isDebugExpired(),
+		isDebugMode:
+			process.env.NODE_ENV === "development" &&
+			isDebugMode &&
+			!isDebugExpired(),
 		debugOverrides,
 		setDebugRole,
 		setDebugEmail,

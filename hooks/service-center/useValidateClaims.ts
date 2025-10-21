@@ -3,6 +3,8 @@ import useSWR from "swr";
 export interface ValidationResult {
 	isValid: boolean;
 	customerName?: string;
+	deviceModel?: string;
+	deviceBrand?: string;
 	previousClaims?: {
 		count: number;
 		lastClaimDate: string;
@@ -10,6 +12,13 @@ export interface ValidationResult {
 		insuranceExpiry: string;
 		canMakeClaim: boolean;
 		remainingClaims: number;
+		claimHistory?: Array<{
+			id: string;
+			issue: string;
+			claimDate: string;
+			repairCost: number;
+			status: string;
+		}>;
 	};
 	error?: string;
 }
@@ -37,13 +46,31 @@ const validateIMEI = async (imei: string): Promise<ValidationResult> => {
 		return {
 			isValid: true,
 			customerName: "John Doe",
+			deviceModel: "Galaxy S23 Ultra",
+			deviceBrand: "Samsung",
 			previousClaims: {
 				count: 2,
-				lastClaimDate: "2024-01-15",
-				registrationDate: "2023-06-15",
-				insuranceExpiry: "2024-06-15",
+				lastClaimDate: "2024-09-15",
+				registrationDate: "2023-10-10",
+				insuranceExpiry: "2025-10-10",
 				canMakeClaim: true,
 				remainingClaims: 3,
+				claimHistory: [
+					{
+						id: "SC001",
+						issue: "Screen Replacement",
+						claimDate: "2024-09-15",
+						repairCost: 45000,
+						status: "Completed",
+					},
+					{
+						id: "SC002",
+						issue: "Battery Replacement",
+						claimDate: "2024-06-20",
+						repairCost: 25000,
+						status: "Completed",
+					},
+				],
 			},
 		};
 	} else if (imei === "999999999999999") {
@@ -55,13 +82,16 @@ const validateIMEI = async (imei: string): Promise<ValidationResult> => {
 		return {
 			isValid: true,
 			customerName: "Jane Smith",
+			deviceModel: "iPhone 15 Pro Max",
+			deviceBrand: "Apple",
 			previousClaims: {
 				count: 0,
 				lastClaimDate: "",
-				registrationDate: "2024-01-01",
-				insuranceExpiry: "2025-01-01",
+				registrationDate: "2024-08-01",
+				insuranceExpiry: "2026-08-01",
 				canMakeClaim: true,
 				remainingClaims: 5,
+				claimHistory: [],
 			},
 		};
 	}
