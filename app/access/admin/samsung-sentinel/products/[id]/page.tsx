@@ -1,10 +1,8 @@
 import SingleProductView from "@/view/dashboard/samsung-sentinel/SingleProductView";
+import { useParams } from "next/navigation";
 
-export default async function ProductDetailsPage({
-	params,
-}: {
-	params: Promise<{ id: string }>;
-}) {
-	const { id } = await params;
-	return <SingleProductView productId={id} />;
+export default function ProductDetailsPage() {
+  const params = useParams();
+  const productId = params?.id as string;
+  return <SingleProductView productId={productId} />;
 }
