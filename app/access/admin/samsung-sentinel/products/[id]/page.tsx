@@ -2,7 +2,7 @@ import SingleProductView from "@/view/dashboard/samsung-sentinel/SingleProductVi
 import { useParams } from "next/navigation";
 
 export default function ProductDetailsPage() {
-  const params = useParams();
-  const productId = params?.id as string;
-  return <SingleProductView productId={productId} />;
+	const params = useParams();
+	const productId = params?.id as string;
+	return <SingleProductView productId={productId} />;
 }
