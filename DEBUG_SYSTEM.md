@@ -88,14 +88,14 @@ const canDelete = hasPermission(role, "canDeleteCustomers", email);
 
 ## Safety Notes
 
-- Debug system only works in `NODE_ENV === "development"`
+- Debug system only works in `NEXT_PUBLIC_API_ENVIRONMENT === "development"`
 - No debug code will run in production
 - Debug state is stored locally and not persisted across machines
 - Always test with debug mode OFF before deploying
 
 ## Troubleshooting
 
-- **Debug button not showing**: Ensure `NODE_ENV=development`
+- **Debug button not showing**: Ensure `NEXT_PUBLIC_API_ENVIRONMENT=development`
 - **Overrides not working**: Check browser console for localStorage errors
 - **Permissions not updating**: Hard refresh the page after changing overrides
 - **Modal styling issues**: Check that HeroUI components are properly imported
