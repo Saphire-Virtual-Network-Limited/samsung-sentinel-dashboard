@@ -795,6 +795,12 @@ export function getSubAdminItems(options: MenuOptions): MenuItem[] {
 			],
 		},
 		{
+			icon: CreditCard,
+			title: "Payout Scheduler",
+			url: "/access/admin/payout-scheduler",
+			id: "admin-payout-scheduler",
+		},
+		{
 			icon: Package2Icon,
 			title: "Inventory",
 			id: "sub-admin-inventory",
