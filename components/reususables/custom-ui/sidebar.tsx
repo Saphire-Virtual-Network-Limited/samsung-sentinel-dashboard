@@ -305,7 +305,7 @@ export function AppSidebar() {
 				<SidebarFooter className="bg-black text-white border-t border-gray-800 sidebar-transition">
 					<SidebarMenu className="py-2 px-2 sm:px-3 flex flex-1 flex-col gap-1 sm:gap-2">
 						{/* Debug Button - Only show in development */}
-						{process.env.NODE_ENV === "development" && (
+						{process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development" && (
 							<SidebarMenuItem className="flex flex-col gap-1 sm:gap-2">
 								<SidebarMenuButton
 									className={`hover:bg-orange-600 hover:text-white w-full sidebar-transition rounded-lg px-3 py-2.5 sm:py-3 sidebar-focus ${

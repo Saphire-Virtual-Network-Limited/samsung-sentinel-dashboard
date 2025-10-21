@@ -92,7 +92,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	} => {
 		if (
 			typeof window === "undefined" ||
-			process.env.NODE_ENV !== "development"
+			process.env.NEXT_PUBLIC_API_ENVIRONMENT !== "development"
 		) {
 			return { enabled: false, overrides: {} };
 		}
@@ -135,7 +135,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 
 	// Save debug state to both cookies and localStorage
 	const saveDebugState = (enabled: boolean, overrides: DebugOverrides) => {
-		if (process.env.NODE_ENV !== "development") return;
+		if (process.env.NEXT_PUBLIC_API_ENVIRONMENT !== "development") return;
 
 		const expiresAt = Date.now() + DEBUG_DURATION_HOURS * 60 * 60 * 1000;
 		const stateData = {
@@ -167,7 +167,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 
 	// Extend debug session
 	const extendDebugSession = () => {
-		if (process.env.NODE_ENV === "development") {
+		if (process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development") {
 			const newExpiresAt = Date.now() + DEBUG_DURATION_HOURS * 60 * 60 * 1000;
 			setDebugOverrides((prev) => ({ ...prev, expiresAt: newExpiresAt }));
 		}
@@ -240,7 +240,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 	};
 
 	const enableDebugMode = () => {
-		if (process.env.NODE_ENV === "development") {
+		if (process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development") {
 			setIsDebugMode(true);
 			extendDebugSession(); // Set expiration time
 		}
@@ -248,7 +248,7 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 
 	const value: DebugContextType = {
 		isDebugMode:
-			process.env.NODE_ENV === "development" &&
+			process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development" &&
 			isDebugMode &&
 			!isDebugExpired(),
 		debugOverrides,

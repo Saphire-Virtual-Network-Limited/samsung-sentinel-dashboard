@@ -480,7 +480,10 @@ export function hasPermission(
 	userEmail?: string
 ): boolean {
 	// Check for debug overrides in development mode
-	if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+	if (
+		typeof window !== "undefined" &&
+		process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development"
+	) {
 		try {
 			// Helper to get cookie value
 			const getCookie = (name: string): string | null => {
@@ -489,7 +492,8 @@ export function hasPermission(
 				for (let i = 0; i < ca.length; i++) {
 					let c = ca[i];
 					while (c.charAt(0) === " ") c = c.substring(1, c.length);
-					if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+					if (c.indexOf(nameEQ) === 0)
+						return c.substring(nameEQ.length, c.length);
 				}
 				return null;
 			};
@@ -508,7 +512,10 @@ export function hasPermission(
 
 			if (debugState && debugState.enabled && debugState.overrides) {
 				// Check if debug session has expired
-				if (debugState.overrides.expiresAt && Date.now() > debugState.overrides.expiresAt) {
+				if (
+					debugState.overrides.expiresAt &&
+					Date.now() > debugState.overrides.expiresAt
+				) {
 					return getPermissions(role, userEmail)[permission] || false;
 				}
 
@@ -626,7 +633,10 @@ export function getRolesWithPermission(
  * @param userEmail - Optional user email for overrides
  * @returns Array of permission names that are granted
  */
-export function getCurrentPermissions(role: string, userEmail?: string): string[] {
+export function getCurrentPermissions(
+	role: string,
+	userEmail?: string
+): string[] {
 	const permissions = getPermissions(role, userEmail);
 	return Object.entries(permissions)
 		.filter(([_, value]) => value === true)

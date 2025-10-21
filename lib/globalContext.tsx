@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	const getDebugOverrides = useCallback(() => {
 		if (
 			typeof document === "undefined" ||
-			process.env.NODE_ENV !== "development"
+			process.env.NEXT_PUBLIC_API_ENVIRONMENT !== "development"
 		)
 			return {};
 		try {
@@ -151,11 +151,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			// Use debug role if available and valid, otherwise use original role
 			const userRole =
-				process.env.NODE_ENV === "development" && currentDebugOverrides.role
+				process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development" &&
+				currentDebugOverrides.role
 					? currentDebugOverrides.role
 					: originalRole;
 			const userEmail =
-				process.env.NODE_ENV === "development" && currentDebugOverrides.email
+				process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development" &&
+				currentDebugOverrides.email
 					? currentDebugOverrides.email
 					: originalEmail;
 
@@ -211,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				const isValid = isValidPathForRole(userRole, currentPath);
 
 				// Debug logging
-				if (process.env.NODE_ENV === "development") {
+				if (process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development") {
 					console.log(
 						`[DEBUG AUTH] Role: '${userRole}', Path: '${currentPath}', IsValid: ${isValid}`
 					);
@@ -231,7 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			if (!isAllowedRoute && !isNavigatingRef.current) {
 				const targetPath = getRoleBasePath(userRole);
 
-				if (process.env.NODE_ENV === "development") {
+				if (process.env.NEXT_PUBLIC_API_ENVIRONMENT === "development") {
 					console.log(
 						`[DEBUG] Unauthorized path '${currentPath}' for role '${userRole}', redirecting to '${targetPath}'`
 					);
