@@ -60,10 +60,31 @@ const CreateClaimView = () => {
 	});
 
 	// Mock functions since hooks don't exist
-	const validateIMEI = async (imei: string) => ({
-		isValid: true,
-		device: { model: "Test Device", brand: "Test Brand" },
-	});
+	const validateIMEI = async (imei: string) => {
+		const isValid = imei.length === 15;
+		const response: any = {
+			isValid,
+			device: { model: "Samsung Galaxy A06", brand: "Samsung" },
+			claimHistory: {
+				totalClaims: 1,
+				recentClaims: 1,
+				insuranceStatus: "Active",
+				lastClaimDate: "2024-03-20",
+			},
+		};
+
+		// Add different claim history for specific IMEI
+		if (imei === "352924996382946") {
+			response.claimHistory = {
+				totalClaims: 2,
+				recentClaims: 2,
+				insuranceStatus: "Active",
+				lastClaimDate: "2024-08-15",
+			};
+		}
+
+		return response;
+	};
 	const createClaim = async (data: any) => ({ success: true });
 	const isValidating = false;
 	const isCreating = false;
@@ -88,7 +109,7 @@ const CreateClaimView = () => {
 					brand: result.device?.brand || "",
 					model: result.device?.model || "",
 				}));
-				setCurrentStep(2);
+				//setCurrentStep(2);
 			} else {
 				showToast({
 					type: "error",
@@ -267,12 +288,13 @@ const CreateClaimView = () => {
 								>
 									{isValidating ? "Validating..." : "Validate IMEI"}
 								</Button>
-								{canProceedToStep2 && (
-									<Button onClick={() => setCurrentStep(2)}>
-										Next Step
-										<ArrowRight className="h-4 w-4 ml-2" />
-									</Button>
-								)}
+								{canProceedToStep2 &&
+									validationData.claimHistory.recentClaims < 2 && (
+										<Button onClick={() => setCurrentStep(2)}>
+											Next Step
+											<ArrowRight className="h-4 w-4 ml-2" />
+										</Button>
+									)}
 							</div>
 						</div>
 					</CardBody>
