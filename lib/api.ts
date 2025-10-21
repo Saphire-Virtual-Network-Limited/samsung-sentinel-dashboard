@@ -198,9 +198,16 @@ export async function getAllDefaultedRecord(
 	return apiCall(`/admin/loan/defaulted${query}`, "GET");
 }
 
-export async function getAllDueLoanRecord(fromDate?: string, toDate?: string) {
-	const query =
+export async function getAllDueLoanRecord(
+	fromDate?: string,
+	toDate?: string,
+	page?: number,
+	limit?: number
+) {
+	let query =
 		fromDate && toDate ? `?fromDate=${fromDate}&toDate=${toDate}` : "";
+	if (page) query += `&page=${page}`;
+	if (limit) query += `&limit=${limit}`;
 	return apiCall(`/admin/loan/due${query}`, "GET");
 }
 
@@ -286,6 +293,10 @@ export async function getAllCustomerBasicRecord(
 //get customer record by id
 export async function getCustomerRecordById(customerId: string) {
 	return apiCall(`/admin/customers/view/${customerId}`, "GET");
+}
+
+export async function getcustomerRepaymentSchedule(loanId: string) {
+	return apiCall(`/admin/repayment/loan/${loanId}`, "GET");
 }
 
 // New optimized customer record functions
@@ -3689,6 +3700,28 @@ export async function assignClusterSupervisorToCluster(userId: string) {
 
 export async function getClustersForAssignment() {
 	return apiCall(`/admin/cluster/clusters`, "GET");
+}
+
+// get collection analytics with filters
+export async function getCollectionAnalyticwithFilter(
+	startDate?: string,
+	endDate?: string
+) {
+	let query = "";
+	if (startDate && endDate) {
+		query = `?startDate=${startDate}&endDate=${endDate}`;
+	}
+	return apiCall(`/admin/repayment/analytics${query}`, "GET");
+}
+
+//get Repayment analytics for a specific date
+export async function getRepaydateforaSpecificDate(date?: string) {
+	return apiCall(`/admin/repayment/analytics/date/${date}`, "GET");
+}
+
+//get Repayment analytics for a specific date
+export async function manualChargeCustomerRepayment(scheduleId: string) {
+	return apiCall(`/admin/auto-debit/retry/${scheduleId}`, "POST");
 }
 
 // *** Samsung Sentinel IMEI Management ***

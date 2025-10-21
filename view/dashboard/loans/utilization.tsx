@@ -128,6 +128,7 @@ type LoanRecord = {
 		SAP: number;
 		SLD: number;
 		createdAt: string;
+		deviceModel: string;
 		deviceManufacturer: string;
 		deviceName: string;
 		deviceRam: string | null;
@@ -280,7 +281,8 @@ export default function UtilizationView() {
 					: "N/A",
 				loanStatus: r.loanStatus || "N/A",
 				imei: r.DeviceOnLoan?.[0]?.imei || "N/A",
-				deviceName: r.device?.deviceName || "N/A",
+				deviceName: r.deviceName || r.device?.deviceName || r.device?.deviceModelNumber || "N/A",
+				deviceModel: r.device?.deviceModel || "N/A",
 				updatedAt: r.updatedAt
 					? new Date(r.updatedAt).toLocaleDateString('en-GB', {
 							day: '2-digit',
@@ -316,8 +318,8 @@ export default function UtilizationView() {
 					const bvn = (c.bvn || "").toLowerCase();
 					const customerId = (c.customerId || "").toLowerCase();
 					const phone = (c.mainPhoneNumber || "").toLowerCase();
-					const deviceName = (c.deviceName || "").toLowerCase();
-					const deviceModel = (c.deviceModelNumber || "").toLowerCase();
+					const deviceName = (c.deviceName || c.deviceModel || "").toLowerCase();
+					const deviceModel = (c.deviceModel || "").toLowerCase();
 					const deviceRam = (c.deviceRam || "").toLowerCase();
 
 					return (
@@ -327,7 +329,7 @@ export default function UtilizationView() {
 						customerId.includes(f) ||
 						phone.includes(f) ||
 						deviceName.includes(f) ||
-						deviceModel.includes(f) ||
+						deviceModel?.includes(f) ||
 						deviceRam.includes(f)
 					);
 				} catch (error) {

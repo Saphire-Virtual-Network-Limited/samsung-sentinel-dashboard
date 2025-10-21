@@ -66,6 +66,8 @@ export interface PermissionConfig {
 	canViewReconciliationHistory: boolean;
 	canSendSms: boolean;
 	canAccessPayoutScheduler: boolean;
+	canLockDevice: boolean;
+	canUnlockDevice: boolean;
 	// Example of how to add a new permission:
 	// canManageReports: boolean;
 	//   canViewSensitiveData: boolean;
@@ -85,11 +87,11 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		// canUpdateWalletBalance: true,
 		// canUpdateLastPoint: true,
 		// canUpdateLoanStatus: true,
-		// canTriggerDeviceActions: true,
+		canTriggerDeviceActions: true,
 		// canDeleteCustomers: true,
-		// canViewOverDuePayments: true,
-		// canViewDeviceActivityLog: true,
-		// canViewCommunicationLog: true,
+		canViewOverDuePayments: true,
+		canViewDeviceActivityLog: true,
+		canViewCommunicationLog: true,
 		createDashboardUser: true,
 		suspendDashboardUser: true,
 		updateGuarantorStatus: true,
@@ -105,6 +107,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewReconciliationHistory: true,
 		canSendSms: true,
 		canAccessPayoutScheduler: true,
+		canLockDevice: true,
 		// Admin has no special permissions by default
 		// All permissions default to false
 	},
@@ -136,22 +139,25 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canViewReconciliationHistory: true,
 		canSendSms: true,
 		canAccessPayoutScheduler: true,
+		canLockDevice: true,
 	},
 
 	"collection-admin": {
 		canTriggerDeviceActions: true,
-		canInjectTransaction: true,
+		// canInjectTransaction: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
 		canViewOverDuePayments: true,
 		canSendSms: true,
+		canLockDevice: true,
 	},
 	"collection-officer": {
-		// canViewOverDuePayments: true,
+		canViewOverDuePayments: true,
 		canViewCommunicationLog: true,
 		canViewDeviceActivityLog: true,
-		canTriggerDeviceActions: true,
 		canSendSms: true,
+		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Collection officer has no special permissions
 		// All permissions default to false
 	},
@@ -170,6 +176,7 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canAssignAgent: true,
 		canInjectTransaction: true,
 		canSendSms: true,
+		canLockDevice: true,
 	},
 	developer: {
 		canUpdateWalletBalance: true,
@@ -186,44 +193,62 @@ const rolePermissions: Record<string, Partial<PermissionConfig>> = {
 		canAssignAgent: true,
 		canInjectTransaction: true,
 		canSendSms: true,
+		canLockDevice: true,
 	},
 	finance: {
 		canAccessPayoutScheduler: true,
+		canViewOverDuePayments: true,
+		canLockDevice: true,
 		// Finance has no special permissions
 		// All permissions default to false
 	},
 	audit: {
 		canAccessPayoutScheduler: true,
+		canViewOverDuePayments: true,
+		canLockDevice: true,
 		// Audit has no special permissions
 		// All permissions default to false
 	},
 	hr: {
+		canLockDevice: true,
 		// HR has no special permissions
 		// All permissions default to false
 	},
 	inventory: {
+		canLockDevice: true,
 		// Inventory has no special permissions
 		// All permissions default to false
 	},
 	sales: {
+		canLockDevice: true,
 		// Sales has no special permissions
 		// All permissions default to false
 	},
 	"scan-partner": {
+		canLockDevice: true,
 		// Scan partner has no special permissions
 		// All permissions default to false
 	},
 	support: {
+		canViewOverDuePayments: true,
+		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Support has no special permissions
 		// All permissions default to false
 	},
 	verify: {
+		canViewOverDuePayments: true,
+		canLockDevice: true,
+		canTriggerDeviceActions: true,
 		// Verify has no special permissions
 		// All permissions default to false
 	},
 	"verification-officer": {
 		updateGuarantorStatus: true,
 		updateAddressStatus: true,
+		canViewOverDuePayments: true,
+		canTriggerDeviceActions: true,
+		canLockDevice: true,
 	},
 };
 
@@ -241,6 +266,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canUpdateDeviceImei: true,
 		canAssignAgent: true,
 		canInjectTransaction: true,
+		canUnlockDevice: true,
 	},
 	"babatunde@sapphirevirtual.com": {
 		verifyMobiflex: true,
@@ -264,6 +290,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canChangeDashboardUserPassword: true,
 		canApproveStore: true,
 		canInjectTransaction: true,
+		canUnlockDevice: true,
 	},
 	"ebunifeoluwa@sapphirevirtual.com": {
 		canCreate: true,
@@ -329,14 +356,40 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		canTriggerDeviceActions: true,
+		canViewOverDuePayments: true,
+		canUnlockDevice: true,
 	},
 	"william@sapphirevirtual.com": {
 		canViewDeviceActivityLog: true,
 		canViewCommunicationLog: true,
 		canTriggerDeviceActions: true,
+		canViewOverDuePayments: true,
 	},
 	"kemi.adeniran@sapphirevirtual.com": {
 		canAssignAgent: true,
+		canViewOverDuePayments: true,
+	},
+	"joy@sapphirevirtual.com": {
+		canViewOverDuePayments: true,
+		canViewCommunicationLog: true,
+		canViewDeviceActivityLog: true,
+		canTriggerDeviceActions: true,
+		canUnlockDevice: true,
+	},
+	"olajide@sapphirevirtual.com": {
+		canUnlockDevice: true,
+	},
+	"favour@sapphirevirtual.com": {
+		canUnlockDevice: true,
+	},
+	"ayodele.olawale@sapphirevirtual.com": {
+		canUnlockDevice: true,
+	},
+	"Innocent@sapphirevirtual.com": {
+		canUnlockDevice: true,
+	},
+	"tosin@sapphirevirtual.com": {
+		canUnlockDevice: true,
 	},
 };
 
@@ -374,6 +427,8 @@ function getDefaultPermissions(): PermissionConfig {
 		canViewReconciliationHistory: false,
 		canSendSms: false,
 		canAccessPayoutScheduler: false,
+		canLockDevice: false,
+		canUnlockDevice: false,
 		// Example of how to add a new permission:
 		// canManageReports: false,
 	};
@@ -524,6 +579,8 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
 		"updateScanPartner",
 		"canApproveStore",
 		"canInjectTransaction",
+		"canLockDevice",
+		"canUnlockDevice",
 		// 'canViewSensitiveData',
 		// 'canManageCustomers',
 		// 'canManageLoans',

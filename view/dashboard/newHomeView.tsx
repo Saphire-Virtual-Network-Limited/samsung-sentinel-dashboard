@@ -12,6 +12,7 @@ import { getSelectedProduct } from "@/utils";
 import MobiflexHomeView from "./MobiflexHomeView";
 import NewSalesHomeView from "../creditflex/dashboardView";
 import CommunicationLockReport from "@/components/reususables/custom-ui/CommunicationLockReport";
+import CollectionAnalytcics from "@/components/dashboard/collectionAnalytcics";
 const NewHomeView = () => {
 	const { label: selectedProduct } = getSelectedProduct();
 
