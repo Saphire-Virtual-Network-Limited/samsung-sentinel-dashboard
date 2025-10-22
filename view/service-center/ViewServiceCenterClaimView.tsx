@@ -381,7 +381,7 @@ const ViewServiceCenterClaimView = () => {
 							Update Status
 						</Button>
 						<Button
-							color="secondary"
+							color="default"
 							variant="bordered"
 							onPress={onUploadModalOpen}
 							startContent={<Upload size={16} />}
