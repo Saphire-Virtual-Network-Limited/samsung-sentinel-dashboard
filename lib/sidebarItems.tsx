@@ -1507,6 +1507,11 @@ export function getSidebarItemsForRole(
 	role: string,
 	options: MenuOptions
 ): MenuItem[] {
+	// Return empty array if no role is provided (e.g., during login/logout)
+	if (!role || role.trim() === "") {
+		return [];
+	}
+
 	// Map role to sidebar key
 	const roleMapping: Record<string, keyof SidebarItemsConfig> = {
 		SUPER_ADMIN: "admin",
@@ -1530,7 +1535,14 @@ export function getSidebarItemsForRole(
 		HR: "hr",
 	};
 
-	const sidebarKey = roleMapping[role] || "admin";
+	const sidebarKey = roleMapping[role];
+	
+	// Return empty array if role is not recognized
+	if (!sidebarKey) {
+		console.warn(`Unknown role "${role}", no sidebar items available`);
+		return [];
+	}
+	
 	const getItems = sidebarItemsConfig[sidebarKey];
 
 	return getItems ? getItems(options) : [];

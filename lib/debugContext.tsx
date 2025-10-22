@@ -179,6 +179,12 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 		// Clear cookies
 		deleteCookie(COOKIE_NAME);
 		localStorage.removeItem("debug-overrides");
+		// Reload the page to ensure all components reflect the original role
+		if (typeof window !== "undefined") {
+			setTimeout(() => {
+				window.location.reload();
+			}, 50);
+		}
 	};
 
 	// Auto-cleanup expired sessions
@@ -221,6 +227,9 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 						url: window.location.href,
 					})
 				);
+				// Reload the page to ensure all components reflect the new debug role
+				// This is the most reliable way to ensure consistency across all components
+				window.location.reload();
 			}, 50);
 		}
 	};
@@ -235,8 +244,12 @@ export const DebugProvider: React.FC<DebugProviderProps> = ({ children }) => {
 
 	const resetDebugOverrides = () => {
 		setDebugOverrides({});
-		// Navigate back to the original user's role if we have it
-		// This would need to be implemented based on your auth system
+		// Reload the page to ensure all components reflect the original role
+		if (typeof window !== "undefined") {
+			setTimeout(() => {
+				window.location.reload();
+			}, 50);
+		}
 	};
 
 	const enableDebugMode = () => {

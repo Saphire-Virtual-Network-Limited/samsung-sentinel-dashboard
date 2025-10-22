@@ -156,9 +156,26 @@ const UnifiedClaimRepairDetailView: React.FC<
 						<p className="text-sm text-gray-500">{claimData.claimId}</p>
 					</div>
 				</div>
-				<Chip color={getStatusColor(claimData.status)} variant="flat" size="lg">
-					{claimData.status.toUpperCase().replace("-", " ")}
-				</Chip>
+				<div className="flex items-center gap-3">
+					<Chip color={getStatusColor(claimData.status)} variant="flat" size="lg">
+						{claimData.status.toUpperCase().replace("-", " ")}
+					</Chip>
+					<Button 
+						color="primary" 
+						variant="bordered"
+						onPress={() => {
+							const path = role === "service-center"
+								? `/access/service-center/claims/${claimData.claimId}`
+								: role === "samsung-partners"
+								? `/access/samsung-partners/claims/${claimData.claimId}`
+								: `/access/admin/samsung-sentinel/claims/${claimData.claimId}`;
+							router.push(path);
+						}}
+						startContent={<FileText className="h-4 w-4" />}
+					>
+						View Full Details
+					</Button>
+				</div>
 			</div>
 
 			{/* Payment Status Banner for Paid Items */}

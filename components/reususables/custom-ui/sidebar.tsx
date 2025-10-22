@@ -53,7 +53,7 @@ import DebugModal from "@/components/modals/DebugModal";
 import { getSidebarItemsForRole, type MenuItem } from "@/lib/sidebarItems";
 
 export function AppSidebar() {
-	const { userResponse, debugInfo, logout } = useAuthWithDebug();
+	const { userResponse, debugInfo, logout, isLoading } = useAuthWithDebug();
 	const { setOpenMobile, isMobile } = useSidebar();
 	const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 	const [openNestedMenus, setOpenNestedMenus] = useState<{
@@ -64,7 +64,7 @@ export function AppSidebar() {
 	const { label: selectedProduct } = getSelectedProduct();
 	const { isDebugMode, debugOverrides } = useDebug();
 
-	// Force sidebar to re-render when debug role changes
+	// Force sidebar to re-render when debug role changes or user data changes
 	useEffect(() => {
 		const handleDebugRoleChange = () => {
 			console.log("Sidebar: Debug role changed, forcing re-render");
@@ -78,12 +78,21 @@ export function AppSidebar() {
 			}
 		};
 
+		const handleUserChange = () => {
+			console.log("Sidebar: User data changed, forcing re-render");
+			setForceUpdate((prev) => prev + 1);
+		};
+
 		if (typeof window !== "undefined") {
 			window.addEventListener(
 				"debug-role-changed",
 				handleDebugRoleChange as EventListener
 			);
 			window.addEventListener("storage", handleStorageChange);
+			window.addEventListener(
+				"user-changed",
+				handleUserChange as EventListener
+			);
 
 			return () => {
 				window.removeEventListener(
@@ -91,6 +100,10 @@ export function AppSidebar() {
 					handleDebugRoleChange as EventListener
 				);
 				window.removeEventListener("storage", handleStorageChange);
+				window.removeEventListener(
+					"user-changed",
+					handleUserChange as EventListener
+				);
 			};
 		}
 	}, []);
@@ -120,14 +133,18 @@ export function AppSidebar() {
 	);
 
 	// Get sidebar items dynamically based on current role (including debug overrides)
+	// Don't render items if loading or no user data available
 	const currentRole = userResponse?.data?.role || "";
-	const items: MenuItem[] = getSidebarItemsForRole(currentRole, {
-		accessRole,
-		userEmail,
-		selectedProduct: selectedProduct || undefined,
-		hasPermission: hasPermission as any, // Type cast to match expected signature
-		canVerifyMobiflex,
-	});
+	const shouldShowItems = !isLoading && userResponse && currentRole;
+	const items: MenuItem[] = shouldShowItems
+		? getSidebarItemsForRole(currentRole, {
+				accessRole,
+				userEmail,
+				selectedProduct: selectedProduct || undefined,
+				hasPermission: hasPermission as any, // Type cast to match expected signature
+				canVerifyMobiflex,
+		  })
+		: [];
 
 	const toggleMenu = (id: string) => {
 		setOpenMenus((prev) => ({
