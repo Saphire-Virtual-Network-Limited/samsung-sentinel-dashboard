@@ -10,6 +10,56 @@ import {
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const appkey = process.env.NEXT_PUBLIC_APP_KEY;
 
+// Function to clear all authentication cookies
+const clearAllCookies = () => {
+	if (typeof document === "undefined") return;
+
+	const cookies = document.cookie.split(";");
+	for (let i = 0; i < cookies.length; i++) {
+		const cookie = cookies[i];
+		const eqPos = cookie.indexOf("=");
+		const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+
+		// Clear the cookie for all possible paths and domains
+		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+	}
+};
+
+// Add axios response interceptor for global 401 handling
+axios.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		// Check if it's a 401 error
+		if (error?.response?.status === 401 && typeof window !== "undefined") {
+			// Clear all authentication data
+			clearAllCookies();
+
+			if (typeof localStorage !== "undefined") {
+				localStorage.removeItem("user");
+				localStorage.removeItem("selectedProduct");
+				localStorage.removeItem("Sapphire-Credit-Product");
+				localStorage.removeItem("Sapphire-Credit-Product-Name");
+			}
+
+			if (typeof sessionStorage !== "undefined") {
+				sessionStorage.clear();
+			}
+
+			// Redirect to login if not already there
+			if (!window.location.pathname.startsWith("/auth/login")) {
+				const currentPath = window.location.pathname;
+				window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(
+					currentPath
+				)}`;
+			}
+		}
+
+		return Promise.reject(error);
+	}
+);
+
 export interface ApiCallOptions {
 	cache?: RequestCache;
 	revalidate?: number;

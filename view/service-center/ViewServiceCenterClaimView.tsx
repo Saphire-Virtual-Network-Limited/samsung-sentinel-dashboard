@@ -82,6 +82,8 @@ const ViewServiceCenterClaimView = () => {
 		faultDescription:
 			"Cracked screen after accidental drop. Touch functionality partially affected. Customer reports the phone was dropped from approximately 4 feet height.",
 		repairCost: 45000,
+		customerCost: 15000,
+		sapphireCost: 30000,
 		engineer: "Mike Johnson",
 		engineerPhone: "+234 803 456 7890",
 		estimatedCompletionDate: "2024-10-25",
@@ -437,21 +439,19 @@ const ViewServiceCenterClaimView = () => {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<InfoField label="Fault Type" value={claim?.faultType} />
 							<InfoField
-								label="Repair Cost"
+								label="Total Repair Cost"
 								value={`₦${claim?.repairCost?.toLocaleString()}`}
+							/>
+							<InfoField
+								label="Customer Cost"
+								value={`₦${claim?.customerCost?.toLocaleString()}`}
+							/>
+							<InfoField
+								label="Sapphire Cost"
+								value={`₦${claim?.sapphireCost?.toLocaleString()}`}
 							/>
 							<InfoField label="Assigned Engineer" value={claim?.engineer} />
 							<InfoField label="Engineer Phone" value={claim?.engineerPhone} />
-							<InfoField
-								label="Estimated Completion"
-								value={
-									claim?.estimatedCompletionDate
-										? new Date(
-												claim.estimatedCompletionDate
-										  ).toLocaleDateString()
-										: "N/A"
-								}
-							/>
 						</div>
 						{claim?.faultDescription && (
 							<div className="mt-4">
@@ -463,8 +463,8 @@ const ViewServiceCenterClaimView = () => {
 						)}
 					</InfoCard>
 
-					{/* Parts Required */}
-					{claim?.partsRequired && claim.partsRequired.length > 0 && (
+					{/* Parts Required 
+					claim?.partsRequired && claim.partsRequired.length > 0 && (
 						<InfoCard title="Parts Required" icon={<Wrench size={20} />}>
 							<div className="space-y-3">
 								{claim.partsRequired.map((part: any, index: number) => (
@@ -497,7 +497,7 @@ const ViewServiceCenterClaimView = () => {
 								))}
 							</div>
 						</InfoCard>
-					)}
+					)*/}
 
 					{/* Repair History */}
 					<InfoCard title="Repair History" icon={<FileText size={20} />}>

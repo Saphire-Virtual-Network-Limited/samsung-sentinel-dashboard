@@ -120,13 +120,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		return () => clearInterval(interval);
 	}, [getDebugOverrides]);
 
+	// Helper function to clear all authentication cookies
+	const clearAuthCookies = useCallback(() => {
+		if (typeof document === "undefined") return;
+
+		// Get all cookies
+		const cookies = document.cookie.split(";");
+
+		// Clear each cookie by setting it to expire in the past
+		for (let i = 0; i < cookies.length; i++) {
+			const cookie = cookies[i];
+			const eqPos = cookie.indexOf("=");
+			const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+
+			// Clear the cookie for all possible paths and domains
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+		}
+	}, []);
+
 	const logout = useCallback(async () => {
 		setIsLoggingOut(true);
 		try {
 			await logoutAdmin();
 			setUserResponse(null);
 			clearPasswordSecurityStatus(); // Clear password security cookie on logout
-			
+
+			// Clear all authentication cookies
+			clearAuthCookies();
+
 			// Clear any localStorage items that might cache user data
 			if (typeof window !== "undefined") {
 				localStorage.removeItem("user");
@@ -136,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				// Clear any other cached data
 				sessionStorage.clear();
 			}
-			
+
 			await router.replace("/auth/login");
 		} catch (error: any) {
 			console.error("Logout error:", error);
@@ -148,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		} finally {
 			setIsLoggingOut(false);
 		}
-	}, [router]);
+	}, [router, clearAuthCookies]);
 
 	const fetchUserProfile = useCallback(async () => {
 		try {
@@ -183,14 +206,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			};
 
 			setUserResponse(modifiedResponse);
-			
+
 			// Dispatch event to notify components that user data has changed
 			if (typeof window !== "undefined") {
-				window.dispatchEvent(new CustomEvent("user-changed", { 
-					detail: { role: userRole, email: userEmail } 
-				}));
+				window.dispatchEvent(
+					new CustomEvent("user-changed", {
+						detail: { role: userRole, email: userEmail },
+					})
+				);
 			}
-			
+
 			// Check password security status for users without cookie
 			const passwordStatus = getPasswordSecurityStatus();
 			if (
@@ -373,6 +398,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	}, [fetchUserProfile, pathName, userResponse]);
 	const login = async (email: string, password: string) => {
 		setUserResponse(null);
+
+		// Clear any existing authentication cookies before login
+		// This prevents issues when switching between servers
+		clearAuthCookies();
+
 		try {
 			await loginAdmin({ email, password });
 

@@ -157,18 +157,83 @@ const UnifiedClaimRepairDetailView: React.FC<
 					</div>
 				</div>
 				<div className="flex items-center gap-3">
-					<Chip color={getStatusColor(claimData.status)} variant="flat" size="lg">
+					<Chip
+						color={getStatusColor(claimData.status)}
+						variant="flat"
+						size="lg"
+					>
 						{claimData.status.toUpperCase().replace("-", " ")}
 					</Chip>
-					<Button 
-						color="primary" 
+
+					{/* Action Buttons - Role-based */}
+					{/* Samsung Partners: Approve/Reject for pending claims */}
+					{role === "samsung-partners" &&
+						claimData.status === "pending" &&
+						onApprove &&
+						onReject && (
+							<>
+								<Button
+									color="danger"
+									variant="flat"
+									startContent={<XCircle className="h-4 w-4" />}
+									onPress={onRejectOpen}
+									isDisabled={isProcessing}
+								>
+									Reject Claim
+								</Button>
+								<Button
+									color="success"
+									startContent={<CheckCircle className="h-4 w-4" />}
+									onPress={handleApprove}
+									isLoading={isProcessing}
+								>
+									Approve Claim
+								</Button>
+							</>
+						)}
+
+					{/* Samsung Partners: Authorize payment for completed/unpaid claims */}
+					{role === "samsung-partners" &&
+						claimData.status === "completed" &&
+						claimData.paymentStatus === "unpaid" &&
+						!claimData.authorizedForPayment &&
+						onAuthorizePayment && (
+							<Button
+								color="primary"
+								startContent={<DollarSign className="h-4 w-4" />}
+								onPress={handleAuthorizePayment}
+								isLoading={isProcessing}
+							>
+								Authorize Payment
+							</Button>
+						)}
+
+					{/* Samsung Sentinel: Execute payment for authorized claims */}
+					{role === "samsung-sentinel" &&
+						claimData.status === "completed" &&
+						claimData.paymentStatus === "unpaid" &&
+						claimData.authorizedForPayment &&
+						onExecutePayment && (
+							<Button
+								color="success"
+								startContent={<CreditCard className="h-4 w-4" />}
+								onPress={onPaymentOpen}
+								isLoading={isProcessing}
+							>
+								Execute Payment
+							</Button>
+						)}
+
+					<Button
+						color="primary"
 						variant="bordered"
 						onPress={() => {
-							const path = role === "service-center"
-								? `/access/service-center/claims/${claimData.claimId}`
-								: role === "samsung-partners"
-								? `/access/samsung-partners/claims/${claimData.claimId}`
-								: `/access/admin/samsung-sentinel/claims/${claimData.claimId}`;
+							const path =
+								role === "service-center"
+									? `/access/service-center/claims/${claimData.claimId}`
+									: role === "samsung-partners"
+									? `/access/samsung-partners/claims/${claimData.claimId}`
+									: `/access/admin/samsung-sentinel/claims/${claimData.claimId}`;
 							router.push(path);
 						}}
 						startContent={<FileText className="h-4 w-4" />}
@@ -410,81 +475,6 @@ const UnifiedClaimRepairDetailView: React.FC<
 					</CardBody>
 				</Card>
 			)}
-
-			{/* Action Buttons - Role-based */}
-			<div className="flex gap-3 justify-end">
-				{/* Samsung Partners: Approve/Reject for pending claims */}
-				{role === "samsung-partners" &&
-					claimData.status === "pending" &&
-					onApprove &&
-					onReject && (
-						<>
-							<Button
-								color="danger"
-								variant="flat"
-								startContent={<XCircle className="h-4 w-4" />}
-								onPress={onRejectOpen}
-								isDisabled={isProcessing}
-							>
-								Reject Claim
-							</Button>
-							<Button
-								color="success"
-								startContent={<CheckCircle className="h-4 w-4" />}
-								onPress={handleApprove}
-								isLoading={isProcessing}
-							>
-								Approve Claim
-							</Button>
-						</>
-					)}
-
-				{/* Samsung Partners: Authorize payment for completed/unpaid claims */}
-				{role === "samsung-partners" &&
-					claimData.status === "completed" &&
-					claimData.paymentStatus === "unpaid" &&
-					!claimData.authorizedForPayment &&
-					onAuthorizePayment && (
-						<Button
-							color="primary"
-							startContent={<DollarSign className="h-4 w-4" />}
-							onPress={handleAuthorizePayment}
-							isLoading={isProcessing}
-						>
-							Authorize Payment
-						</Button>
-					)}
-
-				{/* Samsung Sentinel: Execute payment for authorized claims */}
-				{role === "samsung-sentinel" &&
-					claimData.status === "completed" &&
-					claimData.paymentStatus === "unpaid" &&
-					claimData.authorizedForPayment &&
-					onExecutePayment && (
-						<Button
-							color="success"
-							startContent={<CreditCard className="h-4 w-4" />}
-							onPress={onPaymentOpen}
-							isLoading={isProcessing}
-						>
-							Execute Payment
-						</Button>
-					)}
-
-				{/* Show authorization status */}
-				{claimData.status === "completed" &&
-					claimData.paymentStatus === "unpaid" &&
-					claimData.authorizedForPayment &&
-					role !== "samsung-sentinel" && (
-						<Chip
-							color="success"
-							variant="flat"
-							startContent={<CheckCircle className="h-4 w-4" />}
-						>
-							✓ Authorized for Payment
-						</Chip>
-					)}
-			</div>
 
 			{/* Rejection Modal */}
 			<Modal isOpen={isRejectOpen} onClose={onRejectClose}>
