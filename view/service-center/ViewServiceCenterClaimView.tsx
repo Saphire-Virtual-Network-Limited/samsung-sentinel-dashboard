@@ -59,7 +59,150 @@ const ViewServiceCenterClaimView = () => {
 		onClose: onUploadModalClose,
 	} = useDisclosure();
 
-	const { claim, isLoading, error, mutate } = useServiceCenterClaim(claimId);
+	// DEMO: Using dummy data instead of API call
+	const claim = {
+		id: claimId || "CLM-2024-001",
+		status: "in-progress",
+		deviceStatus: "Under Repair",
+		// Customer fields (flat structure)
+		customerName: "John Doe",
+		customerEmail: "john.doe@example.com",
+		customerPhone: "+234 801 234 5678",
+		customerAddress: "123 Lagos Street, Victoria Island, Lagos, Nigeria",
+		// Device fields (flat structure)
+		imei: "352094561234567",
+		deviceBrand: "Samsung",
+		deviceModel: "Galaxy S23 Ultra",
+		devicePrice: 850000,
+		// Warranty fields
+		warrantyStartDate: "2024-04-15",
+		warrantyEndDate: "2025-10-15",
+		// Repair fields
+		faultType: "Screen Damage",
+		faultDescription:
+			"Cracked screen after accidental drop. Touch functionality partially affected. Customer reports the phone was dropped from approximately 4 feet height.",
+		repairCost: 45000,
+		engineer: "Mike Johnson",
+		engineerPhone: "+234 803 456 7890",
+		estimatedCompletionDate: "2024-10-25",
+		// Parts required
+		partsRequired: [
+			{
+				partName: "Screen Assembly",
+				partCode: "SAM-S23U-SCREEN-001",
+				cost: 35000,
+				availability: "In Stock",
+			},
+			{
+				partName: "Digitizer",
+				partCode: "SAM-S23U-DIG-002",
+				cost: 8000,
+				availability: "In Stock",
+			},
+		],
+		// Repair history
+		repairHistory: [
+			{
+				id: "RH-001",
+				date: "2024-10-15 10:30 AM",
+				action: "Claim Submitted",
+				engineer: "System",
+				findings: "Customer submitted claim through online portal",
+				status: "Completed",
+			},
+			{
+				id: "RH-002",
+				date: "2024-10-15 11:45 AM",
+				action: "Initial Assessment",
+				engineer: "Sarah Admin",
+				findings: "Claim approved. Device eligible for warranty repair.",
+				status: "Completed",
+			},
+			{
+				id: "RH-003",
+				date: "2024-10-16 09:00 AM",
+				action: "Device Received",
+				engineer: "Mike Johnson",
+				findings:
+					"Physical inspection completed. Screen cracked, digitizer partially functional.",
+				status: "Completed",
+			},
+			{
+				id: "RH-004",
+				date: "2024-10-16 02:30 PM",
+				action: "Parts Ordered",
+				engineer: "Mike Johnson",
+				findings: "Genuine Samsung parts ordered. ETA: 3-5 business days.",
+				status: "In Progress",
+			},
+		],
+		// Documents
+		documents: [
+			{
+				id: "doc-1",
+				name: "Device Receipt",
+				type: "receipt",
+				url: "/demo-receipt.pdf",
+				uploadedBy: "John Doe",
+				uploadedAt: "2024-10-15",
+			},
+			{
+				id: "doc-2",
+				name: "Warranty Certificate",
+				type: "warranty",
+				url: "/demo-warranty.pdf",
+				uploadedBy: "System",
+				uploadedAt: "2024-10-15",
+			},
+			{
+				id: "doc-3",
+				name: "Damage Photos",
+				type: "image",
+				url: "/demo-damage.jpg",
+				uploadedBy: "John Doe",
+				uploadedAt: "2024-10-15",
+			},
+		],
+		// Status history
+		statusHistory: [
+			{
+				id: "SH-001",
+				date: "2024-10-15 10:30 AM",
+				status: "submitted",
+				user: "John Doe",
+				notes: "Claim submitted by customer",
+			},
+			{
+				id: "SH-002",
+				date: "2024-10-15 11:45 AM",
+				status: "approved",
+				user: "Sarah Admin",
+				notes: "Claim approved by warranty team",
+			},
+			{
+				id: "SH-003",
+				date: "2024-10-16 09:00 AM",
+				status: "in-progress",
+				user: "Mike Johnson",
+				notes: "Device received at service center. Diagnostics in progress.",
+			},
+			{
+				id: "SH-004",
+				date: "2024-10-16 02:30 PM",
+				status: "in-progress",
+				user: "Mike Johnson",
+				notes: "Screen replacement parts ordered",
+			},
+		],
+		// Dates
+		dateSubmitted: "2024-10-15",
+		dateUpdated: "2024-10-16",
+	};
+
+	const isLoading = false;
+	const error = null;
+	const mutate = (updater?: any, options?: any) => {}; // Dummy mutate function
+
 	const { updateStatus, uploadDocument, replaceDocument, deleteDocument } =
 		useServiceCenterClaimActions();
 

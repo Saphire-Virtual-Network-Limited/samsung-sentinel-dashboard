@@ -126,6 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			await logoutAdmin();
 			setUserResponse(null);
 			clearPasswordSecurityStatus(); // Clear password security cookie on logout
+			
+			// Clear any localStorage items that might cache user data
+			if (typeof window !== "undefined") {
+				localStorage.removeItem("user");
+				localStorage.removeItem("selectedProduct");
+				localStorage.removeItem("Sapphire-Credit-Product");
+				localStorage.removeItem("Sapphire-Credit-Product-Name");
+				// Clear any other cached data
+				sessionStorage.clear();
+			}
+			
 			await router.replace("/auth/login");
 		} catch (error: any) {
 			console.error("Logout error:", error);
@@ -171,7 +182,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				},
 			};
 
-			setUserResponse(modifiedResponse); // Check password security status for users without cookie
+			setUserResponse(modifiedResponse);
+			
+			// Dispatch event to notify components that user data has changed
+			if (typeof window !== "undefined") {
+				window.dispatchEvent(new CustomEvent("user-changed", { 
+					detail: { role: userRole, email: userEmail } 
+				}));
+			}
+			
+			// Check password security status for users without cookie
 			const passwordStatus = getPasswordSecurityStatus();
 			if (
 				passwordStatus === PasswordStatus.UNKNOWN &&
@@ -371,6 +391,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			} else {
 				setPasswordSecurityStatus(PasswordStatus.SECURE);
 			}
+
+			// Fetch the new user's profile immediately after login
+			await fetchUserProfile();
 
 			const redirectTo = callbackUrl === "/" ? "/" : callbackUrl;
 			router.push(redirectTo);

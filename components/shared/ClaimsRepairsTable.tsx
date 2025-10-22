@@ -209,7 +209,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					sortable: true,
 				},
 			];
-			
+
 			// Add bank details column for samsung-sentinel only
 			if (role === "samsung-sentinel") {
 				paymentColumns.push({
@@ -218,7 +218,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					sortable: false,
 				});
 			}
-			
+
 			paymentColumns.push(
 				{
 					name: "Transaction Ref",
@@ -231,7 +231,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					sortable: true,
 				}
 			);
-			
+
 			baseColumns.push(...paymentColumns);
 		}
 
@@ -262,6 +262,9 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				<DropdownItem
 					key="edit"
 					startContent={<FileText className="h-4 w-4" />}
+					onPress={() =>
+						router.push(`/access/service-center/claims/${item.claimId}`)
+					}
 				>
 					Edit Claim
 				</DropdownItem>
@@ -358,10 +361,12 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const renderCell = (item: ClaimRepairItem, columnKey: string) => {
 		const disabled = isItemDisabled(item);
 		const cellClassName = disabled ? "opacity-50" : "";
-		
+
 		switch (columnKey) {
 			case "claimId":
-				return <span className={`font-medium ${cellClassName}`}>{item.claimId}</span>;
+				return (
+					<span className={`font-medium ${cellClassName}`}>{item.claimId}</span>
+				);
 
 			case "device":
 				return (
@@ -384,7 +389,12 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 							₦{Number(item.repairCost).toLocaleString()}
 						</span>
 						{item.authorizedForPayment && (
-							<Chip color="success" size="sm" variant="flat" className="text-xs px-1">
+							<Chip
+								color="success"
+								size="sm"
+								variant="flat"
+								className="text-xs px-1"
+							>
 								✓ Authorized
 							</Chip>
 						)}
@@ -410,7 +420,10 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 							{item.status.toUpperCase().replace("-", " ")}
 						</Chip>
 						{disabled && item.status !== "completed" && (
-							<span className="text-xs text-gray-400" title="Not eligible for selection">
+							<span
+								className="text-xs text-gray-400"
+								title="Not eligible for selection"
+							>
 								🔒
 							</span>
 						)}
@@ -428,7 +441,10 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 							{item.paymentStatus.toUpperCase()}
 						</Chip>
 						{item.paymentStatus === "unpaid" && item.authorizedForPayment && (
-							<span className="text-xs text-success-600 dark:text-success-400" title="Authorized for payment">
+							<span
+								className="text-xs text-success-600 dark:text-success-400"
+								title="Authorized for payment"
+							>
 								🔓
 							</span>
 						)}
@@ -458,11 +474,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					const serviceCenter = testData.serviceCenters.find(
 						(sc: any) => sc.id === item.serviceCenterId
 					);
-					
+
 					if (serviceCenter?.bankDetails) {
 						return (
 							<div className="text-xs">
-								<div className="font-semibold">{serviceCenter.bankDetails.bankName}</div>
+								<div className="font-semibold">
+									{serviceCenter.bankDetails.bankName}
+								</div>
 								<div className="text-gray-600 dark:text-gray-400">
 									{serviceCenter.bankDetails.accountNumber}
 								</div>
@@ -540,13 +558,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	// Determine disabled keys (non-completed or already paid claims)
 	const disabledKeys = useMemo(() => {
 		if (!enableMultiSelect) return new Set<string>();
-		
+
 		return new Set(
 			data
 				.filter(
-					(item) =>
-						item.status !== "completed" ||
-						item.paymentStatus === "paid"
+					(item) => item.status !== "completed" || item.paymentStatus === "paid"
 				)
 				.map((item) => item.id)
 		);
@@ -629,7 +645,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 						item.completedAt ? formatDate(item.completedAt) : "N/A",
 						item.authorizedForPayment ? "Yes" : "No"
 					);
-					
+
 					// Add bank details for samsung-sentinel
 					if (role === "samsung-sentinel" && item.serviceCenterId) {
 						const serviceCenter = testData.serviceCenters.find(
@@ -698,9 +714,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		if (keys === "all") {
 			// Select all non-disabled items
 			const allKeys = new Set(
-				data
-					.filter((item) => !disabledKeys.has(item.id))
-					.map((item) => item.id)
+				data.filter((item) => !disabledKeys.has(item.id)).map((item) => item.id)
 			);
 			setSelectedKeys(allKeys);
 		} else {
@@ -748,7 +762,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	// Determine what bulk actions to show
 	const getBulkActions = () => {
 		// Samsung Sentinel: Execute bulk payment for completed/unpaid
-		if (role === "samsung-sentinel" && status === "completed" && paymentFilter === "unpaid") {
+		if (
+			role === "samsung-sentinel" &&
+			status === "completed" &&
+			paymentFilter === "unpaid"
+		) {
 			return (
 				<Button
 					size="sm"
@@ -786,7 +804,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		}
 
 		// Samsung Partners: Bulk authorize payment for completed/unpaid
-		if (role === "samsung-partners" && status === "completed" && paymentFilter === "unpaid") {
+		if (
+			role === "samsung-partners" &&
+			status === "completed" &&
+			paymentFilter === "unpaid"
+		) {
 			return (
 				<Button
 					size="sm"
@@ -809,11 +831,15 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				<div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-center justify-between">
 					<div className="flex items-center gap-4">
 						<div className="text-sm font-medium text-primary-700 dark:text-primary-300">
-							{selectedKeys.size} claim{selectedKeys.size !== 1 ? "s" : ""} selected
+							{selectedKeys.size} claim{selectedKeys.size !== 1 ? "s" : ""}{" "}
+							selected
 						</div>
 						{(status === "completed" || paymentFilter === "unpaid") && (
 							<div className="text-sm text-primary-600 dark:text-primary-400">
-								Total: <span className="font-bold">₦{selectedTotalAmount.toLocaleString()}</span>
+								Total:{" "}
+								<span className="font-bold">
+									₦{selectedTotalAmount.toLocaleString()}
+								</span>
 							</div>
 						)}
 					</div>
