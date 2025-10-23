@@ -1,7 +1,7 @@
-import ViewServiceCenterClaimView from "@/view/service-center/ViewServiceCenterClaimView";
+import ViewClaimDetailView from "@/view/shared/ViewClaimDetailView";
 
 const ServiceCenterClaimDetailPage = () => {
-	return <ViewServiceCenterClaimView />;
+	return <ViewClaimDetailView />;
 };
 
 export default ServiceCenterClaimDetailPage;
