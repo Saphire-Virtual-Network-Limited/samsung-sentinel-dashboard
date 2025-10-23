@@ -8,6 +8,13 @@ import {
 	Select,
 	SelectItem,
 	Chip,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	Button,
+	DateRangePicker,
 } from "@heroui/react";
 import { StatCard } from "@/components/atoms/StatCard";
 import GenericTable, {
@@ -22,7 +29,20 @@ import {
 	Building2,
 	Calendar,
 	BarChart3,
+	Activity,
 } from "lucide-react";
+import {
+	LineChart,
+	Line,
+	AreaChart,
+	Area,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
+	Legend,
+	ResponsiveContainer,
+} from "recharts";
 import { usePathname } from "next/navigation";
 
 interface ServiceCenterStats {
@@ -47,6 +67,15 @@ const DEVICE_MODELS = [
 	{ label: "Samsung A07", value: "A07" },
 ];
 
+const TREND_PERIODS = [
+	{ label: "Daily (Last 30 Days)", value: "daily" },
+	{ label: "Weekly (Last 12 Weeks)", value: "weekly" },
+	{ label: "Month to Date", value: "mtd" },
+	{ label: "Yearly (Last 12 Months)", value: "yearly" },
+	{ label: "Since Inception", value: "inception" },
+	{ label: "Custom Date Range", value: "custom" },
+];
+
 const serviceCenterColumns: ColumnDef[] = [
 	{ name: "Service Center", uid: "name", sortable: true },
 	{ name: "Location", uid: "location", sortable: true },
@@ -61,6 +90,9 @@ export default function SamsungSentinelStatisticsView() {
 	const pathname = usePathname();
 	const role = pathname.split("/")[2];
 	const [selectedModel, setSelectedModel] = useState("all");
+	const [trendPeriod, setTrendPeriod] = useState("daily");
+	const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
+	const [customDateRange, setCustomDateRange] = useState<any>(null);
 
 	// Mock statistics data
 	const stats = useMemo(
@@ -159,6 +191,88 @@ export default function SamsungSentinelStatisticsView() {
 		],
 		[]
 	);
+
+	// Mock trend data for charts based on selected period
+	const trendData = useMemo(() => {
+		const data = [];
+		const today = new Date();
+		let periods = 30;
+		let dateFormat: Intl.DateTimeFormatOptions = {
+			month: "short",
+			day: "numeric",
+		};
+
+		// Determine periods and format based on selected trend period
+		switch (trendPeriod) {
+			case "daily":
+				periods = 30;
+				dateFormat = { month: "short", day: "numeric" };
+				break;
+			case "weekly":
+				periods = 12;
+				dateFormat = { month: "short", day: "numeric" };
+				break;
+			case "mtd":
+				const dayOfMonth = today.getDate();
+				periods = dayOfMonth;
+				dateFormat = { month: "short", day: "numeric" };
+				break;
+			case "yearly":
+				periods = 12;
+				dateFormat = { month: "short", year: "numeric" };
+				break;
+			case "inception":
+				periods = 24; // Last 24 months for inception view
+				dateFormat = { month: "short", year: "numeric" };
+				break;
+			case "custom":
+				periods = 30; // Default for now, will be replaced with custom logic
+				dateFormat = { month: "short", day: "numeric" };
+				break;
+		}
+
+		for (let i = periods - 1; i >= 0; i--) {
+			const date = new Date(today);
+
+			// Calculate date based on period type
+			if (trendPeriod === "weekly") {
+				date.setDate(date.getDate() - i * 7);
+			} else if (trendPeriod === "yearly" || trendPeriod === "inception") {
+				date.setMonth(date.getMonth() - i);
+			} else {
+				date.setDate(date.getDate() - i);
+			}
+
+			const dateStr = date.toLocaleDateString("en-US", dateFormat);
+
+			// Generate realistic trending data with scaling based on period
+			const multiplier =
+				trendPeriod === "weekly"
+					? 7
+					: trendPeriod === "yearly" || trendPeriod === "inception"
+					? 30
+					: 1;
+
+			const totalClaims = (400 + Math.random() * 150) * multiplier;
+			const authorizedRepairs = Math.round(
+				totalClaims * (0.6 + Math.random() * 0.3)
+			); // 60-90% completion rate
+			const totalRepairCost = (2500000 + Math.random() * 800000) * multiplier;
+			const paidAmount = Math.round(
+				totalRepairCost * (0.5 + Math.random() * 0.4)
+			); // 50-90% paid
+
+			data.push({
+				date: dateStr,
+				totalClaims: Math.round(totalClaims),
+				authorizedRepairs: authorizedRepairs,
+				totalRepairCost: Math.round(totalRepairCost),
+				paidAmount: paidAmount,
+			});
+		}
+
+		return data;
+	}, [trendPeriod]);
 
 	// Filter data based on selected model
 	const filteredServiceCenterData = useMemo(() => {
@@ -336,6 +450,152 @@ export default function SamsungSentinelStatisticsView() {
 				</div>
 			</div>
 
+			{/* Trend Charts */}
+			<div>
+				<div className="flex items-center justify-between mb-4">
+					<h2 className="text-lg font-semibold flex items-center gap-2">
+						<Activity className="w-5 h-5" />
+						Trend Analysis
+					</h2>
+					<Select
+						placeholder="Select time period"
+						selectedKeys={trendPeriod ? [trendPeriod] : []}
+						onSelectionChange={(keys) => {
+							const selected = Array.from(keys)[0] as string;
+							if (selected === "custom") {
+								setIsCustomDateModalOpen(true);
+							} else {
+								setTrendPeriod(selected || "daily");
+							}
+						}}
+						className="w-auto min-w-[200px]"
+						size="sm"
+					>
+						{TREND_PERIODS.map((period) => (
+							<SelectItem key={period.value} value={period.value}>
+								{period.label}
+							</SelectItem>
+						))}
+					</Select>
+				</div>
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+					{/* Claims Trend Chart */}
+					<Card>
+						<CardHeader className="flex-col items-start gap-1">
+							<div className="flex justify-between items-center w-full">
+								<h3 className="text-base font-semibold">Claims Over Time</h3>
+								<p className="text-xs text-gray-500">
+									Total Claims vs Completed Repairs
+								</p>
+							</div>
+						</CardHeader>
+						<CardBody>
+							<ResponsiveContainer width="100%" height={300}>
+								<AreaChart data={trendData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										dataKey="date"
+										tick={{ fontSize: 12 }}
+										angle={-45}
+										textAnchor="end"
+										height={60}
+									/>
+									<YAxis tick={{ fontSize: 12 }} />
+									<Tooltip
+										contentStyle={{
+											backgroundColor: "rgba(255, 255, 255, 0.95)",
+											border: "1px solid #ccc",
+											borderRadius: "8px",
+										}}
+									/>
+									<Legend wrapperStyle={{ paddingTop: "10px" }} />
+									<Area
+										type="monotone"
+										dataKey="totalClaims"
+										stroke="#3b82f6"
+										fill="#3b82f6"
+										fillOpacity={0.6}
+										strokeWidth={2}
+										name="Total Claims"
+									/>
+									<Area
+										type="monotone"
+										dataKey="authorizedRepairs"
+										stroke="#10b981"
+										fill="#10b981"
+										fillOpacity={0.6}
+										strokeWidth={2}
+										name="Authorized Repairs (Completed)"
+									/>
+								</AreaChart>
+							</ResponsiveContainer>
+						</CardBody>
+					</Card>
+
+					{/* Repair Costs Trend Chart */}
+					<Card>
+						<CardHeader className="flex-col items-start gap-1">
+							<div className="flex justify-between items-center w-full">
+								<h3 className="text-base font-semibold">
+									Repair Costs Over Time
+								</h3>
+								<p className="text-xs text-gray-500">
+									Total Cost vs Paid Amount
+								</p>
+							</div>
+						</CardHeader>
+						<CardBody>
+							<ResponsiveContainer width="100%" height={300}>
+								<AreaChart data={trendData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										dataKey="date"
+										tick={{ fontSize: 12 }}
+										angle={-45}
+										textAnchor="end"
+										height={60}
+									/>
+									<YAxis
+										tick={{ fontSize: 12 }}
+										tickFormatter={(value) =>
+											`₦${(value / 1000000).toFixed(1)}M`
+										}
+									/>
+									<Tooltip
+										contentStyle={{
+											backgroundColor: "rgba(255, 255, 255, 0.95)",
+											border: "1px solid #ccc",
+											borderRadius: "8px",
+										}}
+										formatter={(value: number) => [
+											formatCurrency(value),
+											undefined,
+										]}
+									/>
+									<Legend wrapperStyle={{ paddingTop: "10px" }} />
+									<Area
+										type="monotone"
+										dataKey="totalRepairCost"
+										stroke="#3b82f6"
+										fill="#3b82f6"
+										fillOpacity={0.6}
+										name="Total Repair Cost"
+									/>
+									<Area
+										type="monotone"
+										dataKey="paidAmount"
+										stroke="#10b981"
+										fill="#10b981"
+										fillOpacity={0.6}
+										name="Paid Amount"
+									/>
+								</AreaChart>
+							</ResponsiveContainer>
+						</CardBody>
+					</Card>
+				</div>
+			</div>
+
 			{/* Device Model Statistics */}
 			<div>
 				<div className="flex items-center justify-between mb-4">
@@ -348,7 +608,7 @@ export default function SamsungSentinelStatisticsView() {
 					{Object.entries(deviceStats).map(([model, data]) => (
 						<Card key={model}>
 							<CardHeader className="pb-2">
-								<div className="flex items-center justify-between">
+								<div className="flex items-center justify-between w-full">
 									<h3 className="text-lg font-semibold">Samsung {model}</h3>
 									<Chip color="primary" variant="flat">
 										{data.approved.toLocaleString()} repairs
@@ -429,6 +689,47 @@ export default function SamsungSentinelStatisticsView() {
 					searchPlaceholder="Search service centers..."
 				/>
 			</div>
+
+			{/* Custom Date Range Modal */}
+			<Modal
+				isOpen={isCustomDateModalOpen}
+				onClose={() => setIsCustomDateModalOpen(false)}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Select Custom Date Range</h3>
+					</ModalHeader>
+					<ModalBody>
+						<DateRangePicker
+							label="Date Range"
+							value={customDateRange}
+							onChange={setCustomDateRange}
+							className="w-full"
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="danger"
+							variant="light"
+							onPress={() => setIsCustomDateModalOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="primary"
+							onPress={() => {
+								if (customDateRange) {
+									setTrendPeriod("custom");
+									setIsCustomDateModalOpen(false);
+								}
+							}}
+						>
+							Apply
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }
