@@ -3670,7 +3670,7 @@ export default function CollectionSingleCustomerPage() {
 																	</div>
 
 																	{/* Manual Charge Button - Show only if payment is due within 24 hours, on due date, or overdue */}
-																	{isPaymentDueOrOverdue(schedule.dueDate) && schedule.status !== "COMPLETED" && (
+																	{/* {isPaymentDueOrOverdue(schedule.dueDate) && schedule.status !== "COMPLETED" && (
 																		<div className="mb-3 flex justify-end">
 																			<Button
 																				onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
@@ -3691,7 +3691,7 @@ export default function CollectionSingleCustomerPage() {
 																				)}
 																			</Button>
 																		</div>
-																	)}
+																	)} */}
 
 																	{/* Payment Details - Collapsible */}
 																	{schedule.repayments && schedule.repayments.length > 0 && (
