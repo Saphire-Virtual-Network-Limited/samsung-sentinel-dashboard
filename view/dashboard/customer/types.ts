@@ -249,7 +249,7 @@ export type CustomerRecord = {
 			deviceId: string;
 			loanRecordId: string;
 			status: string;
-			lockType: string;
+			lockType?: string | null;
 			createdAt: string;
 			updatedAt: string;
 			channel: string;
@@ -257,6 +257,7 @@ export type CustomerRecord = {
 			newDeviceId: string | null;
 			amount: number;
 			devicePrice: number;
+			lockProvider?: string | null;
 		}>;
 	}>;
 	regBy: {

@@ -2724,14 +2724,30 @@ export default function CollectionSingleCustomerPage() {
 																	{device.imei || "N/A"}
 																</div>
 															</div>
-															<div>
-																<div className="text-sm text-default-500 mb-1">
-																	Lock Type
-																</div>
-																<div className="font-medium text-default-900">
-																	{device.lockType || "N/A"}
-																</div>
+														<div>
+															<div className="text-sm text-default-500 mb-1">
+																Lock Type
 															</div>
+															<div className="font-medium">
+																{device.lockType ? (
+																	<span className="text-blue-600">{device.lockType}</span>
+																) : (
+																	<span className="text-green-600 font-semibold">Unlocked</span>
+																)}
+															</div>
+														</div>
+														<div>
+															<div className="text-sm text-default-500 mb-1">
+																Lock Provider
+															</div>
+															<div className="font-medium">
+																{device.lockProvider ? (
+																	<span className="text-purple-600">{device.lockProvider}</span>
+																) : (
+																	<span className="text-gray-500">N/A</span>
+																)}
+															</div>
+														</div>
 															<div>
 																<div className="text-sm text-default-500 mb-1">
 																	Amount
