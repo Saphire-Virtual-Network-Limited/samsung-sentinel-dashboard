@@ -913,13 +913,13 @@ export default function CollectionSingleCustomerPage() {
 			console.log(response);
 			showToast({
 				type: "success",
-				message: response.message || "Customer repayment charged successfully",
+				message: response?.data?.message || response?.message || "Customer repayment charged successfully",
 				duration: 8000,
 			});
 		} catch (error: any) {
 			showToast({
 				type: "error",
-				message: error.message || "Failed to charge customer repayment",
+				message: error?.message || error?.response?.data?.message || error?.response?.message || "Failed to charge customer repayment",
 				duration: 8000,
 			});
 		} finally {
