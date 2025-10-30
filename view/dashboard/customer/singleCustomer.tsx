@@ -643,6 +643,8 @@ export default function CollectionSingleCustomerPage() {
 	const [repaymentLoading, setRepaymentLoading] = useState(false);
 	const [repaymentError, setRepaymentError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<"timeline" | "grid">("timeline");
+	const [manualChargeCooldowns, setManualChargeCooldowns] = useState<Record<string, number>>({});
+	const [countdownTimers, setCountdownTimers] = useState<Record<string, number>>({});
 
 	const {
 		value: imei,
@@ -898,6 +900,13 @@ export default function CollectionSingleCustomerPage() {
 
 
 	const handleManualChargeCustomerRepayment = async (scheduleId: string) => {
+		// Record the click time for cooldown
+		const now = Date.now();
+		setManualChargeCooldowns((prev) => ({
+			...prev,
+			[scheduleId]: now,
+		}));
+
 		setIsButtonLoading(true);
 		try {
 			const response = await manualChargeCustomerRepayment(scheduleId);
@@ -917,6 +926,44 @@ export default function CollectionSingleCustomerPage() {
 			setIsButtonLoading(false);
 		}
 	};
+
+	// Helper function to check if schedule is in cooldown and get remaining time
+	const getCooldownRemaining = useCallback((scheduleId: string): number => {
+		const lastClickTime = manualChargeCooldowns[scheduleId];
+		if (!lastClickTime) return 0;
+		
+		const now = Date.now();
+		const elapsed = now - lastClickTime;
+		const cooldownDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+		const remaining = cooldownDuration - elapsed;
+		
+		return Math.max(0, remaining);
+	}, [manualChargeCooldowns]);
+
+	// Helper function to format remaining time
+	const formatRemainingTime = useCallback((milliseconds: number): string => {
+		if (milliseconds <= 0) return "";
+		const totalSeconds = Math.ceil(milliseconds / 1000);
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+	}, []);
+
+	// Update countdown timers every second
+	useEffect(() => {
+		if (repaymentSchedule?.schedules) {
+			const interval = setInterval(() => {
+				const timers: Record<string, number> = {};
+				repaymentSchedule.schedules.forEach((schedule) => {
+					const remaining = getCooldownRemaining(schedule.id);
+					timers[schedule.id] = remaining;
+				});
+				setCountdownTimers(timers);
+			}, 1000);
+
+			return () => clearInterval(interval);
+		}
+	}, [repaymentSchedule, getCooldownRemaining]);
 
 	// Helper functions for repayment schedule
 	const formatCurrency = useCallback((amount: number | undefined): string => {
@@ -3669,29 +3716,47 @@ export default function CollectionSingleCustomerPage() {
 																		</div>
 																	</div>
 
-																	{/* Manual Charge Button - Show only if payment is due within 24 hours, on due date, or overdue */}
-																	{/* {isPaymentDueOrOverdue(schedule.dueDate) && schedule.status !== "COMPLETED" && (
+																	{/* Manual Charge Button - 5 minute cooldown after click */}
+																	{schedule.status !== "COMPLETED" && (
 																		<div className="mb-3 flex justify-end">
-																			<Button
-																				onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
-																				disabled={isButtonLoading}
-																				size="sm"
-																				className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-1"
-																			>
-																				{isButtonLoading ? (
-																					<>
-																						<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-																						<span>Processing...</span>
-																					</>
-																				) : (
-																					<>
-																						<CreditCard className="w-3 h-3" />
-																						<span>Manual Charge</span>
-																					</>
-																				)}
-																			</Button>
+																			{(() => {
+																				const remaining = countdownTimers[schedule.id] || 0;
+																				const isInCooldown = remaining > 0;
+																				const isDisabled = isButtonLoading || isInCooldown;
+																				return (
+																					<div className="flex flex-col items-end gap-1">
+																						<Button
+																							onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
+																							isDisabled={isDisabled}
+																							size="sm"
+																							className={`text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-1 ${
+																								isDisabled
+																									? "bg-gray-400 cursor-not-allowed"
+																									: "bg-blue-600 hover:bg-blue-700"
+																							}`}
+																						>
+																							{isButtonLoading ? (
+																								<>
+																									<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+																									<span>Processing...</span>
+																								</>
+																							) : (
+																								<>
+																									<CreditCard className="w-3 h-3" />
+																									<span>Manual Charge</span>
+																								</>
+																							)}
+																						</Button>
+																						{isInCooldown && (
+																							<p className="text-xs text-gray-500">
+																								Available in {formatRemainingTime(remaining)}
+																							</p>
+																						)}
+																					</div>
+																				);
+																			})()}
 																		</div>
-																	)} */}
+																	)}
 
 																	{/* Payment Details - Collapsible */}
 																	{schedule.repayments && schedule.repayments.length > 0 && (
