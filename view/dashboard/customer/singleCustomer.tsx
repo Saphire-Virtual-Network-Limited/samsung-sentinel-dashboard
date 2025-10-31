@@ -665,6 +665,7 @@ export default function CollectionSingleCustomerPage() {
 		useState<CustomerRecord | null>(null);
 	const [amount, setAmount] = useState<string>("");
 	const [isButtonLoading, setIsButtonLoading] = useState(false);
+	const [manualChargeLoading, setManualChargeLoading] = useState<string | null>(null);
 	const [lastPoint, setLastPoint] = useState<string>("");
 	const [selectedAction, setSelectedAction] = useState<string>("");
 	const [deviceActionData, setDeviceActionData] = useState<{
@@ -907,7 +908,7 @@ export default function CollectionSingleCustomerPage() {
 			[scheduleId]: now,
 		}));
 
-		setIsButtonLoading(true);
+		setManualChargeLoading(scheduleId);
 		try {
 			const response = await manualChargeCustomerRepayment(scheduleId);
 			console.log(response);
@@ -923,7 +924,7 @@ export default function CollectionSingleCustomerPage() {
 				duration: 8000,
 			});
 		} finally {
-			setIsButtonLoading(false);
+			setManualChargeLoading(null);
 		}
 	};
 
@@ -3717,12 +3718,13 @@ export default function CollectionSingleCustomerPage() {
 																	</div>
 
 																	{/* Manual Charge Button - 5 minute cooldown after click */}
-																	{schedule.status !== "COMPLETED" && (
+																	{schedule.status !== "COMPLETED" && schedule.status !== "PENDING" && (
 																		<div className="mb-3 flex justify-end">
 																			{(() => {
 																				const remaining = countdownTimers[schedule.id] || 0;
 																				const isInCooldown = remaining > 0;
-																				const isDisabled = isButtonLoading || isInCooldown;
+																				const isThisButtonLoading = manualChargeLoading === schedule.id;
+																				const isDisabled = isThisButtonLoading || isInCooldown;
 																				return (
 																					<div className="flex flex-col items-end gap-1">
 																						<Button
@@ -3735,7 +3737,7 @@ export default function CollectionSingleCustomerPage() {
 																									: "bg-blue-600 hover:bg-blue-700"
 																							}`}
 																						>
-																							{isButtonLoading ? (
+																							{isThisButtonLoading ? (
 																								<>
 																									<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
 																									<span>Processing...</span>
