@@ -1049,6 +1049,25 @@ export default function CollectionSingleCustomerPage() {
 		}
 	}, []);
 
+	// Helper function to check if due date has passed (is today or in the past)
+	const isDueDatePassed = useCallback((dueDate: string): boolean => {
+		if (!dueDate) return false;
+		
+		try {
+			const due = new Date(dueDate);
+			const now = new Date();
+			// Reset time to start of day for accurate comparison
+			const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+			const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+			
+			// Return true if due date is today or in the past
+			return dueDateOnly <= todayOnly;
+		} catch (error) {
+			console.error("Error parsing due date:", error);
+			return false;
+		}
+	}, []);
+
 	// Helper function to convert datetime-local format to CalendarDateTime
 	const parseLocalDateTime = useCallback((localDateTime: string) => {
 		if (!localDateTime) return null;
@@ -3718,7 +3737,18 @@ export default function CollectionSingleCustomerPage() {
 																	</div>
 
 																	{/* Manual Charge Button - 5 minute cooldown after click */}
-																	{schedule.status !== "COMPLETED" && schedule.status !== "PENDING" && (
+																	{(() => {
+																		// Don't show for COMPLETED or PENDING status
+																		if (schedule.status === "COMPLETED" || schedule.status === "PENDING") {
+																			return false;
+																		}
+																		// For PARTIAL status, only show if due date has passed
+																		if (schedule.status === "PARTIAL") {
+																			return isDueDatePassed(schedule.dueDate);
+																		}
+																		// For other statuses (like overdue), show the button
+																		return true;
+																	})() && (
 																		<div className="mb-3 flex justify-end">
 																			{(() => {
 																				const remaining = countdownTimers[schedule.id] || 0;
