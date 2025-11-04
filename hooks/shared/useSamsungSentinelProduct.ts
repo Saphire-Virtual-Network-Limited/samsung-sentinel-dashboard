@@ -70,8 +70,22 @@ export function useSamsungSentinelProduct(
 		lastUpdatedAt: "2024-10-01T14:22:00Z",
 		lastUpdatedBy: "subadmin@sapphire.com",
 		status: "active",
-		sapphireCost: productId === "samsung_a05" ? 150000 : productId === "samsung_a06" ? 180000 : productId === "samsung_a07" ? 200000 : 175000,
-		repairCost: productId === "samsung_a05" ? 25000 : productId === "samsung_a06" ? 30000 : productId === "samsung_a07" ? 35000 : 28000,
+		sapphireCost:
+			productId === "samsung_a05"
+				? 150000
+				: productId === "samsung_a06"
+				? 180000
+				: productId === "samsung_a07"
+				? 200000
+				: 175000,
+		repairCost:
+			productId === "samsung_a05"
+				? 25000
+				: productId === "samsung_a06"
+				? 30000
+				: productId === "samsung_a07"
+				? 35000
+				: 28000,
 	});
 
 	const getMockAuditHistory = (): AuditHistory[] => [

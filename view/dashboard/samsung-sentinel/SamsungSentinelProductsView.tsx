@@ -145,8 +145,10 @@ export default function SamsungSentinelProductsView() {
 		() => ({
 			totalProducts: products.length,
 			activeProducts: products.filter((p) => p.status === "active").length,
-			averageSapphireCost: products.reduce((sum, p) => sum + p.sapphireCost, 0) / products.length,
-			averageRepairCost: products.reduce((sum, p) => sum + p.repairCost, 0) / products.length,
+			averageSapphireCost:
+				products.reduce((sum, p) => sum + p.sapphireCost, 0) / products.length,
+			averageRepairCost:
+				products.reduce((sum, p) => sum + p.repairCost, 0) / products.length,
 		}),
 		[products]
 	);

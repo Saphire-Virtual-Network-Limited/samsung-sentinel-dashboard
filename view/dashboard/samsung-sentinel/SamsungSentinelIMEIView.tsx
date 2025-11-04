@@ -407,11 +407,12 @@ export default function SamsungSentinelIMEIView() {
 		setIsSearching(true);
 		try {
 			// Mock API call - replace with actual API
-			await new Promise(resolve => setTimeout(resolve, 1500));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+
 			// Mock search results based on IMEI
-			const isUsedImei = searchImei.includes("111") || searchImei.includes("222");
-			
+			const isUsedImei =
+				searchImei.includes("111") || searchImei.includes("222");
+
 			if (!isUsedImei) {
 				// Unused IMEI - show unverified status
 				setSearchResult({
@@ -434,7 +435,7 @@ export default function SamsungSentinelIMEIView() {
 							issueDescription: "Screen replacement",
 						},
 						{
-							id: "claim_002", 
+							id: "claim_002",
 							customerName: "Jane Smith",
 							claimStatus: "pending",
 							dateCreated: "2024-10-20T14:22:00Z",
@@ -443,7 +444,6 @@ export default function SamsungSentinelIMEIView() {
 					],
 				});
 			}
-			
 		} catch (error) {
 			showToast({ message: "Failed to search IMEI", type: "error" });
 		} finally {
@@ -736,7 +736,11 @@ export default function SamsungSentinelIMEIView() {
 			</Modal>
 
 			{/* Search IMEI Modal */}
-			<Modal isOpen={isSearchModalOpen} onClose={handleSearchModalClose} size="3xl">
+			<Modal
+				isOpen={isSearchModalOpen}
+				onClose={handleSearchModalClose}
+				size="3xl"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -781,7 +785,9 @@ export default function SamsungSentinelIMEIView() {
 															</div>
 															<div>
 																<span className="text-gray-600">Claims:</span>{" "}
-																<span className="font-medium">{searchResult.claimsCount}</span>
+																<span className="font-medium">
+																	{searchResult.claimsCount}
+																</span>
 															</div>
 														</div>
 													</div>
@@ -794,7 +800,8 @@ export default function SamsungSentinelIMEIView() {
 															IMEI: {searchResult.imei} (In Use)
 														</h3>
 														<p className="text-sm text-amber-800">
-															This IMEI has {searchResult.claims.length} associated claim(s):
+															This IMEI has {searchResult.claims.length}{" "}
+															associated claim(s):
 														</p>
 													</div>
 
@@ -819,7 +826,10 @@ export default function SamsungSentinelIMEIView() {
 															</thead>
 															<tbody className="bg-white divide-y divide-gray-200">
 																{searchResult.claims.map((claim: any) => (
-																	<tr key={claim.id} className="hover:bg-gray-50">
+																	<tr
+																		key={claim.id}
+																		className="hover:bg-gray-50"
+																	>
 																		<td className="px-4 py-3 text-sm font-medium text-gray-900">
 																			{claim.customerName}
 																		</td>
@@ -842,7 +852,9 @@ export default function SamsungSentinelIMEIView() {
 																			</Chip>
 																		</td>
 																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{new Date(claim.dateCreated).toLocaleDateString()}
+																			{new Date(
+																				claim.dateCreated
+																			).toLocaleDateString()}
 																		</td>
 																	</tr>
 																))}

@@ -10,7 +10,6 @@ import {
 	ModalFooter,
 	useDisclosure,
 	Input,
-
 	Chip,
 	Card,
 	CardBody,
@@ -20,7 +19,6 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
-
 } from "@heroui/react";
 import {
 	InfoCard,
@@ -123,9 +121,14 @@ export default function SingleProductView({
 			};
 
 		const totalValue = product.sapphireCost + product.repairCost;
-		const profitMargin = product.sapphireCost > 0 
-			? Math.round(((product.sapphireCost - product.repairCost) / product.sapphireCost) * 100)
-			: 0;
+		const profitMargin =
+			product.sapphireCost > 0
+				? Math.round(
+						((product.sapphireCost - product.repairCost) /
+							product.sapphireCost) *
+							100
+				  )
+				: 0;
 
 		return {
 			sapphireCost: product.sapphireCost,
@@ -145,7 +148,10 @@ export default function SingleProductView({
 		setIsLoading(true);
 		try {
 			// API call to update product name
-			showToast({ message: "Product name updated successfully", type: "success" });
+			showToast({
+				message: "Product name updated successfully",
+				type: "success",
+			});
 			onEditNameModalClose();
 			setProductName("");
 			mutate(); // Refresh product data
@@ -167,7 +173,10 @@ export default function SingleProductView({
 		setIsLoading(true);
 		try {
 			// API call to update sapphire cost
-			showToast({ message: "Sapphire cost updated successfully", type: "success" });
+			showToast({
+				message: "Sapphire cost updated successfully",
+				type: "success",
+			});
 			onEditSapphireCostModalClose();
 			setSapphireCost("");
 			mutate(); // Refresh product data
@@ -189,7 +198,10 @@ export default function SingleProductView({
 		setIsLoading(true);
 		try {
 			// API call to update repair cost
-			showToast({ message: "Repair cost updated successfully", type: "success" });
+			showToast({
+				message: "Repair cost updated successfully",
+				type: "success",
+			});
 			onEditRepairCostModalClose();
 			setRepairCost("");
 			mutate(); // Refresh product data
@@ -199,8 +211,6 @@ export default function SingleProductView({
 			setIsLoading(false);
 		}
 	};
-
-
 
 	// Handle toggle product status
 	const handleToggleProductStatus = async () => {
@@ -220,10 +230,6 @@ export default function SingleProductView({
 			setIsLoading(false);
 		}
 	};
-
-
-
-
 
 	// Render audit history cell
 	const renderAuditCell = (row: AuditHistory, key: string) => {
@@ -316,9 +322,9 @@ export default function SingleProductView({
 			{/* Product Info Card */}
 			<InfoCard title="Product Information">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					<InfoField 
-						label="Product Name" 
-						value={product.name} 
+					<InfoField
+						label="Product Name"
+						value={product.name}
 						endComponent={
 							<Button
 								size="sm"
@@ -437,7 +443,11 @@ export default function SingleProductView({
 			</div>
 
 			{/* Edit Product Name Modal */}
-			<Modal isOpen={isEditNameModalOpen} onClose={onEditNameModalClose} size="lg">
+			<Modal
+				isOpen={isEditNameModalOpen}
+				onClose={onEditNameModalClose}
+				size="lg"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -471,7 +481,11 @@ export default function SingleProductView({
 			</Modal>
 
 			{/* Edit Sapphire Cost Modal */}
-			<Modal isOpen={isEditSapphireCostModalOpen} onClose={onEditSapphireCostModalClose} size="lg">
+			<Modal
+				isOpen={isEditSapphireCostModalOpen}
+				onClose={onEditSapphireCostModalClose}
+				size="lg"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -506,7 +520,11 @@ export default function SingleProductView({
 			</Modal>
 
 			{/* Edit Repair Cost Modal */}
-			<Modal isOpen={isEditRepairCostModalOpen} onClose={onEditRepairCostModalClose} size="lg">
+			<Modal
+				isOpen={isEditRepairCostModalOpen}
+				onClose={onEditRepairCostModalClose}
+				size="lg"
+			>
 				<ModalContent>
 					{() => (
 						<>
@@ -539,8 +557,6 @@ export default function SingleProductView({
 					)}
 				</ModalContent>
 			</Modal>
-
-
 		</div>
 	);
 }
