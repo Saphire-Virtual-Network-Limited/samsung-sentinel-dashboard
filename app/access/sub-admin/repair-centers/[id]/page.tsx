@@ -2,11 +2,12 @@ import React from "react";
 import { SubAdminRepairCenterDetailView } from "@/view/admin";
 
 interface PageProps {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
-const page = ({ params }: PageProps) => {
-	return <SubAdminRepairCenterDetailView repairCenterId={params.id} />;
+const Page = ({ params }: PageProps) => {
+	const { id } = React.use(params);
+	return <SubAdminRepairCenterDetailView repairCenterId={id} />;
 };
 
-export default page;
+export default Page;

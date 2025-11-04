@@ -108,22 +108,24 @@ const statusColorMap = {
 };
 
 interface SubAdminRepairCenterDetailViewProps {
-	repairCenterId: string;
+	repairCenterId?: string;
 }
 
 export default function SubAdminRepairCenterDetailView({
 	repairCenterId,
-}: SubAdminRepairCenterDetailViewProps) {
+}: SubAdminRepairCenterDetailViewProps = {}) {
 	const router = useRouter();
 	const pathname = usePathname();
+	const params = useParams();
 	const role = pathname.split("/")[2];
+	const actualRepairCenterId = repairCenterId || (params.id as string);
 
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Mock data - replace with actual API call
 	const repairCenter: RepairCenter = useMemo(
 		() => ({
-			id: repairCenterId,
+			id: actualRepairCenterId,
 			name: "Sapphire Repair Center Lagos",
 			address: "Plot 15, Admiralty Way, Lekki Phase 1",
 			state: "Lagos",
@@ -176,7 +178,7 @@ export default function SubAdminRepairCenterDetailView({
 				},
 			],
 		}),
-		[repairCenterId]
+		[actualRepairCenterId]
 	);
 
 	// Statistics
