@@ -412,8 +412,8 @@ export default function RepairStoreClaimsView() {
 								>
 									View Details
 								</DropdownItem>
-								{row.status === "pending" && (
-									<>
+								{row.status === "pending" ? (
+									<React.Fragment>
 										<DropdownItem
 											key="approve"
 											className="text-success"
@@ -436,8 +436,8 @@ export default function RepairStoreClaimsView() {
 										>
 											Reject Claim
 										</DropdownItem>
-									</>
-								)}
+									</React.Fragment>
+								) : null}
 							</DropdownMenu>
 						</Dropdown>
 					</div>

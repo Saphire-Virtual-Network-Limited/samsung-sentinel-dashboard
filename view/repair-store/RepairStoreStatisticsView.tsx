@@ -46,6 +46,23 @@ export default function RepairStoreStatisticsView() {
 		new Set(["all"])
 	);
 
+	// Selection handlers
+	const handleTimeRangeChange = (keys: any) => {
+		if (keys === "all") {
+			setTimeRange(new Set(["30days"]));
+		} else {
+			setTimeRange(new Set(Array.from(keys)));
+		}
+	};
+
+	const handleSelectedCenterChange = (keys: any) => {
+		if (keys === "all") {
+			setSelectedCenter(new Set(["all"]));
+		} else {
+			setSelectedCenter(new Set(Array.from(keys)));
+		}
+	};
+
 	// Mock data
 	const serviceCenters = [
 		{ name: "All Centers", uid: "all" },
@@ -223,7 +240,7 @@ export default function RepairStoreStatisticsView() {
 						label="Time Range"
 						className="max-w-xs"
 						selectedKeys={timeRange}
-						onSelectionChange={setTimeRange}
+						onSelectionChange={handleTimeRangeChange}
 						size="sm"
 					>
 						{timeRanges.map((range) => (
@@ -236,7 +253,7 @@ export default function RepairStoreStatisticsView() {
 						label="Service Center"
 						className="max-w-xs"
 						selectedKeys={selectedCenter}
-						onSelectionChange={setSelectedCenter}
+						onSelectionChange={handleSelectedCenterChange}
 						size="sm"
 					>
 						{serviceCenters.map((center) => (

@@ -110,10 +110,16 @@ const statusColorMap = {
 	suspended: "warning" as const,
 };
 
-export default function RepairStoreSingleServiceCenterView() {
+interface RepairStoreSingleServiceCenterViewProps {
+	centerId?: string;
+}
+
+export default function RepairStoreSingleServiceCenterView({
+	centerId,
+}: RepairStoreSingleServiceCenterViewProps = {}) {
 	const router = useRouter();
 	const params = useParams();
-	const serviceCenterId = params.id as string;
+	const serviceCenterId = centerId || (params.id as string);
 
 	// Modal states
 	const {

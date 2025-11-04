@@ -92,6 +92,23 @@ export default function RepairStoreEngineersView() {
 	);
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
+	// Selection handlers
+	const handleServiceCenterFilterChange = (keys: any) => {
+		if (keys === "all") {
+			setServiceCenterFilter(new Set());
+		} else {
+			setServiceCenterFilter(new Set(Array.from(keys)));
+		}
+	};
+
+	const handleRoleFilterChange = (keys: any) => {
+		if (keys === "all") {
+			setRoleFilter(new Set());
+		} else {
+			setRoleFilter(new Set(Array.from(keys)));
+		}
+	};
+
 	// Mock data
 	const engineers: Engineer[] = useMemo(
 		() => [
@@ -582,7 +599,7 @@ export default function RepairStoreEngineersView() {
 						placeholder="All Service Centers"
 						className="max-w-xs"
 						selectedKeys={serviceCenterFilter}
-						onSelectionChange={setServiceCenterFilter}
+						onSelectionChange={handleServiceCenterFilterChange}
 						selectionMode="multiple"
 					>
 						{serviceCenters.map((center) => (
@@ -596,7 +613,7 @@ export default function RepairStoreEngineersView() {
 						placeholder="All Roles"
 						className="max-w-xs"
 						selectedKeys={roleFilter}
-						onSelectionChange={setRoleFilter}
+						onSelectionChange={handleRoleFilterChange}
 						selectionMode="multiple"
 					>
 						{roleOptions.map((role) => (
