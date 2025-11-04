@@ -70,6 +70,7 @@ export type SidebarItemsConfig = {
 	serviceCenter: (options: MenuOptions) => MenuItem[];
 	samsungPartners: (options: MenuOptions) => MenuItem[];
 	scanPartner: (options: MenuOptions) => MenuItem[];
+	repairStore: (options: MenuOptions) => MenuItem[];
 	dev: (options: MenuOptions) => MenuItem[];
 };
 
@@ -272,8 +273,8 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 					url: "/access/admin/samsung-sentinel/products",
 				},
 				{
-					title: "Service Centers",
-					url: "/access/admin/samsung-sentinel/service-centers",
+					title: "Repair Store",
+					url: "/access/admin/repair-centers",
 				},
 				{
 					title: "Repairs & Claims",
@@ -824,8 +825,8 @@ export function getSubAdminItems(options: MenuOptions): MenuItem[] {
 					url: "/access/sub-admin/samsung-sentinel/products",
 				},
 				{
-					title: "Service Centers",
-					url: "/access/sub-admin/samsung-sentinel/service-centers",
+					title: "Repair Store",
+					url: "/access/sub-admin/repair-centers",
 				},
 				{
 					title: "Repairs & Claims",
@@ -1387,7 +1388,7 @@ export function getServiceCenterItems(options: MenuOptions): MenuItem[] {
 		},
 		{
 			icon: Wrench,
-			title: "Repairs",
+			title: "Repairs & Claims",
 			id: "service-center-repairs",
 			subItems: [
 				{
@@ -1479,6 +1480,78 @@ export function getScanPartnerItems(options: MenuOptions): MenuItem[] {
 	];
 }
 
+export function getRepairStoreItems(options: MenuOptions): MenuItem[] {
+	return [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/repair-store/",
+			id: "repair-store-dashboard",
+		},
+		{
+			icon: Shield,
+			title: "Repair Store Management",
+			id: "repair-store-management",
+			subItems: [
+				{
+					title: "Service Centers",
+					url: "/access/repair-store/service-centers",
+				},
+				{
+					title: "Engineers",
+					url: "/access/repair-store/engineers",
+				},
+				{
+					title: "Repairs & Claims",
+					subItems: [
+						{
+							title: "All Claims",
+							url: "/access/repair-store/claims?status=all",
+						},
+						{
+							title: "Pending",
+							url: "/access/repair-store/claims?status=pending",
+						},
+						{
+							title: "Approved",
+							url: "/access/repair-store/claims?status=approved",
+						},
+						{
+							title: "In Progress",
+							url: "/access/repair-store/claims?status=in-progress",
+						},
+						{
+							title: "Completed",
+							url: "/access/repair-store/claims?status=completed",
+						},
+						{
+							title: "Rejected",
+							url: "/access/repair-store/claims?status=rejected",
+						},
+					],
+				},
+				{
+					title: "Payments",
+					subItems: [
+						{
+							title: "Unpaid Repairs",
+							url: "/access/repair-store/claims?status=completed&payment=unpaid",
+						},
+						{
+							title: "Paid Repairs",
+							url: "/access/repair-store/claims?status=completed&payment=paid",
+						},
+					],
+				},
+				{
+					title: "Statistics",
+					url: "/access/repair-store/statistics",
+				},
+			],
+		},
+	];
+}
+
 // ============================================================================
 // MAIN SIDEBAR ITEMS CONFIGURATION
 // ============================================================================
@@ -1497,6 +1570,7 @@ export const sidebarItemsConfig: SidebarItemsConfig = {
 	serviceCenter: getServiceCenterItems,
 	samsungPartners: getSamsungPartnersItems,
 	scanPartner: getScanPartnerItems,
+	repairStore: getRepairStoreItems,
 	dev: getDeveloperItems,
 };
 
@@ -1532,17 +1606,18 @@ export function getSidebarItemsForRole(
 		SERVICE_CENTER: "serviceCenter",
 		SAMSUNG_PARTNERS: "samsungPartners",
 		SAMSUNG_PARTNER: "samsungPartners",
+		REPAIR_STORE: "repairStore",
 		HR: "hr",
 	};
 
 	const sidebarKey = roleMapping[role];
-	
+
 	// Return empty array if role is not recognized
 	if (!sidebarKey) {
 		console.warn(`Unknown role "${role}", no sidebar items available`);
 		return [];
 	}
-	
+
 	const getItems = sidebarItemsConfig[sidebarKey];
 
 	return getItems ? getItems(options) : [];

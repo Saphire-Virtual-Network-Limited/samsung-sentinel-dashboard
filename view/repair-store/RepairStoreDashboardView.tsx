@@ -1,0 +1,304 @@
+"use client";
+
+import React from "react";
+import {
+	Card,
+	CardHeader,
+	CardBody,
+	Button,
+	Chip,
+	Skeleton,
+} from "@heroui/react";
+import {
+	MapPin,
+	Users,
+	CreditCard,
+	Wrench,
+	AlertCircle,
+	TrendingUp,
+	Package,
+	ClipboardList,
+} from "lucide-react";
+import { StatCard } from "@/components/atoms/StatCard";
+import { useRouter } from "next/navigation";
+
+export default function RepairStoreDashboardView() {
+	const router = useRouter();
+	const [isLoading, setIsLoading] = React.useState(false);
+
+	// Mock data - replace with actual API calls
+	const dashboardStats = {
+		totalServiceCenters: 12,
+		activeServiceCenters: 10,
+		totalEngineers: 45,
+		totalRepairs: 1284,
+		monthlyRevenue: 8750000,
+		pendingClaims: 23,
+		inProgressClaims: 67,
+		completedClaims: 194,
+	};
+
+	const formatCurrency = (amount: number) => {
+		return new Intl.NumberFormat("en-NG", {
+			style: "currency",
+			currency: "NGN",
+			minimumFractionDigits: 0,
+		}).format(amount);
+	};
+
+	const statCards = [
+		{
+			title: "Total Service Centers",
+			value: dashboardStats.totalServiceCenters.toString(),
+			icon: <MapPin className="w-5 h-5" />,
+			link: "/access/repair-store/service-centers",
+		},
+		{
+			title: "Total Engineers",
+			value: dashboardStats.totalEngineers.toString(),
+			icon: <Users className="w-5 h-5" />,
+			link: "/access/repair-store/engineers",
+		},
+		{
+			title: "Monthly Revenue",
+			value: formatCurrency(dashboardStats.monthlyRevenue),
+			icon: <CreditCard className="w-5 h-5" />,
+			link: "/access/repair-store/statistics",
+		},
+		{
+			title: "Total Repairs",
+			value: dashboardStats.totalRepairs.toString(),
+			icon: <Wrench className="w-5 h-5" />,
+			link: "/access/repair-store/claims",
+		},
+	];
+
+	const quickActions = [
+		{
+			title: "Create Service Center",
+			description: "Add a new service center to your network",
+			icon: <MapPin className="w-4 h-4" />,
+			color: "primary" as const,
+			action: () => router.push("/access/repair-store/service-centers"),
+		},
+		{
+			title: "Manage Engineers",
+			description: "View and manage engineers across all centers",
+			icon: <Users className="w-4 h-4" />,
+			color: "secondary" as const,
+			action: () => router.push("/access/repair-store/engineers"),
+		},
+		{
+			title: "View Claims",
+			description: "Monitor all repair claims and their status",
+			icon: <ClipboardList className="w-4 h-4" />,
+			color: "warning" as const,
+			action: () => router.push("/access/repair-store/claims"),
+		},
+		{
+			title: "View Statistics",
+			description: "Analyze performance and revenue metrics",
+			icon: <TrendingUp className="w-4 h-4" />,
+			color: "success" as const,
+			action: () => router.push("/access/repair-store/statistics"),
+		},
+	];
+
+	const recentActivity = [
+		{
+			id: 1,
+			title: "New Service Center Added",
+			description: "Sapphire Tech Hub Kano has been created",
+			time: "2 hours ago",
+			status: "success",
+		},
+		{
+			id: 2,
+			title: "Engineer Assigned",
+			description: "John Doe assigned to Lagos service center",
+			time: "4 hours ago",
+			status: "info",
+		},
+		{
+			id: 3,
+			title: "Repair Completed",
+			description: "Galaxy S23 repair completed at Abuja center",
+			time: "6 hours ago",
+			status: "success",
+		},
+	];
+
+	return (
+		<div className="p-6 space-y-6 min-h-screen">
+			{/* Header */}
+			<div className="flex flex-col gap-2">
+				<h1 className="text-2xl font-bold text-gray-900">
+					Repair Store Dashboard
+				</h1>
+				<p className="text-gray-600">
+					Manage your network of service centers and monitor repair operations
+				</p>
+			</div>
+
+			{/* Statistics Cards */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				{statCards.map((card, index) => (
+					<Card
+						key={index}
+						isPressable
+						onPress={() => router.push(card.link)}
+						className="group hover:shadow-xl transition-all duration-300 border border-default-200"
+					>
+						<CardBody className="p-6">
+							<div className="flex items-start justify-between">
+								<div className="flex-1">
+									<p className="text-sm font-medium text-gray-600 mb-2">
+										{card.title}
+									</p>
+									{isLoading ? (
+										<Skeleton className="h-10 w-24 rounded" />
+									) : (
+										<div className="flex items-baseline gap-2 mb-2">
+											<h3 className="text-3xl font-bold text-gray-900">
+												{card.value}
+											</h3>
+										</div>
+									)}
+								</div>
+								<div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+									{card.icon}
+								</div>
+							</div>
+						</CardBody>
+					</Card>
+				))}
+			</div>
+
+			{/* Claims Overview */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<Card className="border border-default-200 shadow-md">
+					<CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b">
+						<div className="flex items-center gap-2">
+							<AlertCircle className="w-5 h-5 text-orange-600" />
+							<h3 className="text-lg font-semibold">Pending Claims</h3>
+						</div>
+					</CardHeader>
+					<CardBody className="p-4">
+						<div className="text-center">
+							<p className="text-3xl font-bold text-orange-600 mb-2">
+								{dashboardStats.pendingClaims}
+							</p>
+							<p className="text-sm text-gray-500">Awaiting review</p>
+						</div>
+					</CardBody>
+				</Card>
+
+				<Card className="border border-default-200 shadow-md">
+					<CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+						<div className="flex items-center gap-2">
+							<Package className="w-5 h-5 text-blue-600" />
+							<h3 className="text-lg font-semibold">In Progress</h3>
+						</div>
+					</CardHeader>
+					<CardBody className="p-4">
+						<div className="text-center">
+							<p className="text-3xl font-bold text-blue-600 mb-2">
+								{dashboardStats.inProgressClaims}
+							</p>
+							<p className="text-sm text-gray-500">Being repaired</p>
+						</div>
+					</CardBody>
+				</Card>
+
+				<Card className="border border-default-200 shadow-md">
+					<CardHeader className="bg-gradient-to-r from-green-50 to-teal-50 border-b">
+						<div className="flex items-center gap-2">
+							<Wrench className="w-5 h-5 text-green-600" />
+							<h3 className="text-lg font-semibold">Completed</h3>
+						</div>
+					</CardHeader>
+					<CardBody className="p-4">
+						<div className="text-center">
+							<p className="text-3xl font-bold text-green-600 mb-2">
+								{dashboardStats.completedClaims}
+							</p>
+							<p className="text-sm text-gray-500">This month</p>
+						</div>
+					</CardBody>
+				</Card>
+			</div>
+
+			{/* Quick Actions and Recent Activity */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Quick Actions */}
+				<Card className="border border-default-200 shadow-md">
+					<CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+						<div className="flex items-center gap-2">
+							<TrendingUp className="w-5 h-5 text-purple-600" />
+							<h3 className="text-lg font-semibold">Quick Actions</h3>
+						</div>
+					</CardHeader>
+					<CardBody className="p-4">
+						<div className="space-y-3">
+							{quickActions.map((action, index) => (
+								<Button
+									key={index}
+									variant="flat"
+									color={action.color}
+									className="w-full justify-start h-auto p-3"
+									startContent={action.icon}
+									onPress={action.action}
+								>
+									<div className="flex flex-col items-start">
+										<span className="font-medium">{action.title}</span>
+										<span className="text-xs opacity-70">
+											{action.description}
+										</span>
+									</div>
+								</Button>
+							))}
+						</div>
+					</CardBody>
+				</Card>
+
+				{/* Recent Activity */}
+				<Card className="border border-default-200 shadow-md">
+					<CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
+						<div className="flex items-center gap-2">
+							<AlertCircle className="w-5 h-5 text-emerald-600" />
+							<h3 className="text-lg font-semibold">Recent Activity</h3>
+						</div>
+					</CardHeader>
+					<CardBody className="p-4">
+						<div className="space-y-4">
+							{recentActivity.map((activity) => (
+								<div key={activity.id} className="flex items-start gap-3">
+									<Chip
+										size="sm"
+										color={
+											activity.status === "success" ? "success" : "primary"
+										}
+										variant="flat"
+									>
+										{activity.status}
+									</Chip>
+									<div className="flex-1 min-w-0">
+										<p className="text-sm font-medium text-gray-900">
+											{activity.title}
+										</p>
+										<p className="text-xs text-gray-500">
+											{activity.description}
+										</p>
+										<p className="text-xs text-gray-400 mt-1">
+											{activity.time}
+										</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</CardBody>
+				</Card>
+			</div>
+		</div>
+	);
+}

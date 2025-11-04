@@ -10,8 +10,6 @@ import {
 	ModalFooter,
 	useDisclosure,
 	Input,
-	Select,
-	SelectItem,
 	Chip,
 	Card,
 	CardBody,
@@ -21,8 +19,6 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
-	Tabs,
-	Tab,
 } from "@heroui/react";
 import {
 	InfoCard,
@@ -47,25 +43,15 @@ import {
 	DollarSign,
 	History,
 	Calendar,
+	TrendingUp,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
 import {
 	useSamsungSentinelProduct,
-	type RepairType,
 	type Product,
 	type AuditHistory,
 } from "@/hooks/shared/useSamsungSentinelProduct";
-
-const repairTypeColumns: ColumnDef[] = [
-	{ name: "Repair Type", uid: "name", sortable: true },
-	{ name: "Category", uid: "category", sortable: true },
-	{ name: "Price (₦)", uid: "price", sortable: true },
-	{ name: "Status", uid: "status", sortable: true },
-	{ name: "Created By", uid: "createdBy", sortable: true },
-	{ name: "Created At", uid: "createdAt", sortable: true },
-	{ name: "Actions", uid: "actions" },
-];
 
 const auditColumns: ColumnDef[] = [
 	{ name: "Action", uid: "action", sortable: true },
@@ -74,18 +60,6 @@ const auditColumns: ColumnDef[] = [
 	{ name: "New Value", uid: "newValue", sortable: true },
 	{ name: "Modified By", uid: "modifiedBy", sortable: true },
 	{ name: "Modified At", uid: "modifiedAt", sortable: true },
-];
-
-const repairCategories = [
-	{ label: "Screen", value: "screen" },
-	{ label: "Camera", value: "camera" },
-	{ label: "Battery", value: "battery" },
-	{ label: "Charging Port", value: "charging_port" },
-	{ label: "Speaker", value: "speaker" },
-	{ label: "Microphone", value: "microphone" },
-	{ label: "Button", value: "button" },
-	{ label: "Software", value: "software" },
-	{ label: "Other", value: "other" },
 ];
 
 const statusColorMap = {
@@ -115,57 +89,57 @@ export default function SingleProductView({
 
 	// Modal states
 	const {
-		isOpen: isEditModalOpen,
-		onOpen: onEditModalOpen,
-		onClose: onEditModalClose,
+		isOpen: isEditNameModalOpen,
+		onOpen: onEditNameModalOpen,
+		onClose: onEditNameModalClose,
 	} = useDisclosure();
 	const {
-		isOpen: isAddRepairModalOpen,
-		onOpen: onAddRepairModalOpen,
-		onClose: onAddRepairModalClose,
+		isOpen: isEditSapphireCostModalOpen,
+		onOpen: onEditSapphireCostModalOpen,
+		onClose: onEditSapphireCostModalClose,
 	} = useDisclosure();
 	const {
-		isOpen: isEditRepairModalOpen,
-		onOpen: onEditRepairModalOpen,
-		onClose: onEditRepairModalClose,
+		isOpen: isEditRepairCostModalOpen,
+		onOpen: onEditRepairCostModalOpen,
+		onClose: onEditRepairCostModalClose,
 	} = useDisclosure();
 
 	// Form states
 	const [productName, setProductName] = useState("");
-	const [repairFormData, setRepairFormData] = useState({
-		name: "",
-		category: "",
-		price: "",
-	});
-	const [selectedRepairType, setSelectedRepairType] =
-		useState<RepairType | null>(null);
+	const [sapphireCost, setSapphireCost] = useState("");
+	const [repairCost, setRepairCost] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Statistics
 	const stats = useMemo(() => {
 		if (!product)
 			return {
-				totalRepairTypes: 0,
-				activeRepairTypes: 0,
-				averagePrice: 0,
+				sapphireCost: 0,
+				repairCost: 0,
 				totalValue: 0,
+				profitMargin: 0,
 			};
 
+		const totalValue = product.sapphireCost + product.repairCost;
+		const profitMargin =
+			product.sapphireCost > 0
+				? Math.round(
+						((product.sapphireCost - product.repairCost) /
+							product.sapphireCost) *
+							100
+				  )
+				: 0;
+
 		return {
-			totalRepairTypes: product.repairTypes.length,
-			activeRepairTypes: product.repairTypes.filter(
-				(rt) => rt.status === "active"
-			).length,
-			averagePrice: Math.round(
-				product.repairTypes.reduce((sum, rt) => sum + rt.price, 0) /
-					product.repairTypes.length || 0
-			),
-			totalValue: product.repairTypes.reduce((sum, rt) => sum + rt.price, 0),
+			sapphireCost: product.sapphireCost,
+			repairCost: product.repairCost,
+			totalValue,
+			profitMargin,
 		};
 	}, [product]);
 
-	// Handle edit product
-	const handleEditProduct = async () => {
+	// Handle edit product name
+	const handleEditProductName = async () => {
 		if (!productName.trim()) {
 			showToast({ message: "Please enter a product name", type: "error" });
 			return;
@@ -174,67 +148,65 @@ export default function SingleProductView({
 		setIsLoading(true);
 		try {
 			// API call to update product name
-			showToast({ message: "Product updated successfully", type: "success" });
-			onEditModalClose();
+			showToast({
+				message: "Product name updated successfully",
+				type: "success",
+			});
+			onEditNameModalClose();
 			setProductName("");
 			mutate(); // Refresh product data
 		} catch (error) {
-			showToast({ message: "Failed to update product", type: "error" });
+			showToast({ message: "Failed to update product name", type: "error" });
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// Handle add repair type
-	const handleAddRepairType = async () => {
-		if (
-			!repairFormData.name.trim() ||
-			!repairFormData.category ||
-			!repairFormData.price
-		) {
-			showToast({ message: "Please fill in all fields", type: "error" });
+	// Handle edit sapphire cost
+	const handleEditSapphireCost = async () => {
+		const cost = parseFloat(sapphireCost);
+		if (isNaN(cost) || cost < 0) {
+			showToast({ message: "Please enter a valid cost amount", type: "error" });
 			return;
 		}
 
 		setIsLoading(true);
 		try {
-			// API call to add repair type
-			showToast({ message: "Repair type added successfully", type: "success" });
-			onAddRepairModalClose();
-			setRepairFormData({ name: "", category: "", price: "" });
-			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to add repair type", type: "error" });
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	// Handle edit repair type
-	const handleEditRepairType = async () => {
-		if (
-			!selectedRepairType ||
-			!repairFormData.name.trim() ||
-			!repairFormData.category ||
-			!repairFormData.price
-		) {
-			showToast({ message: "Please fill in all fields", type: "error" });
-			return;
-		}
-
-		setIsLoading(true);
-		try {
-			// API call to update repair type
+			// API call to update sapphire cost
 			showToast({
-				message: "Repair type updated successfully",
+				message: "Sapphire cost updated successfully",
 				type: "success",
 			});
-			onEditRepairModalClose();
-			setSelectedRepairType(null);
-			setRepairFormData({ name: "", category: "", price: "" });
+			onEditSapphireCostModalClose();
+			setSapphireCost("");
 			mutate(); // Refresh product data
 		} catch (error) {
-			showToast({ message: "Failed to update repair type", type: "error" });
+			showToast({ message: "Failed to update sapphire cost", type: "error" });
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// Handle edit repair cost
+	const handleEditRepairCost = async () => {
+		const cost = parseFloat(repairCost);
+		if (isNaN(cost) || cost < 0) {
+			showToast({ message: "Please enter a valid cost amount", type: "error" });
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			// API call to update repair cost
+			showToast({
+				message: "Repair cost updated successfully",
+				type: "success",
+			});
+			onEditRepairCostModalClose();
+			setRepairCost("");
+			mutate(); // Refresh product data
+		} catch (error) {
+			showToast({ message: "Failed to update repair cost", type: "error" });
 		} finally {
 			setIsLoading(false);
 		}
@@ -256,145 +228,6 @@ export default function SingleProductView({
 			showToast({ message: "Failed to update product status", type: "error" });
 		} finally {
 			setIsLoading(false);
-		}
-	};
-
-	// Handle toggle repair type status
-	const handleToggleRepairTypeStatus = async (
-		repairTypeId: string,
-		currentStatus: string
-	) => {
-		try {
-			// API call to toggle repair type status
-			showToast({
-				message: `Repair type ${
-					currentStatus === "active" ? "disabled" : "enabled"
-				} successfully`,
-				type: "success",
-			});
-			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({
-				message: "Failed to update repair type status",
-				type: "error",
-			});
-		}
-	};
-
-	// Handle delete repair type
-	const handleDeleteRepairType = async (repairTypeId: string) => {
-		try {
-			// API call to delete repair type
-			showToast({
-				message: "Repair type deleted successfully",
-				type: "success",
-			});
-			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to delete repair type", type: "error" });
-		}
-	};
-
-	// Render repair type cell
-	const renderRepairTypeCell = (row: RepairType, key: string) => {
-		switch (key) {
-			case "name":
-				return (
-					<div className="flex flex-col">
-						<p className="text-bold text-sm">{row.name}</p>
-						<p className="text-xs text-default-400">ID: {row.id}</p>
-					</div>
-				);
-			case "category":
-				const categoryLabel =
-					repairCategories.find((c) => c.value === row.category)?.label ||
-					row.category;
-				return (
-					<Chip color="primary" variant="flat" size="sm" className="capitalize">
-						{categoryLabel}
-					</Chip>
-				);
-			case "price":
-				return (
-					<div className="flex items-center gap-1">
-						<DollarSign size={12} className="text-success" />
-						<span className="text-sm font-medium">
-							₦{row.price.toLocaleString()}
-						</span>
-					</div>
-				);
-			case "status":
-				return (
-					<Chip
-						color={statusColorMap[row.status]}
-						size="sm"
-						variant="flat"
-						className="capitalize"
-					>
-						{row.status}
-					</Chip>
-				);
-			case "createdAt":
-				return (
-					<p className="text-sm">
-						{new Date(row.createdAt).toLocaleDateString()}
-					</p>
-				);
-			case "actions":
-				return (
-					<div className="flex justify-end">
-						<Dropdown>
-							<DropdownTrigger>
-								<Button isIconOnly size="sm" variant="light">
-									<EllipsisVertical className="text-default-300" />
-								</Button>
-							</DropdownTrigger>
-							<DropdownMenu>
-								<DropdownItem
-									key="edit"
-									startContent={<Edit size={16} />}
-									onPress={() => {
-										setSelectedRepairType(row);
-										setRepairFormData({
-											name: row.name,
-											category: row.category,
-											price: row.price.toString(),
-										});
-										onEditRepairModalOpen();
-									}}
-								>
-									Edit
-								</DropdownItem>
-								<DropdownItem
-									key="toggle"
-									startContent={
-										row.status === "active" ? (
-											<PowerOff size={16} />
-										) : (
-											<Power size={16} />
-										)
-									}
-									onPress={() =>
-										handleToggleRepairTypeStatus(row.id, row.status)
-									}
-								>
-									{row.status === "active" ? "Disable" : "Enable"}
-								</DropdownItem>
-								<DropdownItem
-									key="delete"
-									className="text-danger"
-									color="danger"
-									startContent={<Trash2 size={16} />}
-									onPress={() => handleDeleteRepairType(row.id)}
-								>
-									Delete
-								</DropdownItem>
-							</DropdownMenu>
-						</Dropdown>
-					</div>
-				);
-			default:
-				return <span className="text-sm">{row[key as keyof RepairType]}</span>;
 		}
 	};
 
@@ -463,10 +296,10 @@ export default function SingleProductView({
 						startContent={<Edit size={16} />}
 						onPress={() => {
 							setProductName(product.name);
-							onEditModalOpen();
+							onEditNameModalOpen();
 						}}
 					>
-						Edit Product
+						Edit Name
 					</Button>
 					<Button
 						color={product.status === "active" ? "danger" : "success"}
@@ -489,7 +322,23 @@ export default function SingleProductView({
 			{/* Product Info Card */}
 			<InfoCard title="Product Information">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					<InfoField label="Product Name" value={product.name} />
+					<InfoField
+						label="Product Name"
+						value={product.name}
+						endComponent={
+							<Button
+								size="sm"
+								variant="light"
+								isIconOnly
+								onPress={() => {
+									setProductName(product.name);
+									onEditNameModalOpen();
+								}}
+							>
+								<Edit size={14} />
+							</Button>
+						}
+					/>
 					<InfoField
 						label="Status"
 						value={product.status}
@@ -506,12 +355,37 @@ export default function SingleProductView({
 						value={new Date(product.lastUpdatedAt).toLocaleDateString()}
 					/>
 					<InfoField
-						label="Total Repair Types"
-						value={product.repairTypesCount}
+						label="Sapphire Cost"
+						value={`₦${product.sapphireCost.toLocaleString()}`}
 						endComponent={
-							<Chip color="primary" variant="flat" size="sm">
-								{product.repairTypesCount}
-							</Chip>
+							<Button
+								size="sm"
+								variant="light"
+								isIconOnly
+								onPress={() => {
+									setSapphireCost(product.sapphireCost.toString());
+									onEditSapphireCostModalOpen();
+								}}
+							>
+								<Edit size={14} />
+							</Button>
+						}
+					/>
+					<InfoField
+						label="Repair Cost"
+						value={`₦${product.repairCost.toLocaleString()}`}
+						endComponent={
+							<Button
+								size="sm"
+								variant="light"
+								isIconOnly
+								onPress={() => {
+									setRepairCost(product.repairCost.toString());
+									onEditRepairCostModalOpen();
+								}}
+							>
+								<Edit size={14} />
+							</Button>
 						}
 					/>
 				</div>
@@ -520,18 +394,13 @@ export default function SingleProductView({
 			{/* Statistics */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatCard
-					title="Total Repair Types"
-					value={stats.totalRepairTypes.toString()}
-					icon={<Wrench className="w-5 h-5" />}
+					title="Sapphire Cost"
+					value={`₦${stats.sapphireCost.toLocaleString()}`}
+					icon={<DollarSign className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Active Repair Types"
-					value={stats.activeRepairTypes.toString()}
-					icon={<Power className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Average Price"
-					value={`₦${stats.averagePrice.toLocaleString()}`}
+					title="Repair Cost"
+					value={`₦${stats.repairCost.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
 				<StatCard
@@ -539,82 +408,50 @@ export default function SingleProductView({
 					value={`₦${stats.totalValue.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
+				<StatCard
+					title="Profit Margin"
+					value={`${stats.profitMargin}%`}
+					icon={<TrendingUp className="w-5 h-5" />}
+				/>
 			</div>
 
-			{/* Tabs */}
-			<Tabs aria-label="Product details" className="w-full">
-				<Tab key="repair-types" title="Repair Types">
-					<div className="space-y-4">
-						<div className="flex justify-between items-center">
-							<h3 className="text-lg font-semibold">Repair Types</h3>
-							<Button
-								color="primary"
-								startContent={<Plus size={16} />}
-								onPress={onAddRepairModalOpen}
-							>
-								Add Repair Type
-							</Button>
-						</div>
+			{/* Audit History */}
+			<div className="space-y-4">
+				<h3 className="text-lg font-semibold">Audit History</h3>
 
-						<GenericTable<RepairType>
-							columns={repairTypeColumns}
-							data={product.repairTypes}
-							allCount={product.repairTypes.length}
-							exportData={product.repairTypes}
-							isLoading={false}
-							renderCell={renderRepairTypeCell}
-							hasNoRecords={product.repairTypes.length === 0}
-							sortDescriptor={{ column: "createdAt", direction: "descending" }}
-							onSortChange={() => {}}
-							page={1}
-							pages={1}
-							onPageChange={() => {}}
-							filterValue=""
-							onFilterChange={() => {}}
-							searchPlaceholder="Search repair types..."
-							showRowsPerPageSelector={true}
-							exportFn={(data) => {
-								console.log("Exporting repair types:", data);
-							}}
-						/>
-					</div>
-				</Tab>
+				<GenericTable<AuditHistory>
+					columns={auditColumns}
+					data={auditHistory}
+					allCount={auditHistory.length}
+					exportData={auditHistory}
+					isLoading={false}
+					renderCell={renderAuditCell}
+					hasNoRecords={auditHistory.length === 0}
+					sortDescriptor={{ column: "modifiedAt", direction: "descending" }}
+					onSortChange={() => {}}
+					page={1}
+					pages={1}
+					onPageChange={() => {}}
+					filterValue=""
+					onFilterChange={() => {}}
+					searchPlaceholder="Search audit history..."
+					showRowsPerPageSelector={true}
+					exportFn={(data) => {
+						console.log("Exporting audit history:", data);
+					}}
+				/>
+			</div>
 
-				<Tab key="audit-history" title="Audit History">
-					<div className="space-y-4">
-						<h3 className="text-lg font-semibold">Audit History</h3>
-
-						<GenericTable<AuditHistory>
-							columns={auditColumns}
-							data={auditHistory}
-							allCount={auditHistory.length}
-							exportData={auditHistory}
-							isLoading={false}
-							renderCell={renderAuditCell}
-							hasNoRecords={auditHistory.length === 0}
-							sortDescriptor={{ column: "modifiedAt", direction: "descending" }}
-							onSortChange={() => {}}
-							page={1}
-							pages={1}
-							onPageChange={() => {}}
-							filterValue=""
-							onFilterChange={() => {}}
-							searchPlaceholder="Search audit history..."
-							showRowsPerPageSelector={true}
-							exportFn={(data) => {
-								console.log("Exporting audit history:", data);
-							}}
-						/>
-					</div>
-				</Tab>
-			</Tabs>
-
-			{/* Edit Product Modal */}
-			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="lg">
+			{/* Edit Product Name Modal */}
+			<Modal
+				isOpen={isEditNameModalOpen}
+				onClose={onEditNameModalClose}
+				size="lg"
+			>
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Edit Product</ModalHeader>
+							<ModalHeader>Edit Product Name</ModalHeader>
 							<ModalBody>
 								<div className="space-y-4">
 									<Input
@@ -627,12 +464,12 @@ export default function SingleProductView({
 								</div>
 							</ModalBody>
 							<ModalFooter>
-								<Button variant="light" onPress={onEditModalClose}>
+								<Button variant="light" onPress={onEditNameModalClose}>
 									Cancel
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleEditProduct}
+									onPress={handleEditProductName}
 									isLoading={isLoading}
 								>
 									Save Changes
@@ -643,67 +480,38 @@ export default function SingleProductView({
 				</ModalContent>
 			</Modal>
 
-			{/* Add Repair Type Modal */}
+			{/* Edit Sapphire Cost Modal */}
 			<Modal
-				isOpen={isAddRepairModalOpen}
-				onClose={onAddRepairModalClose}
+				isOpen={isEditSapphireCostModalOpen}
+				onClose={onEditSapphireCostModalClose}
 				size="lg"
 			>
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Add Repair Type</ModalHeader>
+							<ModalHeader>Edit Sapphire Cost</ModalHeader>
 							<ModalBody>
 								<div className="space-y-4">
 									<Input
-										label="Repair Type Name"
-										placeholder="e.g., Screen Replacement"
-										value={repairFormData.name}
-										onValueChange={(value) =>
-											setRepairFormData((prev) => ({ ...prev, name: value }))
-										}
-										isRequired
-									/>
-									<Select
-										label="Category"
-										placeholder="Select repair category"
-										selectedKeys={
-											repairFormData.category ? [repairFormData.category] : []
-										}
-										onSelectionChange={(keys) => {
-											const key = Array.from(keys)[0] as string;
-											setRepairFormData((prev) => ({ ...prev, category: key }));
-										}}
-										isRequired
-									>
-										{repairCategories.map((category) => (
-											<SelectItem key={category.value} value={category.value}>
-												{category.label}
-											</SelectItem>
-										))}
-									</Select>
-									<Input
-										label="Price (₦)"
-										placeholder="e.g., 25000"
-										value={repairFormData.price}
-										onValueChange={(value) =>
-											setRepairFormData((prev) => ({ ...prev, price: value }))
-										}
+										label="Sapphire Cost (₦)"
+										placeholder="e.g., 150000"
+										value={sapphireCost}
+										onValueChange={setSapphireCost}
 										type="number"
 										isRequired
 									/>
 								</div>
 							</ModalBody>
 							<ModalFooter>
-								<Button variant="light" onPress={onAddRepairModalClose}>
+								<Button variant="light" onPress={onEditSapphireCostModalClose}>
 									Cancel
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleAddRepairType}
+									onPress={handleEditSapphireCost}
 									isLoading={isLoading}
 								>
-									Add Repair Type
+									Save Changes
 								</Button>
 							</ModalFooter>
 						</>
@@ -711,64 +519,35 @@ export default function SingleProductView({
 				</ModalContent>
 			</Modal>
 
-			{/* Edit Repair Type Modal */}
+			{/* Edit Repair Cost Modal */}
 			<Modal
-				isOpen={isEditRepairModalOpen}
-				onClose={onEditRepairModalClose}
+				isOpen={isEditRepairCostModalOpen}
+				onClose={onEditRepairCostModalClose}
 				size="lg"
 			>
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Edit Repair Type</ModalHeader>
+							<ModalHeader>Edit Repair Cost</ModalHeader>
 							<ModalBody>
 								<div className="space-y-4">
 									<Input
-										label="Repair Type Name"
-										placeholder="e.g., Screen Replacement"
-										value={repairFormData.name}
-										onValueChange={(value) =>
-											setRepairFormData((prev) => ({ ...prev, name: value }))
-										}
-										isRequired
-									/>
-									<Select
-										label="Category"
-										placeholder="Select repair category"
-										selectedKeys={
-											repairFormData.category ? [repairFormData.category] : []
-										}
-										onSelectionChange={(keys) => {
-											const key = Array.from(keys)[0] as string;
-											setRepairFormData((prev) => ({ ...prev, category: key }));
-										}}
-										isRequired
-									>
-										{repairCategories.map((category) => (
-											<SelectItem key={category.value} value={category.value}>
-												{category.label}
-											</SelectItem>
-										))}
-									</Select>
-									<Input
-										label="Price (₦)"
+										label="Repair Cost (₦)"
 										placeholder="e.g., 25000"
-										value={repairFormData.price}
-										onValueChange={(value) =>
-											setRepairFormData((prev) => ({ ...prev, price: value }))
-										}
+										value={repairCost}
+										onValueChange={setRepairCost}
 										type="number"
 										isRequired
 									/>
 								</div>
 							</ModalBody>
 							<ModalFooter>
-								<Button variant="light" onPress={onEditRepairModalClose}>
+								<Button variant="light" onPress={onEditRepairCostModalClose}>
 									Cancel
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleEditRepairType}
+									onPress={handleEditRepairCost}
 									isLoading={isLoading}
 								>
 									Save Changes
