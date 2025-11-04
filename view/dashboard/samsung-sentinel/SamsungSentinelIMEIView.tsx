@@ -822,6 +822,9 @@ export default function SamsungSentinelIMEIView() {
 																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
 																		Date Created
 																	</th>
+																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+																		Actions
+																	</th>
 																</tr>
 															</thead>
 															<tbody className="bg-white divide-y divide-gray-200">
@@ -855,6 +858,22 @@ export default function SamsungSentinelIMEIView() {
 																			{new Date(
 																				claim.dateCreated
 																			).toLocaleDateString()}
+																		</td>
+																		<td className="px-4 py-3 text-sm">
+																			<Button
+																				size="sm"
+																				color="primary"
+																				variant="flat"
+																				startContent={<Eye size={14} />}
+																				onPress={() => {
+																					router.push(
+																						`/access/${role}/samsung-sentinel/claims/${claim.id}`
+																					);
+																					handleSearchModalClose();
+																				}}
+																			>
+																				View Details
+																			</Button>
 																		</td>
 																	</tr>
 																))}
