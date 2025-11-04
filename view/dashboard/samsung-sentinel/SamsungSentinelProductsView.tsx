@@ -32,6 +32,7 @@ import {
 	Smartphone,
 	Users,
 	Calendar,
+	DollarSign,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
@@ -44,16 +45,18 @@ interface Product {
 	lastUpdatedAt: string;
 	lastUpdatedBy: string;
 	status: "active" | "inactive";
-	repairTypesCount: number;
+	sapphireCost: number;
+	repairCost: number;
 }
 
 const columns: ColumnDef[] = [
 	{ name: "Product Name", uid: "name", sortable: true },
+	{ name: "Sapphire Cost", uid: "sapphireCost", sortable: true },
+	{ name: "Repair Cost", uid: "repairCost", sortable: true },
 	{ name: "Created By", uid: "createdBy", sortable: true },
 	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Last Updated", uid: "lastUpdatedAt", sortable: true },
 	{ name: "Last Updated By", uid: "lastUpdatedBy", sortable: true },
-	{ name: "Repair Types", uid: "repairTypesCount", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
@@ -95,7 +98,8 @@ export default function SamsungSentinelProductsView() {
 				lastUpdatedAt: "2024-10-01T14:20:00Z",
 				lastUpdatedBy: "manager@sapphire.com",
 				status: "active",
-				repairTypesCount: 8,
+				sapphireCost: 150000,
+				repairCost: 25000,
 			},
 			{
 				id: "prod_002",
@@ -105,7 +109,8 @@ export default function SamsungSentinelProductsView() {
 				lastUpdatedAt: "2024-09-28T11:45:00Z",
 				lastUpdatedBy: "admin@sapphire.com",
 				status: "active",
-				repairTypesCount: 7,
+				sapphireCost: 180000,
+				repairCost: 30000,
 			},
 			{
 				id: "prod_003",
@@ -115,7 +120,8 @@ export default function SamsungSentinelProductsView() {
 				lastUpdatedAt: "2024-10-05T09:30:00Z",
 				lastUpdatedBy: "operator@sapphire.com",
 				status: "active",
-				repairTypesCount: 6,
+				sapphireCost: 200000,
+				repairCost: 35000,
 			},
 			{
 				id: "prod_004",
@@ -125,7 +131,8 @@ export default function SamsungSentinelProductsView() {
 				lastUpdatedAt: "2024-09-20T10:15:00Z",
 				lastUpdatedBy: "admin@sapphire.com",
 				status: "inactive",
-				repairTypesCount: 5,
+				sapphireCost: 160000,
+				repairCost: 22000,
 			},
 		],
 		[]
@@ -138,10 +145,8 @@ export default function SamsungSentinelProductsView() {
 		() => ({
 			totalProducts: products.length,
 			activeProducts: products.filter((p) => p.status === "active").length,
-			totalRepairTypes: products.reduce(
-				(sum, p) => sum + p.repairTypesCount,
-				0
-			),
+			averageSapphireCost: products.reduce((sum, p) => sum + p.sapphireCost, 0) / products.length,
+			averageRepairCost: products.reduce((sum, p) => sum + p.repairCost, 0) / products.length,
 		}),
 		[products]
 	);
@@ -266,10 +271,16 @@ export default function SamsungSentinelProductsView() {
 				return (
 					<p className="text-sm">{new Date(row[key]).toLocaleDateString()}</p>
 				);
-			case "repairTypesCount":
+			case "sapphireCost":
 				return (
-					<Chip color="primary" variant="flat" size="sm">
-						{row.repairTypesCount} types
+					<Chip color="success" variant="flat" size="sm">
+						₦{row.sapphireCost.toLocaleString()}
+					</Chip>
+				);
+			case "repairCost":
+				return (
+					<Chip color="warning" variant="flat" size="sm">
+						₦{row.repairCost.toLocaleString()}
 					</Chip>
 				);
 			case "status":
@@ -405,9 +416,14 @@ export default function SamsungSentinelProductsView() {
 					icon={<Power className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Total Repair Types"
-					value={stats.totalRepairTypes.toString()}
-					icon={<Users className="w-5 h-5" />}
+					title="Avg Sapphire Cost"
+					value={`₦${stats.averageSapphireCost.toLocaleString()}`}
+					icon={<DollarSign className="w-5 h-5" />}
+				/>
+				<StatCard
+					title="Avg Repair Cost"
+					value={`₦${stats.averageRepairCost.toLocaleString()}`}
+					icon={<DollarSign className="w-5 h-5" />}
 				/>
 			</div>
 			{/* Products Table */}

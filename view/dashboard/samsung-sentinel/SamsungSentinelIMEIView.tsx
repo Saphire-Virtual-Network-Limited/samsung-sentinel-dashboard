@@ -43,6 +43,7 @@ import {
 	EllipsisVertical,
 	FileText,
 	AlertTriangle,
+	Search,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import ExcelJS from "exceljs";
@@ -123,6 +124,16 @@ export default function SamsungSentinelIMEIView() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [selectedDeviceModel, setSelectedDeviceModel] = useState<string>("");
 	const [isUploading, setIsUploading] = useState(false);
+
+	// Search IMEI modal state
+	const {
+		isOpen: isSearchModalOpen,
+		onOpen: onSearchModalOpen,
+		onClose: onSearchModalClose,
+	} = useDisclosure();
+	const [searchImei, setSearchImei] = useState("");
+	const [isSearching, setIsSearching] = useState(false);
+	const [searchResult, setSearchResult] = useState<any>(null);
 
 	// --- date filter state managed by GenericTable ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -386,6 +397,67 @@ export default function SamsungSentinelIMEIView() {
 		}
 	};
 
+	// Handle IMEI search
+	const handleSearchImei = async () => {
+		if (!searchImei.trim()) {
+			showToast({ message: "Please enter an IMEI number", type: "error" });
+			return;
+		}
+
+		setIsSearching(true);
+		try {
+			// Mock API call - replace with actual API
+			await new Promise(resolve => setTimeout(resolve, 1500));
+			
+			// Mock search results based on IMEI
+			const isUsedImei = searchImei.includes("111") || searchImei.includes("222");
+			
+			if (!isUsedImei) {
+				// Unused IMEI - show unverified status
+				setSearchResult({
+					type: "unused",
+					imei: searchImei,
+					status: "unverified",
+					claimsCount: 0,
+				});
+			} else {
+				// Used IMEI - show claims table
+				setSearchResult({
+					type: "used",
+					imei: searchImei,
+					claims: [
+						{
+							id: "claim_001",
+							customerName: "John Doe",
+							claimStatus: "approved",
+							dateCreated: "2024-10-15T10:30:00Z",
+							issueDescription: "Screen replacement",
+						},
+						{
+							id: "claim_002", 
+							customerName: "Jane Smith",
+							claimStatus: "pending",
+							dateCreated: "2024-10-20T14:22:00Z",
+							issueDescription: "Battery issue",
+						},
+					],
+				});
+			}
+			
+		} catch (error) {
+			showToast({ message: "Failed to search IMEI", type: "error" });
+		} finally {
+			setIsSearching(false);
+		}
+	};
+
+	// Reset search when modal closes
+	const handleSearchModalClose = () => {
+		setSearchResult(null);
+		setSearchImei("");
+		onSearchModalClose();
+	};
+
 	// Render cell content for uploads (following customerView pattern)
 	const renderUploadCell = (row: UploadRecord, key: string) => {
 		if (key === "actions") {
@@ -495,6 +567,13 @@ export default function SamsungSentinelIMEIView() {
 			<div className="flex items-center justify-between">
 				<div></div>
 				<div className="flex items-center gap-3">
+					<Button
+						variant="flat"
+						startContent={<Search size={16} />}
+						onPress={onSearchModalOpen}
+					>
+						Search IMEI
+					</Button>
 					<Button
 						variant="flat"
 						startContent={<Download size={16} />}
@@ -649,6 +728,136 @@ export default function SamsungSentinelIMEIView() {
 									isDisabled={!selectedFile || !selectedDeviceModel}
 								>
 									{isUploading ? "Uploading..." : "Upload File"}
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Search IMEI Modal */}
+			<Modal isOpen={isSearchModalOpen} onClose={handleSearchModalClose} size="3xl">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Search IMEI</ModalHeader>
+							<ModalBody>
+								<div className="space-y-4">
+									<div className="flex gap-2">
+										<Input
+											label="IMEI Number"
+											placeholder="Enter IMEI to search"
+											value={searchImei}
+											onValueChange={setSearchImei}
+											className="flex-1"
+											maxLength={15}
+										/>
+										<Button
+											color="primary"
+											onPress={handleSearchImei}
+											isLoading={isSearching}
+											isDisabled={!searchImei.trim()}
+										>
+											Search
+										</Button>
+									</div>
+
+									{/* Search Results */}
+									{searchResult && (
+										<div className="mt-6">
+											{searchResult.type === "unused" ? (
+												/* Unused IMEI Result */
+												<div className="space-y-4">
+													<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+														<h3 className="font-semibold text-blue-900 mb-2">
+															IMEI: {searchResult.imei}
+														</h3>
+														<div className="grid grid-cols-2 gap-4 text-sm">
+															<div>
+																<span className="text-gray-600">Status:</span>{" "}
+																<Chip color="default" size="sm">
+																	{searchResult.status}
+																</Chip>
+															</div>
+															<div>
+																<span className="text-gray-600">Claims:</span>{" "}
+																<span className="font-medium">{searchResult.claimsCount}</span>
+															</div>
+														</div>
+													</div>
+												</div>
+											) : (
+												/* Used IMEI Result - Show Claims Table */
+												<div className="space-y-4">
+													<div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+														<h3 className="font-semibold text-amber-900 mb-2">
+															IMEI: {searchResult.imei} (In Use)
+														</h3>
+														<p className="text-sm text-amber-800">
+															This IMEI has {searchResult.claims.length} associated claim(s):
+														</p>
+													</div>
+
+													{/* Claims Table */}
+													<div className="overflow-x-auto">
+														<table className="w-full border border-gray-200 rounded-lg">
+															<thead className="bg-gray-50">
+																<tr>
+																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+																		Customer Name
+																	</th>
+																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+																		Issue Description
+																	</th>
+																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+																		Status
+																	</th>
+																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+																		Date Created
+																	</th>
+																</tr>
+															</thead>
+															<tbody className="bg-white divide-y divide-gray-200">
+																{searchResult.claims.map((claim: any) => (
+																	<tr key={claim.id} className="hover:bg-gray-50">
+																		<td className="px-4 py-3 text-sm font-medium text-gray-900">
+																			{claim.customerName}
+																		</td>
+																		<td className="px-4 py-3 text-sm text-gray-600">
+																			{claim.issueDescription}
+																		</td>
+																		<td className="px-4 py-3 text-sm">
+																			<Chip
+																				color={
+																					claim.claimStatus === "approved"
+																						? "success"
+																						: claim.claimStatus === "pending"
+																						? "warning"
+																						: "danger"
+																				}
+																				size="sm"
+																				className="capitalize"
+																			>
+																				{claim.claimStatus}
+																			</Chip>
+																		</td>
+																		<td className="px-4 py-3 text-sm text-gray-600">
+																			{new Date(claim.dateCreated).toLocaleDateString()}
+																		</td>
+																	</tr>
+																))}
+															</tbody>
+														</table>
+													</div>
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={handleSearchModalClose}>
+									Close
 								</Button>
 							</ModalFooter>
 						</>

@@ -29,6 +29,7 @@ export const ROLES = {
 	AUDIT: "AUDIT",
 	SUPPORT: "SUPPORT",
 	SERVICE_CENTER: "SERVICE_CENTER",
+	REPAIR_STORE: "REPAIR_STORE",
 	SAMSUNG_PARTNERS: "SAMSUNG_PARTNERS",
 	SCAN_PARTNER: "SCAN_PARTNER",
 	DEV: "DEV",
@@ -52,6 +53,7 @@ export const ROLE_BASE_PATHS: Record<Role, string> = {
 	[ROLES.AUDIT]: "/access/audit",
 	[ROLES.SUPPORT]: "/access/support",
 	[ROLES.SERVICE_CENTER]: "/access/service-center",
+	[ROLES.REPAIR_STORE]: "/access/repair-store",
 	[ROLES.SAMSUNG_PARTNERS]: "/access/samsung-partners",
 	[ROLES.SCAN_PARTNER]: "/access/scan-partner",
 	[ROLES.DEV]: "/access/dev",
@@ -73,6 +75,7 @@ export type SidebarItemsKey =
 	| "audit"
 	| "support"
 	| "serviceCenter"
+	| "repairStore"
 	| "samsungPartners"
 	| "scanPartner"
 	| "dev";
@@ -89,6 +92,7 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
 	[ROLES.AUDIT]: "audit",
 	[ROLES.SUPPORT]: "support",
 	[ROLES.SERVICE_CENTER]: "serviceCenter",
+	[ROLES.REPAIR_STORE]: "repairStore",
 	[ROLES.SAMSUNG_PARTNERS]: "samsungPartners",
 	[ROLES.SCAN_PARTNER]: "scanPartner",
 	[ROLES.DEV]: "dev",
