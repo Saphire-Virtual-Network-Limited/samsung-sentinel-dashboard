@@ -2,11 +2,12 @@ import React from "react";
 import { RepairStoreSingleServiceCenterView } from "@/view/repair-store";
 
 interface PageProps {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
-const page = ({ params }: PageProps) => {
-	return <RepairStoreSingleServiceCenterView centerId={params.id} />;
+const Page = ({ params }: PageProps) => {
+	const { id } = React.use(params);
+	return <RepairStoreSingleServiceCenterView centerId={id} />;
 };
 
-export default page;
+export default Page;
