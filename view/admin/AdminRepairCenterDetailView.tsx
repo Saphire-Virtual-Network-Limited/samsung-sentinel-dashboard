@@ -107,15 +107,11 @@ const statusColorMap = {
 	suspended: "danger" as const,
 };
 
-interface AdminRepairCenterDetailViewProps {
-	repairCenterId: string;
-}
-
-export default function AdminRepairCenterDetailView({
-	repairCenterId,
-}: AdminRepairCenterDetailViewProps) {
+export default function AdminRepairCenterDetailView() {
 	const router = useRouter();
 	const pathname = usePathname();
+	const params = useParams();
+	const repairCenterId = params.id as string;
 	const role = pathname.split("/")[2];
 
 	// Modal states
