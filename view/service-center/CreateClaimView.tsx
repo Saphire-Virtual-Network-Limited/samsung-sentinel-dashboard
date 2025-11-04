@@ -28,15 +28,15 @@ import { showToast } from "@/lib";
 
 interface ClaimData {
 	imei: string;
-	customerName: string;
+	firstName: string;
+	lastName: string;
 	customerPhone: string;
 	customerEmail: string;
-	deviceName: string;
-	brand: string;
-	model: string;
-	devicePrice: number;
-	faultType: string;
-	repairCost: number;
+	state: string;
+	location: string;
+	deviceModel: string;
+	deviceFault: string;
+	deviceRepairPrice: number;
 	description: string;
 }
 
@@ -47,24 +47,90 @@ const CreateClaimView = () => {
 	const [validationData, setValidationData] = useState<any>(null);
 	const [claimData, setClaimData] = useState<ClaimData>({
 		imei: "",
-		customerName: "",
+		firstName: "",
+		lastName: "",
 		customerPhone: "",
 		customerEmail: "",
-		deviceName: "",
-		brand: "",
-		model: "",
-		devicePrice: 0,
-		faultType: "",
-		repairCost: 0,
+		state: "",
+		location: "",
+		deviceModel: "",
+		deviceFault: "screen-repair",
+		deviceRepairPrice: 0,
 		description: "",
 	});
+
+	// Device repair prices based on model
+	const repairPrices = {
+		"Samsung A05": 25000,
+		"Samsung A06": 30000,
+		"Samsung A07": 35000,
+	};
+
+	// Nigerian states
+	const nigerianStates = [
+		"Abia",
+		"Adamawa",
+		"Akwa Ibom",
+		"Anambra",
+		"Bauchi",
+		"Bayelsa",
+		"Benue",
+		"Borno",
+		"Cross River",
+		"Delta",
+		"Ebonyi",
+		"Edo",
+		"Ekiti",
+		"Enugu",
+		"Federal Capital Territory",
+		"Gombe",
+		"Imo",
+		"Jigawa",
+		"Kaduna",
+		"Kano",
+		"Katsina",
+		"Kebbi",
+		"Kogi",
+		"Kwara",
+		"Lagos",
+		"Nasarawa",
+		"Niger",
+		"Ogun",
+		"Ondo",
+		"Osun",
+		"Oyo",
+		"Plateau",
+		"Rivers",
+		"Sokoto",
+		"Taraba",
+		"Yobe",
+		"Zamfara",
+	];
+
+	// Auto-detect device model and set repair price based on IMEI
+	const detectDeviceModel = (imei: string) => {
+		// Simple logic to determine device model from IMEI
+		// Check for A06 patterns
+		if (imei.includes("06") || imei.includes("111")) {
+			return "Samsung A06";
+		}
+		// Check for A07 patterns
+		else if (imei.includes("07") || imei.includes("222")) {
+			return "Samsung A07";
+		}
+		// Default to A05
+		else {
+			return "Samsung A05";
+		}
+	};
 
 	// Mock functions since hooks don't exist
 	const validateIMEI = async (imei: string) => {
 		const isValid = imei.length === 15;
+		const deviceModel = detectDeviceModel(imei);
 		const response: any = {
 			isValid,
-			device: { model: "Samsung Galaxy A06", brand: "Samsung" },
+			device: { model: deviceModel, brand: "Samsung" },
 			claimHistory: {
 				totalClaims: 1,
 				recentClaims: 1,
@@ -98,18 +164,21 @@ const CreateClaimView = () => {
 		try {
 			const result = await validateIMEI(imeiInput);
 			if (result.isValid) {
+				const deviceModel = result.device.model;
+				const repairPrice =
+					repairPrices[deviceModel as keyof typeof repairPrices] || 25000;
+
 				setValidationData(result);
 				setClaimData((prev) => ({
 					...prev,
 					imei: imeiInput,
-					customerName: "",
-					customerPhone: "",
-					customerEmail: "",
-					deviceName: "",
-					brand: result.device?.brand || "",
-					model: result.device?.model || "",
+					deviceModel: deviceModel,
+					deviceRepairPrice: repairPrice,
 				}));
-				//setCurrentStep(2);
+				showToast({
+					type: "success",
+					message: "IMEI validated successfully",
+				});
 			} else {
 				showToast({
 					type: "error",
@@ -128,10 +197,12 @@ const CreateClaimView = () => {
 	const handleSubmitClaim = async () => {
 		// Validate required fields
 		if (
-			!claimData.customerName ||
+			!claimData.firstName ||
+			!claimData.lastName ||
 			!claimData.customerPhone ||
-			!claimData.faultType ||
-			!claimData.repairCost
+			!claimData.state ||
+			!claimData.location ||
+			!claimData.deviceFault
 		) {
 			showToast({
 				type: "error",
@@ -151,10 +222,12 @@ const CreateClaimView = () => {
 
 	const canProceedToStep2 = validationData?.isValid;
 	const canSubmit =
-		claimData.customerName &&
+		claimData.firstName &&
+		claimData.lastName &&
 		claimData.customerPhone &&
-		claimData.faultType &&
-		claimData.repairCost;
+		claimData.state &&
+		claimData.location &&
+		claimData.deviceFault;
 
 	return (
 		<div className="space-y-6 max-w-4xl mx-auto">
@@ -313,22 +386,22 @@ const CreateClaimView = () => {
 							<h3 className="text-lg font-medium">Customer Information</h3>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<Label htmlFor="customerName">Customer Name *</Label>
+									<Label htmlFor="firstName">First Name *</Label>
 									<Input
-										id="customerName"
-										value={claimData.customerName}
+										id="firstName"
+										value={claimData.firstName}
 										onChange={(e) =>
-											handleInputChange("customerName", e.target.value)
+											handleInputChange("firstName", e.target.value)
 										}
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="customerPhone">Phone Number *</Label>
+									<Label htmlFor="lastName">Last Name *</Label>
 									<Input
-										id="customerPhone"
-										value={claimData.customerPhone}
+										id="lastName"
+										value={claimData.lastName}
 										onChange={(e) =>
-											handleInputChange("customerPhone", e.target.value)
+											handleInputChange("lastName", e.target.value)
 										}
 									/>
 								</div>
@@ -343,6 +416,44 @@ const CreateClaimView = () => {
 										}
 									/>
 								</div>
+								<div className="space-y-2">
+									<Label htmlFor="customerPhone">Phone Number *</Label>
+									<Input
+										id="customerPhone"
+										value={claimData.customerPhone}
+										onChange={(e) =>
+											handleInputChange("customerPhone", e.target.value)
+										}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="state">State *</Label>
+									<Select
+										placeholder="Select state"
+										selectedKeys={claimData.state ? [claimData.state] : []}
+										onSelectionChange={(keys) => {
+											const value = Array.from(keys)[0] as string;
+											handleInputChange("state", value);
+										}}
+									>
+										{nigerianStates.map((state) => (
+											<SelectItem key={state} value={state}>
+												{state}
+											</SelectItem>
+										))}
+									</Select>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="location">Location *</Label>
+									<Input
+										id="location"
+										value={claimData.location}
+										onChange={(e) =>
+											handleInputChange("location", e.target.value)
+										}
+										placeholder="Enter city/area"
+									/>
+								</div>
 							</div>
 						</div>
 
@@ -355,40 +466,32 @@ const CreateClaimView = () => {
 									<Input id="imeiDisplay" value={claimData.imei} disabled />
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="deviceName">Device Name</Label>
+									<Label htmlFor="deviceModel">Device Model</Label>
 									<Input
-										id="deviceName"
-										value={claimData.deviceName}
-										onChange={(e) =>
-											handleInputChange("deviceName", e.target.value)
-										}
+										id="deviceModel"
+										value={claimData.deviceModel}
+										disabled
+										className="bg-gray-100"
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="brand">Brand</Label>
+									<Label htmlFor="deviceFault">Device Fault</Label>
 									<Input
-										id="brand"
-										value={claimData.brand}
-										onChange={(e) => handleInputChange("brand", e.target.value)}
+										id="deviceFault"
+										value="Screen Repair"
+										disabled
+										className="bg-gray-100"
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="model">Model</Label>
+									<Label htmlFor="deviceRepairPrice">
+										Device Repair Price (₦)
+									</Label>
 									<Input
-										id="model"
-										value={claimData.model}
-										onChange={(e) => handleInputChange("model", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="devicePrice">Device Price (₦)</Label>
-									<Input
-										id="devicePrice"
-										type="number"
-										value={claimData.devicePrice}
-										onChange={(e) =>
-											handleInputChange("devicePrice", Number(e.target.value))
-										}
+										id="deviceRepairPrice"
+										value={claimData.deviceRepairPrice.toLocaleString()}
+										disabled
+										className="bg-gray-100"
 									/>
 								</div>
 							</div>
@@ -397,39 +500,6 @@ const CreateClaimView = () => {
 						{/* Claim Information */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-medium">Claim Information</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label htmlFor="faultType">Fault Type *</Label>
-									<Select
-										placeholder="Select fault type"
-										selectedKeys={
-											claimData.faultType ? [claimData.faultType] : []
-										}
-										onSelectionChange={(keys) => {
-											const value = Array.from(keys)[0] as string;
-											handleInputChange("faultType", value);
-										}}
-									>
-										<SelectItem key="broken-screen" value="broken-screen">
-											Broken Screen
-										</SelectItem>
-										<SelectItem key="damaged-screen" value="damaged-screen">
-											Damaged Screen
-										</SelectItem>
-									</Select>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="repairCost">Repair Cost (₦) *</Label>
-									<Input
-										id="repairCost"
-										type="number"
-										value={claimData.repairCost}
-										onChange={(e) =>
-											handleInputChange("repairCost", Number(e.target.value))
-										}
-									/>
-								</div>
-							</div>
 							<div className="space-y-2">
 								<Label htmlFor="description">Description</Label>
 								<textarea
