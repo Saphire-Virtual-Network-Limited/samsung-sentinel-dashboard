@@ -270,6 +270,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	},
 	"babatunde@sapphirevirtual.com": {
 		verifyMobiflex: true,
+		canUnlockDevice: true,
 	},
 
 	"topeyemi33@gmail.com": {
@@ -393,6 +394,7 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	"tosin@sapphirevirtual.com": {
 		canUnlockDevice: true,
 	},
+	
 };
 
 /**

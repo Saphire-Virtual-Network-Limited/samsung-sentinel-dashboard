@@ -643,6 +643,8 @@ export default function CollectionSingleCustomerPage() {
 	const [repaymentLoading, setRepaymentLoading] = useState(false);
 	const [repaymentError, setRepaymentError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<"timeline" | "grid">("timeline");
+	const [manualChargeCooldowns, setManualChargeCooldowns] = useState<Record<string, number>>({});
+	const [countdownTimers, setCountdownTimers] = useState<Record<string, number>>({});
 
 	const {
 		value: imei,
@@ -663,6 +665,7 @@ export default function CollectionSingleCustomerPage() {
 		useState<CustomerRecord | null>(null);
 	const [amount, setAmount] = useState<string>("");
 	const [isButtonLoading, setIsButtonLoading] = useState(false);
+	const [manualChargeLoading, setManualChargeLoading] = useState<string | null>(null);
 	const [lastPoint, setLastPoint] = useState<string>("");
 	const [selectedAction, setSelectedAction] = useState<string>("");
 	const [deviceActionData, setDeviceActionData] = useState<{
@@ -898,25 +901,70 @@ export default function CollectionSingleCustomerPage() {
 
 
 	const handleManualChargeCustomerRepayment = async (scheduleId: string) => {
-		setIsButtonLoading(true);
+		// Record the click time for cooldown
+		const now = Date.now();
+		setManualChargeCooldowns((prev) => ({
+			...prev,
+			[scheduleId]: now,
+		}));
+
+		setManualChargeLoading(scheduleId);
 		try {
 			const response = await manualChargeCustomerRepayment(scheduleId);
 			console.log(response);
 			showToast({
 				type: "success",
-				message: response.message || "Customer repayment charged successfully",
+				message: response?.data?.message || response?.message || "Customer repayment charged successfully",
 				duration: 8000,
 			});
 		} catch (error: any) {
 			showToast({
 				type: "error",
-				message: error.message || "Failed to charge customer repayment",
+				message: error?.message || error?.response?.data?.message || error?.response?.message || "Failed to charge customer repayment",
 				duration: 8000,
 			});
 		} finally {
-			setIsButtonLoading(false);
+			setManualChargeLoading(null);
 		}
 	};
+
+	// Helper function to check if schedule is in cooldown and get remaining time
+	const getCooldownRemaining = useCallback((scheduleId: string): number => {
+		const lastClickTime = manualChargeCooldowns[scheduleId];
+		if (!lastClickTime) return 0;
+		
+		const now = Date.now();
+		const elapsed = now - lastClickTime;
+		const cooldownDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+		const remaining = cooldownDuration - elapsed;
+		
+		return Math.max(0, remaining);
+	}, [manualChargeCooldowns]);
+
+	// Helper function to format remaining time
+	const formatRemainingTime = useCallback((milliseconds: number): string => {
+		if (milliseconds <= 0) return "";
+		const totalSeconds = Math.ceil(milliseconds / 1000);
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+	}, []);
+
+	// Update countdown timers every second
+	useEffect(() => {
+		if (repaymentSchedule?.schedules) {
+			const interval = setInterval(() => {
+				const timers: Record<string, number> = {};
+				repaymentSchedule.schedules.forEach((schedule) => {
+					const remaining = getCooldownRemaining(schedule.id);
+					timers[schedule.id] = remaining;
+				});
+				setCountdownTimers(timers);
+			}, 1000);
+
+			return () => clearInterval(interval);
+		}
+	}, [repaymentSchedule, getCooldownRemaining]);
 
 	// Helper functions for repayment schedule
 	const formatCurrency = useCallback((amount: number | undefined): string => {
@@ -995,6 +1043,25 @@ export default function CollectionSingleCustomerPage() {
 			
 			// Return true if payment is due within 24 hours, on due date, or overdue
 			return hoursDiff <= 24;
+		} catch (error) {
+			console.error("Error parsing due date:", error);
+			return false;
+		}
+	}, []);
+
+	// Helper function to check if due date has passed (is today or in the past)
+	const isDueDatePassed = useCallback((dueDate: string): boolean => {
+		if (!dueDate) return false;
+		
+		try {
+			const due = new Date(dueDate);
+			const now = new Date();
+			// Reset time to start of day for accurate comparison
+			const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+			const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+			
+			// Return true if due date is today or in the past
+			return dueDateOnly <= todayOnly;
 		} catch (error) {
 			console.error("Error parsing due date:", error);
 			return false;
@@ -3669,29 +3736,59 @@ export default function CollectionSingleCustomerPage() {
 																		</div>
 																	</div>
 
-																	{/* Manual Charge Button - Show only if payment is due within 24 hours, on due date, or overdue */}
-																	{/* {isPaymentDueOrOverdue(schedule.dueDate) && schedule.status !== "COMPLETED" && (
+																	{/* Manual Charge Button - 5 minute cooldown after click */}
+																	{(() => {
+																		// Don't show for COMPLETED or PENDING status
+																		if (schedule.status === "COMPLETED" || schedule.status === "PENDING") {
+																			return false;
+																		}
+																		// For PARTIAL status, only show if due date has passed
+																		if (schedule.status === "PARTIAL") {
+																			return isDueDatePassed(schedule.dueDate);
+																		}
+																		// For other statuses (like overdue), show the button
+																		return true;
+																	})() && (
 																		<div className="mb-3 flex justify-end">
-																			<Button
-																				onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
-																				disabled={isButtonLoading}
-																				size="sm"
-																				className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-1"
-																			>
-																				{isButtonLoading ? (
-																					<>
-																						<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-																						<span>Processing...</span>
-																					</>
-																				) : (
-																					<>
-																						<CreditCard className="w-3 h-3" />
-																						<span>Manual Charge</span>
-																					</>
-																				)}
-																			</Button>
+																			{(() => {
+																				const remaining = countdownTimers[schedule.id] || 0;
+																				const isInCooldown = remaining > 0;
+																				const isThisButtonLoading = manualChargeLoading === schedule.id;
+																				const isDisabled = isThisButtonLoading || isInCooldown;
+																				return (
+																					<div className="flex flex-col items-end gap-1">
+																						<Button
+																							onPress={() => handleManualChargeCustomerRepayment(schedule.id)}
+																							isDisabled={isDisabled}
+																							size="sm"
+																							className={`text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center space-x-1 ${
+																								isDisabled
+																									? "bg-gray-400 cursor-not-allowed"
+																									: "bg-blue-600 hover:bg-blue-700"
+																							}`}
+																						>
+																							{isThisButtonLoading ? (
+																								<>
+																									<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+																									<span>Processing...</span>
+																								</>
+																							) : (
+																								<>
+																									<CreditCard className="w-3 h-3" />
+																									<span>Manual Charge</span>
+																								</>
+																							)}
+																						</Button>
+																						{isInCooldown && (
+																							<p className="text-xs text-gray-500">
+																								Available in {formatRemainingTime(remaining)}
+																							</p>
+																						)}
+																					</div>
+																				);
+																			})()}
 																		</div>
-																	)} */}
+																	)}
 
 																	{/* Payment Details - Collapsible */}
 																	{schedule.repayments && schedule.repayments.length > 0 && (
