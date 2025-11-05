@@ -10,7 +10,6 @@ export * from "./api";
 export * from "./globalContext";
 export * from "./helper";
 export * from "./passwordSecurity";
-export * from "./roleMapping";
 export * from "./debugContext";
 import InternetStatus from "./internetCheck";
 

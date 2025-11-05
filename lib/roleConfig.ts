@@ -18,8 +18,12 @@
 // ============================================================================
 
 export const ROLES = {
+	// Admin hierarchy
+	SUPER_ADMIN: "SUPER_ADMIN",
 	ADMIN: "ADMIN",
 	SUB_ADMIN: "SUB_ADMIN",
+
+	// Core roles
 	SALES: "SALES",
 	FINANCE: "FINANCE",
 	INVENTORY: "INVENTORY",
@@ -33,6 +37,15 @@ export const ROLES = {
 	SAMSUNG_PARTNERS: "SAMSUNG_PARTNERS",
 	SCAN_PARTNER: "SCAN_PARTNER",
 	DEV: "DEV",
+
+	// Aliases and variations
+	DEVELOPER: "DEVELOPER",
+	VERIFICATION: "VERIFICATION",
+	VERIFICATION_OFFICER: "VERIFICATION_OFFICER",
+	VERIFY: "VERIFY",
+	SAMSUNG_PARTNER: "SAMSUNG_PARTNER",
+	HUMAN_RESOURCE: "HUMAN_RESOURCE",
+	INVENTORY_MANAGER: "INVENTORY_MANAGER",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -42,8 +55,12 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 // ============================================================================
 
 export const ROLE_BASE_PATHS: Record<Role, string> = {
-	[ROLES.ADMIN]: "/access/admin",
+	// Admin hierarchy - IMPORTANT: ADMIN maps to sub-admin, SUPER_ADMIN maps to admin
+	[ROLES.SUPER_ADMIN]: "/access/admin",
+	[ROLES.ADMIN]: "/access/sub-admin",
 	[ROLES.SUB_ADMIN]: "/access/sub-admin",
+
+	// Core roles
 	[ROLES.SALES]: "/access/sales",
 	[ROLES.FINANCE]: "/access/finance",
 	[ROLES.INVENTORY]: "/access/inventory",
@@ -57,6 +74,15 @@ export const ROLE_BASE_PATHS: Record<Role, string> = {
 	[ROLES.SAMSUNG_PARTNERS]: "/access/samsung-partners",
 	[ROLES.SCAN_PARTNER]: "/access/scan-partner",
 	[ROLES.DEV]: "/access/dev",
+
+	// Aliases and variations
+	[ROLES.DEVELOPER]: "/access/dev",
+	[ROLES.VERIFICATION]: "/access/verify",
+	[ROLES.VERIFICATION_OFFICER]: "/access/verify",
+	[ROLES.VERIFY]: "/access/verify",
+	[ROLES.SAMSUNG_PARTNER]: "/access/samsung-partners",
+	[ROLES.HUMAN_RESOURCE]: "/access/hr",
+	[ROLES.INVENTORY_MANAGER]: "/access/inventory",
 };
 
 // ============================================================================
@@ -81,8 +107,12 @@ export type SidebarItemsKey =
 	| "dev";
 
 export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
-	[ROLES.ADMIN]: "admin",
+	// Admin hierarchy
+	[ROLES.SUPER_ADMIN]: "admin",
+	[ROLES.ADMIN]: "subAdmin",
 	[ROLES.SUB_ADMIN]: "subAdmin",
+
+	// Core roles
 	[ROLES.SALES]: "sales",
 	[ROLES.FINANCE]: "finance",
 	[ROLES.INVENTORY]: "inventory",
@@ -96,6 +126,15 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
 	[ROLES.SAMSUNG_PARTNERS]: "samsungPartners",
 	[ROLES.SCAN_PARTNER]: "scanPartner",
 	[ROLES.DEV]: "dev",
+
+	// Aliases and variations
+	[ROLES.DEVELOPER]: "dev",
+	[ROLES.VERIFICATION]: "admin", // Verification uses admin sidebar
+	[ROLES.VERIFICATION_OFFICER]: "admin",
+	[ROLES.VERIFY]: "admin",
+	[ROLES.SAMSUNG_PARTNER]: "samsungPartners",
+	[ROLES.HUMAN_RESOURCE]: "hr",
+	[ROLES.INVENTORY_MANAGER]: "inventory",
 };
 
 // ============================================================================
@@ -105,21 +144,29 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
 /**
  * Get the base path for a given role
  */
-export function getRoleBasePath(role: string): string {
-	return ROLE_BASE_PATHS[role as Role] || "/access/admin";
+export function getRoleBasePath(role: string | undefined): string {
+	if (!role) return "/access/admin"; // Default fallback
+	const normalizedRole = role.toUpperCase() as Role;
+	return ROLE_BASE_PATHS[normalizedRole] || "/access/admin";
 }
 
 /**
  * Get the sidebar items key for a given role
  */
 export function getRoleSidebarKey(role: string): SidebarItemsKey {
-	return ROLE_SIDEBAR_MAPPING[role as Role] || "admin";
+	const normalizedRole = role.toUpperCase() as Role;
+	return ROLE_SIDEBAR_MAPPING[normalizedRole] || "admin";
 }
 
 /**
  * Check if a path is valid for a given role
  */
-export function isValidPathForRole(role: string, path: string): boolean {
+export function isValidPathForRole(
+	role: string | undefined,
+	path: string
+): boolean {
+	if (!role) return false;
+
 	// Settings is accessible to all roles
 	if (path.startsWith("/access/settings")) {
 		return true;
@@ -131,7 +178,8 @@ export function isValidPathForRole(role: string, path: string): boolean {
 	}
 
 	const basePath = getRoleBasePath(role);
-	return path.startsWith(basePath);
+	// Allow exact match or subpaths
+	return path === basePath || path.startsWith(basePath + "/");
 }
 
 /**
@@ -156,4 +204,25 @@ export function getRoleDisplayName(role: string): string {
  */
 export function isValidRole(role: string): role is Role {
 	return Object.values(ROLES).includes(role as Role);
+}
+
+/**
+ * Available roles for debug dropdown
+ */
+export const DEBUG_AVAILABLE_ROLES = Object.keys(ROLE_BASE_PATHS).sort();
+
+/**
+ * Get dashboard URL for role (default page for that role)
+ */
+export function getRoleDashboard(role: string | undefined): string {
+	return getRoleBasePath(role);
+}
+
+/**
+ * Get the role from a URL path
+ */
+export function getRoleFromPath(path: string): string | null {
+	const pathMappings = Object.entries(ROLE_BASE_PATHS);
+	const found = pathMappings.find(([_, rolePath]) => path.startsWith(rolePath));
+	return found ? found[0] : null;
 }

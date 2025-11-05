@@ -22,7 +22,7 @@ import {
 } from "@/lib/permissions";
 import { useAuthWithDebug } from "@/hooks/useAuthWithDebug";
 import {
-	getAvailableRoles,
+	DEBUG_AVAILABLE_ROLES,
 	getRoleDisplayName,
 	type Role,
 } from "@/lib/roleConfig";
@@ -192,7 +192,7 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 											className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
 										>
 											<option value="">No Override (Use Original Role)</option>
-											{getAvailableRoles().map((role) => (
+											{DEBUG_AVAILABLE_ROLES.map((role) => (
 												<option key={role} value={role}>
 													{getRoleDisplayName(role)}
 												</option>
