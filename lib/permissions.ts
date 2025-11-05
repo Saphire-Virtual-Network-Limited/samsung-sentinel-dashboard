@@ -384,9 +384,11 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	},
 	"ayodele.olawale@sapphirevirtual.com": {
 		canUnlockDevice: true,
+		canLockDevice: true,
 	},
 	"Innocent@sapphirevirtual.com": {
 		canUnlockDevice: true,
+		canLockDevice: true,
 	},
 	"tosin@sapphirevirtual.com": {
 		canUnlockDevice: true,
