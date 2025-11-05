@@ -13,6 +13,8 @@ export interface UseClaimsDataOptions {
 	role: ClaimRepairRole;
 	status?: string;
 	payment?: string;
+	repairStatus?: string;
+	search?: string;
 	startDate?: string;
 	endDate?: string;
 	enableAutoRefresh?: boolean;
@@ -38,6 +40,10 @@ export interface UseClaimsDataReturn {
 	bulkApproveHandler: (claimIds: string[]) => Promise<void>;
 	bulkRejectHandler: (claimIds: string[], reason: string) => Promise<void>;
 	bulkAuthorizePaymentHandler: (claimIds: string[]) => Promise<void>;
+	updateRepairStatusHandler: (
+		claimId: string,
+		repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed"
+	) => Promise<void>;
 }
 
 export const useClaimsData = (
@@ -47,6 +53,8 @@ export const useClaimsData = (
 		role,
 		status: statusProp,
 		payment: paymentProp,
+		repairStatus: repairStatusProp,
+		search: searchProp,
 		startDate,
 		endDate,
 		enableAutoRefresh = false,
@@ -61,6 +69,8 @@ export const useClaimsData = (
 	// Use props if provided, otherwise fall back to search params
 	const status = statusProp || searchParams.get("status") || "all";
 	const payment = paymentProp || searchParams.get("payment") || "all";
+	const repairStatus = repairStatusProp || searchParams.get("repairStatus") || "all";
+	const search = searchProp || searchParams.get("search") || "";
 
 	// Construct API endpoint based on role
 	const getApiEndpoint = useCallback(() => {
@@ -80,8 +90,18 @@ export const useClaimsData = (
 			params.append("payment", payment);
 		}
 
+		// Add repair status filter
+		if (repairStatus && repairStatus !== "all") {
+			params.append("repairStatus", repairStatus);
+		}
+
+		// Add search filter (IMEI)
+		if (search && search.trim()) {
+			params.append("search", search.trim());
+		}
+
 		return `${baseUrl}?${params.toString()}`;
-	}, [role, status, payment]);
+	}, [role, status, payment, repairStatus, search]);
 
 	// Load data from centralized test data
 	const loadTestData = useCallback((): ClaimRepairItem[] => {
@@ -99,6 +119,8 @@ export const useClaimsData = (
 				...claim,
 				serviceCenterName: serviceCenter?.name,
 				engineerName: engineer?.name,
+				// Ensure repairStatus exists with a default value
+				repairStatus: claim.repairStatus || "pending",
 			};
 		}) as ClaimRepairItem[];
 	}, []);
@@ -123,6 +145,19 @@ export const useClaimsData = (
 			// Filter by payment
 			if (payment && payment !== "all") {
 				allData = allData.filter((item) => item.paymentStatus === payment);
+			}
+
+			// Filter by repair status
+			if (repairStatus && repairStatus !== "all") {
+				allData = allData.filter((item) => (item.repairStatus || "pending") === repairStatus);
+			}
+
+			// Filter by search (IMEI)
+			if (search && search.trim()) {
+				const searchTerm = search.trim().toLowerCase();
+				allData = allData.filter((item) => 
+					item.imei?.toLowerCase().includes(searchTerm)
+				);
 			}
 
 			setData(allData);
@@ -150,7 +185,7 @@ export const useClaimsData = (
 		} finally {
 			setIsLoading(false);
 		}
-	}, [status, payment, loadTestData]);
+	}, [status, payment, repairStatus, search, loadTestData]);
 
 	// Initial fetch and refetch on dependency changes
 	useEffect(() => {
@@ -302,6 +337,60 @@ export const useClaimsData = (
 				});
 
 				await fetchData();
+				*/
+			} catch (err) {
+				const error =
+					err instanceof Error ? err : new Error("Unknown error occurred");
+				showToast({
+					message: error.message,
+					type: "error",
+				});
+				throw error;
+			}
+		},
+		[fetchData]
+	);
+
+	// Update repair status handler (service-center) (with dummy simulation)
+	const updateRepairStatusHandler = useCallback(
+		async (
+			claimId: string,
+			repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed"
+		) => {
+			try {
+				// Simulate API delay
+				await new Promise((resolve) => setTimeout(resolve, 800));
+
+				// Simulate success
+				showToast({
+					message: `Repair status updated to ${repairStatus.replace("-", " ")}`,
+					type: "success",
+				});
+
+				await fetchData();
+
+				// TODO: Replace with actual API call when backend is ready
+				/*
+				const response = await fetch(`/api/claims/${claimId}/repair-status`, {
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ repairStatus }),
+				});
+
+				if (!response.ok) {
+					throw new Error("Failed to update repair status");
+				}
+
+				const result = await response.json();
+				if (result.success) {
+					showToast({
+						message: `Repair status updated to ${repairStatus.replace("-", " ")}`,
+						type: "success",
+					});
+					await fetchData();
+				}
 				*/
 			} catch (err) {
 				const error =
@@ -515,5 +604,6 @@ export const useClaimsData = (
 		bulkApproveHandler,
 		bulkRejectHandler,
 		bulkAuthorizePaymentHandler,
+		updateRepairStatusHandler,
 	};
 };
