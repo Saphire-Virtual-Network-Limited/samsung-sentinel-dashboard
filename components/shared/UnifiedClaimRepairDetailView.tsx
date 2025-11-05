@@ -23,11 +23,11 @@ import {
 	Smartphone,
 	Wrench,
 	DollarSign,
-	FileText,
 	CheckCircle,
 	XCircle,
 	CreditCard,
 	Building2,
+	Eye,
 	Hash,
 } from "lucide-react";
 import { InfoCard, InfoField } from "@/components/reususables";
@@ -141,7 +141,7 @@ const UnifiedClaimRepairDetailView: React.FC<
 
 	const isPaid = claimData.paymentStatus === "paid";
 	const isUnpaidCompleted =
-		claimData.status === "completed" && claimData.paymentStatus === "unpaid";
+		claimData.repairStatus === "completed" && claimData.paymentStatus === "unpaid";
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -194,7 +194,7 @@ const UnifiedClaimRepairDetailView: React.FC<
 
 					{/* Samsung Partners: Authorize payment for completed/unpaid claims */}
 					{role === "samsung-partners" &&
-						claimData.status === "completed" &&
+						claimData.repairStatus === "completed" &&
 						claimData.paymentStatus === "unpaid" &&
 						!claimData.authorizedForPayment &&
 						onAuthorizePayment && (
@@ -210,7 +210,7 @@ const UnifiedClaimRepairDetailView: React.FC<
 
 					{/* Samsung Sentinel: Execute payment for authorized claims */}
 					{role === "samsung-sentinel" &&
-						claimData.status === "completed" &&
+						claimData.repairStatus === "completed" &&
 						claimData.paymentStatus === "unpaid" &&
 						claimData.authorizedForPayment &&
 						onExecutePayment && (
@@ -236,7 +236,7 @@ const UnifiedClaimRepairDetailView: React.FC<
 									: `/access/admin/samsung-sentinel/claims/${claimData.claimId}`;
 							router.push(path);
 						}}
-						startContent={<FileText className="h-4 w-4" />}
+						startContent={<Eye className="h-4 w-4" />}
 					>
 						View Full Details
 					</Button>
@@ -405,31 +405,6 @@ const UnifiedClaimRepairDetailView: React.FC<
 					)}
 				</div>
 			</InfoCard>
-
-			{/* Documents */}
-			{role === "service-center" &&
-				claimData.documents &&
-				claimData.documents.length > 0 && (
-					<Card>
-						<CardHeader>
-							<h3 className="text-lg font-semibold flex items-center gap-2">
-								<FileText size={18} />
-								Documents
-							</h3>
-						</CardHeader>
-						<CardBody>
-							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-								{claimData.documents.map((doc, index) => (
-									<div key={index} className="border rounded-lg p-3">
-										<p className="text-sm text-gray-600 truncate">
-											{doc.name || `Document ${index + 1}`}
-										</p>
-									</div>
-								))}
-							</div>
-						</CardBody>
-					</Card>
-				)}
 
 			{/* Timeline */}
 			<InfoCard title="Timeline" icon={<Calendar size={18} />}>

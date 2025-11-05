@@ -31,12 +31,14 @@ import {
 	Package,
 	MessageSquare,
 	CheckCircle,
+	XCircle,
 	FileText,
 	Shield,
 } from "lucide-react";
 import { IoLogoAndroid, IoLogoApple, IoBusiness } from "react-icons/io5";
 import type { LucideIcon } from "lucide-react";
 import type { IconType } from "react-icons";
+import { getRoleSidebarKey } from "@/lib/roleConfig";
 
 // ============================================================================
 // TYPES
@@ -71,6 +73,7 @@ export type SidebarItemsConfig = {
 	samsungPartners: (options: MenuOptions) => MenuItem[];
 	scanPartner: (options: MenuOptions) => MenuItem[];
 	repairStore: (options: MenuOptions) => MenuItem[];
+	verification: (options: MenuOptions) => MenuItem[];
 	dev: (options: MenuOptions) => MenuItem[];
 };
 
@@ -1378,6 +1381,62 @@ export function getSupportItems(options: MenuOptions): MenuItem[] {
 	];
 }
 
+export function getVerificationItems(options: MenuOptions): MenuItem[] {
+	const { canVerifyMobiflex } = options;
+
+	const adminVerificationItems: MenuItem[] = canVerifyMobiflex
+		? [
+				{
+					icon: IoBusiness,
+					title: "Mobiflex Sales Agent",
+					id: "verify-staff-mobiflex",
+					subItems: [
+						{
+							title: "Pending",
+							url: "/access/verify/staff/agents?status=pending",
+						},
+						{
+							title: "Approved",
+							url: "/access/verify/staff/agents?status=approved",
+						},
+						{
+							title: "Rejected",
+							url: "/access/verify/staff/agents?status=rejected",
+						},
+					],
+				},
+		  ]
+		: [];
+
+	return [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/verify/",
+			id: "verification-dashboard",
+		},
+		{
+			icon: Users,
+			title: "Pending",
+			url: "/access/verify/referees/unapproved-referees",
+			id: "unapproved-referees",
+		},
+		{
+			icon: CheckCircle,
+			title: "Approved",
+			url: "/access/verify/referees/approved-referees",
+			id: "approved-referees",
+		},
+		{
+			icon: XCircle,
+			title: "Rejected",
+			url: "/access/verify/referees/rejected-referees",
+			id: "rejected-referees",
+		},
+		...adminVerificationItems,
+	];
+}
+
 export function getServiceCenterItems(options: MenuOptions): MenuItem[] {
 	return [
 		{
@@ -1571,6 +1630,7 @@ export const sidebarItemsConfig: SidebarItemsConfig = {
 	samsungPartners: getSamsungPartnersItems,
 	scanPartner: getScanPartnerItems,
 	repairStore: getRepairStoreItems,
+	verification: getVerificationItems,
 	dev: getDeveloperItems,
 };
 
@@ -1586,34 +1646,11 @@ export function getSidebarItemsForRole(
 		return [];
 	}
 
-	// Map role to sidebar key
-	const roleMapping: Record<string, keyof SidebarItemsConfig> = {
-		SUPER_ADMIN: "admin",
-		ADMIN: "subAdmin",
-		SUB_ADMIN: "subAdmin",
-		VERIFICATION: "admin",
-		VERIFICATION_OFFICER: "admin",
-		DEVELOPER: "dev",
-		DEV: "dev",
-		SALES: "sales",
-		FINANCE: "finance",
-		INVENTORY: "inventory",
-		AUDIT: "audit",
-		SUPPORT: "support",
-		COLLECTION_ADMIN: "collectionAdmin",
-		COLLECTION_OFFICER: "collectionOfficer",
-		SCAN_PARTNER: "scanPartner",
-		SERVICE_CENTER: "serviceCenter",
-		SAMSUNG_PARTNERS: "samsungPartners",
-		SAMSUNG_PARTNER: "samsungPartners",
-		REPAIR_STORE: "repairStore",
-		HR: "hr",
-	};
-
-	const sidebarKey = roleMapping[role];
+	// Use centralized role mapping from roleConfig.ts
+	const sidebarKey = getRoleSidebarKey(role);
 
 	// Return empty array if role is not recognized
-	if (!sidebarKey) {
+	if (!sidebarKey || !sidebarItemsConfig[sidebarKey]) {
 		console.warn(`Unknown role "${role}", no sidebar items available`);
 		return [];
 	}

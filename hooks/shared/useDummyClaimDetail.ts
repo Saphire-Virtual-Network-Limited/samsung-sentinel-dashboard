@@ -32,9 +32,11 @@ export const useDummyClaimDetail = (
 				const claimNumber = parseInt(claimId.replace(/\D/g, "")) || 1;
 
 				// Generate consistent dummy data based on claimId
-				const statuses: Array<
-					"pending" | "approved" | "rejected" | "in-progress" | "completed"
-				> = ["pending", "approved", "rejected", "in-progress", "completed"];
+				const statuses: Array<"pending" | "approved" | "rejected"> = [
+					"pending",
+					"approved",
+					"rejected",
+				];
 				const paymentStatuses: Array<"paid" | "unpaid"> = ["paid", "unpaid"];
 
 				const faultTypes = [
@@ -80,7 +82,18 @@ export const useDummyClaimDetail = (
 
 				const statusIndex = claimNumber % statuses.length;
 				const claimStatus = statuses[statusIndex];
-				const isCompleted = claimStatus === "completed";
+
+				// Generate repair status
+				const repairStatuses = [
+					"pending",
+					"awaiting-parts",
+					"received-device",
+					"completed",
+				] as const;
+				const repairStatusIndex = claimNumber % repairStatuses.length;
+				const repairStatus = repairStatuses[repairStatusIndex];
+
+				const isCompleted = repairStatus === "completed";
 				const paymentStatus = isCompleted
 					? paymentStatuses[claimNumber % 2]
 					: undefined;
@@ -98,6 +111,7 @@ export const useDummyClaimDetail = (
 					faultType: faultTypes[claimNumber % faultTypes.length],
 					repairCost: Math.floor(Math.random() * 50000) + 10000,
 					status: claimStatus,
+					repairStatus,
 					paymentStatus,
 					serviceCenterName:
 						serviceCenters[claimNumber % serviceCenters.length],
@@ -127,9 +141,7 @@ export const useDummyClaimDetail = (
 						  ).toISOString()
 						: undefined,
 					approvedAt:
-						claimStatus === "approved" ||
-						claimStatus === "in-progress" ||
-						isCompleted
+						claimStatus === "approved" || isCompleted
 							? new Date(
 									2025,
 									9,
@@ -144,43 +156,6 @@ export const useDummyClaimDetail = (
 									Math.floor(Math.random() * 13) + 1
 							  ).toISOString()
 							: undefined,
-					documents: [
-						{
-							id: `doc${claimNumber}-1`,
-							name: "Device Photo - Front View",
-							url: "/images/placeholder.jpg",
-							type: "image",
-						},
-						{
-							id: `doc${claimNumber}-2`,
-							name: "Device Photo - Back View",
-							url: "/images/placeholder.jpg",
-							type: "image",
-						},
-						{
-							id: `doc${claimNumber}-3`,
-							name: "Purchase Receipt",
-							url: "/images/placeholder.jpg",
-							type: "document",
-						},
-					],
-					deviceImages: [
-						{
-							id: `img${claimNumber}-1`,
-							name: "Front View",
-							url: "/images/placeholder.jpg",
-						},
-						{
-							id: `img${claimNumber}-2`,
-							name: "Back View",
-							url: "/images/placeholder.jpg",
-						},
-						{
-							id: `img${claimNumber}-3`,
-							name: "Damage Close-up",
-							url: "/images/placeholder.jpg",
-						},
-					],
 				};
 
 				setClaim(dummyClaim);
@@ -202,7 +177,7 @@ export const useDummyClaimDetail = (
 
 	// Generate bank details for unpaid completed claims
 	const bankDetails =
-		claim?.status === "completed" && claim?.paymentStatus === "unpaid"
+		claim?.repairStatus === "completed" && claim?.paymentStatus === "unpaid"
 			? {
 					bankName: ["GTBank", "Access Bank", "First Bank", "Zenith Bank"][
 						parseInt(claim.id) % 4

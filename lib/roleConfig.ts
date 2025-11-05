@@ -20,8 +20,7 @@
 export const ROLES = {
 	// Admin hierarchy
 	SUPER_ADMIN: "SUPER_ADMIN",
-	ADMIN: "ADMIN",
-	SUB_ADMIN: "SUB_ADMIN",
+	ADMIN: "SUB_ADMIN",
 
 	// Core roles
 	SALES: "SALES",
@@ -36,15 +35,11 @@ export const ROLES = {
 	REPAIR_STORE: "REPAIR_STORE",
 	SAMSUNG_PARTNERS: "SAMSUNG_PARTNERS",
 	SCAN_PARTNER: "SCAN_PARTNER",
-	DEV: "DEV",
 
 	// Aliases and variations
 	DEVELOPER: "DEVELOPER",
 	VERIFICATION: "VERIFICATION",
 	VERIFICATION_OFFICER: "VERIFICATION_OFFICER",
-	VERIFY: "VERIFY",
-	SAMSUNG_PARTNER: "SAMSUNG_PARTNER",
-	HUMAN_RESOURCE: "HUMAN_RESOURCE",
 	INVENTORY_MANAGER: "INVENTORY_MANAGER",
 } as const;
 
@@ -58,7 +53,6 @@ export const ROLE_BASE_PATHS: Record<Role, string> = {
 	// Admin hierarchy - IMPORTANT: ADMIN maps to sub-admin, SUPER_ADMIN maps to admin
 	[ROLES.SUPER_ADMIN]: "/access/admin",
 	[ROLES.ADMIN]: "/access/sub-admin",
-	[ROLES.SUB_ADMIN]: "/access/sub-admin",
 
 	// Core roles
 	[ROLES.SALES]: "/access/sales",
@@ -73,15 +67,11 @@ export const ROLE_BASE_PATHS: Record<Role, string> = {
 	[ROLES.REPAIR_STORE]: "/access/repair-store",
 	[ROLES.SAMSUNG_PARTNERS]: "/access/samsung-partners",
 	[ROLES.SCAN_PARTNER]: "/access/scan-partner",
-	[ROLES.DEV]: "/access/dev",
 
 	// Aliases and variations
 	[ROLES.DEVELOPER]: "/access/dev",
 	[ROLES.VERIFICATION]: "/access/verify",
 	[ROLES.VERIFICATION_OFFICER]: "/access/verify",
-	[ROLES.VERIFY]: "/access/verify",
-	[ROLES.SAMSUNG_PARTNER]: "/access/samsung-partners",
-	[ROLES.HUMAN_RESOURCE]: "/access/hr",
 	[ROLES.INVENTORY_MANAGER]: "/access/inventory",
 };
 
@@ -104,13 +94,13 @@ export type SidebarItemsKey =
 	| "repairStore"
 	| "samsungPartners"
 	| "scanPartner"
+	| "verification"
 	| "dev";
 
 export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
 	// Admin hierarchy
 	[ROLES.SUPER_ADMIN]: "admin",
 	[ROLES.ADMIN]: "subAdmin",
-	[ROLES.SUB_ADMIN]: "subAdmin",
 
 	// Core roles
 	[ROLES.SALES]: "sales",
@@ -125,15 +115,11 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
 	[ROLES.REPAIR_STORE]: "repairStore",
 	[ROLES.SAMSUNG_PARTNERS]: "samsungPartners",
 	[ROLES.SCAN_PARTNER]: "scanPartner",
-	[ROLES.DEV]: "dev",
 
 	// Aliases and variations
 	[ROLES.DEVELOPER]: "dev",
-	[ROLES.VERIFICATION]: "admin", // Verification uses admin sidebar
-	[ROLES.VERIFICATION_OFFICER]: "admin",
-	[ROLES.VERIFY]: "admin",
-	[ROLES.SAMSUNG_PARTNER]: "samsungPartners",
-	[ROLES.HUMAN_RESOURCE]: "hr",
+	[ROLES.VERIFICATION]: "verification", // Verification uses admin sidebar
+	[ROLES.VERIFICATION_OFFICER]: "verification",
 	[ROLES.INVENTORY_MANAGER]: "inventory",
 };
 
