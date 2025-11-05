@@ -25,7 +25,7 @@ export interface ServiceCenterClaim {
 	partsRequired?: any[];
 	repairHistory?: any[];
 	statusHistory?: any[];
-	documents?: any[];
+	repairStatus?: "pending" | "awaiting-parts" | "received-device" | "completed";
 }
 
 // Mock data fetcher
@@ -67,22 +67,7 @@ const fetcher = (url: string): Promise<ServiceCenterClaim> => {
 				availability: "Ordered",
 			},
 		],
-		documents: [
-			{
-				id: "DOC001",
-				name: "diagnostic_report.pdf",
-				type: "document",
-				uploadDate: "2024-01-18",
-				url: "/files/diagnostic_report.pdf",
-			},
-			{
-				id: "DOC002",
-				name: "device_photos.jpg",
-				type: "image",
-				uploadDate: "2024-01-18",
-				url: "/files/device_photos.jpg",
-			},
-		],
+		repairStatus: "awaiting-parts" as const,
 		repairHistory: [
 			{
 				id: "REP001",
@@ -172,121 +157,44 @@ export const useServiceCenterClaimActions = () => {
 		url?: string;
 	};
 
-	const uploadDocument = async (claimId: string, file: File): Promise<Doc> => {
-		// API call to upload document (mocked)
-		const uploaded: Doc = {
-			id: `DOC${Date.now()}`,
-			name: file.name,
-			type: file.type.startsWith("image")
-				? "image"
-				: file.type === "application/pdf"
-				? "document"
-				: "file",
-			url: `/files/${file.name}`,
-		};
+	// Document functions removed - focusing on repair status management
 
+	const updateRepairStatus = async (
+		claimId: string, 
+		newRepairStatus: "pending" | "awaiting-parts" | "received-device" | "completed",
+		notes?: string
+	) => {
+		// API call to update repair status (mocked)
 		const key = `/api/service-center/claims/${claimId}`;
-		// Update SWR cache to include the newly uploaded document and add status history
+		
 		await mutate(
 			key,
 			(current: any) => {
 				if (!current) return current;
-				const newDocs = [uploaded, ...(current.documents || [])];
+				
 				const historyEntry = {
 					id: `ST${Date.now()}`,
 					date: new Date().toISOString(),
-					status: "document-uploaded",
+					status: `repair-${newRepairStatus}`,
 					user: "Service Center Staff",
-					notes: `Uploaded ${file.name}`,
+					notes: notes || `Repair status updated to ${newRepairStatus.replace('-', ' ')}`,
 				};
+				
 				return {
 					...current,
-					documents: newDocs,
+					repairStatus: newRepairStatus,
+					dateUpdated: new Date().toISOString(),
 					statusHistory: [historyEntry, ...(current.statusHistory || [])],
 				};
 			},
 			false
 		);
 
-		return Promise.resolve(uploaded);
-	};
-
-	const replaceDocument = async (
-		claimId: string,
-		docId: string,
-		file: File
-	): Promise<Doc> => {
-		// API call to replace document (mocked)
-		const replaced: Doc = {
-			id: docId,
-			name: file.name,
-			type: file.type.startsWith("image")
-				? "image"
-				: file.type === "application/pdf"
-				? "document"
-				: "file",
-			url: `/files/${file.name}`,
-		};
-
-		const key = `/api/service-center/claims/${claimId}`;
-		await mutate(
-			key,
-			(current: any) => {
-				if (!current) return current;
-				const newDocs = (current.documents || []).map((d: any) =>
-					d.id === docId ? replaced : d
-				);
-				const historyEntry = {
-					id: `ST${Date.now()}`,
-					date: new Date().toISOString(),
-					status: "document-replaced",
-					user: "Service Center Staff",
-					notes: `Replaced ${docId} with ${file.name}`,
-				};
-				return {
-					...current,
-					documents: newDocs,
-					statusHistory: [historyEntry, ...(current.statusHistory || [])],
-				};
-			},
-			false
-		);
-
-		return Promise.resolve(replaced);
-	};
-
-	const deleteDocument = async (claimId: string, docId: string) => {
-		// API call to delete document (mocked)
-		const key = `/api/service-center/claims/${claimId}`;
-		await mutate(
-			key,
-			(current: any) => {
-				if (!current) return current;
-				const newDocs = (current.documents || []).filter(
-					(d: any) => d.id !== docId
-				);
-				const historyEntry = {
-					id: `ST${Date.now()}`,
-					date: new Date().toISOString(),
-					status: "document-deleted",
-					user: "Service Center Staff",
-					notes: `Deleted ${docId}`,
-				};
-				return {
-					...current,
-					documents: newDocs,
-					statusHistory: [historyEntry, ...(current.statusHistory || [])],
-				};
-			},
-			false
-		);
 		return Promise.resolve();
 	};
 
 	return {
 		updateStatus,
-		uploadDocument,
-		replaceDocument,
-		deleteDocument,
+		updateRepairStatus,
 	};
 };

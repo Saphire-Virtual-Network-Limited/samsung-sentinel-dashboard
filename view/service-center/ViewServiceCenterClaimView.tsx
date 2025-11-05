@@ -30,7 +30,7 @@ import {
 	Wrench,
 	FileText,
 } from "lucide-react";
-import UploadArea from "@/components/reususables/UploadArea";
+
 import { showToast } from "@/lib/showNotification";
 import {
 	useServiceCenterClaim,
@@ -46,18 +46,15 @@ const ViewServiceCenterClaimView = () => {
 
 	const [newStatus, setNewStatus] = useState("");
 	const [statusNotes, setStatusNotes] = useState("");
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [newRepairStatus, setNewRepairStatus] = useState("");
+	const [repairStatusNotes, setRepairStatusNotes] = useState("");
 
 	const {
 		isOpen: isStatusModalOpen,
 		onOpen: onStatusModalOpen,
 		onClose: onStatusModalClose,
 	} = useDisclosure();
-	const {
-		isOpen: isUploadModalOpen,
-		onOpen: onUploadModalOpen,
-		onClose: onUploadModalClose,
-	} = useDisclosure();
+
 
 	// DEMO: Using dummy data instead of API call
 	const claim = {
@@ -138,33 +135,8 @@ const ViewServiceCenterClaimView = () => {
 				status: "In Progress",
 			},
 		],
-		// Documents
-		documents: [
-			{
-				id: "doc-1",
-				name: "Device Receipt",
-				type: "receipt",
-				url: "/demo-receipt.pdf",
-				uploadedBy: "John Doe",
-				uploadedAt: "2024-10-15",
-			},
-			{
-				id: "doc-2",
-				name: "Warranty Certificate",
-				type: "warranty",
-				url: "/demo-warranty.pdf",
-				uploadedBy: "System",
-				uploadedAt: "2024-10-15",
-			},
-			{
-				id: "doc-3",
-				name: "Damage Photos",
-				type: "image",
-				url: "/demo-damage.jpg",
-				uploadedBy: "John Doe",
-				uploadedAt: "2024-10-15",
-			},
-		],
+		// Repair Status
+		repairStatus: "awaiting-parts" as "pending" | "awaiting-parts" | "received-device" | "completed",
 		// Status history
 		statusHistory: [
 			{
@@ -205,29 +177,14 @@ const ViewServiceCenterClaimView = () => {
 	const error = null;
 	const mutate = (updater?: any, options?: any) => {}; // Dummy mutate function
 
-	const { updateStatus, uploadDocument, replaceDocument, deleteDocument } =
-		useServiceCenterClaimActions();
+	const { updateStatus, updateRepairStatus } = useServiceCenterClaimActions();
 
-	// Document modals
+	// Repair status modal
 	const {
-		isOpen: isPreviewOpen,
-		onOpen: onPreviewOpen,
-		onClose: onPreviewClose,
+		isOpen: isRepairStatusOpen,
+		onOpen: onRepairStatusOpen,
+		onClose: onRepairStatusClose,
 	} = useDisclosure();
-
-	const {
-		isOpen: isReplaceOpen,
-		onOpen: onReplaceOpen,
-		onClose: onReplaceClose,
-	} = useDisclosure();
-
-	const {
-		isOpen: isDeleteOpen,
-		onOpen: onDeleteOpen,
-		onClose: onDeleteClose,
-	} = useDisclosure();
-
-	const [activeDoc, setActiveDoc] = useState<any | null>(null);
 
 	const statusOptions = [
 		{ key: "in-progress", label: "In Progress" },
@@ -236,6 +193,13 @@ const ViewServiceCenterClaimView = () => {
 		{ key: "ready-pickup", label: "Ready for Pickup" },
 		{ key: "completed", label: "Completed" },
 		{ key: "cancelled", label: "Cancelled" },
+	];
+
+	const repairStatusOptions = [
+		{ key: "pending", label: "Pending" },
+		{ key: "awaiting-parts", label: "Awaiting Parts" },
+		{ key: "received-device", label: "Device Received" },
+		{ key: "completed", label: "Completed" },
 	];
 
 	const handleStatusUpdate = async () => {
@@ -265,28 +229,29 @@ const ViewServiceCenterClaimView = () => {
 		}
 	};
 
-	const handleFileUpload = async () => {
-		if (!selectedFile) {
+	const handleRepairStatusUpdate = async () => {
+		if (!newRepairStatus) {
 			showToast({
 				type: "error",
-				message: "Please select a file",
+				message: "Please select a repair status",
 			});
 			return;
 		}
 
 		try {
-			await uploadDocument(claimId, selectedFile);
+			await updateRepairStatus(claimId, newRepairStatus as any, repairStatusNotes);
 			showToast({
 				type: "success",
-				message: "File uploaded successfully",
+				message: "Repair status updated successfully",
 			});
-			onUploadModalClose();
-			setSelectedFile(null);
+			onRepairStatusClose();
+			setNewRepairStatus("");
+			setRepairStatusNotes("");
 			mutate();
 		} catch (error) {
 			showToast({
 				type: "error",
-				message: "Failed to upload file",
+				message: "Failed to update repair status",
 			});
 		}
 	};
@@ -381,12 +346,12 @@ const ViewServiceCenterClaimView = () => {
 							Update Status
 						</Button>
 						<Button
-							color="default"
+							color="secondary"
 							variant="bordered"
-							onPress={onUploadModalOpen}
-							startContent={<Upload size={16} />}
+							onPress={onRepairStatusOpen}
+							startContent={<Wrench size={16} />}
 						>
-							Upload Document
+							Update Repair Status
 						</Button>
 					</div>
 				</div>
@@ -564,67 +529,46 @@ const ViewServiceCenterClaimView = () => {
 						</CardBody>
 					</Card>
 
-					{/* Documents / Upload Areas */}
-					<UploadArea
-						title="Images & Receipts"
-						accept="image/*,application/pdf"
-						files={claim?.documents || []}
-						filter={(d) =>
-							!!d.type &&
-							(/(image|jpg|png|jpeg)/i.test(d.type) || /pdf/i.test(d.type))
-						}
-						onUpload={async (file: File) => {
-							const uploaded = await uploadDocument(claimId, file);
-							return {
-								id: uploaded.id,
-								name: uploaded.name,
-								url: uploaded.url,
-								type: uploaded.type,
-							};
-						}}
-						onReplace={async (docId: string, file: File) => {
-							const replaced = await replaceDocument(claimId, docId, file);
-							return {
-								id: replaced.id,
-								name: replaced.name,
-								url: replaced.url,
-								type: replaced.type,
-							};
-						}}
-						onDelete={async (docId: string) => {
-							await deleteDocument(claimId, docId);
-						}}
-					/>
-
-					<div className="h-4" />
-
-					<UploadArea
-						title="Other Documents"
-						accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-						files={claim?.documents || []}
-						filter={(d) => !!d.type && !/(image|jpg|png|jpeg)/i.test(d.type)}
-						onUpload={async (file: File) => {
-							const uploaded = await uploadDocument(claimId, file);
-							return {
-								id: uploaded.id,
-								name: uploaded.name,
-								url: uploaded.url,
-								type: uploaded.type,
-							};
-						}}
-						onReplace={async (docId: string, file: File) => {
-							const replaced = await replaceDocument(claimId, docId, file);
-							return {
-								id: replaced.id,
-								name: replaced.name,
-								url: replaced.url,
-								type: replaced.type,
-							};
-						}}
-						onDelete={async (docId: string) => {
-							await deleteDocument(claimId, docId);
-						}}
-					/>
+					{/* Repair Status Management */}
+					<Card>
+						<CardHeader className="flex flex-row items-center justify-between">
+							<div className="flex items-center gap-3">
+								<Wrench className="w-5 h-5 text-primary" />
+								<h3 className="text-lg font-semibold">Repair Status</h3>
+							</div>
+							<Button
+								size="sm"
+								color="primary"
+								variant="flat"
+								startContent={<Wrench size={16} />}
+								onPress={onRepairStatusOpen}
+							>
+								Update Status
+							</Button>
+						</CardHeader>
+						<CardBody>
+							<div className="space-y-4">
+								<div className="flex items-center gap-3">
+									<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+										Current Status:
+									</span>
+									<Chip
+										color={
+											claim?.repairStatus === "completed"
+												? "success"
+												: claim?.repairStatus === "awaiting-parts"
+												? "warning"
+												: "primary"
+										}
+										variant="flat"
+										startContent={<Wrench size={12} />}
+									>
+										{claim?.repairStatus?.toUpperCase().replace("-", " ") || "PENDING"}
+									</Chip>
+								</div>
+							</div>
+						</CardBody>
+					</Card>
 
 					{/* Status History */}
 					<Card>
@@ -701,221 +645,58 @@ const ViewServiceCenterClaimView = () => {
 				</ModalContent>
 			</Modal>
 
-			{/* Upload Document Modal */}
-			<Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose} size="md">
+			{/* Repair Status Update Modal */}
+			<Modal isOpen={isRepairStatusOpen} onClose={onRepairStatusClose} size="md">
 				<ModalContent>
 					<ModalHeader>
-						<h3 className="text-lg font-semibold">Upload Document</h3>
+						<div className="flex items-center gap-2">
+							<Wrench className="w-5 h-5 text-secondary" />
+							<h3 className="text-lg font-semibold">Update Repair Status</h3>
+						</div>
 					</ModalHeader>
 					<ModalBody>
 						<div className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Select File
-								</label>
-								<input
-									type="file"
-									onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-									className="block w-full text-sm text-gray-500
-										file:mr-4 file:py-2 file:px-4
-										file:rounded-full file:border-0
-										file:text-sm file:font-semibold
-										file:bg-blue-50 file:text-blue-700
-										hover:file:bg-blue-100"
+								<Select
+									label="New Repair Status"
+									placeholder="Select repair status"
+									selectedKeys={newRepairStatus ? [newRepairStatus] : []}
+									onSelectionChange={(keys) => {
+										const selected = Array.from(keys)[0] as string;
+										setNewRepairStatus(selected);
+									}}
+								>
+									{repairStatusOptions.map((option) => (
+										<SelectItem key={option.key} value={option.key}>
+											{option.label}
+										</SelectItem>
+									))}
+								</Select>
+							</div>
+
+							<div>
+								<Textarea
+									label="Notes (Optional)"
+									placeholder="Add any notes about this status update..."
+									value={repairStatusNotes}
+									onValueChange={setRepairStatusNotes}
+									minRows={3}
 								/>
 							</div>
-							{selectedFile && (
-								<div className="text-sm text-gray-600">
-									Selected: {selectedFile.name}
-								</div>
-							)}
 						</div>
 					</ModalBody>
 					<ModalFooter>
-						<Button color="danger" variant="light" onPress={onUploadModalClose}>
+						<Button color="danger" variant="light" onPress={onRepairStatusClose}>
 							Cancel
 						</Button>
-						<Button color="primary" onPress={handleFileUpload}>
-							Upload
+						<Button color="secondary" onPress={handleRepairStatusUpdate}>
+							Update Status
 						</Button>
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
 
-			{/* Document Preview Modal */}
-			<Modal isOpen={isPreviewOpen} onClose={onPreviewClose} size="lg">
-				<ModalContent>
-					<ModalHeader>
-						<h3 className="text-lg font-semibold">Document Preview</h3>
-					</ModalHeader>
-					<ModalBody>
-						{activeDoc ? (
-							<div>
-								<p className="text-sm mb-2">{activeDoc.name}</p>
-								{activeDoc.type === "image" ? (
-									<div className="w-full relative h-96">
-										<Image
-											src={activeDoc.url}
-											alt={activeDoc.name}
-											fill
-											style={{ objectFit: "contain" }}
-										/>
-									</div>
-								) : (
-									<iframe
-										src={activeDoc.url}
-										className="w-full h-96"
-										sandbox="allow-same-origin allow-scripts"
-									/>
-								)}
-							</div>
-						) : (
-							<p>No document selected</p>
-						)}
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onPreviewClose}>
-							Close
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
 
-			{/* Replace Document Modal */}
-			<Modal isOpen={isReplaceOpen} onClose={onReplaceClose} size="md">
-				<ModalContent>
-					<ModalHeader>
-						<h3 className="text-lg font-semibold">Replace Document</h3>
-					</ModalHeader>
-					<ModalBody>
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Select File
-							</label>
-							<input
-								type="file"
-								onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-								className="block w-full text-sm text-gray-500"
-							/>
-						</div>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onReplaceClose}>
-							Cancel
-						</Button>
-						<Button
-							color="primary"
-							onPress={async () => {
-								if (!selectedFile || !activeDoc) return;
-								try {
-									await replaceDocument(claimId, activeDoc.id, selectedFile);
-									// locally update claim: replace document and add statusHistory entry
-									mutate(
-										(current: any) => {
-											if (!current) return current;
-											const newDocs = current.documents.map((d: any) =>
-												d.id === activeDoc.id
-													? {
-															...d,
-															name: selectedFile.name,
-															url: `/files/${selectedFile.name}`,
-													  }
-													: d
-											);
-											const historyEntry = {
-												id: `ST${Date.now()}`,
-												date: new Date().toISOString(),
-												status: "document-replaced",
-												user: "Service Center Staff",
-												notes: `Replaced ${activeDoc.name} with ${selectedFile.name}`,
-											};
-											return {
-												...current,
-												documents: newDocs,
-												statusHistory: [
-													historyEntry,
-													...(current.statusHistory || []),
-												],
-											};
-										},
-										{ revalidate: false }
-									);
-									showToast({ type: "success", message: "Document replaced" });
-									onReplaceClose();
-									setSelectedFile(null);
-								} catch (err) {
-									showToast({
-										type: "error",
-										message: "Failed to replace document",
-									});
-								}
-							}}
-						>
-							Replace
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* Delete Confirm Modal */}
-			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} size="sm">
-				<ModalContent>
-					<ModalHeader>
-						<h3 className="text-lg font-semibold">Delete Document</h3>
-					</ModalHeader>
-					<ModalBody>
-						<p>Are you sure you want to delete {activeDoc?.name}?</p>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onDeleteClose}>
-							Cancel
-						</Button>
-						<Button
-							color="danger"
-							onPress={async () => {
-								if (!activeDoc) return;
-								try {
-									await deleteDocument(claimId, activeDoc.id);
-									// locally update claim: remove document and add statusHistory
-									mutate(
-										(current: any) => {
-											if (!current) return current;
-											const newDocs = (current.documents || []).filter(
-												(d: any) => d.id !== activeDoc.id
-											);
-											const historyEntry = {
-												id: `ST${Date.now()}`,
-												date: new Date().toISOString(),
-												status: "document-deleted",
-												user: "Service Center Staff",
-												notes: `Deleted ${activeDoc.name}`,
-											};
-											return {
-												...current,
-												documents: newDocs,
-												statusHistory: [
-													historyEntry,
-													...(current.statusHistory || []),
-												],
-											};
-										},
-										{ revalidate: false }
-									);
-									showToast({ type: "success", message: "Document deleted" });
-									onDeleteClose();
-								} catch (err) {
-									showToast({
-										type: "error",
-										message: "Failed to delete document",
-									});
-								}
-							}}
-						>
-							Delete
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
 		</div>
 	);
 };

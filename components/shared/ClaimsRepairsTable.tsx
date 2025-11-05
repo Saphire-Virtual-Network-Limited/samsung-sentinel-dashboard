@@ -21,6 +21,7 @@ import {
 	XCircle,
 	DollarSign,
 	FileText,
+	Wrench,
 } from "lucide-react";
 import { formatDate } from "@/lib";
 import { showToast } from "@/lib/showNotification";
@@ -41,13 +42,12 @@ export interface ClaimRepairItem {
 	model: string;
 	faultType: string;
 	repairCost: number;
-	status: "pending" | "approved" | "rejected" | "in-progress" | "completed";
+	status: "pending" | "approved" | "rejected";
+	repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed";
 	paymentStatus?: "paid" | "unpaid";
 	transactionRef?: string;
 	sessionId?: string;
 	createdAt: string;
-	documents?: any[];
-	deviceImages?: any[];
 	serviceCenterName?: string;
 	serviceCenterId?: string;
 	engineerName?: string;
@@ -72,6 +72,7 @@ export interface ClaimsRepairsTableProps {
 	onBulkReject?: (claimIds: string[], reason: string) => void;
 	onBulkAuthorizePayment?: (claimIds: string[]) => void;
 	onViewDetails?: (claim: ClaimRepairItem) => void;
+	onUpdateRepairStatus?: (claimId: string, newRepairStatus: "pending" | "awaiting-parts" | "received-device" | "completed") => void;
 	showPaymentColumns?: boolean;
 	enableMultiSelect?: boolean;
 	onDateFilterChange?: (start: string, end: string) => void;
@@ -94,6 +95,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	onBulkReject,
 	onBulkAuthorizePayment,
 	onViewDetails,
+	onUpdateRepairStatus,
 	showPaymentColumns = false,
 	enableMultiSelect = false,
 	onDateFilterChange,
@@ -173,13 +175,14 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				sortable: true,
 			},
 			{
-				name: "Date",
-				uid: "createdAt",
+				name: "Repair Status",
+				uid: "repairStatus",
 				sortable: true,
 			},
 			{
-				name: "Documents",
-				uid: "documents",
+				name: "Date",
+				uid: "createdAt",
+				sortable: true,
 			},
 		];
 
@@ -206,6 +209,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				{
 					name: "Payment Status",
 					uid: "paymentStatus",
+					sortable: true,
+				},
+				{
+					name: "Authorization",
+					uid: "authorizedForPayment",
 					sortable: true,
 				},
 			];
@@ -293,10 +301,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
+		// Samsung Partners: Authorize payment for approved claims with completed repairs
 		if (
 			role === "samsung-partners" &&
-			item.status === "completed" &&
-			item.paymentStatus === "unpaid"
+			item.status === "approved" &&
+			item.repairStatus === "completed" &&
+			item.paymentStatus === "unpaid" &&
+			!item.authorizedForPayment
 		) {
 			items.push(
 				<DropdownItem
@@ -310,11 +321,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Sentinel Actions
+		// Samsung Sentinel Actions: Execute payment for authorized claims
 		if (
 			role === "samsung-sentinel" &&
-			item.status === "completed" &&
-			item.paymentStatus === "unpaid"
+			item.status === "approved" &&
+			item.repairStatus === "completed" &&
+			item.paymentStatus === "unpaid" &&
+			item.authorizedForPayment
 		) {
 			items.push(
 				<DropdownItem
@@ -324,6 +337,24 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					color="success"
 				>
 					Execute Payment
+				</DropdownItem>
+			);
+		}
+
+		// Service Center: Update repair status for approved claims (except completed)
+		if (
+			role === "service-center" &&
+			item.status === "approved" &&
+			item.repairStatus !== "completed"
+		) {
+			items.push(
+				<DropdownItem
+					key="update-repair"
+					startContent={<Wrench className="h-4 w-4" />}
+					onPress={() => onUpdateRepairStatus?.(item.id, item.repairStatus)}
+					color="warning"
+				>
+					Update Repair Status
 				</DropdownItem>
 			);
 		}
@@ -407,19 +438,18 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					approved: "success",
 					rejected: "danger",
 					"in-progress": "primary",
-					completed: "success",
 				};
 				return (
 					<div className="flex items-center gap-2">
 						<Chip
-							color={statusColors[item.status] || "default"}
+							color={statusColors[item.status || "pending"] || "default"}
 							variant="flat"
 							size="sm"
 							className={cellClassName}
 						>
-							{item.status.toUpperCase().replace("-", " ")}
+							{(item.status || "pending").toUpperCase().replace("-", " ")}
 						</Chip>
-						{disabled && item.status !== "completed" && (
+						{disabled && item.status !== "approved" && (
 							<span
 								className="text-xs text-gray-400"
 								title="Not eligible for selection"
@@ -427,6 +457,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 								🔒
 							</span>
 						)}
+					</div>
+				);
+
+			case "repairStatus":
+				const repairStatusColors: Record<string, any> = {
+					pending: "warning",
+					"awaiting-parts": "secondary",
+					"received-device": "primary",
+					completed: "success",
+				};
+				return (
+					<div className="flex items-center gap-2">
+						<Chip
+							color={repairStatusColors[item.repairStatus || "pending"] || "default"}
+							variant="flat"
+							size="sm"
+							startContent={<Wrench size={12} />}
+							className={cellClassName}
+						>
+							{(item.repairStatus || "pending").toUpperCase().replace("-", " ")}
+						</Chip>
 					</div>
 				);
 
@@ -470,7 +521,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "bankDetails":
 				// Bank details are loaded from test data via serviceCenterId
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "completed") {
+				if (item.serviceCenterId && item.status === "approved" && item.repairStatus === "completed") {
 					const serviceCenter = testData.serviceCenters.find(
 						(sc: any) => sc.id === item.serviceCenterId
 					);
@@ -503,14 +554,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "createdAt":
 				return <span className="text-sm">{formatDate(item.createdAt)}</span>;
 
-			case "documents":
-				return (
-					<DocumentsCell
-						documents={item.documents || []}
-						deviceImages={item.deviceImages || []}
-						claimId={item.claimId}
-					/>
-				);
+
 
 			case "serviceCenterName":
 				return (
@@ -562,7 +606,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		return new Set(
 			data
 				.filter(
-					(item) => item.status !== "completed" || item.paymentStatus === "paid"
+					(item) => !(item.status === "approved" && item.repairStatus === "completed") || item.paymentStatus === "paid"
 				)
 				.map((item) => item.id)
 		);

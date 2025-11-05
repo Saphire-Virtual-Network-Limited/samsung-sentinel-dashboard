@@ -8,6 +8,7 @@ import {
 	Tabs,
 	Tab,
 	Button,
+	Input,
 	Modal,
 	ModalContent,
 	ModalBody,
@@ -20,6 +21,7 @@ import {
 	Settings,
 	CheckCheck,
 	ListChecks,
+	Search,
 } from "lucide-react";
 import ClaimsRepairsTable, {
 	ClaimRepairRole,
@@ -47,6 +49,9 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [paymentFilter, setPaymentFilter] = useState(
 		searchParams.get("payment") || "all"
 	);
+	const [repairStatusFilter, setRepairStatusFilter] = useState(
+		searchParams.get("repairStatus") || "all"
+	);
 	const [startDate, setStartDate] = useState<string | undefined>(
 		searchParams.get("startDate") || undefined
 	);
@@ -56,6 +61,9 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [selectedClaim, setSelectedClaim] = useState<ClaimRepairItem | null>(
 		null
 	);
+	const [searchQuery, setSearchQuery] = useState(
+		searchParams.get("search") || ""
+	);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	// Update URL when filters change
@@ -64,6 +72,8 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 
 		if (activeTab !== "all") params.set("status", activeTab);
 		if (paymentFilter !== "all") params.set("payment", paymentFilter);
+		if (repairStatusFilter !== "all") params.set("repairStatus", repairStatusFilter);
+		if (searchQuery) params.set("search", searchQuery);
 		if (startDate) params.set("startDate", startDate);
 		if (endDate) params.set("endDate", endDate);
 
@@ -74,7 +84,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		if (window.location.search !== (queryString ? `?${queryString}` : "")) {
 			router.replace(newUrl, { scroll: false });
 		}
-	}, [activeTab, paymentFilter, startDate, endDate, router]);
+	}, [activeTab, paymentFilter, repairStatusFilter, searchQuery, startDate, endDate, router]);
 
 	// Fetch data based on role, status, payment filter, and date range
 	const {
@@ -89,11 +99,14 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		bulkApproveHandler,
 		bulkRejectHandler,
 		bulkAuthorizePaymentHandler,
+		updateRepairStatusHandler,
 		refetch,
 	} = useClaimsData({
 		role,
 		status: activeTab,
 		payment: paymentFilter,
+		repairStatus: repairStatusFilter,
+		search: searchQuery,
 		startDate,
 		endDate,
 	});
@@ -108,7 +121,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const getBankDetails = (claim: ClaimRepairItem | null) => {
 		if (
 			!claim ||
-			claim.status !== "completed" ||
+			!(claim.status === "approved" && claim.repairStatus === "completed") ||
 			claim.paymentStatus !== "unpaid"
 		) {
 			return undefined;
@@ -185,11 +198,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				title: "Approved",
 				icon: <CheckCircle className="w-4 h-4" />,
 			},
-			{
-				key: "in-progress",
-				title: "In Progress",
-				icon: <Settings className="w-4 h-4" />,
-			},
+
 			{
 				key: "completed",
 				title: "Completed",
@@ -215,7 +224,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 			case "samsung-sentinel":
 				// Admin/Sub-admin focus on completed and payment-related tabs
 				return allTabs.filter((tab) =>
-					["all", "completed", "approved", "in-progress"].includes(tab.key)
+					["all", "completed", "approved"].includes(tab.key)
 				);
 
 			default:
@@ -240,8 +249,69 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		];
 	};
 
+	const getRepairStatusTabs = () => {
+		return [
+			{
+				key: "all",
+				title: "All",
+			},
+			{
+				key: "pending",
+				title: "Pending",
+			},
+			{
+				key: "awaiting-parts",
+				title: "Awaiting Parts",
+			},
+			{
+				key: "received-device",
+				title: "Device Received",
+			},
+			{
+				key: "completed",
+				title: "Completed",
+			},
+		];
+	};
+
+	// Handle repair status filter change
+	const handleRepairStatusFilterChange = (key: string) => {
+		setRepairStatusFilter(key);
+	};
+
 	return (
 		<div className="space-y-6">
+			{/* Search Section 
+			<Card>
+				<CardBody className="flex flex-row items-center justify-between p-4">
+					<div className="flex items-center gap-3">
+						<Search className="w-5 h-5 text-primary" />
+						<span className="font-medium">Search Claims by IMEI</span>
+					</div>
+					<div className="flex items-center space-x-2">
+						<Input
+							placeholder="Enter IMEI..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="w-64"
+							maxLength={15}
+						/>
+						<Button
+							onClick={() => {
+								// Update the filters to include search
+								handleTabChange(activeTab);
+							}}
+							variant="ghost"
+							size="sm"
+							className="flex items-center space-x-1"
+						>
+							<Search className="w-4 h-4" />
+							<span>Search</span>
+						</Button>
+					</div>
+				</CardBody>
+			</Card>
+*/}
 			<Tabs
 				selectedKey={activeTab}
 				onSelectionChange={(key) => handleTabChange(key as string)}
@@ -309,6 +379,51 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 									</Card>
 								)}
 
+							{/* Repair Status Filter for Service Center */}
+							{role === "service-center" && (
+								<Card className="mb-4">
+									<CardBody className="flex flex-row items-center gap-3 p-3">
+										<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+											Repair Status:
+										</span>
+										<div className="flex gap-2">
+											{getRepairStatusTabs().map((repairTab) => (
+												<Button
+													key={repairTab.key}
+													size="sm"
+													variant={
+														repairStatusFilter === repairTab.key
+															? "solid"
+															: "flat"
+													}
+													color={
+														repairStatusFilter === repairTab.key
+															? "secondary"
+															: "default"
+													}
+													onPress={() =>
+														handleRepairStatusFilterChange(repairTab.key)
+													}
+													className={
+														repairStatusFilter === repairTab.key
+															? "font-semibold"
+															: ""
+													}
+												>
+													{repairTab.title}
+													{repairStatusFilter === repairTab.key &&
+														repairTab.key !== "all" && (
+															<span className="ml-2 text-xs">
+																({data?.length || 0})
+															</span>
+														)}
+												</Button>
+											))}
+										</div>
+									</CardBody>
+								</Card>
+							)}
+
 							<ClaimsRepairsTable
 								data={data}
 								isLoading={isLoading}
@@ -328,6 +443,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 								onBulkApprove={bulkApproveHandler}
 								onBulkReject={bulkRejectHandler}
 								onBulkAuthorizePayment={bulkAuthorizePaymentHandler}
+								onUpdateRepairStatus={updateRepairStatusHandler}
 								onViewDetails={handleViewDetails}
 								showPaymentColumns={
 									showPaymentTabs &&
