@@ -1,13 +1,8 @@
 import React from "react";
-import { SubAdminRepairCenterDetailView } from "@/view/admin";
+import AdminRepairCenterDetailView from "@/view/dashboard/samsung-sentinel/AdminRepairCenterDetailView";
 
-interface PageProps {
-	params: Promise<{ id: string }>;
-}
-
-const Page = ({ params }: PageProps) => {
-	const { id } = React.use(params);
-	return <SubAdminRepairCenterDetailView repairCenterId={id} />;
+const Page = () => {
+	return <AdminRepairCenterDetailView />;
 };
 
 export default Page;

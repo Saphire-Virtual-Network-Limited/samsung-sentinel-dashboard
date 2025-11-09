@@ -20,7 +20,7 @@
 export const ROLES = {
 	// Admin hierarchy
 	SUPER_ADMIN: "SUPER_ADMIN",
-	ADMIN: "SUB_ADMIN",
+	ADMIN: "ADMIN",
 
 	// Core roles
 	SALES: "SALES",
@@ -131,17 +131,20 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
  * Get the base path for a given role
  */
 export function getRoleBasePath(role: string | undefined): string {
-	if (!role) return "/access/admin"; // Default fallback
+	if (!role) return "/access/sub-admin"; // Default fallback
 	const normalizedRole = role.toUpperCase() as Role;
-	return ROLE_BASE_PATHS[normalizedRole] || "/access/admin";
+	return ROLE_BASE_PATHS[normalizedRole] || "/access/sub-admin";
 }
 
 /**
  * Get the sidebar items key for a given role
  */
 export function getRoleSidebarKey(role: string): SidebarItemsKey {
+	console.log("role sidebarkey was called with: ",role)
 	const normalizedRole = role.toUpperCase() as Role;
-	return ROLE_SIDEBAR_MAPPING[normalizedRole] || "admin";
+	console.log("normalizedrole is: ",normalizedRole);
+	console.log("role sidebar mapping: ",ROLE_SIDEBAR_MAPPING[normalizedRole])
+	return ROLE_SIDEBAR_MAPPING[normalizedRole] || "subAdmin";
 }
 
 /**

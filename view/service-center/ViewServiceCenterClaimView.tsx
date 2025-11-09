@@ -196,9 +196,7 @@ const ViewServiceCenterClaimView = () => {
 	];
 
 	const repairStatusOptions = [
-		{ key: "pending", label: "Pending" },
-		{ key: "awaiting-parts", label: "Awaiting Parts" },
-		{ key: "received-device", label: "Device Received" },
+
 		{ key: "completed", label: "Completed" },
 	];
 

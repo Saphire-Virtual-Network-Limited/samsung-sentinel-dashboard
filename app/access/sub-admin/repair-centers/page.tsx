@@ -1,8 +1,8 @@
 import React from "react";
-import { SubAdminRepairCentersView } from "@/view/admin";
+import AdminRepairCentersView from "@/view/dashboard/samsung-sentinel/AdminRepairCentersView";
 
 const page = () => {
-	return <SubAdminRepairCentersView />;
+	return <AdminRepairCentersView />;
 };
 
 export default page;

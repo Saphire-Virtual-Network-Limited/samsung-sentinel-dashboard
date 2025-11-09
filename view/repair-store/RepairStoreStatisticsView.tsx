@@ -360,78 +360,7 @@ export default function RepairStoreStatisticsView() {
 				</Card>
 			</div>
 
-			{/* Charts Row 2 */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				{/* Repair Types Distribution */}
-				<Card>
-					<CardHeader>
-						<h3 className="text-lg font-semibold">Repair Types Distribution</h3>
-					</CardHeader>
-					<CardBody>
-						<div className="flex">
-							<ResponsiveContainer width="60%" height={300}>
-								<PieChart>
-									<Pie
-										data={repairTypesData}
-										cx="50%"
-										cy="50%"
-										outerRadius={100}
-										dataKey="value"
-									>
-										{repairTypesData.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={entry.color} />
-										))}
-									</Pie>
-									<Tooltip />
-								</PieChart>
-							</ResponsiveContainer>
-							<div className="w-40% flex flex-col justify-center space-y-2">
-								{repairTypesData.map((item, index) => (
-									<div key={index} className="flex items-center gap-2">
-										<div
-											className="w-3 h-3 rounded"
-											style={{ backgroundColor: item.color }}
-										/>
-										<span className="text-sm">{item.name}</span>
-										<span className="text-sm font-medium ml-auto">
-											{item.value}
-										</span>
-									</div>
-								))}
-							</div>
-						</div>
-					</CardBody>
-				</Card>
-
-				{/* Customer Satisfaction Trend */}
-				<Card>
-					<CardHeader>
-						<h3 className="text-lg font-semibold">Customer Satisfaction</h3>
-					</CardHeader>
-					<CardBody>
-						<ResponsiveContainer width="100%" height={300}>
-							<LineChart data={satisfactionData}>
-								<CartesianGrid strokeDasharray="3 3" />
-								<XAxis dataKey="week" />
-								<YAxis domain={[4.0, 5.0]} />
-								<Tooltip
-									formatter={(value) => [
-										`${(value as number).toFixed(1)} stars`,
-										"Rating",
-									]}
-								/>
-								<Line
-									type="monotone"
-									dataKey="satisfaction"
-									stroke="#00C49F"
-									strokeWidth={3}
-									dot={{ r: 6 }}
-								/>
-							</LineChart>
-						</ResponsiveContainer>
-					</CardBody>
-				</Card>
-			</div>
+		
 
 			{/* Top Performers Table */}
 			<Card>

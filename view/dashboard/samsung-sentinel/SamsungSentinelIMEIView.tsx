@@ -61,30 +61,13 @@ const uploadColumns: ColumnDef[] = [
 	{ name: "Device Model", uid: "deviceModel", sortable: true },
 	{ name: "Total Records", uid: "totalRecords", sortable: true },
 	{ name: "Uploaded By", uid: "uploadedBy", sortable: true },
-	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
-// Unverified IMEI columns
-const unverifiedIMEIColumns: ColumnDef[] = [
-	{ name: "IMEI", uid: "imei", sortable: true },
-	{ name: "Distributor", uid: "distributor", sortable: true },
-	{ name: "Service Center", uid: "serviceCenter", sortable: true },
-	{ name: "Date", uid: "date", sortable: true },
-];
 
-const statusOptions = [
-	{ name: "Processing", uid: "processing" },
-	{ name: "Completed", uid: "completed" },
-	{ name: "Failed", uid: "failed" },
-];
 
-const statusColorMap: Record<string, ChipProps["color"]> = {
-	processing: "warning",
-	completed: "success",
-	failed: "danger",
-};
+
 
 interface UploadRecord {
 	id: string;
@@ -98,13 +81,7 @@ interface UploadRecord {
 	status: "processing" | "completed" | "failed";
 }
 
-interface UnverifiedIMEIRecord {
-	id: string;
-	imei: string;
-	distributor: string;
-	serviceCenter: string;
-	date: string;
-}
+
 
 export default function SamsungSentinelIMEIView() {
 	const router = useRouter();
@@ -178,7 +155,6 @@ export default function SamsungSentinelIMEIView() {
 				createdAt: "2024-10-01T10:30:00Z",
 				updatedAt: "2024-10-01T10:35:00Z",
 				processedAt: "2024-10-01T10:35:00Z",
-				status: "completed",
 			},
 			{
 				id: "upload_002",
@@ -190,7 +166,6 @@ export default function SamsungSentinelIMEIView() {
 				createdAt: "2024-10-02T14:20:00Z",
 				updatedAt: "2024-10-02T14:25:00Z",
 				processedAt: "2024-10-02T14:25:00Z",
-				status: "completed",
 			},
 			{
 				id: "upload_003",
@@ -201,7 +176,6 @@ export default function SamsungSentinelIMEIView() {
 				fileName: "samsung_a07_batch_003.csv",
 				createdAt: "2024-10-03T09:15:00Z",
 				updatedAt: "2024-10-03T09:18:00Z",
-				status: "processing",
 			},
 			{
 				id: "upload_004",
@@ -212,68 +186,12 @@ export default function SamsungSentinelIMEIView() {
 				fileName: "samsung_a05_batch_004.csv",
 				createdAt: "2024-09-22T16:45:00Z",
 				updatedAt: "2024-09-22T16:50:00Z",
-				status: "failed",
 			},
 		],
 		[role]
 	);
 
-	// Mock unverified IMEI data
-	const unverifiedIMEIData: UnverifiedIMEIRecord[] = useMemo(
-		() => [
-			{
-				id: "imei_001",
-				imei: "123456789012345",
-				distributor: "Sapphire Distributors Ltd",
-				serviceCenter: "TechFix Lagos",
-				date: "2024-10-01",
-			},
-			{
-				id: "imei_002",
-				imei: "234567890123456",
-				distributor: "Global Tech Solutions",
-				serviceCenter: "Samsung Care Abuja",
-				date: "2024-10-02",
-			},
-			{
-				id: "imei_003",
-				imei: "345678901234567",
-				distributor: "Metro Electronics",
-				serviceCenter: "Mobile Masters Port Harcourt",
-				date: "2024-10-03",
-			},
-			{
-				id: "imei_004",
-				imei: "456789012345678",
-				distributor: "Digital Plus Nigeria",
-				serviceCenter: "Galaxy Repairs Kano",
-				date: "2024-10-04",
-			},
-			{
-				id: "imei_005",
-				imei: "567890123456789",
-				distributor: "Sapphire Distributors Ltd",
-				serviceCenter: "TechFix Lagos",
-				date: "2024-10-05",
-			},
-			{
-				id: "imei_006",
-				imei: "678901234567890",
-				distributor: "Prime Electronics",
-				serviceCenter: "Smart Repair Ibadan",
-				date: "2024-10-06",
-			},
-			{
-				id: "imei_007",
-				imei: "789012345678901",
-				distributor: "NextGen Mobile",
-				serviceCenter: "Fix It Pro Kaduna",
-				date: "2024-10-07",
-			},
-		],
-		[]
-	);
-
+	
 	// Update hasNoRecords when data changes
 	React.useEffect(() => {
 		setHasNoRecords(uploads.length === 0);
@@ -282,10 +200,7 @@ export default function SamsungSentinelIMEIView() {
 	// Let GenericTable handle filtering internally
 	const filteredUploads = uploads;
 
-	// Let GenericTable handle filtering internally
-	const filteredUnverifiedIMEI = unverifiedIMEIData;
 
-	// Pagination handled by GenericTable
 
 	// Export function for uploads (for GenericTable)
 	const exportUploadsFn = async (data: UploadRecord[]) => {
@@ -311,26 +226,7 @@ export default function SamsungSentinelIMEIView() {
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Samsung_Sentinel_Uploads.xlsx");
 	};
-
-	// Export function for unverified IMEI
-	const exportUnverifiedIMEIFn = async (data: UnverifiedIMEIRecord[]) => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Unverified IMEI");
-		ws.columns = unverifiedIMEIColumns.map((c) => ({
-			header: c.name,
-			key: c.uid,
-			width: 20,
-		}));
-		data.forEach((r) =>
-			ws.addRow({
-				...r,
-				date: new Date(r.date).toLocaleDateString(),
-			})
-		);
-		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Unverified_IMEI.xlsx");
-	};
-
+	
 	// Handle delete action
 	const handleDelete = async (id: string) => {
 		try {
@@ -349,7 +245,7 @@ export default function SamsungSentinelIMEIView() {
 
 		ws.columns = [
 			{ header: "IMEI", key: "imei", width: 20 },
-			{ header: "Distributor (Optional)", key: "distributor", width: 25 },
+			{ header: "Distributor ", key: "distributor", width: 25 },
 			{ header: "Expiry Date (Optional)", key: "expiryDate", width: 15 },
 		];
 
@@ -493,18 +389,8 @@ export default function SamsungSentinelIMEIView() {
 				</div>
 			);
 		}
-		if (key === "status") {
-			return (
-				<Chip
-					className="capitalize"
-					color={statusColorMap[row.status]}
-					size="sm"
-					variant="flat"
-				>
-					{capitalize(row.status)}
-				</Chip>
-			);
-		}
+
+
 		if (key === "deviceModel") {
 			const modelLabel =
 				DEVICE_MODELS.find((m) => m.value === row.deviceModel)?.label ||
@@ -535,32 +421,6 @@ export default function SamsungSentinelIMEIView() {
 		return <p className="text-sm">{(row as any)[key]}</p>;
 	};
 
-	// Render cell content for unverified IMEI
-	const renderUnverifiedIMEICell = (row: UnverifiedIMEIRecord, key: string) => {
-		if (key === "imei") {
-			return <p className="text-sm font-mono">{row.imei}</p>;
-		}
-		if (key === "distributor") {
-			return (
-				<Chip variant="flat" color="secondary" size="sm">
-					{row.distributor}
-				</Chip>
-			);
-		}
-		if (key === "serviceCenter") {
-			return (
-				<Chip variant="flat" color="primary" size="sm">
-					{row.serviceCenter}
-				</Chip>
-			);
-		}
-		if (key === "date") {
-			return (
-				<p className="text-sm">{new Date(row.date).toLocaleDateString()}</p>
-			);
-		}
-		return <p className="text-sm">{(row as any)[key]}</p>;
-	};
 
 	return (
 		<div className="space-y-6">
@@ -591,12 +451,7 @@ export default function SamsungSentinelIMEIView() {
 				</div>
 			</div>
 
-			{/* Tabs Container */}
-			<Tabs
-				selectedKey={activeTab}
-				onSelectionChange={(key) => setActiveTab(key as string)}
-			>
-				<Tab key="uploads" title="Uploads">
+		
 					{/* Table using GenericTable with all built-in features */}
 					{isLoading ? (
 						<TableSkeleton columns={uploadColumns.length} rows={10} />
@@ -609,11 +464,7 @@ export default function SamsungSentinelIMEIView() {
 							isLoading={isLoading}
 							filterValue={filterValue}
 							onFilterChange={setFilterValue}
-							statusOptions={statusOptions}
-							statusFilter={statusFilter}
-							onStatusChange={setStatusFilter}
-							statusColorMap={statusColorMap}
-							showStatus={true}
+							
 							sortDescriptor={{ column: "createdAt", direction: "descending" }}
 							onSortChange={() => {}}
 							page={1}
@@ -629,32 +480,10 @@ export default function SamsungSentinelIMEIView() {
 							showRowsPerPageSelector={true}
 						/>
 					)}
-				</Tab>
+				
 
-				<Tab key="unverified" title="Unverified IMEI">
-					{/* Unverified IMEI Table */}
-					<GenericTable<UnverifiedIMEIRecord>
-						columns={unverifiedIMEIColumns}
-						data={unverifiedIMEIData}
-						allCount={unverifiedIMEIData.length}
-						exportData={unverifiedIMEIData}
-						isLoading={false}
-						filterValue={imeiFilterValue}
-						onFilterChange={setImeiFilterValue}
-						showStatus={false}
-						sortDescriptor={{ column: "date", direction: "descending" }}
-						onSortChange={() => {}}
-						page={1}
-						pages={1}
-						onPageChange={() => {}}
-						exportFn={exportUnverifiedIMEIFn}
-						renderCell={renderUnverifiedIMEICell}
-						hasNoRecords={unverifiedIMEIData.length === 0}
-						searchPlaceholder="Search by IMEI, distributor, or service center..."
-						showRowsPerPageSelector={true}
-					/>
-				</Tab>
-			</Tabs>
+			
+			
 
 			{/* Upload Modal */}
 			<Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose} size="2xl">
