@@ -20,7 +20,23 @@ export * from "./service-centers";
 export * from "./engineers";
 
 // Export IMEIs APIs
-export * from "./imeis";
+// Note: IMEI module also exports Product type, but products module is authoritative
+export {
+	type Imei,
+	type ImeiUpload,
+	type ValidateImeiDto,
+	type ValidateImeiResponse,
+	type GetImeisParams,
+	type GetUploadsParams,
+	type PaginatedImeiUploadsResponse,
+	type PaginatedImeisResponse,
+	uploadImeiCsv,
+	getImeiUploads,
+	getImeiUploadById,
+	getAllImeis,
+	validateImei,
+	searchImei,
+} from "./imeis";
 
 // Export claims APIs
 export * from "./claims";

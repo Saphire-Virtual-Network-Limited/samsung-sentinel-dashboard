@@ -29,12 +29,14 @@ import GenericTable, {
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import {
-	getSamsungSentinelUploads,
-	uploadIMEIFile,
-	deleteSamsungSentinelUpload,
-	showToast,
-	capitalize,
-} from "@/lib";
+	getImeiUploads,
+	uploadImeiCsv,
+	searchImei as searchImeiApi,
+	validateImei,
+} from "@/lib/api/imeis";
+import { getAllClaims } from "@/lib/api/claims";
+import { getAllProducts } from "@/lib/api/products";
+import { showToast, capitalize } from "@/lib";
 import {
 	Upload,
 	Download,
@@ -45,52 +47,65 @@ import {
 	AlertTriangle,
 	Search,
 } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-const DEVICE_MODELS = [
-	{ label: "Samsung A05", value: "SAMSUNG_A05" },
-	{ label: "Samsung A06", value: "SAMSUNG_A06" },
-	{ label: "Samsung A07", value: "SAMSUNG_A07" },
-];
-
 // Upload columns
 const uploadColumns: ColumnDef[] = [
-	{ name: "File Name", uid: "fileName", sortable: true },
-	{ name: "Device Model", uid: "deviceModel", sortable: true },
-	{ name: "Total Records", uid: "totalRecords", sortable: true },
-	{ name: "Uploaded By", uid: "uploadedBy", sortable: true },
-	{ name: "Created At", uid: "createdAt", sortable: true },
+	{ name: "File Name", uid: "file_name", sortable: true },
+	{ name: "Product", uid: "product_id", sortable: true },
+	{ name: "Total Records", uid: "total_records", sortable: true },
+	{ name: "Successful", uid: "successful_records", sortable: true },
+	{ name: "Failed", uid: "failed_records", sortable: true },
+	{ name: "Status", uid: "processing_status", sortable: true },
+	{ name: "Uploaded At", uid: "uploaded_at", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
-
-
-
-
 interface UploadRecord {
 	id: string;
-	deviceModel: string;
-	uploadedBy: string;
-	totalRecords: number;
-	fileName: string;
-	createdAt: string;
-	updatedAt: string;
-	processedAt?: string;
-	status: "processing" | "completed" | "failed";
+	created_at: string;
+	updated_at: string;
+	file_name: string;
+	product_id: string;
+	total_records: number;
+	successful_records: number;
+	failed_records: number;
+	uploaded_by_id: string | null;
+	uploaded_at: string;
+	processing_status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+	error_message: string | null;
+	processing_details: {
+		duplicates?: string[];
+		errors?: string[];
+	};
+	product?: {
+		id: string;
+		name: string;
+		sapphire_cost: string;
+		repair_cost: string;
+		status: string;
+	};
+	uploaded_by?: any | null;
 }
 
-
+interface ClaimRecord {
+	id: string;
+	customer_name: string;
+	status: string;
+	createdAt: string;
+	issue_description: string;
+	imei: string;
+}
 
 export default function SamsungSentinelIMEIView() {
 	const router = useRouter();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+
 	// Get the role from the URL path (e.g., /access/admin/samsung-sentinel -> admin)
 	const role = pathname.split("/")[2];
-
-	// Tab state
-	const [activeTab, setActiveTab] = useState("uploads");
 
 	// Upload modal state
 	const {
@@ -99,7 +114,7 @@ export default function SamsungSentinelIMEIView() {
 		onClose: onUploadModalClose,
 	} = useDisclosure();
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	const [selectedDeviceModel, setSelectedDeviceModel] = useState<string>("");
+	const [selectedProductId, setSelectedProductId] = useState<string>("");
 	const [isUploading, setIsUploading] = useState(false);
 
 	// Search IMEI modal state
@@ -117,81 +132,103 @@ export default function SamsungSentinelIMEIView() {
 	const [endDate, setEndDate] = useState<string | undefined>(undefined);
 	const [hasNoRecords, setHasNoRecords] = useState(false);
 
+	// --- pagination state (read from URL params) ---
+	const [page, setPage] = useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [rowsPerPage, setRowsPerPage] = useState(() => {
+		const limitParam = searchParams.get("limit");
+		return limitParam ? parseInt(limitParam, 10) : 25;
+	});
+
 	// --- table state managed by GenericTable ---
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [imeiFilterValue, setImeiFilterValue] = useState("");
 
+	// Helper function to update URL params
+	const updateURLParams = (newPage: number, newLimit: number) => {
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("page", newPage.toString());
+		params.set("limit", newLimit.toString());
+		router.push(`${pathname}?${params.toString()}`, { scroll: false });
+	};
+
 	// --- handle date filter (managed by GenericTable) ---
 	const handleDateFilter = (start: string, end: string) => {
 		setStartDate(start);
 		setEndDate(end);
+		setPage(1); // Reset to first page when filter changes
+		updateURLParams(1, rowsPerPage);
 	};
 
-	// Fetch upload records based on date filter
+	// --- handle page change ---
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+		updateURLParams(newPage, rowsPerPage);
+	};
+
+	// --- handle rows per page change ---
+	const handleRowsPerPageChange = (newRowsPerPage: number) => {
+		setRowsPerPage(newRowsPerPage);
+		setPage(1); // Reset to first page when rows per page changes
+		updateURLParams(1, newRowsPerPage);
+	};
+
+	// Sync state with URL params when they change (browser back/forward)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const limitParam = searchParams.get("limit");
+
+		if (pageParam) {
+			const newPage = parseInt(pageParam, 10);
+			if (newPage !== page && newPage > 0) {
+				setPage(newPage);
+			}
+		}
+
+		if (limitParam) {
+			const newLimit = parseInt(limitParam, 10);
+			if (newLimit !== rowsPerPage && newLimit > 0) {
+				setRowsPerPage(newLimit);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams]);
+
+	// Fetch products for dropdown
+	const { data: productsResponse } = useSWR(
+		"products",
+		() => getAllProducts(),
+		{ revalidateOnFocus: false }
+	);
+
+	const products = useMemo(
+		() => productsResponse?.data || [],
+		[productsResponse]
+	);
+
+	// Fetch upload records based on date filter and pagination
 	const {
-		data: uploadsData = [],
+		data: uploadsResponse,
 		error,
 		mutate,
 		isLoading,
 	} = useSWR(
-		startDate && endDate
-			? ["samsung-sentinel-uploads", startDate, endDate]
-			: ["samsung-sentinel-uploads"],
-		() => getSamsungSentinelUploads({ startDate, endDate }),
+		["imei-uploads", startDate, endDate, page, rowsPerPage],
+		() => getImeiUploads({ page, limit: rowsPerPage }),
 		{ revalidateOnFocus: false, dedupingInterval: 300000 }
 	);
 
-	// Mock data for demo - replace with actual API data
 	const uploads: UploadRecord[] = useMemo(
-		() => [
-			{
-				id: "upload_001",
-				deviceModel: "SAMSUNG_A05",
-				uploadedBy:
-					role === "admin" ? "admin@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 1500,
-				fileName: "samsung_a05_batch_001.csv",
-				createdAt: "2024-10-01T10:30:00Z",
-				updatedAt: "2024-10-01T10:35:00Z",
-				processedAt: "2024-10-01T10:35:00Z",
-			},
-			{
-				id: "upload_002",
-				deviceModel: "SAMSUNG_A06",
-				uploadedBy:
-					role === "admin" ? "manager@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 2300,
-				fileName: "samsung_a06_batch_002.csv",
-				createdAt: "2024-10-02T14:20:00Z",
-				updatedAt: "2024-10-02T14:25:00Z",
-				processedAt: "2024-10-02T14:25:00Z",
-			},
-			{
-				id: "upload_003",
-				deviceModel: "SAMSUNG_A07",
-				uploadedBy:
-					role === "admin" ? "admin@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 1800,
-				fileName: "samsung_a07_batch_003.csv",
-				createdAt: "2024-10-03T09:15:00Z",
-				updatedAt: "2024-10-03T09:18:00Z",
-			},
-			{
-				id: "upload_004",
-				deviceModel: "SAMSUNG_A05",
-				uploadedBy:
-					role === "admin" ? "operator@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 800,
-				fileName: "samsung_a05_batch_004.csv",
-				createdAt: "2024-09-22T16:45:00Z",
-				updatedAt: "2024-09-22T16:50:00Z",
-			},
-		],
-		[role]
+		() => uploadsResponse?.data || [],
+		[uploadsResponse]
 	);
 
-	
+	const totalRecords = uploadsResponse?.total || 0;
+	const totalPages = uploadsResponse?.totalPages || 1;
+
 	// Update hasNoRecords when data changes
 	React.useEffect(() => {
 		setHasNoRecords(uploads.length === 0);
@@ -200,39 +237,81 @@ export default function SamsungSentinelIMEIView() {
 	// Let GenericTable handle filtering internally
 	const filteredUploads = uploads;
 
+	// Get product name by ID
+	const getProductName = (productId: string) => {
+		const product = products.find((p: any) => p.id === productId);
+		return product?.name || productId;
+	};
 
+	// Get status color
+	const getStatusColor = (
+		status: string
+	): "default" | "primary" | "success" | "warning" | "danger" => {
+		switch (status) {
+			case "COMPLETED":
+				return "success";
+			case "PROCESSING":
+				return "primary";
+			case "PENDING":
+				return "warning";
+			case "FAILED":
+				return "danger";
+			default:
+				return "default";
+		}
+	};
 
 	// Export function for uploads (for GenericTable)
 	const exportUploadsFn = async (data: UploadRecord[]) => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("Samsung Sentinel Uploads");
-		ws.columns = uploadColumns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({
-				header: c.name,
-				key: c.uid,
-				width: 20,
-			}));
-		data.forEach((r) =>
-			ws.addRow({
-				...r,
-				deviceModel:
-					DEVICE_MODELS.find((m) => m.value === r.deviceModel)?.label ||
-					r.deviceModel,
-				status: capitalize(r.status),
-				createdAt: new Date(r.createdAt).toLocaleDateString(),
-			})
-		);
-		const buf = await wb.xlsx.writeBuffer();
-		saveAs(new Blob([buf]), "Samsung_Sentinel_Uploads.xlsx");
+		try {
+			// Fetch all records for export (not just current page)
+			const allRecordsResponse = await getImeiUploads({
+				page: 1,
+				limit: totalRecords || 1000, // Get all records
+			});
+
+			const allRecords = allRecordsResponse?.data || data;
+
+			const wb = new ExcelJS.Workbook();
+			const ws = wb.addWorksheet("Samsung Sentinel Uploads");
+			ws.columns = uploadColumns
+				.filter((c) => c.uid !== "actions")
+				.map((c) => ({
+					header: c.name,
+					key: c.uid,
+					width: 20,
+				}));
+
+			allRecords.forEach((r) =>
+				ws.addRow({
+					file_name: r.file_name,
+					product_id: r.product?.name || r.product_id,
+					total_records: r.total_records,
+					successful_records: r.successful_records,
+					failed_records: r.failed_records,
+					processing_status: r.processing_status,
+					uploaded_at: new Date(r.uploaded_at).toLocaleDateString(),
+				})
+			);
+
+			const buf = await wb.xlsx.writeBuffer();
+			saveAs(new Blob([buf]), "Samsung_Sentinel_Uploads.xlsx");
+			showToast({
+				message: `Exported ${allRecords.length} records`,
+				type: "success",
+			});
+		} catch (error) {
+			showToast({ message: "Failed to export records", type: "error" });
+		}
 	};
-	
-	// Handle delete action
+
+	// Handle delete action (Note: No delete endpoint in API, might need to add)
 	const handleDelete = async (id: string) => {
 		try {
-			await deleteSamsungSentinelUpload(id);
-			showToast({ message: "Upload deleted successfully", type: "success" });
-			mutate();
+			// TODO: Add delete endpoint to API when available
+			// await deleteImeiUpload(id);
+			showToast({ message: "Delete functionality coming soon", type: "info" });
+			// mutate();
 		} catch (error) {
 			showToast({ message: "Failed to delete upload", type: "error" });
 		}
@@ -245,14 +324,14 @@ export default function SamsungSentinelIMEIView() {
 
 		ws.columns = [
 			{ header: "IMEI", key: "imei", width: 20 },
-			{ header: "Distributor ", key: "distributor", width: 25 },
+			{ header: "Supplier", key: "supplier", width: 25 },
 			{ header: "Expiry Date (Optional)", key: "expiryDate", width: 15 },
 		];
 
 		// Add sample data
 		ws.addRow({
 			imei: "123456789012345",
-			distributor: "Sapphire Distributors Ltd",
+			supplier: "Mitsumi",
 			expiryDate: "2025-12-31",
 		});
 
@@ -266,9 +345,9 @@ export default function SamsungSentinelIMEIView() {
 
 	// Handle file upload
 	const handleFileUpload = async () => {
-		if (!selectedFile || !selectedDeviceModel) {
+		if (!selectedFile || !selectedProductId) {
 			showToast({
-				message: "Please select a file and device model",
+				message: "Please select a file and product",
 				type: "error",
 			});
 			return;
@@ -276,15 +355,11 @@ export default function SamsungSentinelIMEIView() {
 
 		setIsUploading(true);
 		try {
-			// Pass the correct object structure expected by uploadIMEIFile
-			await uploadIMEIFile({
-				csvFile: selectedFile,
-				deviceModel: selectedDeviceModel,
-			});
+			await uploadImeiCsv(selectedFile, selectedProductId);
 			showToast({ message: "File uploaded successfully", type: "success" });
 			onUploadModalClose();
 			setSelectedFile(null);
-			setSelectedDeviceModel("");
+			setSelectedProductId("");
 			mutate();
 		} catch (error) {
 			showToast({ message: "Failed to upload file", type: "error" });
@@ -302,46 +377,49 @@ export default function SamsungSentinelIMEIView() {
 
 		setIsSearching(true);
 		try {
-			// Mock API call - replace with actual API
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			// Search for IMEI - API returns Imei object directly
+			const imeiData = await searchImeiApi(searchImei);
 
-			// Mock search results based on IMEI
-			const isUsedImei =
-				searchImei.includes("111") || searchImei.includes("222");
-
-			if (!isUsedImei) {
-				// Unused IMEI - show unverified status
+			// Check if IMEI is used
+			if (!imeiData.is_used) {
+				// Unused IMEI
 				setSearchResult({
 					type: "unused",
-					imei: searchImei,
-					status: "unverified",
+					imei: imeiData.imei,
+					status: "Available",
 					claimsCount: 0,
+					supplier: imeiData.supplier,
+					expiryDate: imeiData.expiry_date,
+					product: imeiData.product,
 				});
 			} else {
-				// Used IMEI - show claims table
+				// Used IMEI - fetch claims
+				const claimsResponse = await getAllClaims({
+					imei: searchImei,
+					page: 1,
+					limit: 100,
+				});
+
 				setSearchResult({
 					type: "used",
-					imei: searchImei,
-					claims: [
-						{
-							id: "claim_001",
-							customerName: "John Doe",
-							claimStatus: "approved",
-							dateCreated: "2024-10-15T10:30:00Z",
-							issueDescription: "Screen replacement",
-						},
-						{
-							id: "claim_002",
-							customerName: "Jane Smith",
-							claimStatus: "pending",
-							dateCreated: "2024-10-20T14:22:00Z",
-							issueDescription: "Battery issue",
-						},
-					],
+					imei: imeiData.imei,
+					claims: claimsResponse.data || [],
+					supplier: imeiData.supplier,
+					expiryDate: imeiData.expiry_date,
+					usedAt: imeiData.used_at,
+					product: imeiData.product,
 				});
 			}
-		} catch (error) {
-			showToast({ message: "Failed to search IMEI", type: "error" });
+		} catch (error: any) {
+			if (error?.response?.status === 404) {
+				showToast({ message: "IMEI not found in database", type: "error" });
+				setSearchResult({
+					type: "not-found",
+					imei: searchImei,
+				});
+			} else {
+				showToast({ message: "Failed to search IMEI", type: "error" });
+			}
 		} finally {
 			setIsSearching(false);
 		}
@@ -390,37 +468,57 @@ export default function SamsungSentinelIMEIView() {
 			);
 		}
 
-
-		if (key === "deviceModel") {
-			const modelLabel =
-				DEVICE_MODELS.find((m) => m.value === row.deviceModel)?.label ||
-				row.deviceModel;
+		if (key === "product_id") {
 			return (
 				<Chip variant="flat" color="primary" size="sm">
-					{modelLabel}
+					{row.product?.name || getProductName(row.product_id)}
 				</Chip>
 			);
 		}
-		if (key === "totalRecords") {
+		if (key === "processing_status") {
+			return (
+				<Chip
+					variant="flat"
+					color={getStatusColor(row.processing_status)}
+					size="sm"
+				>
+					{row.processing_status}
+				</Chip>
+			);
+		}
+		if (key === "total_records") {
 			return (
 				<p className="text-sm font-medium">
-					{row.totalRecords.toLocaleString()}
+					{row.total_records.toLocaleString()}
 				</p>
 			);
 		}
-		if (key === "fileName") {
-			return <p className="text-sm font-mono">{row.fileName}</p>;
+		if (key === "successful_records") {
+			return (
+				<p className="text-sm font-medium text-green-600">
+					{row.successful_records.toLocaleString()}
+				</p>
+			);
 		}
-		if (key === "createdAt") {
+		if (key === "failed_records") {
+			return (
+				<p className="text-sm font-medium text-red-600">
+					{row.failed_records.toLocaleString()}
+				</p>
+			);
+		}
+		if (key === "file_name") {
+			return <p className="text-sm font-mono">{row.file_name}</p>;
+		}
+		if (key === "uploaded_at") {
 			return (
 				<p className="text-sm">
-					{new Date(row.createdAt).toLocaleDateString()}
+					{new Date(row.uploaded_at).toLocaleDateString()}
 				</p>
 			);
 		}
 		return <p className="text-sm">{(row as any)[key]}</p>;
 	};
-
 
 	return (
 		<div className="space-y-6">
@@ -451,39 +549,36 @@ export default function SamsungSentinelIMEIView() {
 				</div>
 			</div>
 
-		
-					{/* Table using GenericTable with all built-in features */}
-					{isLoading ? (
-						<TableSkeleton columns={uploadColumns.length} rows={10} />
-					) : (
-						<GenericTable<UploadRecord>
-							columns={uploadColumns}
-							data={uploads}
-							allCount={uploads.length}
-							exportData={uploads}
-							isLoading={isLoading}
-							filterValue={filterValue}
-							onFilterChange={setFilterValue}
-							
-							sortDescriptor={{ column: "createdAt", direction: "descending" }}
-							onSortChange={() => {}}
-							page={1}
-							pages={1}
-							onPageChange={() => {}}
-							exportFn={exportUploadsFn}
-							renderCell={renderUploadCell}
-							hasNoRecords={hasNoRecords}
-							onDateFilterChange={handleDateFilter}
-							initialStartDate={startDate}
-							initialEndDate={endDate}
-							searchPlaceholder="Search by file name, uploaded by, or device model..."
-							showRowsPerPageSelector={true}
-						/>
-					)}
-				
-
-			
-			
+			{/* Table using GenericTable with all built-in features */}
+			{isLoading ? (
+				<TableSkeleton columns={uploadColumns.length} rows={10} />
+			) : (
+				<GenericTable<UploadRecord>
+					columns={uploadColumns}
+					data={uploads}
+					allCount={totalRecords}
+					exportData={uploads}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={setFilterValue}
+					sortDescriptor={{ column: "uploaded_at", direction: "descending" }}
+					onSortChange={() => {}}
+					page={page}
+					pages={totalPages}
+					onPageChange={handlePageChange}
+					exportFn={exportUploadsFn}
+					renderCell={renderUploadCell}
+					hasNoRecords={hasNoRecords}
+					onDateFilterChange={handleDateFilter}
+					initialStartDate={startDate}
+					initialEndDate={endDate}
+					searchPlaceholder="Search by file name, product, or status..."
+					showRowsPerPageSelector={true}
+					rowsPerPageOptions={[10, 25, 50, 100]}
+					defaultRowsPerPage={25}
+					onRowsPerPageChange={handleRowsPerPageChange}
+				/>
+			)}
 
 			{/* Upload Modal */}
 			<Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose} size="2xl">
@@ -495,21 +590,21 @@ export default function SamsungSentinelIMEIView() {
 								<div className="space-y-4">
 									<div>
 										<p className="text-sm text-muted-foreground mb-2">
-											Select device model for this upload:
+											Select product for this upload:
 										</p>
 										<Select
-											placeholder="Choose device model"
+											placeholder="Choose product"
 											selectedKeys={
-												selectedDeviceModel ? [selectedDeviceModel] : []
+												selectedProductId ? [selectedProductId] : []
 											}
 											onSelectionChange={(keys) => {
 												const selected = Array.from(keys)[0] as string;
-												setSelectedDeviceModel(selected || "");
+												setSelectedProductId(selected || "");
 											}}
 										>
-											{DEVICE_MODELS.map((model) => (
-												<SelectItem key={model.value} value={model.value}>
-													{model.label}
+											{products.map((product: any) => (
+												<SelectItem key={product.id} value={product.id}>
+													{product.name}
 												</SelectItem>
 											))}
 										</Select>
@@ -521,12 +616,15 @@ export default function SamsungSentinelIMEIView() {
 										</p>
 										<Input
 											type="file"
-											accept=".csv"
+											accept=".csv,.xlsx"
 											onChange={(e) => {
 												const file = e.target.files?.[0];
 												setSelectedFile(file || null);
 											}}
 										/>
+										<p className="text-xs text-muted-foreground mt-1">
+											Required columns: IMEI, Supplier, Expiry Date (Optional)
+										</p>
 									</div>
 
 									{selectedFile && (
@@ -554,7 +652,7 @@ export default function SamsungSentinelIMEIView() {
 									color="primary"
 									onPress={handleFileUpload}
 									isLoading={isUploading}
-									isDisabled={!selectedFile || !selectedDeviceModel}
+									isDisabled={!selectedFile || !selectedProductId}
 								>
 									{isUploading ? "Uploading..." : "Upload File"}
 								</Button>
@@ -598,7 +696,22 @@ export default function SamsungSentinelIMEIView() {
 									{/* Search Results */}
 									{searchResult && (
 										<div className="mt-6">
-											{searchResult.type === "unused" ? (
+											{searchResult.type === "not-found" ? (
+												/* IMEI Not Found */
+												<div className="bg-red-50 border border-red-200 rounded-lg p-4">
+													<h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+														<AlertTriangle size={18} />
+														IMEI Not Found
+													</h3>
+													<p className="text-sm text-red-800">
+														The IMEI{" "}
+														<span className="font-mono font-bold">
+															{searchResult.imei}
+														</span>{" "}
+														was not found in the database.
+													</p>
+												</div>
+											) : searchResult.type === "unused" ? (
 												/* Unused IMEI Result */
 												<div className="space-y-4">
 													<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -608,7 +721,7 @@ export default function SamsungSentinelIMEIView() {
 														<div className="grid grid-cols-2 gap-4 text-sm">
 															<div>
 																<span className="text-gray-600">Status:</span>{" "}
-																<Chip color="default" size="sm">
+																<Chip color="success" size="sm">
 																	{searchResult.status}
 																</Chip>
 															</div>
@@ -618,6 +731,38 @@ export default function SamsungSentinelIMEIView() {
 																	{searchResult.claimsCount}
 																</span>
 															</div>
+															{searchResult.product && (
+																<div>
+																	<span className="text-gray-600">
+																		Product:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{searchResult.product.name}
+																	</span>
+																</div>
+															)}
+															{searchResult.supplier && (
+																<div>
+																	<span className="text-gray-600">
+																		Supplier:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{searchResult.supplier}
+																	</span>
+																</div>
+															)}
+															{searchResult.expiryDate && (
+																<div>
+																	<span className="text-gray-600">
+																		Expiry Date:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{new Date(
+																			searchResult.expiryDate
+																		).toLocaleDateString()}
+																	</span>
+																</div>
+															)}
 														</div>
 													</div>
 												</div>
@@ -628,6 +773,40 @@ export default function SamsungSentinelIMEIView() {
 														<h3 className="font-semibold text-amber-900 mb-2">
 															IMEI: {searchResult.imei} (In Use)
 														</h3>
+														<div className="grid grid-cols-2 gap-4 text-sm mb-2">
+															{searchResult.product && (
+																<div>
+																	<span className="text-gray-600">
+																		Product:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{searchResult.product.name}
+																	</span>
+																</div>
+															)}
+															{searchResult.supplier && (
+																<div>
+																	<span className="text-gray-600">
+																		Supplier:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{searchResult.supplier}
+																	</span>
+																</div>
+															)}
+															{searchResult.usedAt && (
+																<div>
+																	<span className="text-gray-600">
+																		Used On:
+																	</span>{" "}
+																	<span className="font-medium">
+																		{new Date(
+																			searchResult.usedAt
+																		).toLocaleDateString()}
+																	</span>
+																</div>
+															)}
+														</div>
 														<p className="text-sm text-amber-800">
 															This IMEI has {searchResult.claims.length}{" "}
 															associated claim(s):
@@ -663,29 +842,31 @@ export default function SamsungSentinelIMEIView() {
 																		className="hover:bg-gray-50"
 																	>
 																		<td className="px-4 py-3 text-sm font-medium text-gray-900">
-																			{claim.customerName}
+																			{claim.customer_name}
 																		</td>
 																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{claim.issueDescription}
+																			{claim.issue_description}
 																		</td>
 																		<td className="px-4 py-3 text-sm">
 																			<Chip
 																				color={
-																					claim.claimStatus === "approved"
+																					claim.status === "approved"
 																						? "success"
-																						: claim.claimStatus === "pending"
+																						: claim.status === "pending"
 																						? "warning"
+																						: claim.status === "completed"
+																						? "primary"
 																						: "danger"
 																				}
 																				size="sm"
 																				className="capitalize"
 																			>
-																				{claim.claimStatus}
+																				{claim.status}
 																			</Chip>
 																		</td>
 																		<td className="px-4 py-3 text-sm text-gray-600">
 																			{new Date(
-																				claim.dateCreated
+																				claim.createdAt
 																			).toLocaleDateString()}
 																		</td>
 																		<td className="px-4 py-3 text-sm">

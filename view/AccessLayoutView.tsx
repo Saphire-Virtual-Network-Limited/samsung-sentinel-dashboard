@@ -1,29 +1,24 @@
 "use client";
 
+import { AppSidebar, GlobalSearch } from "@/components/reususables";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-	AppSidebar,
-	GlobalSearch,
-	SelectField,
-} from "@/components/reususables";
-import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/lib";
 import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import {
+	ReactNode,
+	isValidElement,
+	useCallback,
+	useEffect,
 	useMemo,
 	useState,
-	useEffect,
-	useCallback,
-	ReactNode,
-	cloneElement,
-	isValidElement,
 } from "react";
-import { useAuth } from "@/lib";
 import { mutate } from "swr";
 
 function getGreeting() {
@@ -171,29 +166,6 @@ export default function AccessLayoutView({
 					<div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
 						<SidebarTrigger className="-ml-1 text-primary hover:bg-gray-100 rounded-md p-1 transition-all duration-200 ease-in-out" />
 						<Separator orientation="vertical" className="h-4 hidden sm:block" />
-						{!isDisabled && (
-							<div className="pb-3 w-full max-w-xs sm:max-w-sm lg:max-w-md">
-								<SelectField
-									key={products.length}
-									htmlFor="product-search"
-									id="product-search"
-									placeholder={
-										loading
-											? "Loading products..."
-											: products.length > 0
-											? "Choose Products"
-											: "No products available"
-									}
-									defaultSelectedKeys={selectedProduct}
-									onChange={(value) => {
-										const product = products.find((p) => p.value === value);
-										handleProductSelect(value as string, product?.label);
-									}}
-									options={[...products, ...legacyServices]}
-									size="md"
-								/>
-							</div>
-						)}
 					</div>
 					<div></div>
 

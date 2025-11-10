@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { cachedApiCall, generateCacheKey } from "../../cache";
 import {
 	getPasswordSecurityStatus,
@@ -7,53 +7,150 @@ import {
 	isExemptRoute,
 } from "../../passwordSecurity";
 import { ApiCallOptions } from "./types";
+import {
+	getAccessToken,
+	getRefreshToken,
+	saveTokens,
+	clearAuthData,
+} from "./tokenManager";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const appkey = process.env.NEXT_PUBLIC_APP_KEY;
 
-// Function to clear all authentication cookies
-const clearAllCookies = () => {
-	if (typeof document === "undefined") return;
+// Track if we're currently refreshing to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
 
-	const cookies = document.cookie.split(";");
-	for (let i = 0; i < cookies.length; i++) {
-		const cookie = cookies[i];
-		const eqPos = cookie.indexOf("=");
-		const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+/**
+ * Add subscriber to wait for token refresh
+ */
+function subscribeTokenRefresh(callback: (token: string) => void) {
+	refreshSubscribers.push(callback);
+}
 
-		// Clear the cookie for all possible paths and domains
-		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+/**
+ * Notify all subscribers when token is refreshed
+ */
+function onTokenRefreshed(token: string) {
+	refreshSubscribers.forEach((callback) => callback(token));
+	refreshSubscribers = [];
+}
+
+/**
+ * Refresh the access token using the refresh token
+ */
+async function refreshAccessToken(): Promise<string | null> {
+	const refreshToken = getRefreshToken();
+
+	if (!refreshToken) {
+		console.error("No refresh token available");
+		return null;
 	}
-};
 
-// Add axios response interceptor for global 401 handling
+	try {
+		const response = await axios.post(
+			`${apiUrl}/api/v1/auth/refresh`,
+			{ refresh_token: refreshToken },
+			{
+				headers: {
+					"Content-Type": "application/json",
+					"x-app-key": appkey,
+				},
+			}
+		);
+
+		const { access_token, refresh_token: newRefreshToken } = response.data.data;
+
+		// Save the new tokens
+		saveTokens(access_token, newRefreshToken);
+
+		return access_token;
+	} catch (error) {
+		console.error("Failed to refresh token:", error);
+		// Clear auth data and redirect to login
+		clearAuthData();
+
+		if (
+			typeof window !== "undefined" &&
+			!window.location.pathname.startsWith("/auth/login")
+		) {
+			const currentPath = window.location.pathname;
+			window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(
+				currentPath
+			)}`;
+		}
+
+		return null;
+	}
+}
+
+// Add axios response interceptor for automatic token refresh on 401
 axios.interceptors.response.use(
 	(response) => response,
-	(error) => {
-		// Check if it's a 401 error
-		if (error?.response?.status === 401 && typeof window !== "undefined") {
-			// Clear all authentication data
-			clearAllCookies();
+	async (error: AxiosError) => {
+		const originalRequest = error.config as any;
 
-			if (typeof localStorage !== "undefined") {
-				localStorage.removeItem("user");
-				localStorage.removeItem("selectedProduct");
-				localStorage.removeItem("Sapphire-Credit-Product");
-				localStorage.removeItem("Sapphire-Credit-Product-Name");
+		// Check if it's a 401 error and we haven't already tried to refresh
+		if (error?.response?.status === 401 && !originalRequest._retry) {
+			// Skip refresh for login and refresh endpoints
+			if (
+				originalRequest.url?.includes("/auth/login") ||
+				originalRequest.url?.includes("/auth/refresh")
+			) {
+				clearAuthData();
+
+				if (
+					typeof window !== "undefined" &&
+					!window.location.pathname.startsWith("/auth/login")
+				) {
+					const currentPath = window.location.pathname;
+					window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(
+						currentPath
+					)}`;
+				}
+
+				return Promise.reject(error);
 			}
 
-			if (typeof sessionStorage !== "undefined") {
-				sessionStorage.clear();
+			if (isRefreshing) {
+				// If already refreshing, wait for the new token
+				return new Promise((resolve) => {
+					subscribeTokenRefresh((token: string) => {
+						originalRequest.headers["Authorization"] = `Bearer ${token}`;
+						resolve(axios(originalRequest));
+					});
+				});
 			}
 
-			// Redirect to login if not already there
-			if (!window.location.pathname.startsWith("/auth/login")) {
-				const currentPath = window.location.pathname;
-				window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(
-					currentPath
-				)}`;
+			originalRequest._retry = true;
+			isRefreshing = true;
+
+			try {
+				const newAccessToken = await refreshAccessToken();
+
+				if (newAccessToken) {
+					isRefreshing = false;
+					onTokenRefreshed(newAccessToken);
+
+					// Retry the original request with new token
+					originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+					return axios(originalRequest);
+				}
+			} catch (refreshError) {
+				isRefreshing = false;
+				clearAuthData();
+
+				if (
+					typeof window !== "undefined" &&
+					!window.location.pathname.startsWith("/auth/login")
+				) {
+					const currentPath = window.location.pathname;
+					window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(
+						currentPath
+					)}`;
+				}
+
+				return Promise.reject(refreshError);
 			}
 		}
 
@@ -74,11 +171,9 @@ export async function apiCall(
 			const passwordStatus = getPasswordSecurityStatus();
 
 			// Skip password check for auth routes, settings, and login endpoint
-			const isLoginEndpoint = endpoint === "/admin/login";
-			const isProfileEndpoint = endpoint === "/admin/profile";
-			const isPasswordChangeEndpoint = endpoint.includes(
-				"/admin/update-password"
-			);
+			const isLoginEndpoint = endpoint.includes("/auth/login");
+			const isProfileEndpoint = endpoint.includes("/users/me");
+			const isPasswordChangeEndpoint = endpoint.includes("/change-password");
 
 			if (
 				!isLoginEndpoint &&
@@ -95,10 +190,23 @@ export async function apiCall(
 
 		const headers: any = {
 			Accept: "*/*",
-			"x-app-key": options?.appKey,
+			"x-app-key": options?.appKey || appkey,
 		};
 
+		// Add Authorization header if access token exists
 		if (typeof window !== "undefined") {
+			const accessToken = getAccessToken();
+			if (accessToken) {
+				headers["Authorization"] = `Bearer ${accessToken}`;
+			}
+
+			// Add refresh token header
+			const refreshToken = getRefreshToken();
+			if (refreshToken) {
+				headers["X-Refresh-Token"] = refreshToken;
+			}
+
+			// Add Sapphire product header
 			const sapphireProduct = localStorage.getItem("Sapphire-Credit-Product");
 			if (sapphireProduct) {
 				headers["Sapphire-Credit-Product"] = sapphireProduct;
@@ -134,19 +242,6 @@ export async function apiCall(
 		const response = await axios(config);
 		return response.data;
 	} catch (error: any) {
-		const status = error?.response?.status;
-
-		/**
-    // If Unauthorized, clear session and redirect to login
-    if (status === 401 && typeof window !== "undefined") {
-      // Clear any stored product key
-      localStorage.removeItem("Sapphire-Credit-Product");
-      // Redirect user to admin login
-      window.location.href = "/auth/login";
-      // Return a never‑resolving promise to stop further execution
-      return new Promise(() => {});
-    }
- */
 		const errorMessage =
 			error?.response?.data?.message ||
 			error?.message ||

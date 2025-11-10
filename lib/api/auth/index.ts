@@ -1,4 +1,10 @@
-import { apiCall, BaseApiResponse } from "../shared";
+import {
+	apiCall,
+	BaseApiResponse,
+	saveTokens,
+	saveUser,
+	clearAuthData,
+} from "../shared";
 
 // ============================================================================
 // AUTH APIs
@@ -70,7 +76,16 @@ export interface ResetPasswordDto {
 export async function login(
 	data: LoginDto
 ): Promise<BaseApiResponse<LoginResponseDto>> {
-	return apiCall("/api/v1/auth/login", "POST", data);
+	const response = await apiCall("/api/v1/auth/login", "POST", data);
+
+	// Save tokens and user data after successful login
+	if (response?.data) {
+		const { access_token, refresh_token, user } = response.data;
+		saveTokens(access_token, refresh_token);
+		saveUser(user);
+	}
+
+	return response;
 }
 
 /**
@@ -90,7 +105,15 @@ export async function register(data: RegisterDto): Promise<BaseApiResponse> {
 export async function refreshToken(
 	data: RefreshTokenDto
 ): Promise<BaseApiResponse<RefreshTokenResponseDto>> {
-	return apiCall("/api/v1/auth/refresh", "POST", data);
+	const response = await apiCall("/api/v1/auth/refresh", "POST", data);
+
+	// Save new tokens after successful refresh
+	if (response?.data) {
+		const { access_token, refresh_token } = response.data;
+		saveTokens(access_token, refresh_token);
+	}
+
+	return response;
 }
 
 /**
@@ -99,7 +122,12 @@ export async function refreshToken(
  * @tag Authentication
  */
 export async function logout(data: RefreshTokenDto): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/logout", "POST", data);
+	const response = await apiCall("/api/v1/auth/logout", "POST", data);
+
+	// Clear all authentication data after successful logout
+	clearAuthData();
+
+	return response;
 }
 
 /**
@@ -108,7 +136,12 @@ export async function logout(data: RefreshTokenDto): Promise<BaseApiResponse> {
  * @tag Authentication
  */
 export async function revokeAllTokens(): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/revoke-all", "POST");
+	const response = await apiCall("/api/v1/auth/revoke-all", "POST");
+
+	// Clear all authentication data after revoking all tokens
+	clearAuthData();
+
+	return response;
 }
 
 /**

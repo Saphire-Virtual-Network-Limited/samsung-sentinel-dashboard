@@ -15,27 +15,14 @@ import {
 	Home,
 	Users,
 	Settings,
-	ChartBar,
 	Store,
-	Package2Icon,
+	Package,
 	Users2,
-	CreditCard,
-	UserCheck,
-	BriefcaseBusiness,
-	ClipboardCheckIcon,
 	Wrench,
 	BarChart3,
-	LayoutDashboard,
-	IdCard,
-	Receipt,
-	Package,
-	MessageSquare,
-	CheckCircle,
-	XCircle,
-	FileText,
 	Shield,
+	Receipt,
 } from "lucide-react";
-import { IoLogoAndroid, IoLogoApple, IoBusiness } from "react-icons/io5";
 import type { LucideIcon } from "lucide-react";
 import type { IconType } from "react-icons";
 import { getRoleSidebarKey } from "@/lib/roleConfig";
@@ -97,223 +84,92 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 			id: "admin-dashboard",
 		},
 		{
-			icon: CreditCard,
-			title: "Loans",
-			id: "admin-loans",
-			subItems: [
-				{
-					title: "All Loans",
-					url: "/access/admin/loans/loans",
-				},
-				{
-					title: "Repayment",
-					url: "/access/admin/loans/repayment",
-				},
-			],
+			icon: Shield,
+			title: "IMEI Management",
+			url: "/access/admin/samsung-sentinel/imei",
+			id: "admin-imei",
 		},
 		{
-			icon: Users,
-			title: "Customers",
-			url: "/access/admin/customers",
-			id: "admin-customers",
-		},
-		{
-			icon: UserCheck,
-			title: "Verification",
-			id: "admin-referees",
-			subItems: [
-				{
-					title: "Pending",
-					url: "/access/admin/referees/unapproved-referees",
-				},
-				{
-					title: "Approved",
-					url: "/access/admin/referees/approved-referees",
-				},
-				{
-					title: "Rejected",
-					url: "/access/admin/referees/rejected-referees",
-				},
-			],
+			icon: Package,
+			title: "Products",
+			url: "/access/admin/samsung-sentinel/products",
+			id: "admin-products",
 		},
 		{
 			icon: Store,
-			title: "Stores",
-			url: "/access/admin/stores",
-			id: "admin-stores",
+			title: "Repair Stores",
+			url: "/access/admin/repair-centers",
+			id: "admin-repair-stores",
 		},
-		...(hasPermission(accessRole, "canSendSms", userEmail)
-			? [
-					{
-						icon: MessageSquare,
-						title: "SMS",
-						url: "/access/admin/sms",
-						id: "admin-sms",
-					},
-			  ]
-			: []),
 		{
-			icon: IoBusiness,
-			title: "Staff",
-			url: "/access/admin/staff",
-			id: "admin-staff",
+			icon: Users,
+			title: "Service Centers",
+			url: "/access/admin/service-centers",
+			id: "admin-service-centers",
+		},
+		{
+			icon: Wrench,
+			title: "Repairs & Claims",
+			id: "admin-repairs-claims",
 			subItems: [
 				{
-					title: "Mobiflex Sales Agent",
-					url: "/access/admin/staff/agents",
+					title: "All Claims",
+					url: "/access/admin/samsung-sentinel/claims?status=all",
 				},
 				{
-					title: "MBE",
-					url: "/access/admin/staff/mbe",
+					title: "Pending",
+					url: "/access/admin/samsung-sentinel/claims?status=pending",
 				},
 				{
-					title: "SCAN Partners",
-					url: "/access/admin/staff/scan-partners",
+					title: "Approved",
+					url: "/access/admin/samsung-sentinel/claims?status=approved",
+				},
+				{
+					title: "In Progress",
+					url: "/access/admin/samsung-sentinel/claims?status=in-progress",
+				},
+				{
+					title: "Completed",
+					url: "/access/admin/samsung-sentinel/claims?status=completed",
+				},
+				{
+					title: "Rejected",
+					url: "/access/admin/samsung-sentinel/claims?status=rejected",
 				},
 			],
 		},
 		{
-			icon: ChartBar,
-			title: "Reports",
-			id: "admin-reports",
+			icon: Receipt,
+			title: "Payments",
+			id: "admin-payments",
 			subItems: [
 				{
-					title: "Sales",
-					subItems: [
-						{
-							title: "Overview",
-							url: "/access/admin/reports/sales/overview",
-						},
-						{
-							title: "MBE Report",
-							url: "/access/admin/reports/sales/mbe",
-						},
-						{
-							title: "Samsung Report",
-							url: "/access/admin/reports/sales/samsung",
-						},
-						{
-							title: "Xiaomi Report",
-							url: "/access/admin/reports/sales/xiaomi",
-						},
-						{
-							title: "Oppo Report",
-							url: "/access/admin/reports/sales/oppo",
-						},
-						{
-							title: "Sentinel Report",
-							url: "/access/admin/reports/sales/sentinel",
-						},
-						{
-							title: "Low Downpayment",
-							url: "/access/admin/reports/sales/low-downpayment",
-						},
-						{
-							title: "Mobiflex Report",
-							url: "/access/admin/reports/mobiflex",
-						},
-					],
+					title: "Unpaid Repairs",
+					url: "/access/admin/samsung-sentinel/claims?status=completed&payment=unpaid",
 				},
 				{
-					title: "Commissions",
-					url: "/access/admin/reports/commissions",
+					title: "Paid Repairs",
+					url: "/access/admin/samsung-sentinel/claims?status=completed&payment=paid",
 				},
-				{ title: "Drop-offs", url: "/access/admin/reports/drop-offs" },
-				{ title: "Tracker", url: "/access/admin/reports/tracker" },
 			],
+		},
+		{
+			icon: BarChart3,
+			title: "Statistics",
+			url: "/access/admin/samsung-sentinel/statistics",
+			id: "admin-statistics",
 		},
 		{
 			icon: Users2,
-			title: "Users",
-			id: "admin-users",
+			title: "User Management",
 			url: "/access/admin/users/",
+			id: "admin-users",
 		},
 		{
-			icon: CreditCard,
-			title: "Payout Scheduler",
-			url: "/access/admin/payout-scheduler",
-			id: "admin-payout-scheduler",
-		},
-		{
-			icon: Package2Icon,
-			title: "Inventory",
-			id: "admin-inventory",
-			subItems: [
-				{ title: "Devices", url: "/access/admin/inventory/devices" },
-				{ title: "TVs", url: "/access/admin/inventory/tvs" },
-				{ title: "Solar", url: "/access/admin/inventory/solar" },
-			],
-		},
-		{
-			icon: Shield,
-			title: "Samsung Sentinel",
-			id: "admin-samsung-sentinel",
-			subItems: [
-				{
-					title: "IMEI Management",
-					url: "/access/admin/samsung-sentinel/imei",
-				},
-				{
-					title: "Products",
-					url: "/access/admin/samsung-sentinel/products",
-				},
-				{
-					title: "Repair Store",
-					url: "/access/admin/repair-centers",
-				},
-				{
-					title: "Repairs & Claims",
-					subItems: [
-						{
-							title: "All Claims",
-							url: "/access/admin/samsung-sentinel/claims?status=all",
-						},
-						{
-							title: "Pending",
-							url: "/access/admin/samsung-sentinel/claims?status=pending",
-						},
-						{
-							title: "Approved",
-							url: "/access/admin/samsung-sentinel/claims?status=approved",
-						},
-						{
-							title: "In Progress",
-							url: "/access/admin/samsung-sentinel/claims?status=in-progress",
-						},
-						{
-							title: "Completed",
-							url: "/access/admin/samsung-sentinel/claims?status=completed",
-						},
-						{
-							title: "Rejected",
-							url: "/access/admin/samsung-sentinel/claims?status=rejected",
-						},
-					],
-				},
-				{
-					title: "Payments",
-					subItems: [
-						{
-							title: "Unpaid Repairs",
-							url: "/access/admin/samsung-sentinel/claims?status=completed&payment=unpaid",
-						},
-						{
-							title: "Paid Repairs",
-							url: "/access/admin/samsung-sentinel/claims?status=completed&payment=paid",
-						},
-					],
-				},
-				{
-					title: "Statistics",
-					url: "/access/admin/samsung-sentinel/statistics",
-				},
-			],
-		},
-		{
-			icon: Package2Icon,
-			title: "PowerFlex",
-			id: "admin-powerflex",
-			url: "/access/admin/powerflex",
+			icon: Settings,
+			title: "Settings",
+			url: "/access/admin/settings",
+			id: "admin-settings",
 		},
 	];
 }

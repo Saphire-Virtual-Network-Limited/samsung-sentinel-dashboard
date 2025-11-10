@@ -5,27 +5,53 @@ import { apiCall, BaseApiResponse } from "../shared";
 // ============================================================================
 
 // Types & Interfaces
-export interface Imei {
+export interface Product {
 	id: string;
-	imei: string;
-	product_id: string;
-	upload_id: string;
-	distributor?: string;
-	expiry_date?: string;
-	is_used: boolean;
-	used_at?: string;
-	used_by_claim_id?: string;
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
+	created_by_id: string | null;
+	updated_by_id: string | null;
+	name: string;
+	sapphire_cost: string;
+	repair_cost: string;
+	status: "ACTIVE" | "INACTIVE";
 }
 
 export interface ImeiUpload {
 	id: string;
+	created_at: string;
+	updated_at: string;
+	file_name: string;
 	product_id: string;
-	filename: string;
-	total_imeis: number;
-	uploaded_by_id: string;
-	createdAt: string;
+	total_records: number;
+	successful_records: number;
+	failed_records: number;
+	uploaded_by_id: string | null;
+	uploaded_at: string;
+	processing_status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+	error_message: string | null;
+	processing_details: {
+		duplicates?: string[];
+		errors?: string[];
+	};
+	product?: Product;
+	uploaded_by?: any | null;
+}
+
+export interface Imei {
+	id: string;
+	created_at: string;
+	updated_at: string;
+	imei: string;
+	upload_id: string;
+	product_id: string;
+	supplier?: string;
+	expiry_date?: string;
+	is_used: boolean;
+	used_at?: string;
+	used_by_claim_id?: string;
+	upload?: ImeiUpload;
+	product?: Product;
 }
 
 export interface ValidateImeiDto {
@@ -53,6 +79,22 @@ export interface GetUploadsParams {
 	limit?: number;
 }
 
+export interface PaginatedImeiUploadsResponse {
+	data: ImeiUpload[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
+
+export interface PaginatedImeisResponse {
+	data: Imei[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
+
 // API Functions
 
 /**
@@ -67,7 +109,7 @@ export async function uploadImeiCsv(
 	const formData = new FormData();
 	formData.append("file", file);
 	formData.append("product_id", product_id);
-	return apiCall("/api/v1/imeis/upload", "POST", formData);
+	return apiCall("/imeis/upload", "POST", formData);
 }
 
 /**
@@ -77,11 +119,11 @@ export async function uploadImeiCsv(
  */
 export async function getImeiUploads(
 	params?: GetUploadsParams
-): Promise<BaseApiResponse<ImeiUpload[]>> {
+): Promise<PaginatedImeiUploadsResponse> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/imeis/uploads?${queryParams}`, "GET");
+	return apiCall(`/imeis/uploads?${queryParams}`, "GET");
 }
 
 /**
@@ -92,7 +134,7 @@ export async function getImeiUploads(
 export async function getImeiUploadById(
 	id: string
 ): Promise<BaseApiResponse<ImeiUpload>> {
-	return apiCall(`/api/v1/imeis/uploads/${id}`, "GET");
+	return apiCall(`/imeis/uploads/${id}`, "GET");
 }
 
 /**
@@ -102,11 +144,11 @@ export async function getImeiUploadById(
  */
 export async function getAllImeis(
 	params?: GetImeisParams
-): Promise<BaseApiResponse<Imei[]>> {
+): Promise<PaginatedImeisResponse> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/imeis?${queryParams}`, "GET");
+	return apiCall(`/imeis?${queryParams}`, "GET");
 }
 
 /**
@@ -117,7 +159,7 @@ export async function getAllImeis(
 export async function validateImei(
 	data: ValidateImeiDto
 ): Promise<BaseApiResponse<ValidateImeiResponse>> {
-	return apiCall("/api/v1/imeis/validate", "POST", data);
+	return apiCall("/imeis/validate", "POST", data);
 }
 
 /**
@@ -125,6 +167,6 @@ export async function validateImei(
  * @summary Search for a specific IMEI and get its details
  * @tag IMEIs
  */
-export async function searchImei(imei: string): Promise<BaseApiResponse<Imei>> {
-	return apiCall(`/api/v1/imeis/search/${imei}`, "GET");
+export async function searchImei(imei: string): Promise<Imei> {
+	return apiCall(`/imeis/search/${imei}`, "GET");
 }
