@@ -11,8 +11,8 @@ export interface Product {
 	sapphire_cost: number;
 	repair_cost: number;
 	status: ProductStatus;
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface CreateProductDto {
@@ -52,9 +52,13 @@ export async function createProduct(
  * @summary Retrieve all products with optional filters and pagination
  * @tag Products
  */
-export async function getAllProducts(
-	params?: GetProductsParams
-): Promise<BaseApiResponse<Product[]>> {
+export async function getAllProducts(params?: GetProductsParams): Promise<{
+	data: Product[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();

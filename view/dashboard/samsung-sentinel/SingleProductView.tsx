@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import useSWR from "swr";
 import {
 	Button,
 	Modal,
@@ -15,56 +16,35 @@ import {
 	CardBody,
 	CardHeader,
 	Divider,
-	Dropdown,
-	DropdownTrigger,
-	DropdownMenu,
-	DropdownItem,
 } from "@heroui/react";
 import {
 	InfoCard,
 	InfoField,
-	StatusChip,
-	LoadingSpinner,
-	NotFound,
+	TableSkeleton,
 } from "@/components/reususables/custom-ui";
-import GenericTable, {
-	ColumnDef,
-} from "@/components/reususables/custom-ui/tableUi";
 import { StatCard } from "@/components/atoms/StatCard";
 import {
 	ArrowLeft,
-	Plus,
 	Edit,
-	Trash2,
 	Power,
 	PowerOff,
-	EllipsisVertical,
-	Wrench,
 	DollarSign,
-	History,
 	Calendar,
 	TrendingUp,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
 import {
-	useSamsungSentinelProduct,
-	type Product,
-	type AuditHistory,
-} from "@/hooks/shared/useSamsungSentinelProduct";
-
-const auditColumns: ColumnDef[] = [
-	{ name: "Action", uid: "action", sortable: true },
-	{ name: "Field", uid: "field", sortable: true },
-	{ name: "Old Value", uid: "oldValue", sortable: true },
-	{ name: "New Value", uid: "newValue", sortable: true },
-	{ name: "Modified By", uid: "modifiedBy", sortable: true },
-	{ name: "Modified At", uid: "modifiedAt", sortable: true },
-];
+	getProductById,
+	Product,
+	updateProduct,
+	activateProduct,
+	deactivateProduct,
+} from "@/lib/api/products";
 
 const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
+	ACTIVE: "success" as const,
+	INACTIVE: "danger" as const,
 };
 
 interface SingleProductViewProps {
@@ -78,14 +58,19 @@ export default function SingleProductView({
 	const pathname = usePathname();
 	const role = pathname.split("/")[2];
 
-	// Fetch product data using the hook
+	// Fetch product data with SWR
 	const {
-		product,
-		auditHistory,
+		data: productResponse,
+		error,
 		isLoading: isLoadingData,
-		isError,
 		mutate,
-	} = useSamsungSentinelProduct(productId);
+	} = useSWR(
+		productId ? `/products/${productId}` : null,
+		() => getProductById(productId),
+		{ revalidateOnFocus: false }
+	);
+
+	const product = productResponse?.data;
 
 	// Modal states
 	const {
@@ -120,19 +105,15 @@ export default function SingleProductView({
 				profitMargin: 0,
 			};
 
-		const totalValue = product.sapphireCost + product.repairCost;
+		const sapphire = Number(product.sapphire_cost);
+		const repair = Number(product.repair_cost);
+		const totalValue = sapphire + repair;
 		const profitMargin =
-			product.sapphireCost > 0
-				? Math.round(
-						((product.sapphireCost - product.repairCost) /
-							product.sapphireCost) *
-							100
-				  )
-				: 0;
+			sapphire > 0 ? Math.round(((sapphire - repair) / sapphire) * 100) : 0;
 
 		return {
-			sapphireCost: product.sapphireCost,
-			repairCost: product.repairCost,
+			sapphireCost: sapphire,
+			repairCost: repair,
 			totalValue,
 			profitMargin,
 		};
@@ -147,7 +128,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update product name
+			await updateProduct(productId, { name: productName.trim() });
 			showToast({
 				message: "Product name updated successfully",
 				type: "success",
@@ -155,8 +136,11 @@ export default function SingleProductView({
 			onEditNameModalClose();
 			setProductName("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update product name", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update product name",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -172,7 +156,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update sapphire cost
+			await updateProduct(productId, { sapphire_cost: cost });
 			showToast({
 				message: "Sapphire cost updated successfully",
 				type: "success",
@@ -180,8 +164,11 @@ export default function SingleProductView({
 			onEditSapphireCostModalClose();
 			setSapphireCost("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update sapphire cost", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update sapphire cost",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -197,7 +184,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update repair cost
+			await updateProduct(productId, { repair_cost: cost });
 			showToast({
 				message: "Repair cost updated successfully",
 				type: "success",
@@ -205,8 +192,11 @@ export default function SingleProductView({
 			onEditRepairCostModalClose();
 			setRepairCost("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update repair cost", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update repair cost",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -214,66 +204,69 @@ export default function SingleProductView({
 
 	// Handle toggle product status
 	const handleToggleProductStatus = async () => {
+		if (!product) return;
+
 		setIsLoading(true);
 		try {
-			// API call to toggle product status
+			if (product.status === "ACTIVE") {
+				await deactivateProduct(productId);
+			} else {
+				await activateProduct(productId);
+			}
 			showToast({
 				message: `Product ${
-					product!.status === "active" ? "disabled" : "enabled"
+					product.status === "ACTIVE" ? "disabled" : "enabled"
 				} successfully`,
 				type: "success",
 			});
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update product status", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update product status",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// Render audit history cell
-	const renderAuditCell = (row: AuditHistory, key: string) => {
-		switch (key) {
-			case "action":
-				const actionColor =
-					row.action === "CREATE"
-						? "success"
-						: row.action === "UPDATE"
-						? "warning"
-						: row.action === "DELETE"
-						? "danger"
-						: "default";
-				return (
-					<Chip color={actionColor} variant="flat" size="sm">
-						{row.action}
-					</Chip>
-				);
-			case "modifiedAt":
-				return (
-					<p className="text-sm">{new Date(row.modifiedAt).toLocaleString()}</p>
-				);
-			default:
-				return (
-					<span className="text-sm">{row[key as keyof AuditHistory]}</span>
-				);
-		}
-	};
-
 	// Loading state
 	if (isLoadingData) {
-		return <LoadingSpinner />;
+		return <TableSkeleton columns={4} />;
 	}
 
 	// Error state
-	if (isError) {
+	if (error) {
 		return (
-			<NotFound title="Error Loading Product" onGoBack={() => router.back()} />
+			<div className="flex flex-col items-center justify-center h-96">
+				<p className="text-lg text-gray-500">Failed to load product</p>
+				<Button
+					color="primary"
+					variant="flat"
+					onPress={() => router.back()}
+					className="mt-4"
+				>
+					Go Back
+				</Button>
+			</div>
 		);
 	}
 
 	// Product not found
 	if (!product) {
-		return <NotFound onGoBack={() => router.back()} />;
+		return (
+			<div className="flex flex-col items-center justify-center h-96">
+				<p className="text-lg text-gray-500">Product not found</p>
+				<Button
+					color="primary"
+					variant="flat"
+					onPress={() => router.back()}
+					className="mt-4"
+				>
+					Go Back
+				</Button>
+			</div>
+		);
 	}
 
 	return (
@@ -302,10 +295,10 @@ export default function SingleProductView({
 						Edit Name
 					</Button>
 					<Button
-						color={product.status === "active" ? "danger" : "success"}
+						color={product.status === "ACTIVE" ? "danger" : "success"}
 						variant="flat"
 						startContent={
-							product.status === "active" ? (
+							product.status === "ACTIVE" ? (
 								<PowerOff size={16} />
 							) : (
 								<Power size={16} />
@@ -314,7 +307,7 @@ export default function SingleProductView({
 						onPress={handleToggleProductStatus}
 						isLoading={isLoading}
 					>
-						{product.status === "active" ? "Disable" : "Enable"}
+						{product.status === "ACTIVE" ? "Disable" : "Enable"}
 					</Button>
 				</div>
 			</div>
@@ -342,28 +335,34 @@ export default function SingleProductView({
 					<InfoField
 						label="Status"
 						value={product.status}
-						endComponent={<StatusChip status={product.status} />}
+						endComponent={
+							<Chip
+								color={statusColorMap[product.status]}
+								size="sm"
+								variant="flat"
+							>
+								{product.status}
+							</Chip>
+						}
 					/>
-					<InfoField label="Created By" value={product.createdBy} />
 					<InfoField
 						label="Created At"
-						value={new Date(product.createdAt).toLocaleDateString()}
+						value={new Date(product.created_at).toLocaleDateString()}
 					/>
-					<InfoField label="Last Updated By" value={product.lastUpdatedBy} />
 					<InfoField
 						label="Last Updated At"
-						value={new Date(product.lastUpdatedAt).toLocaleDateString()}
+						value={new Date(product.updated_at).toLocaleDateString()}
 					/>
 					<InfoField
 						label="Sapphire Cost"
-						value={`₦${product.sapphireCost.toLocaleString()}`}
+						value={`₦${Number(product.sapphire_cost).toLocaleString()}`}
 						endComponent={
 							<Button
 								size="sm"
 								variant="light"
 								isIconOnly
 								onPress={() => {
-									setSapphireCost(product.sapphireCost.toString());
+									setSapphireCost(product.sapphire_cost.toString());
 									onEditSapphireCostModalOpen();
 								}}
 							>
@@ -373,14 +372,14 @@ export default function SingleProductView({
 					/>
 					<InfoField
 						label="Repair Cost"
-						value={`₦${product.repairCost.toLocaleString()}`}
+						value={`₦${Number(product.repair_cost).toLocaleString()}`}
 						endComponent={
 							<Button
 								size="sm"
 								variant="light"
 								isIconOnly
 								onPress={() => {
-									setRepairCost(product.repairCost.toString());
+									setRepairCost(product.repair_cost.toString());
 									onEditRepairCostModalOpen();
 								}}
 							>
@@ -412,33 +411,6 @@ export default function SingleProductView({
 					title="Profit Margin"
 					value={`${stats.profitMargin}%`}
 					icon={<TrendingUp className="w-5 h-5" />}
-				/>
-			</div>
-
-			{/* Audit History */}
-			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Audit History</h3>
-
-				<GenericTable<AuditHistory>
-					columns={auditColumns}
-					data={auditHistory}
-					allCount={auditHistory.length}
-					exportData={auditHistory}
-					isLoading={false}
-					renderCell={renderAuditCell}
-					hasNoRecords={auditHistory.length === 0}
-					sortDescriptor={{ column: "modifiedAt", direction: "descending" }}
-					onSortChange={() => {}}
-					page={1}
-					pages={1}
-					onPageChange={() => {}}
-					filterValue=""
-					onFilterChange={() => {}}
-					searchPlaceholder="Search audit history..."
-					showRowsPerPageSelector={true}
-					exportFn={(data) => {
-						console.log("Exporting audit history:", data);
-					}}
 				/>
 			</div>
 

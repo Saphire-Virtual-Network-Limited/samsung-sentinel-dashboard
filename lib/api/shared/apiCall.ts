@@ -12,6 +12,7 @@ import {
 	getRefreshToken,
 	saveTokens,
 	clearAuthData,
+	isTokenExpired,
 } from "./tokenManager";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -59,10 +60,15 @@ async function refreshAccessToken(): Promise<string | null> {
 			}
 		);
 
-		const { access_token, refresh_token: newRefreshToken } = response.data.data;
+		// Response structure: { access_token, refresh_token, token_type, expires_in }
+		const {
+			access_token,
+			refresh_token: newRefreshToken,
+			expires_in,
+		} = response.data;
 
-		// Save the new tokens
-		saveTokens(access_token, newRefreshToken);
+		// Save the new tokens with expiration
+		saveTokens(access_token, newRefreshToken, expires_in || 86400);
 
 		return access_token;
 	} catch (error) {
@@ -165,6 +171,45 @@ export async function apiCall(
 	options?: ApiCallOptions
 ) {
 	try {
+		// Proactively refresh token if it's about to expire (client-side only)
+		// Skip refresh for auth endpoints to avoid infinite loops
+		if (typeof window !== "undefined") {
+			const isAuthEndpoint =
+				endpoint.includes("/auth/login") ||
+				endpoint.includes("/auth/refresh") ||
+				endpoint.includes("/auth/register") ||
+				endpoint.includes("/auth/set-password") ||
+				endpoint.includes("/auth/verify-invitation");
+
+			if (!isAuthEndpoint && isTokenExpired(300)) {
+				// Token expired or will expire in 5 minutes
+				console.log("Token is expired or expiring soon, refreshing...");
+
+				if (!isRefreshing) {
+					isRefreshing = true;
+					try {
+						const newAccessToken = await refreshAccessToken();
+						isRefreshing = false;
+
+						if (newAccessToken) {
+							onTokenRefreshed(newAccessToken);
+							console.log("Token refreshed successfully");
+						} else {
+							console.error("Failed to refresh token proactively");
+						}
+					} catch (error) {
+						isRefreshing = false;
+						console.error("Error during proactive token refresh:", error);
+					}
+				} else {
+					// Wait for ongoing refresh to complete
+					await new Promise<void>((resolve) => {
+						subscribeTokenRefresh(() => resolve());
+					});
+				}
+			}
+		}
+
 		// Check password security before making API calls (client-side only)
 		if (typeof window !== "undefined") {
 			const currentPath = window.location.pathname;

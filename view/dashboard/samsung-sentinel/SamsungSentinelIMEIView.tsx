@@ -197,10 +197,10 @@ export default function SamsungSentinelIMEIView() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [searchParams]);
 
-	// Fetch products for dropdown
+	// Fetch products for dropdown - fetch all products
 	const { data: productsResponse } = useSWR(
-		"products",
-		() => getAllProducts(),
+		"products-all",
+		() => getAllProducts({ page: 1, limit: 1000 }), // Fetch all products
 		{ revalidateOnFocus: false }
 	);
 

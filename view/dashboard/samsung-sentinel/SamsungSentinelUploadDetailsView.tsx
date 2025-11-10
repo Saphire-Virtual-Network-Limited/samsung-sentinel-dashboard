@@ -1,70 +1,44 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import useSWR from "swr";
 import {
-	Card,
-	CardBody,
-	CardHeader,
-	Chip,
-	Input,
-	Select,
-	SelectItem,
-	Button,
-	Divider,
-	SortDescriptor,
-} from "@heroui/react";
-import GenericTable from "@/components/reususables/custom-ui/tableUi";
-import {
-	TableSkeleton,
 	InfoCard,
 	InfoField,
+	TableSkeleton,
 } from "@/components/reususables/custom-ui";
-import { getSamsungSentinelUploadDetails } from "@/lib";
-import { ArrowLeft, Download, Search, Upload } from "lucide-react";
-import { useRouter, usePathname, useParams } from "next/navigation";
+import GenericTable from "@/components/reususables/custom-ui/tableUi";
+import {
+	getImeiUploadById,
+	Imei,
+	ImeiUploadWithDetails,
+} from "@/lib/api/imeis";
+import { Button, Card, Chip, SortDescriptor } from "@heroui/react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { ArrowLeft, Upload } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import useSWR from "swr";
 
-const DEVICE_MODELS = [
-	{ label: "Samsung A05", value: "SAMSUNG_A05" },
-	{ label: "Samsung A06", value: "SAMSUNG_A06" },
-	{ label: "Samsung A07", value: "SAMSUNG_A07" },
-];
-
-interface IMEIRecord {
-	recordId: string;
-	deviceImei: string;
-	distributor?: string;
-	expiryDate?: string;
-	status: "active" | "used";
-}
-
-interface UploadDetails {
-	id: string;
-	deviceModel: string;
-	uploadedBy: string;
-	totalRecords: number;
-	fileName: string;
-	createdAt: string;
-	updatedAt: string;
-	processedAt?: string;
-	status: "processing" | "completed" | "failed";
-	imeiRecords: IMEIRecord[];
-}
+const uploadStatusColorMap: Record<
+	string,
+	"success" | "warning" | "danger" | "default"
+> = {
+	PENDING: "default",
+	PROCESSING: "warning",
+	COMPLETED: "success",
+	FAILED: "danger",
+};
 
 export default function SamsungSentinelUploadDetailsView() {
 	const params = useParams();
 	const uploadId = params?.id as string;
 	const router = useRouter();
-	const pathname = usePathname();
-	// Get the role from the URL path (e.g., /access/admin/samsung-sentinel -> admin)
-	const role = pathname.split("/")[2];
-	// --- table state (let GenericTable handle filtering) ---
+
+	// --- table state ---
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-		column: "recordId",
+		column: "imei",
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
@@ -74,196 +48,99 @@ export default function SamsungSentinelUploadDetailsView() {
 		setSortDescriptor(sd);
 	};
 
-	// Fetch upload details - disabled for demo, using mock data
-	// const { data: uploadData, error, isLoading } = useSWR(
-	// 	uploadId ? `samsung-sentinel-upload-${uploadId}` : null,
-	// 	() => getSamsungSentinelUploadDetails(uploadId)
-	// );
+	// Fetch upload details with SWR
+	const {
+		data: uploadDetails,
+		error,
+		isLoading,
+	} = useSWR<ImeiUploadWithDetails>(
+		uploadId ? `/imeis/uploads/${uploadId}` : null,
+		() => getImeiUploadById(uploadId),
+		{ revalidateOnFocus: false }
+	);
 
-	// Use mock data for demo
-	const uploadData = null;
-	const error = null;
-	const isLoading = false;
-
-	// Mock data for demo - replace with actual API data
-	const uploadDetails: UploadDetails = useMemo(() => {
-		// Mock data matching the IDs from the main view
-		const mockUploads = {
-			upload_001: {
-				id: "upload_001",
-				deviceModel: "SAMSUNG_A05",
-				uploadedBy:
-					role === "admin" ? "admin@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 1500,
-				fileName: "samsung_a05_batch_001.csv",
-				createdAt: "2024-10-01T10:30:00Z",
-				updatedAt: "2024-10-01T10:35:00Z",
-				processedAt: "2024-10-01T10:35:00Z",
-				status: "completed" as const,
-			},
-			upload_002: {
-				id: "upload_002",
-				deviceModel: "SAMSUNG_A06",
-				uploadedBy:
-					role === "admin" ? "manager@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 2300,
-				fileName: "samsung_a06_batch_002.csv",
-				createdAt: "2024-10-02T14:20:00Z",
-				updatedAt: "2024-10-02T14:25:00Z",
-				processedAt: "2024-10-02T14:25:00Z",
-				status: "completed" as const,
-			},
-			upload_003: {
-				id: "upload_003",
-				deviceModel: "SAMSUNG_A07",
-				uploadedBy:
-					role === "admin" ? "admin@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 1800,
-				fileName: "samsung_a07_batch_003.csv",
-				createdAt: "2024-10-03T09:15:00Z",
-				updatedAt: "2024-10-03T09:18:00Z",
-				status: "processing" as const,
-			},
-			upload_004: {
-				id: "upload_004",
-				deviceModel: "SAMSUNG_A05",
-				uploadedBy:
-					role === "admin" ? "operator@sapphire.com" : "subadmin@sapphire.com",
-				totalRecords: 800,
-				fileName: "samsung_a05_batch_004.csv",
-				createdAt: "2024-09-22T16:45:00Z",
-				updatedAt: "2024-09-22T16:50:00Z",
-				status: "failed" as const,
-			},
-		};
-
-		const baseData =
-			mockUploads[uploadId as keyof typeof mockUploads] ||
-			mockUploads.upload_001;
-
-		return {
-			...baseData,
-			imeiRecords: [
-				{
-					recordId: `${uploadId}_rec_001`,
-					deviceImei: "123456789012345",
-					distributor: "Sapphire Distributors Ltd",
-					expiryDate: "2025-12-31",
-					status: "active",
-				},
-				{
-					recordId: `${uploadId}_rec_002`,
-					deviceImei: "234567890123456",
-					distributor: "Global Tech Distribution",
-					expiryDate: "2025-11-30",
-					status: "used",
-				},
-				{
-					recordId: `${uploadId}_rec_003`,
-					deviceImei: "345678901234567",
-					distributor: "Samsung Official Store",
-					expiryDate: "2025-10-15",
-					status: "active",
-				},
-				{
-					recordId: `${uploadId}_rec_004`,
-					deviceImei: "456789012345678",
-					distributor: "Tech World Nigeria",
-					expiryDate: "2025-09-30",
-					status: "used",
-				},
-				{
-					recordId: `${uploadId}_rec_005`,
-					deviceImei: "567890123456789",
-					distributor: "Mobile Hub Limited",
-					expiryDate: "2025-08-20",
-					status: "active",
-				},
-				{
-					recordId: `${uploadId}_rec_006`,
-					deviceImei: "678901234567890",
-					distributor: "Mobile Network Ltd",
-					expiryDate: "2025-07-15",
-					status: "active",
-				},
-			],
-		};
-	}, [uploadId, role]);
-
-	// Filter IMEI records (following staffView pattern)
+	// Filter IMEI records
 	const filteredRecords = useMemo(() => {
-		let filtered = uploadDetails.imeiRecords;
+		if (!uploadDetails?.imeis) return [];
+
+		let filtered = uploadDetails.imeis;
 
 		if (filterValue) {
 			const search = filterValue.toLowerCase();
 			filtered = filtered.filter(
 				(record) =>
-					record.deviceImei.includes(search) ||
-					record.distributor?.toLowerCase().includes(search) ||
-					record.recordId.toLowerCase().includes(search)
+					record.imei.includes(search) ||
+					record.supplier?.toLowerCase().includes(search) ||
+					record.id.toLowerCase().includes(search)
 			);
 		}
 
 		if (statusFilter.size > 0) {
-			filtered = filtered.filter((record) => statusFilter.has(record.status));
+			filtered = filtered.filter((record) =>
+				statusFilter.has(record.is_used ? "used" : "available")
+			);
 		}
 
 		return filtered;
-	}, [uploadDetails.imeiRecords, filterValue, statusFilter]);
+	}, [uploadDetails?.imeis, filterValue, statusFilter]);
 
-	// GenericTable columns (following staffView pattern)
+	// GenericTable columns
 	const columns = [
-		{ name: "Record ID", uid: "recordId", sortable: true },
-		{ name: "Device IMEI", uid: "deviceImei", sortable: true },
-		{ name: "Distributor", uid: "distributor", sortable: true },
-		{ name: "Expiry Date", uid: "expiryDate", sortable: true },
-		{ name: "Status", uid: "status", sortable: true },
+		{ name: "IMEI Number", uid: "imei", sortable: true },
+		{ name: "Supplier", uid: "supplier", sortable: true },
+		{ name: "Expiry Date", uid: "expiry_date", sortable: true },
+		{ name: "Status", uid: "is_used", sortable: true },
+		{ name: "Created At", uid: "created_at", sortable: true },
 	];
 
 	// Pagination
 	const pages = Math.ceil(filteredRecords.length / 10) || 1;
 
-	// Render cell content (following staffView pattern)
-	const renderCell = (record: IMEIRecord, key: string) => {
-		if (key === "recordId") {
-			return <span className="font-mono text-sm">{record.recordId}</span>;
-		}
-		if (key === "deviceImei") {
+	// Render cell content
+	const renderCell = (record: Imei, key: string) => {
+		if (key === "imei") {
 			return (
-				<span className="font-mono text-sm font-semibold">
-					{record.deviceImei}
-				</span>
+				<span className="font-mono text-sm font-semibold">{record.imei}</span>
 			);
 		}
-		if (key === "distributor") {
-			return record.distributor || "-";
+		if (key === "supplier") {
+			return record.supplier || "-";
 		}
-		if (key === "expiryDate") {
-			return record.expiryDate
-				? new Date(record.expiryDate).toLocaleDateString()
+		if (key === "expiry_date") {
+			return record.expiry_date
+				? new Date(record.expiry_date).toLocaleDateString()
 				: "-";
 		}
-		if (key === "status") {
+		if (key === "is_used") {
 			return (
-				<Chip variant="flat" color={statusColorMap[record.status]} size="sm">
-					{record.status.toUpperCase()}
+				<Chip
+					variant="flat"
+					color={record.is_used ? "warning" : "success"}
+					size="sm"
+				>
+					{record.is_used ? "USED" : "AVAILABLE"}
 				</Chip>
 			);
 		}
-		return (record as any)[key] || "-";
+		if (key === "created_at") {
+			return new Date(record.created_at).toLocaleDateString();
+		}
+		return "-";
 	};
 
 	const exportToExcel = () => {
+		if (!uploadDetails) return;
+
 		const workbook = new ExcelJS.Workbook();
 		const worksheet = workbook.addWorksheet("IMEI Records");
 
 		// Add headers
 		const headers = [
-			"Record ID",
-			"Device IMEI",
-			"Distributor",
+			"IMEI Number",
+			"Supplier",
 			"Expiry Date",
 			"Status",
+			"Created At",
 		];
 		worksheet.addRow(headers);
 
@@ -278,16 +155,16 @@ export default function SamsungSentinelUploadDetailsView() {
 		// Add data
 		filteredRecords.forEach((record) => {
 			worksheet.addRow([
-				record.recordId,
-				record.deviceImei,
-				record.distributor || "",
-				record.expiryDate || "",
-				record.status.toUpperCase(),
+				record.imei,
+				record.supplier || "",
+				record.expiry_date || "",
+				record.is_used ? "USED" : "AVAILABLE",
+				new Date(record.created_at).toLocaleDateString(),
 			]);
 		});
 
 		// Format IMEI column as number with no decimals
-		worksheet.getColumn(2).numFmt = "0";
+		worksheet.getColumn(1).numFmt = "0";
 
 		// Auto-fit columns
 		worksheet.columns.forEach((column) => {
@@ -303,30 +180,30 @@ export default function SamsungSentinelUploadDetailsView() {
 		});
 	};
 
-	const deviceModelLabel =
-		DEVICE_MODELS.find((m) => m.value === uploadDetails.deviceModel)?.label ||
-		uploadDetails.deviceModel;
-
-	const uploadStatusColorMap = {
-		processing: "warning",
-		completed: "success",
-		failed: "danger",
-	} as const;
-
-	// Status options for GenericTable (following staffView pattern)
+	// Status options for GenericTable
 	const statusOptions = [
-		{ name: "Active", uid: "active" },
+		{ name: "Available", uid: "available" },
 		{ name: "Used", uid: "used" },
 	];
 
-	const statusColorMap = {
-		active: "success" as const,
-		used: "warning" as const,
-	};
-
-	// For demo, always show mock data
 	if (isLoading) {
 		return <TableSkeleton columns={columns.length} />;
+	}
+
+	if (error || !uploadDetails) {
+		return (
+			<div className="flex flex-col items-center justify-center h-96">
+				<p className="text-lg text-gray-500">Failed to load upload details</p>
+				<Button
+					color="primary"
+					variant="flat"
+					onPress={() => router.back()}
+					className="mt-4"
+				>
+					Go Back
+				</Button>
+			</div>
+		);
 	}
 
 	return (
@@ -337,7 +214,8 @@ export default function SamsungSentinelUploadDetailsView() {
 					<ArrowLeft size={20} />
 				</Button>
 				<div>
-					<p className="text-muted-foreground">{uploadDetails.fileName}</p>
+					<h1 className="text-2xl font-semibold">Upload Details</h1>
+					<p className="text-muted-foreground">{uploadDetails.file_name}</p>
 				</div>
 			</div>
 
@@ -352,94 +230,94 @@ export default function SamsungSentinelUploadDetailsView() {
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<InfoField
 							label="File Name"
-							value={uploadDetails.fileName}
+							value={uploadDetails.file_name}
 							copyable
 						/>
-						<InfoField label="Device Model" value={deviceModelLabel} />
+						<InfoField
+							label="Product"
+							value={uploadDetails.product?.name || "-"}
+						/>
 						<InfoField
 							label="Total Records"
-							value={uploadDetails.totalRecords.toLocaleString()}
+							value={uploadDetails.total_records.toLocaleString()}
 						/>
 						<InfoField
-							label="Uploaded By"
-							value={uploadDetails.uploadedBy}
-							copyable
+							label="Successful"
+							value={uploadDetails.successful_records.toLocaleString()}
+						/>
+						<InfoField
+							label="Failed"
+							value={uploadDetails.failed_records.toLocaleString()}
 						/>
 						<InfoField
 							label="Status"
-							value={uploadDetails.status.toUpperCase()}
 							endComponent={
 								<Chip
 									variant="flat"
-									color={uploadStatusColorMap[uploadDetails.status]}
+									color={uploadStatusColorMap[uploadDetails.processing_status]}
 									size="sm"
 								>
-									{uploadDetails.status.toUpperCase()}
+									{uploadDetails.processing_status}
 								</Chip>
 							}
+							value={uploadDetails.processing_status}
 						/>
 					</div>
 				</InfoCard>
 
-				{/* Timeline Information */}
+				{/* Processing Details */}
 				<InfoCard
-					title="Timeline"
-					icon={<Download className="w-5 h-5 text-success-600" />}
+					title="Processing Details"
+					icon={<Upload className="w-5 h-5 text-primary-600" />}
 					collapsible={false}
 				>
-					<div className="grid grid-cols-1 gap-4">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<InfoField
+							label="Uploaded At"
+							value={new Date(uploadDetails.uploaded_at).toLocaleString()}
+						/>
 						<InfoField
 							label="Created At"
-							value={new Date(uploadDetails.createdAt).toLocaleString("en-GB")}
+							value={new Date(uploadDetails.created_at).toLocaleString()}
 						/>
 						<InfoField
-							label="Updated At"
-							value={new Date(uploadDetails.updatedAt).toLocaleString("en-GB")}
+							label="Last Updated"
+							value={new Date(uploadDetails.updated_at).toLocaleString()}
 						/>
-						<InfoField
-							label="Processed At"
-							value={
-								uploadDetails.processedAt
-									? new Date(uploadDetails.processedAt).toLocaleString("en-GB")
-									: "Not processed yet"
-							}
-						/>
+						{uploadDetails.error_message && (
+							<InfoField
+								label="Error Message"
+								value={uploadDetails.error_message}
+							/>
+						)}
 					</div>
 				</InfoCard>
 			</div>
 
-			<Divider />
-
-			{/* IMEI Records Section */}
-			<div className="space-y-4">
-				{/* IMEI Records Table - using GenericTable's built-in features */}
-				<GenericTable<IMEIRecord>
+			{/* IMEI Records Table */}
+			<Card>
+				<GenericTable<Imei>
 					columns={columns}
 					data={filteredRecords}
 					allCount={filteredRecords.length}
 					exportData={filteredRecords}
 					isLoading={isLoading}
+					renderCell={renderCell}
 					filterValue={filterValue}
-					onFilterChange={(v) => {
-						setFilterValue(v);
-						setPage(1);
-					}}
-					statusOptions={statusOptions}
+					onFilterChange={setFilterValue}
 					statusFilter={statusFilter}
 					onStatusChange={setStatusFilter}
-					statusColorMap={statusColorMap}
-					showStatus={true}
+					statusOptions={statusOptions}
 					sortDescriptor={sortDescriptor}
 					onSortChange={handleSortChange}
 					page={page}
 					pages={pages}
 					onPageChange={setPage}
 					exportFn={exportToExcel}
-					renderCell={renderCell}
 					hasNoRecords={filteredRecords.length === 0}
-					searchPlaceholder="Search by IMEI, distributor, or record ID..."
+					searchPlaceholder="Search by IMEI, supplier, or ID..."
 				/>
-			</div>
+			</Card>
 		</div>
 	);
 }

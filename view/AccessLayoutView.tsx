@@ -9,6 +9,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib";
+import { getAllProducts } from "@/lib/api/products";
 import { Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -83,8 +84,8 @@ export default function AccessLayoutView({
 		pathname === "/access/inventory" ||
 		pathname === "/access/sales";
 
-	const { userResponse, getAllProducts } = useAuth();
-	const userName = userResponse?.data?.firstName || "";
+	const { userResponse } = useAuth();
+	const userName = userResponse?.name || "";
 
 	// Update headers and trigger revalidation when product is selected
 	const handleProductSelect = useCallback(
@@ -120,11 +121,15 @@ export default function AccessLayoutView({
 		[products, pathname]
 	);
 
-	const isDisabled = false; // userResponse?.data?.role === "SALES";
+	const isDisabled = false; // userResponse?.role === "SALES";
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
-				const productsList = await getAllProducts();
+				const response = await getAllProducts({ page: 1, limit: 1000 });
+				const productsList = response.data.map((product) => ({
+					label: product.name,
+					value: product.id,
+				}));
 				setProducts(productsList || []);
 
 				const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
@@ -135,7 +140,9 @@ export default function AccessLayoutView({
 				if (
 					lastSelectedId &&
 					lastSelectedName &&
-					productsList?.some((p) => p.value === lastSelectedId)
+					productsList?.some(
+						(p: { label: string; value: string }) => p.value === lastSelectedId
+					)
 				) {
 					setSelectedProduct([lastSelectedId]);
 					await handleProductSelect(lastSelectedId, lastSelectedName);
@@ -155,7 +162,7 @@ export default function AccessLayoutView({
 		};
 
 		fetchProducts();
-	}, [getAllProducts, handleProductSelect]);
+	}, [handleProductSelect]);
 
 	return (
 		<SidebarProvider>
@@ -183,7 +190,7 @@ export default function AccessLayoutView({
 						<div className="hidden lg:flex flex-col text-start">
 							<span className="text-black font-bold text-base">{userName}</span>
 							<span className="text-xs text-zinc-400 text-right">
-								{userResponse?.data?.role
+								{userResponse?.role
 									?.replace(/_/g, " ")
 									.replace(/\b\w/g, (char: string) => char.toUpperCase())}
 							</span>

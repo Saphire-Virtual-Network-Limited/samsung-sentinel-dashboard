@@ -53,6 +53,12 @@ export interface SetPasswordDto {
 	password: string;
 }
 
+export interface VerifyInvitationResponse {
+	valid: boolean;
+	email?: string;
+	expires_at?: string;
+}
+
 export interface ResendInvitationDto {
 	email: string;
 }
@@ -64,6 +70,27 @@ export interface ForgotPasswordDto {
 export interface ResetPasswordDto {
 	token: string;
 	new_password: string;
+}
+
+export interface UserProfile {
+	id: string;
+	created_at: string;
+	updated_at: string;
+	email: string;
+	name: string;
+	phone: string;
+	role:
+		| "admin"
+		| "repair_store_admin"
+		| "service_center_admin"
+		| "engineer"
+		| "samsung_partner"
+		| "finance"
+		| "auditor";
+	status: "ACTIVE" | "INACTIVE";
+	last_login: string | null;
+	created_by_id: string | null;
+	deleted_at: string | null;
 }
 
 // API Functions
@@ -79,9 +106,10 @@ export async function login(
 	const response = await apiCall("/api/v1/auth/login", "POST", data);
 
 	// Save tokens and user data after successful login
-	if (response?.data) {
-		const { access_token, refresh_token, user } = response.data;
-		saveTokens(access_token, refresh_token);
+	// Response structure: { access_token, refresh_token, token_type, expires_in, user }
+	if (response) {
+		const { access_token, refresh_token, expires_in, user } = response;
+		saveTokens(access_token, refresh_token, expires_in || 86400);
 		saveUser(user);
 	}
 
@@ -108,9 +136,10 @@ export async function refreshToken(
 	const response = await apiCall("/api/v1/auth/refresh", "POST", data);
 
 	// Save new tokens after successful refresh
-	if (response?.data) {
-		const { access_token, refresh_token } = response.data;
-		saveTokens(access_token, refresh_token);
+	// Response structure: { access_token, refresh_token, token_type, expires_in }
+	if (response) {
+		const { access_token, refresh_token, expires_in } = response;
+		saveTokens(access_token, refresh_token, expires_in || 86400);
 	}
 
 	return response;
@@ -162,7 +191,7 @@ export async function setPassword(
  */
 export async function verifyInvitation(
 	token: string
-): Promise<BaseApiResponse> {
+): Promise<VerifyInvitationResponse> {
 	return apiCall(`/api/v1/auth/verify-invitation?token=${token}`, "GET");
 }
 
@@ -201,5 +230,6 @@ export async function resetPassword(
 
 // Legacy aliases for backward compatibility
 export const loginAdmin = login;
-export const getAdminProfile = () => apiCall("/api/v1/users/me", "GET");
+export const getAdminProfile = (): Promise<UserProfile> =>
+	apiCall("/api/v1/users/me", "GET");
 export const logoutAdmin = logout;

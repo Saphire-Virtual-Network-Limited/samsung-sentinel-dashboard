@@ -47,12 +47,11 @@ export type MenuItem = {
 
 export type SidebarItemsConfig = {
 	admin: (options: MenuOptions) => MenuItem[];
-	subAdmin: (options: MenuOptions) => MenuItem[];
-
 	serviceCenter: (options: MenuOptions) => MenuItem[];
 	samsungPartners: (options: MenuOptions) => MenuItem[];
-
 	repairStore: (options: MenuOptions) => MenuItem[];
+	finance: (options: MenuOptions) => MenuItem[];
+	audit: (options: MenuOptions) => MenuItem[];
 };
 
 export type MenuOptions = {
@@ -337,17 +336,105 @@ export function getRepairStoreItems(options: MenuOptions): MenuItem[] {
 	];
 }
 
+export function getScanPartnerItems(options: MenuOptions): MenuItem[] {
+	return [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/scan-partner/",
+			id: "scan-partner-dashboard",
+		},
+		{
+			icon: Settings,
+			title: "Settings",
+			url: "/access/scan-partner/settings",
+			id: "scan-partner-settings",
+		},
+	];
+}
+
+export function getFinanceItems(options: MenuOptions): MenuItem[] {
+	return [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/finance/",
+			id: "finance-dashboard",
+		},
+		{
+			icon: Receipt,
+			title: "Payments",
+			id: "finance-payments",
+			subItems: [
+				{
+					title: "All Payments",
+					url: "/access/finance/payments?status=all",
+				},
+				{
+					title: "Pending",
+					url: "/access/finance/payments?status=pending",
+				},
+				{
+					title: "Completed",
+					url: "/access/finance/payments?status=completed",
+				},
+			],
+		},
+		{
+			icon: BarChart3,
+			title: "Reports",
+			url: "/access/finance/reports",
+			id: "finance-reports",
+		},
+		{
+			icon: Settings,
+			title: "Settings",
+			url: "/access/finance/settings",
+			id: "finance-settings",
+		},
+	];
+}
+
+export function getAuditItems(options: MenuOptions): MenuItem[] {
+	return [
+		{
+			title: "Dashboard",
+			icon: Home,
+			url: "/access/audit/",
+			id: "audit-dashboard",
+		},
+		{
+			icon: Shield,
+			title: "Audit Logs",
+			url: "/access/audit/logs",
+			id: "audit-logs",
+		},
+		{
+			icon: BarChart3,
+			title: "Reports",
+			url: "/access/audit/reports",
+			id: "audit-reports",
+		},
+		{
+			icon: Settings,
+			title: "Settings",
+			url: "/access/audit/settings",
+			id: "audit-settings",
+		},
+	];
+}
+
 // ============================================================================
 // MAIN SIDEBAR ITEMS CONFIGURATION
 // ============================================================================
 
 export const sidebarItemsConfig: SidebarItemsConfig = {
 	admin: getAdminItems,
-	subAdmin: getAdminItems,
-
 	serviceCenter: getServiceCenterItems,
 	samsungPartners: getSamsungPartnersItems,
 	repairStore: getRepairStoreItems,
+	finance: getFinanceItems,
+	audit: getAuditItems,
 };
 
 /**

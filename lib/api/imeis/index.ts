@@ -38,6 +38,10 @@ export interface ImeiUpload {
 	uploaded_by?: any | null;
 }
 
+export interface ImeiUploadWithDetails extends ImeiUpload {
+	imeis: Imei[];
+}
+
 export interface Imei {
 	id: string;
 	created_at: string;
@@ -133,8 +137,8 @@ export async function getImeiUploads(
  */
 export async function getImeiUploadById(
 	id: string
-): Promise<BaseApiResponse<ImeiUpload>> {
-	return apiCall(`/imeis/uploads/${id}`, "GET");
+): Promise<ImeiUploadWithDetails> {
+	return apiCall(`/api/v1/imeis/uploads/${id}`, "GET");
 }
 
 /**
