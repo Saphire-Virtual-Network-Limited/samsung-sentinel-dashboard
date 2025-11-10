@@ -17,4 +17,4 @@
  * 3. Export from that folder in lib/api/index.ts
  */
 
-export * from "./api";
+export * from "./api/index";

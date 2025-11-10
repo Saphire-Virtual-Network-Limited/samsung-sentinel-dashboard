@@ -47,8 +47,8 @@ const DebugModal: React.FC<DebugModalProps> = ({ isOpen, onClose }) => {
 	} = useDebug();
 
 	const { userResponse } = useAuthWithDebug();
-	const currentUserEmail = userResponse?.data?.email;
-	const currentUserRole = userResponse?.data?.role;
+	const currentUserEmail = userResponse?.email;
+	const currentUserRole = userResponse?.role;
 
 	// Initialize with current user permissions + any debug overrides
 	const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
