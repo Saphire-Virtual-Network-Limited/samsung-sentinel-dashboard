@@ -4,8 +4,14 @@ import useSWR from "swr";
 import { GeneralSans_Meduim, GeneralSans_SemiBold, cn } from "@/lib";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
-import { getDailyReport } from "@/lib";
 import { TrendingDown, TrendingUp, BarChart3, Smartphone } from "lucide-react";
+
+// Mocked getDailyReport for local testing — returns an empty object or empty array.
+// Toggle the returned shape as needed.
+const getDailyReport = async (channel: string) => {
+	// return { data: {} }; // -> empty object
+	return { data: [] }; // -> empty array
+};
 import { useState } from "react";
 import {
 	BarChart,
