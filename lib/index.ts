@@ -11,7 +11,6 @@ export * from "./globalContext";
 export * from "./helper";
 export * from "./passwordSecurity";
 export * from "./debugContext";
-export * from "./legacyApiMocks"; // Legacy API mocks for non-Samsung Sentinel features
 import InternetStatus from "./internetCheck";
 
 import {

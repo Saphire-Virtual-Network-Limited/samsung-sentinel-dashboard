@@ -13,8 +13,8 @@ export const useAuthWithDebug = () => {
 
 	// The globalContext now handles debug overrides internally
 	// So we can get the effective role and email directly from userResponse
-	const effectiveRole = auth.userResponse?.data?.role;
-	const effectiveEmail = auth.userResponse?.data?.email;
+	const effectiveRole = auth.userResponse?.role;
+	const effectiveEmail = auth.userResponse?.email;
 
 	// Keep track of original values for debug info
 	const originalRole = effectiveRole; // This comes from globalContext (with debug overrides applied)

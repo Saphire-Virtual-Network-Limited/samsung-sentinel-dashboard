@@ -1,7 +1,3 @@
-import HomeView from "./homeView";
-import NewHomeView from "./newHomeView";
-import SettingsView from "./settings/settingsView";
-
-export { HomeView, NewHomeView, SettingsView };
+// Removed: HomeView, NewHomeView, SettingsView - non-Samsung Sentinel views
 
 export * from "./samsung-sentinel";

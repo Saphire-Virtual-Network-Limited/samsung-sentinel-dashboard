@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import type { AgentType } from "@/view/dashboard/user-management/user";
 import { useAuth } from "@/lib";
-import { inviteAdmin } from "@/lib/api";
+//import { inviteAdmin } from "@/lib/api";
 import { useMemo } from "react";
 interface UseAgentDataReturn {
 	agentTypes: AgentType[];
@@ -44,12 +44,17 @@ export const fallbackAgentTypes: AgentType[] = [
 
 const fetchValidRoles = async (): Promise<AgentType[]> => {
 	try {
+		// Mock inviteAdmin as a no-op async function (does nothing)
+		const inviteAdmin = async (_payload: any): Promise<void> => {
+			// intentionally no-op for testing/mocking
+		};
+
 		await inviteAdmin({
 			firstName: "temp",
 			lastName: "temp",
 			email: "temp@temp.com",
 			telephoneNumber: "1234567890",
-			role: "GOD_OF_ALL_CREATIONS", // Invalid role to trigger validation
+			role: "GOD_OF_ALL_CREATIONS", // still sent but will be ignored by mock
 		});
 
 		console.warn(
@@ -121,16 +126,10 @@ const fetchValidRoles = async (): Promise<AgentType[]> => {
 export const useAgentData = (): UseAgentDataReturn => {
 	const { userResponse } = useAuth();
 	const filteredFallbackData = useMemo(() => {
-		const userRole = userResponse?.data?.role;
+		const userRole = userResponse?.role;
 
-		if (userRole === "ADMIN") {
-			return fallbackAgentTypes.filter((type) => type.value !== "SUPER_ADMIN");
-		} else if (userRole === "SUPER_ADMIN" || userRole == "DEVELOPER") {
-			return fallbackAgentTypes;
-		} else {
-			return [];
-		}
-	}, [userResponse?.data?.role]);
+		return fallbackAgentTypes;
+	}, [userResponse?.role]);
 
 	const {
 		data: fetchedAgentTypes,
@@ -147,17 +146,11 @@ export const useAgentData = (): UseAgentDataReturn => {
 	);
 	console.log("fetched types: ", fetchedAgentTypes);
 	const agentTypes = useMemo(() => {
-		const userRole = userResponse?.data?.role;
+		const userRole = userResponse?.role;
 		const typesToFilter = fetchedAgentTypes || filteredFallbackData;
 
-		if (userRole === "ADMIN") {
-			return typesToFilter.filter((type) => type.value !== "SUPER_ADMIN");
-		} else if (userRole === "SUPER_ADMIN" || userRole === "DEVELOPER") {
-			return typesToFilter;
-		} else {
-			return [];
-		}
-	}, [fetchedAgentTypes, filteredFallbackData, userResponse?.data?.role]);
+		return typesToFilter;
+	}, [fetchedAgentTypes, filteredFallbackData, userResponse?.role]);
 
 	return {
 		agentTypes: agentTypes || fallbackAgentTypes,

@@ -1,6 +1,6 @@
 "use client";
 
-import { AppSidebar, GlobalSearch } from "@/components/reususables";
+import { AppSidebar } from "@/components/reususables";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -178,7 +178,7 @@ export default function AccessLayoutView({
 
 					{/* Right side */}
 					<div className="flex items-center gap-2 sm:gap-3">
-						<GlobalSearch />
+						{/* GlobalSearch removed - non-Samsung Sentinel feature */}
 						<Button
 							variant="secondary"
 							size="icon"

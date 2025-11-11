@@ -25,6 +25,17 @@ import {
 } from "recharts";
 import { getSelectedProduct } from "@/utils";
 
+// Type for daily report data
+interface DailyReportData {
+	Today_Date?: string;
+	today_loan?: number | string;
+	total_value?: number | string;
+	average_value?: number | string;
+	This_month_MTD_loan?: number | string;
+	Last_month_LTD_loan?: number | string;
+	[key: string]: any; // Allow additional properties
+}
+
 const DailyDashCard = () => {
 	const [hasNoRecords, setHasNoRecords] = useState(false);
 	const { label: selectedProduct } = getSelectedProduct();
@@ -82,14 +93,15 @@ const DailyDashCard = () => {
 
 	console.log("NEW DAILY reports", reports);
 
-	// Extract data for each channel
-	const overall = reports[0] || {};
-	const samsung = reports[1] || {};
-	const xiaomi = reports[2] || {};
-	const oppo = reports[3] || {};
-	const mbe = reports[4] || {};
-	const glo = reports[5] || {};
-	const nineMobile = reports[6] || {};
+	// Extract data for each channel with proper typing
+	const overall: DailyReportData = reports[0] || {};
+	const samsung: DailyReportData = reports[1] || {};
+	const xiaomi: DailyReportData = reports[2] || {};
+	const oppo: DailyReportData = reports[3] || {};
+	const mbe: DailyReportData = reports[4] || {};
+	const glo: DailyReportData = reports[5] || {};
+	const nineMobile: DailyReportData = reports[6] || {};
+
 	// Helper to format numbers with commas
 	const formatNumber = (num: string | number) => {
 		if (typeof num === "string" && num.includes(".")) {

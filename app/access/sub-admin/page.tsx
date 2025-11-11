@@ -1,8 +1,5 @@
-import React from "react";
-import { NewHomeView } from "@/view";
+import { SamsungSentinelStatisticsView } from "@/view/dashboard/samsung-sentinel";
 
-const page = () => {
-	return <NewHomeView />;
-};
-
-export default page;
+export default function StatisticsPage() {
+	return <SamsungSentinelStatisticsView />;
+}

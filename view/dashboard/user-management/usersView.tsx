@@ -2,13 +2,8 @@
 
 import { TableSkeleton } from "@/components/reususables/custom-ui";
 import GenericTable from "@/components/reususables/custom-ui/tableUi";
-import {
-	calculateAge,
-	capitalize,
-	suspendUser,
-	useAuth,
-	showToast,
-} from "@/lib";
+import { calculateAge, capitalize, useAuth, showToast } from "@/lib";
+import { getAllUsers, deactivateUser } from "@/lib/api/users";
 import { hasPermission } from "@/lib/permissions";
 import {
 	Button,
@@ -96,9 +91,9 @@ export default function UsersPage() {
 	} = useSWR(
 		"all-admins",
 		() =>
-			getAllAdmins()
-				.then((r: UsersResponse) => {
-					if (!r.data || r.data?.length === 0) {
+			getAllUsers()
+				.then((r: any) => {
+					if (!r?.data || r.data?.length === 0) {
 						setHasNoRecords(true);
 						return [];
 					}
@@ -231,15 +226,16 @@ export default function UsersPage() {
 
 		setIsPasswordLoading(true);
 		try {
-			await updateAdminPasswordForDev(
-				selectedUser.Admins.adminid,
-				passwordForm.password,
-				passwordForm.confirmPassword
-			);
+			// TODO: Implement password change for admin users
+			// await updateAdminPasswordForDev(
+			// 	selectedUser.Admins.adminid,
+			// 	passwordForm.password,
+			// 	passwordForm.confirmPassword
+			// );
 
 			showToast({
-				type: "success",
-				message: "Password updated successfully",
+				type: "warning",
+				message: "Password change not implemented yet",
 			});
 			setPasswordForm({ password: "", confirmPassword: "" });
 			onPasswordModalClose();
@@ -269,10 +265,8 @@ export default function UsersPage() {
 
 		setIsPasswordLoading(true);
 		try {
-			await suspendUser({
-				adminId: selectedUser.Admins.adminid,
-				status: suspendForm.status,
-			});
+			// Use deactivateUser instead of suspendUser
+			await deactivateUser(selectedUser.Admins.adminid);
 
 			showToast({
 				type: "success",
@@ -294,17 +288,17 @@ export default function UsersPage() {
 		}
 	};
 
-	const canSuspendUsers = currentUser?.data?.role
+	const canSuspendUsers = currentUser?.role
 		? hasPermission(
-				currentUser?.data.role,
+				currentUser?.role,
 				"suspendDashboardUser",
-				currentUser?.data.email
+				currentUser?.email
 		  )
 		: false;
 	const canChangePasswords = hasPermission(
-		currentUser?.data?.role,
+		currentUser?.role || "",
 		"canChangeDashboardUserPassword",
-		currentUser?.data?.email
+		currentUser?.email
 	);
 	console.log("curent user is: ", canChangePasswords);
 
@@ -327,9 +321,9 @@ export default function UsersPage() {
 			if (
 				canChangePasswords ||
 				hasPermission(
-					currentUser?.data?.role,
+					currentUser?.role || "",
 					"canChangeDashboardUserPassword",
-					currentUser?.data?.email
+					currentUser?.email
 				)
 			) {
 				dropdownItems.push(

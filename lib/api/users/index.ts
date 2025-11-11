@@ -55,7 +55,7 @@ export async function getAllUsers(
  * @summary Get logged-in user profile
  * @tag Users
  */
-export async function getMyProfile(): Promise<BaseApiResponse<User>> {
+export async function getMyProfile(): Promise<User> {
 	return apiCall("/api/v1/users/me", "GET");
 }
 
@@ -64,9 +64,7 @@ export async function getMyProfile(): Promise<BaseApiResponse<User>> {
  * @summary Update logged-in user profile (name, phone)
  * @tag Users
  */
-export async function updateMyProfile(
-	data: UpdateUserDto
-): Promise<BaseApiResponse<User>> {
+export async function updateMyProfile(data: UpdateUserDto): Promise<User> {
 	return apiCall("/api/v1/users/me", "PATCH", data);
 }
 

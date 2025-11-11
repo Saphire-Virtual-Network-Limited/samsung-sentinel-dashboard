@@ -96,7 +96,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
 	const role = pathname.split("/")[2];
 	const { userResponse } = useAuth(); // get the user email
-	const userEmail = userResponse?.data?.email || "";
+	const userEmail = userResponse?.email || "";
 
 	const {
 		columns,

@@ -46,9 +46,3 @@ export * from "./partners";
 
 // Export audit APIs
 export * from "./audit";
-
-// Legacy API mocks for backwards compatibility (non-Samsung Sentinel features)
-export {
-	getCollectionAnalyticwithFilter,
-	createCDFLoanProduct,
-} from "../legacyApiMocks";

@@ -12,22 +12,23 @@ import TableSkeleton from "./tableSkeleton";
 import PaymentReceipt from "./paymentReceipt";
 import DynamicQRCode from "./qrCode";
 import DailyDashCard from "./dailyDashCard";
-import InceptionDashCard from "./inceptionDashCard";
-import DeviceDashAnalytic from "./deviceDashAnalytic";
-import ScreenReport from "./screenReport";
-import DailyDashCardCollection from "./collections/dailyDashCard";
-import InceptionDashCardCollection from "./collections/inceptionDashCard";
-import GlobalSearch from "./globalSearch";
+// Removed non-Samsung Sentinel components:
+// import InceptionDashCard from "./inceptionDashCard";
+// import DeviceDashAnalytic from "./deviceDashAnalytic";
+// import ScreenReport from "./screenReport";
+// import DailyDashCardCollection from "./collections/dailyDashCard";
+// import InceptionDashCardCollection from "./collections/inceptionDashCard";
+// import GlobalSearch from "./globalSearch";
+// import AgentDeviceCard from "./AgentDeviceCard";
+// import BankDetailsModal from "./BankDetailsModal";
 import InfoCard from "./InfoCard";
 import InfoField from "./InfoField";
 import LoadingSpinner from "./LoadingSpinner";
 import NotFound from "./NotFound";
 import EmptyState from "./EmptyState";
-import AgentDeviceCard from "./AgentDeviceCard";
 import ConfirmationModal from "./ConfirmationModal";
 import FormModal from "./FormModal";
 import ImagePreviewModal from "./ImagePreviewModal";
-import BankDetailsModal from "./BankDetailsModal";
 import {
 	SelectionWithPreview,
 	ConditionalForm,
@@ -55,22 +56,23 @@ export {
 	PaymentReceipt,
 	DynamicQRCode,
 	DailyDashCard,
-	InceptionDashCard,
-	DeviceDashAnalytic,
-	ScreenReport,
-	DailyDashCardCollection,
-	InceptionDashCardCollection,
-	GlobalSearch,
+	// Removed non-Samsung Sentinel components:
+	// InceptionDashCard,
+	// DeviceDashAnalytic,
+	// ScreenReport,
+	// DailyDashCardCollection,
+	// InceptionDashCardCollection,
+	// GlobalSearch,
+	// AgentDeviceCard,
+	// BankDetailsModal,
 	InfoCard,
 	InfoField,
 	LoadingSpinner,
 	NotFound,
 	EmptyState,
-	AgentDeviceCard,
 	ConfirmationModal,
 	FormModal,
 	ImagePreviewModal,
-	BankDetailsModal,
 	SelectionWithPreview,
 	ConditionalForm,
 	ReasonSelection,
