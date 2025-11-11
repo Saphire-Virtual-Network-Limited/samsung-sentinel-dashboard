@@ -1,12 +1,19 @@
 import { apiCall, BaseApiResponse, UserStatus } from "../shared";
+import type { ServiceCenter } from "../service-centers";
 
 // ============================================================================
 // REPAIR STORES APIs
 // ============================================================================
 
 // Types & Interfaces
+export type { ServiceCenter } from "../service-centers";
+
 export interface RepairStore {
 	id: string;
+	created_at: string;
+	updated_at: string;
+	created_by_id: string | null;
+	updated_by_id: string | null;
 	name: string;
 	email: string;
 	phone: string;
@@ -16,8 +23,10 @@ export interface RepairStore {
 	account_number?: string;
 	bank_name?: string;
 	status: UserStatus;
-	createdAt: string;
-	updatedAt: string;
+	user_id: string | null;
+	user: any | null;
+	service_centers_count?: number; // Available in list view
+	service_centers?: ServiceCenter[]; // Available in detail view
 }
 
 export interface CreateRepairStoreDto {
@@ -49,6 +58,14 @@ export interface GetRepairStoresParams {
 	limit?: number;
 }
 
+export interface PaginatedRepairStoresResponse {
+	data: RepairStore[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
+
 // API Functions
 
 /**
@@ -58,8 +75,8 @@ export interface GetRepairStoresParams {
  */
 export async function createRepairStore(
 	data: CreateRepairStoreDto
-): Promise<BaseApiResponse<RepairStore>> {
-	return apiCall("/api/v1/repair-stores", "POST", data);
+): Promise<RepairStore> {
+	return apiCall("/repair-stores", "POST", data);
 }
 
 /**
@@ -69,11 +86,11 @@ export async function createRepairStore(
  */
 export async function getAllRepairStores(
 	params?: GetRepairStoresParams
-): Promise<BaseApiResponse<RepairStore[]>> {
+): Promise<PaginatedRepairStoresResponse> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/repair-stores?${queryParams}`, "GET");
+	return apiCall(`/repair-stores?${queryParams}`, "GET");
 }
 
 /**
@@ -81,20 +98,16 @@ export async function getAllRepairStores(
  * @summary Get repair store for logged-in repair store admin
  * @tag Repair Stores
  */
-export async function getMyRepairStore(): Promise<
-	BaseApiResponse<RepairStore>
-> {
-	return apiCall("/api/v1/repair-stores/me", "GET");
+export async function getMyRepairStore(): Promise<RepairStore> {
+	return apiCall("/repair-stores/me", "GET");
 }
 
 /**
  * Get repair store by ID
  * @tag Repair Stores
  */
-export async function getRepairStoreById(
-	id: string
-): Promise<BaseApiResponse<RepairStore>> {
-	return apiCall(`/api/v1/repair-stores/${id}`, "GET");
+export async function getRepairStoreById(id: string): Promise<RepairStore> {
+	return apiCall(`/repair-stores/${id}`, "GET");
 }
 
 /**
@@ -104,8 +117,8 @@ export async function getRepairStoreById(
 export async function updateRepairStore(
 	id: string,
 	data: UpdateRepairStoreDto
-): Promise<BaseApiResponse<RepairStore>> {
-	return apiCall(`/api/v1/repair-stores/${id}`, "PATCH", data);
+): Promise<RepairStore> {
+	return apiCall(`/repair-stores/${id}`, "PATCH", data);
 }
 
 /**
@@ -115,7 +128,7 @@ export async function updateRepairStore(
 export async function activateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/repair-stores/${id}/activate`, "POST");
+	return apiCall(`/repair-stores/${id}/activate`, "POST");
 }
 
 /**
@@ -125,7 +138,7 @@ export async function activateRepairStore(
 export async function deactivateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/repair-stores/${id}/deactivate`, "POST");
+	return apiCall(`/repair-stores/${id}/deactivate`, "POST");
 }
 
 /**
@@ -134,5 +147,5 @@ export async function deactivateRepairStore(
  * @tag Repair Stores
  */
 export async function resendRepairStoreInvitation(): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/repair-stores/resend-invitation", "POST");
+	return apiCall("/repair-stores/resend-invitation", "POST");
 }

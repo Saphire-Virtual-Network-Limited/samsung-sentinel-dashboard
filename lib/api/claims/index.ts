@@ -102,7 +102,7 @@ export interface ClaimStatistics {
 export async function createClaim(
 	data: CreateClaimDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall("/api/v1/claims", "POST", data);
+	return apiCall("/claims", "POST", data);
 }
 
 /**
@@ -116,7 +116,7 @@ export async function getAllClaims(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/claims?${queryParams}`, "GET");
+	return apiCall(`/claims?${queryParams}`, "GET");
 }
 
 /**
@@ -127,7 +127,7 @@ export async function getAllClaims(
 export async function getClaimById(
 	id: string
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall(`/api/v1/claims/${id}`, "GET");
+	return apiCall(`/claims/${id}`, "GET");
 }
 
 /**
@@ -139,7 +139,7 @@ export async function completeClaim(
 	id: string,
 	data?: CompleteClaimDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall(`/api/v1/claims/${id}/complete`, "PATCH", data);
+	return apiCall(`/claims/${id}/complete`, "PATCH", data);
 }
 
 /**
@@ -151,7 +151,7 @@ export async function approveClaim(
 	id: string,
 	data?: ApproveClaimDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall(`/api/v1/claims/${id}/approve`, "PATCH", data);
+	return apiCall(`/claims/${id}/approve`, "PATCH", data);
 }
 
 /**
@@ -163,7 +163,7 @@ export async function rejectClaim(
 	id: string,
 	data: RejectClaimDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall(`/api/v1/claims/${id}/reject`, "PATCH", data);
+	return apiCall(`/claims/${id}/reject`, "PATCH", data);
 }
 
 /**
@@ -175,7 +175,7 @@ export async function authorizePayment(
 	id: string,
 	data?: AuthorizePaymentDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall(`/api/v1/claims/${id}/authorize-payment`, "PATCH", data);
+	return apiCall(`/claims/${id}/authorize-payment`, "PATCH", data);
 }
 
 /**
@@ -191,7 +191,7 @@ export async function getClaimsByServiceCenter(
 		params as Record<string, string>
 	).toString();
 	return apiCall(
-		`/api/v1/claims/service-center/${service_center_id}?${queryParams}`,
+		`/claims/service-center/${service_center_id}?${queryParams}`,
 		"GET"
 	);
 }
@@ -205,7 +205,7 @@ export async function getServiceCenterStatistics(
 	service_center_id: string
 ): Promise<BaseApiResponse<ClaimStatistics>> {
 	return apiCall(
-		`/api/v1/claims/service-center/${service_center_id}/statistics`,
+		`/claims/service-center/${service_center_id}/statistics`,
 		"GET"
 	);
 }
@@ -223,7 +223,7 @@ export async function getClaimsByRepairStore(
 		params as Record<string, string>
 	).toString();
 	return apiCall(
-		`/api/v1/claims/repair-store/${repair_store_id}?${queryParams}`,
+		`/claims/repair-store/${repair_store_id}?${queryParams}`,
 		"GET"
 	);
 }
@@ -236,8 +236,5 @@ export async function getClaimsByRepairStore(
 export async function getRepairStoreStatistics(
 	repair_store_id: string
 ): Promise<BaseApiResponse<ClaimStatistics>> {
-	return apiCall(
-		`/api/v1/claims/repair-store/${repair_store_id}/statistics`,
-		"GET"
-	);
+	return apiCall(`/claims/repair-store/${repair_store_id}/statistics`, "GET");
 }

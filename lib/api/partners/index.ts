@@ -40,7 +40,7 @@ export interface GetPartnersParams {
 export async function createPartner(
 	data: CreatePartnerDto
 ): Promise<BaseApiResponse<Partner>> {
-	return apiCall("/api/v1/partners", "POST", data);
+	return apiCall("/partners", "POST", data);
 }
 
 /**
@@ -54,7 +54,7 @@ export async function getAllPartners(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/partners?${queryParams}`, "GET");
+	return apiCall(`/partners?${queryParams}`, "GET");
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getAllPartners(
  * @tag Samsung Partners
  */
 export async function getMyPartnerProfile(): Promise<BaseApiResponse<Partner>> {
-	return apiCall("/api/v1/partners/me/profile", "GET");
+	return apiCall("/partners/me/profile", "GET");
 }
 
 /**
@@ -73,7 +73,7 @@ export async function getMyPartnerProfile(): Promise<BaseApiResponse<Partner>> {
 export async function getPartnerById(
 	id: string
 ): Promise<BaseApiResponse<Partner>> {
-	return apiCall(`/api/v1/partners/${id}`, "GET");
+	return apiCall(`/partners/${id}`, "GET");
 }
 
 /**
@@ -82,7 +82,7 @@ export async function getPartnerById(
  * @tag Samsung Partners
  */
 export async function deletePartner(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/partners/${id}`, "DELETE");
+	return apiCall(`/partners/${id}`, "DELETE");
 }
 
 /**
@@ -91,5 +91,5 @@ export async function deletePartner(id: string): Promise<BaseApiResponse> {
  * @tag Samsung Partners
  */
 export async function resendPartnerInvitation(): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/partners/resend-invitation", "POST");
+	return apiCall("/partners/resend-invitation", "POST");
 }

@@ -44,7 +44,7 @@ export interface GetProductsParams {
 export async function createProduct(
 	data: CreateProductDto
 ): Promise<BaseApiResponse<Product>> {
-	return apiCall("/api/v1/products", "POST", data);
+	return apiCall("/products", "POST", data);
 }
 
 /**
@@ -62,7 +62,7 @@ export async function getAllProducts(params?: GetProductsParams): Promise<{
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/products?${queryParams}`, "GET");
+	return apiCall(`/products?${queryParams}`, "GET");
 }
 
 /**
@@ -73,7 +73,7 @@ export async function getAllProducts(params?: GetProductsParams): Promise<{
 export async function getProductById(
 	id: string
 ): Promise<BaseApiResponse<Product>> {
-	return apiCall(`/api/v1/products/${id}`, "GET");
+	return apiCall(`/products/${id}`, "GET");
 }
 
 /**
@@ -85,7 +85,7 @@ export async function updateProduct(
 	id: string,
 	data: UpdateProductDto
 ): Promise<BaseApiResponse<Product>> {
-	return apiCall(`/api/v1/products/${id}`, "PATCH", data);
+	return apiCall(`/products/${id}`, "PATCH", data);
 }
 
 /**
@@ -94,7 +94,7 @@ export async function updateProduct(
  * @tag Products
  */
 export async function deleteProduct(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/products/${id}`, "DELETE");
+	return apiCall(`/products/${id}`, "DELETE");
 }
 
 /**
@@ -103,7 +103,7 @@ export async function deleteProduct(id: string): Promise<BaseApiResponse> {
  * @tag Products
  */
 export async function activateProduct(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/products/${id}/activate`, "POST");
+	return apiCall(`/products/${id}/activate`, "POST");
 }
 
 /**
@@ -112,5 +112,5 @@ export async function activateProduct(id: string): Promise<BaseApiResponse> {
  * @tag Products
  */
 export async function deactivateProduct(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/products/${id}/deactivate`, "POST");
+	return apiCall(`/products/${id}/deactivate`, "POST");
 }

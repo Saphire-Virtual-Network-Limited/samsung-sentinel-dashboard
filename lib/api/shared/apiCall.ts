@@ -18,6 +18,10 @@ import {
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const appkey = process.env.NEXT_PUBLIC_APP_KEY;
 
+// Check if CORS bypass is enabled
+const USE_CORS_BYPASS = process.env.NEXT_PUBLIC_USE_CORS_BYPASS === "true";
+const PROXY_PATH = "/api/proxy";
+
 // Track if we're currently refreshing to prevent multiple simultaneous refresh attempts
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -50,7 +54,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
 	try {
 		const response = await axios.post(
-			`${apiUrl}/api/v1/auth/refresh`,
+			`${apiUrl}/auth/refresh`,
 			{ refresh_token: refreshToken },
 			{
 				headers: {
@@ -260,9 +264,12 @@ export async function apiCall(
 
 		const config: any = {
 			method,
-			url: `${apiUrl}${endpoint}`,
+			url:
+				USE_CORS_BYPASS && typeof window !== "undefined"
+					? `${PROXY_PATH}${endpoint}` // Use proxy route
+					: `${apiUrl}${endpoint}`, // Direct API call
 			headers,
-			withCredentials: true,
+			withCredentials: !USE_CORS_BYPASS, // Don't send credentials to proxy
 		};
 
 		if (method !== "GET" && method !== "HEAD" && body) {

@@ -47,7 +47,7 @@ export async function getAllUsers(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/users?${queryParams}`, "GET");
+	return apiCall(`/users?${queryParams}`, "GET");
 }
 
 /**
@@ -56,7 +56,7 @@ export async function getAllUsers(
  * @tag Users
  */
 export async function getMyProfile(): Promise<User> {
-	return apiCall("/api/v1/users/me", "GET");
+	return apiCall("/users/me", "GET");
 }
 
 /**
@@ -65,7 +65,7 @@ export async function getMyProfile(): Promise<User> {
  * @tag Users
  */
 export async function updateMyProfile(data: UpdateUserDto): Promise<User> {
-	return apiCall("/api/v1/users/me", "PATCH", data);
+	return apiCall("/users/me", "PATCH", data);
 }
 
 /**
@@ -76,7 +76,7 @@ export async function updateMyProfile(data: UpdateUserDto): Promise<User> {
 export async function changePassword(
 	data: ChangePasswordDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/users/me/change-password", "POST", data);
+	return apiCall("/users/me/change-password", "POST", data);
 }
 
 /**
@@ -84,7 +84,7 @@ export async function changePassword(
  * @tag Users
  */
 export async function getUserById(id: string): Promise<BaseApiResponse<User>> {
-	return apiCall(`/api/v1/users/${id}`, "GET");
+	return apiCall(`/users/${id}`, "GET");
 }
 
 /**
@@ -96,7 +96,7 @@ export async function updateUser(
 	id: string,
 	data: UpdateUserDto
 ): Promise<BaseApiResponse<User>> {
-	return apiCall(`/api/v1/users/${id}`, "PATCH", data);
+	return apiCall(`/users/${id}`, "PATCH", data);
 }
 
 /**
@@ -105,7 +105,7 @@ export async function updateUser(
  * @tag Users
  */
 export async function deleteUser(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/users/${id}`, "DELETE");
+	return apiCall(`/users/${id}`, "DELETE");
 }
 
 /**
@@ -114,7 +114,7 @@ export async function deleteUser(id: string): Promise<BaseApiResponse> {
  * @tag Users
  */
 export async function activateUser(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/users/${id}/activate`, "POST");
+	return apiCall(`/users/${id}/activate`, "POST");
 }
 
 /**
@@ -123,7 +123,7 @@ export async function activateUser(id: string): Promise<BaseApiResponse> {
  * @tag Users
  */
 export async function deactivateUser(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/users/${id}/deactivate`, "POST");
+	return apiCall(`/users/${id}/deactivate`, "POST");
 }
 
 /**
@@ -132,5 +132,5 @@ export async function deactivateUser(id: string): Promise<BaseApiResponse> {
  * @tag Users
  */
 export async function restoreUser(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/users/${id}/restore`, "POST");
+	return apiCall(`/users/${id}/restore`, "POST");
 }

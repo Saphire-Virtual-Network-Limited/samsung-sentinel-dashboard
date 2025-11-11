@@ -103,7 +103,7 @@ export interface UserProfile {
 export async function login(
 	data: LoginDto
 ): Promise<BaseApiResponse<LoginResponseDto>> {
-	const response = await apiCall("/api/v1/auth/login", "POST", data);
+	const response = await apiCall("/auth/login", "POST", data);
 
 	// Save tokens and user data after successful login
 	// Response structure: { access_token, refresh_token, token_type, expires_in, user }
@@ -122,7 +122,7 @@ export async function login(
  * @tag Authentication
  */
 export async function register(data: RegisterDto): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/register", "POST", data);
+	return apiCall("/auth/register", "POST", data);
 }
 
 /**
@@ -133,7 +133,7 @@ export async function register(data: RegisterDto): Promise<BaseApiResponse> {
 export async function refreshToken(
 	data: RefreshTokenDto
 ): Promise<BaseApiResponse<RefreshTokenResponseDto>> {
-	const response = await apiCall("/api/v1/auth/refresh", "POST", data);
+	const response = await apiCall("/auth/refresh", "POST", data);
 
 	// Save new tokens after successful refresh
 	// Response structure: { access_token, refresh_token, token_type, expires_in }
@@ -151,7 +151,7 @@ export async function refreshToken(
  * @tag Authentication
  */
 export async function logout(data: RefreshTokenDto): Promise<BaseApiResponse> {
-	const response = await apiCall("/api/v1/auth/logout", "POST", data);
+	const response = await apiCall("/auth/logout", "POST", data);
 
 	// Clear all authentication data after successful logout
 	clearAuthData();
@@ -165,7 +165,7 @@ export async function logout(data: RefreshTokenDto): Promise<BaseApiResponse> {
  * @tag Authentication
  */
 export async function revokeAllTokens(): Promise<BaseApiResponse> {
-	const response = await apiCall("/api/v1/auth/revoke-all", "POST");
+	const response = await apiCall("/auth/revoke-all", "POST");
 
 	// Clear all authentication data after revoking all tokens
 	clearAuthData();
@@ -181,7 +181,7 @@ export async function revokeAllTokens(): Promise<BaseApiResponse> {
 export async function setPassword(
 	data: SetPasswordDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/set-password", "POST", data);
+	return apiCall("/auth/set-password", "POST", data);
 }
 
 /**
@@ -192,7 +192,7 @@ export async function setPassword(
 export async function verifyInvitation(
 	token: string
 ): Promise<VerifyInvitationResponse> {
-	return apiCall(`/api/v1/auth/verify-invitation?token=${token}`, "GET");
+	return apiCall(`/auth/verify-invitation?token=${token}`, "GET");
 }
 
 /**
@@ -203,7 +203,7 @@ export async function verifyInvitation(
 export async function resendInvitation(
 	data: ResendInvitationDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/resend-invitation", "POST", data);
+	return apiCall("/auth/resend-invitation", "POST", data);
 }
 
 /**
@@ -214,7 +214,7 @@ export async function resendInvitation(
 export async function forgotPassword(
 	data: ForgotPasswordDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/forgot-password", "POST", data);
+	return apiCall("/auth/forgot-password", "POST", data);
 }
 
 /**
@@ -225,11 +225,11 @@ export async function forgotPassword(
 export async function resetPassword(
 	data: ResetPasswordDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/auth/reset-password", "POST", data);
+	return apiCall("/auth/reset-password", "POST", data);
 }
 
 // Legacy aliases for backward compatibility
 export const loginAdmin = login;
 export const getAdminProfile = (): Promise<UserProfile> =>
-	apiCall("/api/v1/users/me", "GET");
+	apiCall("/users/me", "GET");
 export const logoutAdmin = logout;

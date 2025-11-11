@@ -52,7 +52,7 @@ export async function getAllAuditLogs(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/audit?${queryParams}`, "GET");
+	return apiCall(`/audit?${queryParams}`, "GET");
 }
 
 /**
@@ -65,7 +65,7 @@ export async function getAuditStatistics(
 	end_date: string
 ): Promise<BaseApiResponse<AuditStatistics>> {
 	return apiCall(
-		`/api/v1/audit/statistics?start_date=${start_date}&end_date=${end_date}`,
+		`/audit/statistics?start_date=${start_date}&end_date=${end_date}`,
 		"GET"
 	);
 }
@@ -79,5 +79,5 @@ export async function getAuditLogsByResource(
 	type: string,
 	id: string
 ): Promise<BaseApiResponse<AuditLog[]>> {
-	return apiCall(`/api/v1/audit/resource/${type}/${id}`, "GET");
+	return apiCall(`/audit/resource/${type}/${id}`, "GET");
 }

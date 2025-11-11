@@ -37,40 +37,49 @@ import {
 	Wrench,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { showToast } from "@/lib";
+import {
+	showToast,
+	getAllServiceCenters,
+	createServiceCenter,
+	updateServiceCenter,
+	activateServiceCenter,
+	deactivateServiceCenter,
+	type ServiceCenter as APIServiceCenter,
+	type PaginatedServiceCentersResponse,
+} from "@/lib";
+import useSWR from "swr";
 
 interface ServiceCenter {
 	id: string;
 	name: string;
 	address: string;
 	state: string;
-	lga: string;
-	phoneNumber: string;
+	city: string;
+	phone: string;
 	email: string;
-	engineersCount: number;
-	totalRepairs: number;
-	monthlyRevenue: number;
-	status: "active" | "inactive" | "suspended";
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
+	engineers_count?: number;
+	status: "ACTIVE" | "SUSPENDED" | "DISABLED";
+	created_at: string;
+	repair_store?: {
+		id: string;
+		name: string;
+	};
 }
 
 const columns: ColumnDef[] = [
 	{ name: "Service Center", uid: "name", sortable: true },
 	{ name: "Location", uid: "location", sortable: true },
 	{ name: "Contact", uid: "contact", sortable: true },
-	{ name: "Engineers", uid: "engineersCount", sortable: true },
-	{ name: "Total Repairs", uid: "totalRepairs", sortable: true },
-	{ name: "Monthly Revenue", uid: "monthlyRevenue", sortable: true },
+	{ name: "Engineers", uid: "engineers_count", sortable: true },
+	{ name: "Repair Store", uid: "repair_store", sortable: false },
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
-const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
-	suspended: "warning" as const,
+const statusColorMap: Record<string, "success" | "default" | "danger"> = {
+	ACTIVE: "success" as const,
+	DISABLED: "default" as const,
+	SUSPENDED: "danger" as const,
 };
 
 export default function SamsungSentinelServiceCentersView() {
@@ -90,112 +99,69 @@ export default function SamsungSentinelServiceCentersView() {
 		name: "",
 		address: "",
 		state: "",
-		lga: "",
-		phoneNumber: "",
+		city: "",
+		phone: "",
 		email: "",
+		description: "",
+		account_name: "",
+		account_number: "",
+		bank_name: "",
 	});
 	const [isCreating, setIsCreating] = useState(false);
 
-	// Filter and selection states (pagination/sorting handled by GenericTable)
+	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+	const [page, setPage] = useState(1);
+	const [limit] = useState(25);
 
-	// Mock data
-	const serviceCenters: ServiceCenter[] = useMemo(
-		() => [
-			{
-				id: "sc_001",
-				name: "Sapphire Tech Hub Lagos",
-				address: "123 Allen Avenue, Ikeja",
-				state: "Lagos",
-				lga: "Ikeja",
-				phoneNumber: "+234 801 234 5678",
-				email: "lagos@sapphiretech.com",
-				engineersCount: 8,
-				totalRepairs: 1245,
-				monthlyRevenue: 2850000,
-				status: "active",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-01-15T10:30:00Z",
-				lastUpdatedAt: "2024-10-01T14:20:00Z",
-			},
-			{
-				id: "sc_002",
-				name: "Sapphire Tech Hub Abuja",
-				address: "45 Wuse II District",
-				state: "FCT",
-				lga: "Wuse",
-				phoneNumber: "+234 802 345 6789",
-				email: "abuja@sapphiretech.com",
-				engineersCount: 6,
-				totalRepairs: 892,
-				monthlyRevenue: 2100000,
-				status: "active",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-02-20T09:15:00Z",
-				lastUpdatedAt: "2024-09-28T11:45:00Z",
-			},
-			{
-				id: "sc_003",
-				name: "Sapphire Tech Hub Port Harcourt",
-				address: "78 GRA Phase II",
-				state: "Rivers",
-				lga: "Port Harcourt",
-				phoneNumber: "+234 803 456 7890",
-				email: "portharcourt@sapphiretech.com",
-				engineersCount: 5,
-				totalRepairs: 654,
-				monthlyRevenue: 1750000,
-				status: "active",
-				createdBy: "manager@sapphire.com",
-				createdAt: "2024-03-10T16:20:00Z",
-				lastUpdatedAt: "2024-10-05T09:30:00Z",
-			},
-			{
-				id: "sc_004",
-				name: "Sapphire Tech Hub Kano",
-				address: "12 Bompai Road",
-				state: "Kano",
-				lga: "Nassarawa",
-				phoneNumber: "+234 804 567 8901",
-				email: "kano@sapphiretech.com",
-				engineersCount: 4,
-				totalRepairs: 423,
-				monthlyRevenue: 1200000,
-				status: "suspended",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-04-05T13:10:00Z",
-				lastUpdatedAt: "2024-09-20T10:15:00Z",
-			},
-		],
-		[]
+	// Fetch service centers with SWR
+	const {
+		data: serviceCentersData,
+		mutate,
+		isLoading,
+	} = useSWR(["service-centers", page, limit, filterValue, statusFilter], () =>
+		getAllServiceCenters({
+			page,
+			limit,
+			search: filterValue || undefined,
+			status:
+				statusFilter.size > 0
+					? (Array.from(statusFilter)[0] as any)
+					: undefined,
+		})
 	);
 
-	// Let GenericTable handle filtering internally	// Statistics
+	const serviceCenters: ServiceCenter[] = useMemo(
+		() => serviceCentersData?.data || [],
+		[serviceCentersData]
+	);
+
+	const totalPages = useMemo(
+		() => serviceCentersData?.totalPages || 1,
+		[serviceCentersData]
+	);
+	// Statistics
 	const stats = useMemo(
 		() => ({
-			totalCenters: serviceCenters.length,
-			activeCenters: serviceCenters.filter((c) => c.status === "active").length,
+			totalCenters: serviceCentersData?.total || 0,
+			activeCenters: serviceCenters.filter((c) => c.status === "ACTIVE").length,
 			totalEngineers: serviceCenters.reduce(
-				(sum, c) => sum + c.engineersCount,
+				(sum, c) => sum + (c.engineers_count || 0),
 				0
 			),
-			totalRevenue: serviceCenters.reduce(
-				(sum, c) => sum + c.monthlyRevenue,
-				0
-			),
+			suspendedCenters: serviceCenters.filter((c) => c.status === "SUSPENDED")
+				.length,
 		}),
-		[serviceCenters]
+		[serviceCenters, serviceCentersData]
 	);
 
 	// Handlers
-	// Sort handling managed by GenericTable
-
 	const handleCreateServiceCenter = async () => {
-		const { name, address, state, lga, phoneNumber, email } = formData;
+		const { name, address, state, city, phone, email } = formData;
 
-		if (!name || !address || !state || !lga || !phoneNumber || !email) {
+		if (!name || !address || !state || !city || !phone || !email) {
 			showToast({
 				message: "Please fill in all required fields",
 				type: "error",
@@ -205,8 +171,7 @@ export default function SamsungSentinelServiceCentersView() {
 
 		setIsCreating(true);
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await createServiceCenter(formData);
 			showToast({
 				message: "Service center created successfully",
 				type: "success",
@@ -215,13 +180,21 @@ export default function SamsungSentinelServiceCentersView() {
 				name: "",
 				address: "",
 				state: "",
-				lga: "",
-				phoneNumber: "",
+				city: "",
+				phone: "",
 				email: "",
+				description: "",
+				account_name: "",
+				account_number: "",
+				bank_name: "",
 			});
 			onCreateModalClose();
-		} catch (error) {
-			showToast({ message: "Failed to create service center", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to create service center",
+				type: "error",
+			});
 		} finally {
 			setIsCreating(false);
 		}
@@ -231,40 +204,26 @@ export default function SamsungSentinelServiceCentersView() {
 		centerId: string,
 		currentStatus: string
 	) => {
-		let newStatus: "active" | "inactive" | "suspended";
-		if (currentStatus === "active") {
-			newStatus = "suspended";
-		} else if (currentStatus === "suspended") {
-			newStatus = "inactive";
-		} else {
-			newStatus = "active";
-		}
-
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			if (currentStatus === "ACTIVE") {
+				await deactivateServiceCenter(centerId);
+				showToast({
+					message: "Service center deactivated successfully",
+					type: "success",
+				});
+			} else {
+				await activateServiceCenter(centerId);
+				showToast({
+					message: "Service center activated successfully",
+					type: "success",
+				});
+			}
+			mutate();
+		} catch (error: any) {
 			showToast({
-				message: `Service center status updated to ${newStatus}`,
-				type: "success",
-			});
-		} catch (error) {
-			showToast({
-				message: "Failed to update service center status",
+				message: error?.message || "Failed to update service center status",
 				type: "error",
 			});
-		}
-	};
-
-	const handleDelete = async (centerId: string) => {
-		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			showToast({
-				message: "Service center deleted successfully",
-				type: "success",
-			});
-		} catch (error) {
-			showToast({ message: "Failed to delete service center", type: "error" });
 		}
 	};
 
@@ -272,16 +231,20 @@ export default function SamsungSentinelServiceCentersView() {
 	const handleBulkActivate = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await Promise.all(
+				Array.from(selectedKeys).map((id) =>
+					activateServiceCenter(id as string)
+				)
+			);
 			showToast({
 				message: `${selectedKeys.size} service centers activated successfully`,
 				type: "success",
 			});
 			setSelectedKeys(new Set());
-		} catch (error) {
+			mutate();
+		} catch (error: any) {
 			showToast({
-				message: "Failed to activate service centers",
+				message: error?.message || "Failed to activate service centers",
 				type: "error",
 			});
 		}
@@ -290,16 +253,20 @@ export default function SamsungSentinelServiceCentersView() {
 	const handleBulkSuspend = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await Promise.all(
+				Array.from(selectedKeys).map((id) =>
+					deactivateServiceCenter(id as string)
+				)
+			);
 			showToast({
-				message: `${selectedKeys.size} service centers suspended successfully`,
+				message: `${selectedKeys.size} service centers deactivated successfully`,
 				type: "success",
 			});
 			setSelectedKeys(new Set());
-		} catch (error) {
+			mutate();
+		} catch (error: any) {
 			showToast({
-				message: "Failed to suspend service centers",
+				message: error?.message || "Failed to deactivate service centers",
 				type: "error",
 			});
 		}
@@ -326,15 +293,6 @@ export default function SamsungSentinelServiceCentersView() {
 		console.log("Exporting service centers:", data);
 	};
 
-	// Format currency
-	const formatCurrency = (amount: number) => {
-		return new Intl.NumberFormat("en-NG", {
-			style: "currency",
-			currency: "NGN",
-			minimumFractionDigits: 0,
-		}).format(amount);
-	};
-
 	// Render cell content
 	const renderCell = (row: ServiceCenter, key: string) => {
 		switch (key) {
@@ -349,7 +307,7 @@ export default function SamsungSentinelServiceCentersView() {
 				return (
 					<div className="flex flex-col">
 						<p className="text-sm">
-							{row.state}, {row.lga}
+							{row.city}, {row.state}
 						</p>
 						<p className="text-xs text-default-400">{row.address}</p>
 					</div>
@@ -357,24 +315,18 @@ export default function SamsungSentinelServiceCentersView() {
 			case "contact":
 				return (
 					<div className="flex flex-col">
-						<p className="text-sm">{row.phoneNumber}</p>
+						<p className="text-sm">{row.phone}</p>
 						<p className="text-xs text-default-400">{row.email}</p>
 					</div>
 				);
-			case "engineersCount":
+			case "engineers_count":
 				return (
 					<Chip color="primary" variant="flat" size="sm">
-						{row.engineersCount} engineers
+						{row.engineers_count || 0} engineers
 					</Chip>
 				);
-			case "totalRepairs":
-				return <p className="text-sm font-medium">{row.totalRepairs}</p>;
-			case "monthlyRevenue":
-				return (
-					<p className="text-sm font-medium">
-						{formatCurrency(row.monthlyRevenue)}
-					</p>
-				);
+			case "repair_store":
+				return <p className="text-sm">{row.repair_store?.name || "N/A"}</p>;
 			case "status":
 				return (
 					<Chip
@@ -419,7 +371,7 @@ export default function SamsungSentinelServiceCentersView() {
 								<DropdownItem
 									key="toggle"
 									startContent={
-										row.status === "active" ? (
+										row.status === "ACTIVE" ? (
 											<PowerOff size={16} />
 										) : (
 											<Power size={16} />
@@ -427,16 +379,7 @@ export default function SamsungSentinelServiceCentersView() {
 									}
 									onPress={() => handleToggleStatus(row.id, row.status)}
 								>
-									Change Status
-								</DropdownItem>
-								<DropdownItem
-									key="delete"
-									className="text-danger"
-									color="danger"
-									startContent={<Trash2 size={16} />}
-									onPress={() => handleDelete(row.id)}
-								>
-									Delete
+									{row.status === "ACTIVE" ? "Deactivate" : "Activate"}
 								</DropdownItem>
 							</DropdownMenu>
 						</Dropdown>
@@ -448,22 +391,9 @@ export default function SamsungSentinelServiceCentersView() {
 	};
 
 	const statusOptions = [
-		{ name: "Active", uid: "active" },
-		{ name: "Suspended", uid: "suspended" },
-		{ name: "Inactive", uid: "inactive" },
-	];
-
-	const states = [
-		"Lagos",
-		"FCT",
-		"Rivers",
-		"Kano",
-		"Kaduna",
-		"Oyo",
-		"Delta",
-		"Edo",
-		"Anambra",
-		"Imo",
+		{ name: "Active", uid: "ACTIVE" },
+		{ name: "Suspended", uid: "SUSPENDED" },
+		{ name: "Disabled", uid: "DISABLED" },
 	];
 
 	return (
@@ -490,7 +420,7 @@ export default function SamsungSentinelServiceCentersView() {
 								onPress={handleBulkSuspend}
 								size="sm"
 							>
-								Suspend ({selectedKeys.size})
+								Deactivate ({selectedKeys.size})
 							</Button>
 							<Button
 								variant="light"
@@ -528,18 +458,18 @@ export default function SamsungSentinelServiceCentersView() {
 					icon={<Users className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Monthly Revenue"
-					value={formatCurrency(stats.totalRevenue)}
-					icon={<CreditCard className="w-5 h-5" />}
+					title="Suspended Centers"
+					value={stats.suspendedCenters.toString()}
+					icon={<PowerOff className="w-5 h-5" />}
 				/>
 			</div>
 			{/* Service Centers Table */}
 			<GenericTable<ServiceCenter>
 				columns={columns}
 				data={serviceCenters}
-				allCount={serviceCenters.length}
+				allCount={serviceCentersData?.total || 0}
 				exportData={serviceCenters}
-				isLoading={false}
+				isLoading={isLoading}
 				filterValue={filterValue}
 				onFilterChange={setFilterValue}
 				statusOptions={statusOptions}
@@ -547,11 +477,11 @@ export default function SamsungSentinelServiceCentersView() {
 				onStatusChange={setStatusFilter}
 				statusColorMap={statusColorMap}
 				showStatus={true}
-				sortDescriptor={{ column: "createdAt", direction: "descending" }}
+				sortDescriptor={{ column: "created_at", direction: "descending" }}
 				onSortChange={() => {}}
-				page={1}
-				pages={1}
-				onPageChange={() => {}}
+				page={page}
+				pages={totalPages}
+				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
 				hasNoRecords={serviceCenters.length === 0}
@@ -560,7 +490,7 @@ export default function SamsungSentinelServiceCentersView() {
 				onSelectionChange={handleSelectionChange}
 				selectionMode="multiple"
 				showRowsPerPageSelector={true}
-			/>{" "}
+			/>
 			{/* Create Service Center Modal */}
 			<Modal isOpen={isCreateModalOpen} onClose={onCreateModalClose} size="2xl">
 				<ModalContent>
@@ -579,15 +509,6 @@ export default function SamsungSentinelServiceCentersView() {
 										isRequired
 									/>
 									<Input
-										label="Phone Number"
-										placeholder="+234 801 234 5678"
-										value={formData.phoneNumber}
-										onValueChange={(value) =>
-											setFormData((prev) => ({ ...prev, phoneNumber: value }))
-										}
-										isRequired
-									/>
-									<Input
 										label="Email Address"
 										type="email"
 										placeholder="center@sapphiretech.com"
@@ -597,31 +518,30 @@ export default function SamsungSentinelServiceCentersView() {
 										}
 										isRequired
 									/>
-									<Select
-										label="State"
-										placeholder="Select state"
-										selectedKeys={formData.state ? [formData.state] : []}
-										onSelectionChange={(keys) => {
-											const selectedState = Array.from(keys)[0] as string;
-											setFormData((prev) => ({
-												...prev,
-												state: selectedState,
-											}));
-										}}
-										isRequired
-									>
-										{states.map((state) => (
-											<SelectItem key={state} value={state}>
-												{state}
-											</SelectItem>
-										))}
-									</Select>
 									<Input
-										label="Local Government Area"
-										placeholder="e.g., Ikeja"
-										value={formData.lga}
+										label="Phone Number"
+										placeholder="+234 801 234 5678"
+										value={formData.phone}
 										onValueChange={(value) =>
-											setFormData((prev) => ({ ...prev, lga: value }))
+											setFormData((prev) => ({ ...prev, phone: value }))
+										}
+										isRequired
+									/>
+									<Input
+										label="State"
+										placeholder="e.g., Lagos"
+										value={formData.state}
+										onValueChange={(value) =>
+											setFormData((prev) => ({ ...prev, state: value }))
+										}
+										isRequired
+									/>
+									<Input
+										label="City"
+										placeholder="e.g., Ikeja"
+										value={formData.city}
+										onValueChange={(value) =>
+											setFormData((prev) => ({ ...prev, city: value }))
 										}
 										isRequired
 									/>
@@ -632,14 +552,44 @@ export default function SamsungSentinelServiceCentersView() {
 										onValueChange={(value) =>
 											setFormData((prev) => ({ ...prev, address: value }))
 										}
-										className="md:col-span-2"
 										isRequired
 									/>
+									<Input
+										label="Account Name"
+										placeholder="e.g., John Doe"
+										value={formData.account_name}
+										onValueChange={(value) =>
+											setFormData((prev) => ({ ...prev, account_name: value }))
+										}
+									/>
+									<Input
+										label="Account Number"
+										placeholder="e.g., 1234567890"
+										value={formData.account_number}
+										onValueChange={(value) =>
+											setFormData((prev) => ({
+												...prev,
+												account_number: value,
+											}))
+										}
+									/>
+									<Input
+										label="Bank Name"
+										placeholder="e.g., First Bank"
+										value={formData.bank_name}
+										onValueChange={(value) =>
+											setFormData((prev) => ({ ...prev, bank_name: value }))
+										}
+									/>
 								</div>
-								<p className="text-sm text-gray-600 mt-4">
-									After creating the service center, you can add engineers and
-									configure bank details.
-								</p>
+								<Input
+									label="Description"
+									placeholder="Enter service center description..."
+									value={formData.description}
+									onValueChange={(value) =>
+										setFormData((prev) => ({ ...prev, description: value }))
+									}
+								/>
 							</ModalBody>
 							<ModalFooter>
 								<Button
@@ -654,7 +604,12 @@ export default function SamsungSentinelServiceCentersView() {
 									onPress={handleCreateServiceCenter}
 									isLoading={isCreating}
 									isDisabled={
-										!formData.name || !formData.email || !formData.phoneNumber
+										!formData.name ||
+										!formData.email ||
+										!formData.phone ||
+										!formData.state ||
+										!formData.city ||
+										!formData.address
 									}
 								>
 									{isCreating ? "Creating..." : "Create Service Center"}

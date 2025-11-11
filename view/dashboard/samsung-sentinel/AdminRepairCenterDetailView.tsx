@@ -23,6 +23,7 @@ import {
 	DropdownItem,
 	Tabs,
 	Tab,
+	Textarea,
 } from "@heroui/react";
 import {
 	InfoCard,
@@ -58,53 +59,34 @@ import {
 	Eye,
 } from "lucide-react";
 import { useParams, useRouter, usePathname } from "next/navigation";
-import { showToast } from "@/lib";
-
-interface RepairCenter {
-	id: string;
-	name: string;
-	address: string;
-	state: string;
-	lga: string;
-	phoneNumber: string;
-	email: string;
-	serviceCentersCount: number;
-	totalRepairs: number;
-	monthlyRevenue: number;
-	status: "active" | "inactive" | "suspended";
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
-	serviceCenters: ServiceCenter[];
-}
-
-interface ServiceCenter {
-	id: string;
-	name: string;
-	address: string;
-	phoneNumber: string;
-	email: string;
-	engineersCount: number;
-	totalRepairs: number;
-	monthlyRevenue: number;
-	status: "active" | "inactive" | "suspended";
-	createdAt: string;
-}
+import {
+	showToast,
+	getRepairStoreById,
+	updateRepairStore,
+	activateRepairStore as activateRepairStoreAPI,
+	deactivateRepairStore as deactivateRepairStoreAPI,
+	createServiceCenter,
+	updateServiceCenter,
+	activateServiceCenter,
+	deactivateServiceCenter,
+	type RepairStore,
+	type ServiceCenter,
+} from "@/lib";
+import useSWR from "swr";
 
 const serviceCenterColumns: ColumnDef[] = [
 	{ name: "Service Center", uid: "name", sortable: true },
 	{ name: "Location", uid: "address", sortable: true },
-	{ name: "Engineers", uid: "engineersCount", sortable: true },
-	{ name: "Total Repairs", uid: "totalRepairs", sortable: true },
-	{ name: "Revenue", uid: "monthlyRevenue", sortable: true },
+	{ name: "Contact", uid: "contact", sortable: false },
 	{ name: "Status", uid: "status", sortable: true },
+	{ name: "Created", uid: "created_at", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
-const statusColorMap = {
-	active: "success" as const,
-	inactive: "default" as const,
-	suspended: "danger" as const,
+const statusColorMap: Record<string, "success" | "default" | "danger"> = {
+	ACTIVE: "success" as const,
+	DISABLED: "default" as const,
+	SUSPENDED: "danger" as const,
 };
 
 export default function AdminRepairCenterDetailView() {
@@ -129,96 +111,60 @@ export default function AdminRepairCenterDetailView() {
 	// Form states
 	const [centerFormData, setCenterFormData] = useState({
 		name: "",
-		address: "",
-		state: "",
-		lga: "",
-		phoneNumber: "",
 		email: "",
+		phone: "",
+		description: "",
+		location: "",
+		account_name: "",
+		account_number: "",
+		bank_name: "",
 	});
 	const [serviceCenterFormData, setServiceCenterFormData] = useState({
 		name: "",
-		address: "",
-		phoneNumber: "",
 		email: "",
+		phone: "",
+		state: "",
+		city: "",
+		address: "",
+		description: "",
+		account_name: "",
+		account_number: "",
+		bank_name: "",
 	});
 
-	const [isLoading, setIsLoading] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Mock data - replace with actual API call
-	const repairCenter: RepairCenter = useMemo(
-		() => ({
-			id: repairCenterId,
-			name: "Sapphire Repair Center Lagos",
-			address: "Plot 15, Admiralty Way, Lekki Phase 1",
-			state: "Lagos",
-			lga: "Eti-Osa",
-			phoneNumber: "+234-903-123-4567",
-			email: "lagos@sapphire-repair.com",
-			serviceCentersCount: 12,
-			totalRepairs: 2450,
-			monthlyRevenue: 15750000,
-			status: "active",
-			createdBy: "admin@sapphire.com",
-			createdAt: "2024-01-15T10:30:00Z",
-			lastUpdatedAt: "2024-12-20T14:45:00Z",
-			serviceCenters: [
-				{
-					id: "sc_001",
-					name: "Sapphire Service Center Ikeja",
-					address: "45, Obafemi Awolowo Way, Ikeja",
-					phoneNumber: "+234-903-111-1111",
-					email: "ikeja@sapphire.com",
-					engineersCount: 8,
-					totalRepairs: 450,
-					monthlyRevenue: 2750000,
-					status: "active",
-					createdAt: "2024-01-20T09:00:00Z",
-				},
-				{
-					id: "sc_002",
-					name: "Sapphire Service Center Victoria Island",
-					address: "Plot 12, Tiamiyu Savage Street, VI",
-					phoneNumber: "+234-903-222-2222",
-					email: "vi@sapphire.com",
-					engineersCount: 12,
-					totalRepairs: 680,
-					monthlyRevenue: 4200000,
-					status: "active",
-					createdAt: "2024-02-05T11:30:00Z",
-				},
-				{
-					id: "sc_003",
-					name: "Sapphire Service Center Lekki",
-					address: "Shop 15, Palms Shopping Mall, Lekki",
-					phoneNumber: "+234-903-333-3333",
-					email: "lekki@sapphire.com",
-					engineersCount: 6,
-					totalRepairs: 320,
-					monthlyRevenue: 1800000,
-					status: "suspended",
-					createdAt: "2024-03-10T14:15:00Z",
-				},
-			],
-		}),
-		[repairCenterId]
+	// Fetch repair store details
+	const {
+		data: repairStore,
+		mutate,
+		isLoading,
+		error,
+	} = useSWR(
+		repairCenterId ? ["repair-store-detail", repairCenterId] : null,
+		() => getRepairStoreById(repairCenterId)
+	);
+
+	const serviceCenters = useMemo(
+		() => repairStore?.service_centers || [],
+		[repairStore]
 	);
 
 	// Statistics
 	const stats = useMemo(
 		() => ({
-			totalServiceCenters: repairCenter.serviceCenters.length,
-			activeServiceCenters: repairCenter.serviceCenters.filter(
-				(sc) => sc.status === "active"
+			totalServiceCenters: serviceCenters.length,
+			activeServiceCenters: serviceCenters.filter(
+				(sc) => sc.status === "ACTIVE"
 			).length,
-			totalEngineers: repairCenter.serviceCenters.reduce(
-				(sum, sc) => sum + sc.engineersCount,
-				0
-			),
-			avgRepairsPerCenter: Math.round(
-				repairCenter.totalRepairs / repairCenter.serviceCenters.length
-			),
+			inactiveServiceCenters: serviceCenters.filter(
+				(sc) => sc.status === "DISABLED"
+			).length,
+			suspendedServiceCenters: serviceCenters.filter(
+				(sc) => sc.status === "SUSPENDED"
+			).length,
 		}),
-		[repairCenter]
+		[serviceCenters]
 	);
 
 	// Format currency
@@ -232,39 +178,47 @@ export default function AdminRepairCenterDetailView() {
 
 	// Handle edit repair center
 	const handleEditRepairCenter = async () => {
-		if (!centerFormData.name.trim() || !centerFormData.address.trim()) {
+		const { name, email, phone, location } = centerFormData;
+
+		if (!name || !email || !phone || !location) {
 			showToast({ message: "Please fill in required fields", type: "error" });
 			return;
 		}
 
-		setIsLoading(true);
+		setIsSubmitting(true);
 		try {
-			// API call to update repair center
+			await updateRepairStore(repairCenterId, centerFormData);
 			showToast({
 				message: "Repair center updated successfully",
 				type: "success",
 			});
 			onEditModalClose();
-		} catch (error) {
-			showToast({ message: "Failed to update repair center", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update repair center",
+				type: "error",
+			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
 	// Handle add service center
 	const handleAddServiceCenter = async () => {
-		if (
-			!serviceCenterFormData.name.trim() ||
-			!serviceCenterFormData.address.trim()
-		) {
+		const { name, email, phone, state, city, address } = serviceCenterFormData;
+
+		if (!name || !email || !phone || !state || !city || !address) {
 			showToast({ message: "Please fill in required fields", type: "error" });
 			return;
 		}
 
-		setIsLoading(true);
+		setIsSubmitting(true);
 		try {
-			// API call to add service center
+			await createServiceCenter({
+				...serviceCenterFormData,
+				repair_store_id: repairCenterId,
+			});
 			showToast({
 				message: "Service center added successfully",
 				type: "success",
@@ -272,35 +226,82 @@ export default function AdminRepairCenterDetailView() {
 			onAddServiceCenterModalClose();
 			setServiceCenterFormData({
 				name: "",
-				address: "",
-				phoneNumber: "",
 				email: "",
+				phone: "",
+				state: "",
+				city: "",
+				address: "",
+				description: "",
+				account_name: "",
+				account_number: "",
+				bank_name: "",
 			});
-		} catch (error) {
-			showToast({ message: "Failed to add service center", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to add service center",
+				type: "error",
+			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
 	// Handle toggle repair center status
 	const handleToggleRepairCenterStatus = async () => {
-		setIsLoading(true);
+		if (!repairStore) return;
+
+		setIsSubmitting(true);
 		try {
-			// API call to toggle repair center status
+			if (repairStore.status === "ACTIVE") {
+				await deactivateRepairStoreAPI(repairCenterId);
+				showToast({
+					message: "Repair center deactivated successfully",
+					type: "success",
+				});
+			} else {
+				await activateRepairStoreAPI(repairCenterId);
+				showToast({
+					message: "Repair center activated successfully",
+					type: "success",
+				});
+			}
+			mutate();
+		} catch (error: any) {
 			showToast({
-				message: `Repair center ${
-					repairCenter.status === "active" ? "suspended" : "activated"
-				} successfully`,
-				type: "success",
-			});
-		} catch (error) {
-			showToast({
-				message: "Failed to update repair center status",
+				message: error?.message || "Failed to update repair center status",
 				type: "error",
 			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
+		}
+	};
+
+	// Handle toggle service center status
+	const handleToggleServiceCenterStatus = async (
+		id: string,
+		currentStatus: string
+	) => {
+		try {
+			if (currentStatus === "ACTIVE") {
+				await deactivateServiceCenter(id);
+				showToast({
+					message: "Service center deactivated successfully",
+					type: "success",
+				});
+			} else {
+				await activateServiceCenter(id);
+				showToast({
+					message: "Service center activated successfully",
+					type: "success",
+				});
+			}
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to toggle service center status",
+				type: "error",
+			});
 		}
 	};
 
@@ -320,28 +321,20 @@ export default function AdminRepairCenterDetailView() {
 					</div>
 				);
 			case "address":
-				return <span className="text-sm">{item.address}</span>;
-			case "engineersCount":
 				return (
-					<div className="flex items-center gap-2">
-						<Users size={16} className="text-default-400" />
-						<span className="text-sm">{item.engineersCount}</span>
+					<div className="flex flex-col">
+						<p className="text-bold text-sm">{item.address}</p>
+						<p className="text-sm text-default-400">
+							{item.city}, {item.state}
+						</p>
 					</div>
 				);
-			case "totalRepairs":
+			case "contact":
 				return (
-					<div className="flex items-center gap-2">
-						<Wrench size={16} className="text-default-400" />
-						<span className="text-sm">
-							{item.totalRepairs.toLocaleString()}
-						</span>
+					<div className="flex flex-col">
+						<p className="text-bold text-sm">{item.phone}</p>
+						<p className="text-sm text-default-400">{item.email}</p>
 					</div>
-				);
-			case "monthlyRevenue":
-				return (
-					<span className="text-sm font-semibold text-success">
-						{formatCurrency(item.monthlyRevenue)}
-					</span>
 				);
 			case "status":
 				return (
@@ -353,6 +346,12 @@ export default function AdminRepairCenterDetailView() {
 					>
 						{item.status}
 					</Chip>
+				);
+			case "created_at":
+				return (
+					<span className="text-sm">
+						{new Date(item.created_at).toLocaleDateString()}
+					</span>
 				);
 			case "actions":
 				return (
@@ -368,9 +367,7 @@ export default function AdminRepairCenterDetailView() {
 									key="view"
 									startContent={<Eye size={16} />}
 									onPress={() =>
-										router.push(
-											`/access/${role}/samsung-sentinel/service-centers/${item.id}`
-										)
+										router.push(`/access/${role}/service-centers/${item.id}`)
 									}
 								>
 									View Details
@@ -387,17 +384,17 @@ export default function AdminRepairCenterDetailView() {
 								<DropdownItem
 									key="toggle"
 									startContent={
-										item.status === "active" ? (
+										item.status === "ACTIVE" ? (
 											<PowerOff size={16} />
 										) : (
 											<Power size={16} />
 										)
 									}
-									onPress={() => {
-										/* Handle toggle status */
-									}}
+									onPress={() =>
+										handleToggleServiceCenterStatus(item.id, item.status)
+									}
 								>
-									{item.status === "active" ? "Suspend" : "Activate"}
+									{item.status === "ACTIVE" ? "Deactivate" : "Activate"}
 								</DropdownItem>
 							</DropdownMenu>
 						</Dropdown>
@@ -410,17 +407,30 @@ export default function AdminRepairCenterDetailView() {
 
 	// Initialize form data when modal opens
 	React.useEffect(() => {
-		if (isEditModalOpen) {
+		if (isEditModalOpen && repairStore) {
 			setCenterFormData({
-				name: repairCenter.name,
-				address: repairCenter.address,
-				state: repairCenter.state,
-				lga: repairCenter.lga,
-				phoneNumber: repairCenter.phoneNumber,
-				email: repairCenter.email,
+				name: repairStore.name,
+				email: repairStore.email,
+				phone: repairStore.phone,
+				description: repairStore.description || "",
+				location: repairStore.location,
+				account_name: repairStore.account_name || "",
+				account_number: repairStore.account_number || "",
+				bank_name: repairStore.bank_name || "",
 			});
 		}
-	}, [isEditModalOpen, repairCenter]);
+	}, [isEditModalOpen, repairStore]);
+
+	if (isLoading) return <LoadingSpinner />;
+	if (error)
+		return (
+			<NotFound
+				title="Repair Store Not Found"
+				description="The requested repair store could not be found."
+				onGoBack={() => router.push(`/access/${role}/repair-centers`)}
+			/>
+		);
+	if (!repairStore) return null;
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -435,7 +445,7 @@ export default function AdminRepairCenterDetailView() {
 						<ArrowLeft size={20} />
 					</Button>
 					<div>
-						<h1 className="text-2xl font-bold">{repairCenter.name}</h1>
+						<h1 className="text-2xl font-bold">{repairStore.name}</h1>
 						<p className="text-default-500">
 							Repair center details and service locations
 						</p>
@@ -453,19 +463,19 @@ export default function AdminRepairCenterDetailView() {
 						Edit Details
 					</Button>
 					<Button
-						color={repairCenter.status === "active" ? "danger" : "success"}
+						color={repairStore.status === "ACTIVE" ? "danger" : "success"}
 						variant="flat"
 						startContent={
-							repairCenter.status === "active" ? (
+							repairStore.status === "ACTIVE" ? (
 								<PowerOff size={16} />
 							) : (
 								<Power size={16} />
 							)
 						}
 						onPress={handleToggleRepairCenterStatus}
-						isLoading={isLoading}
+						isLoading={isSubmitting}
 					>
-						{repairCenter.status === "active" ? "Suspend" : "Activate"}
+						{repairStore.status === "ACTIVE" ? "Deactivate" : "Activate"}
 					</Button>
 				</div>
 			</div>
@@ -483,14 +493,14 @@ export default function AdminRepairCenterDetailView() {
 					icon={<Power className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Total Engineers"
-					value={stats.totalEngineers.toString()}
-					icon={<Users className="w-5 h-5" />}
+					title="Inactive Centers"
+					value={stats.inactiveServiceCenters.toString()}
+					icon={<PowerOff className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Avg Repairs/Center"
-					value={stats.avgRepairsPerCenter.toString()}
-					icon={<TrendingUp className="w-5 h-5" />}
+					title="Suspended Centers"
+					value={stats.suspendedServiceCenters.toString()}
+					icon={<UserX className="w-5 h-5" />}
 				/>
 			</div>
 
@@ -505,45 +515,75 @@ export default function AdminRepairCenterDetailView() {
 							</CardHeader>
 							<CardBody className="pt-0">
 								<div className="space-y-4">
-									<InfoField label="Center Name" value={repairCenter.name} />
-									<InfoField label="Address" value={repairCenter.address} />
-									<InfoField
-										label="Location"
-										value={`${repairCenter.state}, ${repairCenter.lga}`}
-									/>
-									<InfoField label="Phone" value={repairCenter.phoneNumber} />
-									<InfoField label="Email" value={repairCenter.email} />
+									<InfoField label="Center Name" value={repairStore.name} />
+									<InfoField label="Location" value={repairStore.location} />
+									<InfoField label="Phone" value={repairStore.phone} />
+									<InfoField label="Email" value={repairStore.email} />
+									{repairStore.description && (
+										<InfoField
+											label="Description"
+											value={repairStore.description}
+										/>
+									)}
 								</div>
 							</CardBody>
 						</Card>
 
-						{/* Status & Performance */}
+						{/* Bank Details */}
 						<Card>
 							<CardHeader className="pb-3">
-								<h3 className="text-lg font-semibold">Status & Performance</h3>
+								<h3 className="text-lg font-semibold">Bank Details</h3>
+							</CardHeader>
+							<CardBody className="pt-0">
+								<div className="space-y-4">
+									<InfoField
+										label="Account Name"
+										value={repairStore.account_name || "Not provided"}
+									/>
+									<InfoField
+										label="Account Number"
+										value={repairStore.account_number || "Not provided"}
+									/>
+									<InfoField
+										label="Bank Name"
+										value={repairStore.bank_name || "Not provided"}
+									/>
+								</div>
+							</CardBody>
+						</Card>
+
+						{/* Status Information */}
+						<Card>
+							<CardHeader className="pb-3">
+								<h3 className="text-lg font-semibold">Status Information</h3>
 							</CardHeader>
 							<CardBody className="pt-0">
 								<div className="space-y-4">
 									<div className="bg-default-50 rounded-lg p-4">
 										<div className="text-sm text-default-500 mb-1">Status</div>
-										<StatusChip status={repairCenter.status} />
+										<Chip
+											className="capitalize"
+											color={statusColorMap[repairStore.status]}
+											size="md"
+											variant="flat"
+										>
+											{repairStore.status}
+										</Chip>
 									</div>
 									<InfoField
 										label="Service Centers"
-										value={repairCenter.serviceCentersCount.toString()}
-									/>
-									<InfoField
-										label="Total Repairs"
-										value={repairCenter.totalRepairs.toLocaleString()}
-									/>
-									<InfoField
-										label="Monthly Revenue"
-										value={formatCurrency(repairCenter.monthlyRevenue)}
+										value={(repairStore.service_centers_count || 0).toString()}
 									/>
 									<InfoField
 										label="Created"
 										value={new Date(
-											repairCenter.createdAt
+											repairStore.created_at
+										).toLocaleDateString()}
+									/>
+									<InfoField
+										label="Last Updated"
+										value={new Date(
+											repairStore.updated_at
 										).toLocaleDateString()}
 									/>
 								</div>
@@ -574,16 +614,16 @@ export default function AdminRepairCenterDetailView() {
 						{/* Service Centers Table */}
 						<GenericTable<ServiceCenter>
 							columns={serviceCenterColumns}
-							data={repairCenter.serviceCenters}
-							allCount={repairCenter.serviceCenters.length}
-							exportData={repairCenter.serviceCenters}
+							data={serviceCenters}
+							allCount={serviceCenters.length}
+							exportData={serviceCenters}
 							isLoading={false}
 							filterValue=""
 							onFilterChange={() => {}}
 							statusOptions={[
-								{ name: "Active", uid: "active" },
-								{ name: "Inactive", uid: "inactive" },
-								{ name: "Suspended", uid: "suspended" },
+								{ name: "Active", uid: "ACTIVE" },
+								{ name: "Disabled", uid: "DISABLED" },
+								{ name: "Suspended", uid: "SUSPENDED" },
 							]}
 							statusFilter={new Set()}
 							onStatusChange={() => {}}
@@ -596,7 +636,7 @@ export default function AdminRepairCenterDetailView() {
 							onPageChange={() => {}}
 							exportFn={() => {}}
 							renderCell={renderServiceCenterCell}
-							hasNoRecords={repairCenter.serviceCenters.length === 0}
+							hasNoRecords={serviceCenters.length === 0}
 							searchPlaceholder="Search service centers..."
 							showRowsPerPageSelector={true}
 						/>
@@ -630,57 +670,58 @@ export default function AdminRepairCenterDetailView() {
 									/>
 									<Input
 										label="Phone Number"
-										value={centerFormData.phoneNumber}
+										value={centerFormData.phone}
 										onValueChange={(value) =>
 											setCenterFormData({
 												...centerFormData,
-												phoneNumber: value,
+												phone: value,
 											})
 										}
 										isRequired
 									/>
-									<Select
-										label="State"
-										selectedKeys={
-											centerFormData.state ? [centerFormData.state] : []
+									<Input
+										label="Location"
+										value={centerFormData.location}
+										onValueChange={(value) =>
+											setCenterFormData({ ...centerFormData, location: value })
 										}
-										onSelectionChange={(keys) =>
+										isRequired
+									/>
+									<Input
+										label="Account Name"
+										value={centerFormData.account_name}
+										onValueChange={(value) =>
 											setCenterFormData({
 												...centerFormData,
-												state: Array.from(keys)[0] as string,
+												account_name: value,
 											})
 										}
-										isRequired
-									>
-										<SelectItem key="Lagos" value="Lagos">
-											Lagos
-										</SelectItem>
-										<SelectItem key="FCT" value="FCT">
-											FCT (Abuja)
-										</SelectItem>
-										<SelectItem key="Kano" value="Kano">
-											Kano
-										</SelectItem>
-										<SelectItem key="Rivers" value="Rivers">
-											Rivers
-										</SelectItem>
-									</Select>
+									/>
 									<Input
-										label="LGA"
-										value={centerFormData.lga}
+										label="Account Number"
+										value={centerFormData.account_number}
 										onValueChange={(value) =>
-											setCenterFormData({ ...centerFormData, lga: value })
+											setCenterFormData({
+												...centerFormData,
+												account_number: value,
+											})
 										}
-										isRequired
+									/>
+									<Input
+										label="Bank Name"
+										value={centerFormData.bank_name}
+										onValueChange={(value) =>
+											setCenterFormData({ ...centerFormData, bank_name: value })
+										}
 									/>
 								</div>
-								<Input
-									label="Address"
-									value={centerFormData.address}
+								<Textarea
+									label="Description"
+									value={centerFormData.description}
 									onValueChange={(value) =>
-										setCenterFormData({ ...centerFormData, address: value })
+										setCenterFormData({ ...centerFormData, description: value })
 									}
-									isRequired
+									minRows={3}
 								/>
 							</ModalBody>
 							<ModalFooter>
@@ -690,7 +731,7 @@ export default function AdminRepairCenterDetailView() {
 								<Button
 									color="primary"
 									onPress={handleEditRepairCenter}
-									isLoading={isLoading}
+									isLoading={isSubmitting}
 								>
 									Update Repair Center
 								</Button>
@@ -739,19 +780,76 @@ export default function AdminRepairCenterDetailView() {
 									<Input
 										label="Phone Number"
 										placeholder="e.g., +234-903-111-1111"
-										value={serviceCenterFormData.phoneNumber}
+										value={serviceCenterFormData.phone}
 										onValueChange={(value) =>
 											setServiceCenterFormData({
 												...serviceCenterFormData,
-												phoneNumber: value,
+												phone: value,
 											})
 										}
 										isRequired
 									/>
+									<Input
+										label="State"
+										placeholder="e.g., Lagos"
+										value={serviceCenterFormData.state}
+										onValueChange={(value) =>
+											setServiceCenterFormData({
+												...serviceCenterFormData,
+												state: value,
+											})
+										}
+										isRequired
+									/>
+									<Input
+										label="City"
+										placeholder="e.g., Ikeja"
+										value={serviceCenterFormData.city}
+										onValueChange={(value) =>
+											setServiceCenterFormData({
+												...serviceCenterFormData,
+												city: value,
+											})
+										}
+										isRequired
+									/>
+									<Input
+										label="Account Name"
+										placeholder="e.g., John Doe"
+										value={serviceCenterFormData.account_name}
+										onValueChange={(value) =>
+											setServiceCenterFormData({
+												...serviceCenterFormData,
+												account_name: value,
+											})
+										}
+									/>
+									<Input
+										label="Account Number"
+										placeholder="e.g., 1234567890"
+										value={serviceCenterFormData.account_number}
+										onValueChange={(value) =>
+											setServiceCenterFormData({
+												...serviceCenterFormData,
+												account_number: value,
+											})
+										}
+									/>
+									<Input
+										label="Bank Name"
+										placeholder="e.g., First Bank"
+										value={serviceCenterFormData.bank_name}
+										onValueChange={(value) =>
+											setServiceCenterFormData({
+												...serviceCenterFormData,
+												bank_name: value,
+											})
+										}
+									/>
 								</div>
 								<Input
 									label="Address"
-									placeholder="e.g., 45, Obafemi Awolowo Way, Ikeja"
+									placeholder="e.g., 123 Main Street, Ikeja"
 									value={serviceCenterFormData.address}
 									onValueChange={(value) =>
 										setServiceCenterFormData({
@@ -761,6 +859,18 @@ export default function AdminRepairCenterDetailView() {
 									}
 									isRequired
 								/>
+								<Textarea
+									label="Description"
+									placeholder="Enter service center description..."
+									value={serviceCenterFormData.description}
+									onValueChange={(value) =>
+										setServiceCenterFormData({
+											...serviceCenterFormData,
+											description: value,
+										})
+									}
+									minRows={3}
+								/>
 							</ModalBody>
 							<ModalFooter>
 								<Button variant="light" onPress={onAddServiceCenterModalClose}>
@@ -769,7 +879,7 @@ export default function AdminRepairCenterDetailView() {
 								<Button
 									color="primary"
 									onPress={handleAddServiceCenter}
-									isLoading={isLoading}
+									isLoading={isSubmitting}
 								>
 									Add Service Center
 								</Button>

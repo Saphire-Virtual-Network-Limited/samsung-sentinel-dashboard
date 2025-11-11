@@ -52,7 +52,7 @@ export interface GetEngineersParams {
 export async function createEngineer(
 	data: CreateEngineerDto
 ): Promise<BaseApiResponse<Engineer>> {
-	return apiCall("/api/v1/engineers", "POST", data);
+	return apiCall("/engineers", "POST", data);
 }
 
 /**
@@ -66,7 +66,7 @@ export async function getAllEngineers(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/engineers?${queryParams}`, "GET");
+	return apiCall(`/engineers?${queryParams}`, "GET");
 }
 
 /**
@@ -77,7 +77,7 @@ export async function getAllEngineers(
 export async function getMyEngineerProfile(): Promise<
 	BaseApiResponse<Engineer>
 > {
-	return apiCall("/api/v1/engineers/me/profile", "GET");
+	return apiCall("/engineers/me/profile", "GET");
 }
 
 /**
@@ -87,7 +87,7 @@ export async function getMyEngineerProfile(): Promise<
 export async function getEngineerById(
 	id: string
 ): Promise<BaseApiResponse<Engineer>> {
-	return apiCall(`/api/v1/engineers/${id}`, "GET");
+	return apiCall(`/engineers/${id}`, "GET");
 }
 
 /**
@@ -99,7 +99,7 @@ export async function updateEngineer(
 	id: string,
 	data: UpdateEngineerDto
 ): Promise<BaseApiResponse<Engineer>> {
-	return apiCall(`/api/v1/engineers/${id}`, "PATCH", data);
+	return apiCall(`/engineers/${id}`, "PATCH", data);
 }
 
 /**
@@ -108,7 +108,7 @@ export async function updateEngineer(
  * @tag Engineers
  */
 export async function deleteEngineer(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/engineers/${id}`, "DELETE");
+	return apiCall(`/engineers/${id}`, "DELETE");
 }
 
 /**
@@ -119,5 +119,5 @@ export async function deleteEngineer(id: string): Promise<BaseApiResponse> {
 export async function resendEngineerInvitation(
 	data: ResendEngineerInvitationDto
 ): Promise<BaseApiResponse> {
-	return apiCall("/api/v1/engineers/resend-invitation", "POST", data);
+	return apiCall("/engineers/resend-invitation", "POST", data);
 }

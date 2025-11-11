@@ -7,6 +7,11 @@ import { apiCall, BaseApiResponse, UserStatus } from "../shared";
 // Types & Interfaces
 export interface ServiceCenter {
 	id: string;
+	created_at: string;
+	updated_at: string;
+	created_by_id: string;
+	updated_by_id: string | null;
+	repair_store_id: string;
 	name: string;
 	email: string;
 	phone: string;
@@ -17,10 +22,10 @@ export interface ServiceCenter {
 	account_name?: string;
 	account_number?: string;
 	bank_name?: string;
-	repair_store_id: string;
 	status: UserStatus;
-	createdAt: string;
-	updatedAt: string;
+	repair_store?: any;
+	engineers_count?: number;
+	engineers?: any[];
 }
 
 export interface CreateServiceCenterDto {
@@ -60,6 +65,14 @@ export interface GetServiceCentersParams {
 	limit?: number;
 }
 
+export interface PaginatedServiceCentersResponse {
+	data: ServiceCenter[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
+
 // API Functions
 
 /**
@@ -69,8 +82,8 @@ export interface GetServiceCentersParams {
  */
 export async function createServiceCenter(
 	data: CreateServiceCenterDto
-): Promise<BaseApiResponse<ServiceCenter>> {
-	return apiCall("/api/v1/service-centers", "POST", data);
+): Promise<ServiceCenter> {
+	return apiCall("/service-centers", "POST", data);
 }
 
 /**
@@ -80,21 +93,19 @@ export async function createServiceCenter(
  */
 export async function getAllServiceCenters(
 	params?: GetServiceCentersParams
-): Promise<BaseApiResponse<ServiceCenter[]>> {
+): Promise<PaginatedServiceCentersResponse> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/api/v1/service-centers?${queryParams}`, "GET");
+	return apiCall(`/service-centers?${queryParams}`, "GET");
 }
 
 /**
  * Get service center by ID
  * @tag Service Centers
  */
-export async function getServiceCenterById(
-	id: string
-): Promise<BaseApiResponse<ServiceCenter>> {
-	return apiCall(`/api/v1/service-centers/${id}`, "GET");
+export async function getServiceCenterById(id: string): Promise<ServiceCenter> {
+	return apiCall(`/service-centers/${id}`, "GET");
 }
 
 /**
@@ -105,8 +116,8 @@ export async function getServiceCenterById(
 export async function updateServiceCenter(
 	id: string,
 	data: UpdateServiceCenterDto
-): Promise<BaseApiResponse<ServiceCenter>> {
-	return apiCall(`/api/v1/service-centers/${id}`, "PATCH", data);
+): Promise<ServiceCenter> {
+	return apiCall(`/service-centers/${id}`, "PATCH", data);
 }
 
 /**
@@ -117,7 +128,7 @@ export async function updateServiceCenter(
 export async function activateServiceCenter(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/service-centers/${id}/activate`, "POST");
+	return apiCall(`/service-centers/${id}/activate`, "POST");
 }
 
 /**
@@ -128,5 +139,5 @@ export async function activateServiceCenter(
 export async function deactivateServiceCenter(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/api/v1/service-centers/${id}/deactivate`, "POST");
+	return apiCall(`/service-centers/${id}/deactivate`, "POST");
 }

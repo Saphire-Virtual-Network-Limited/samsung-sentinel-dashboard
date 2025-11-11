@@ -18,6 +18,7 @@ import {
 	DropdownItem,
 	Select,
 	SelectItem,
+	Textarea,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -38,7 +39,16 @@ import {
 	Building2,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { showToast } from "@/lib";
+import {
+	showToast,
+	getAllRepairStores,
+	createRepairStore,
+	updateRepairStore,
+	activateRepairStore,
+	deactivateRepairStore,
+	type RepairStore,
+} from "@/lib";
+import useSWR from "swr";
 
 interface RepairCenter {
 	id: string;
@@ -58,26 +68,27 @@ interface RepairCenter {
 }
 
 const columns: ColumnDef[] = [
-	{ name: "Repair Center", uid: "name", sortable: true },
+	{ name: "Repair Store", uid: "name", sortable: true },
 	{ name: "Location", uid: "location", sortable: true },
-	{ name: "Service Centers", uid: "serviceCentersCount", sortable: true },
-	{ name: "Total Repairs", uid: "totalRepairs", sortable: true },
-	{ name: "Monthly Revenue", uid: "monthlyRevenue", sortable: true },
+	{ name: "Contact", uid: "contact", sortable: false },
+	{ name: "Service Centers", uid: "service_centers_count", sortable: true },
+	{ name: "Bank Details", uid: "bank", sortable: false },
 	{ name: "Status", uid: "status", sortable: true },
-	{ name: "Created", uid: "createdAt", sortable: true },
+	{ name: "Created", uid: "created_at", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
 const statusOptions = [
-	{ name: "Active", uid: "active" },
-	{ name: "Inactive", uid: "inactive" },
-	{ name: "Suspended", uid: "suspended" },
+	{ name: "Active", uid: "ACTIVE" },
+	{ name: "Inactive", uid: "INACTIVE" },
+	{ name: "Suspended", uid: "SUSPENDED" },
 ];
 
-const statusColorMap = {
-	active: "success" as const,
-	inactive: "default" as const,
-	suspended: "danger" as const,
+const statusColorMap: Record<string, "success" | "default" | "danger"> = {
+	ACTIVE: "success" as const,
+	INACTIVE: "default" as const,
+	SUSPENDED: "danger" as const,
+	DISABLED: "danger" as const,
 };
 
 export default function AdminRepairCentersView() {
@@ -92,112 +103,84 @@ export default function AdminRepairCentersView() {
 		onClose: onCreateModalClose,
 	} = useDisclosure();
 
+	const {
+		isOpen: isEditModalOpen,
+		onOpen: onEditModalOpen,
+		onClose: onEditModalClose,
+	} = useDisclosure();
+
 	// Form states
 	const [formData, setFormData] = useState({
 		name: "",
-		address: "",
-		state: "",
-		lga: "",
-		phoneNumber: "",
 		email: "",
+		phone: "",
+		description: "",
+		location: "",
+		account_name: "",
+		account_number: "",
+		bank_name: "",
 	});
-	const [isCreating, setIsCreating] = useState(false);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Filter and selection states (pagination/sorting handled by GenericTable)
+	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
+	const [locationFilter, setLocationFilter] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+	const [page, setPage] = useState(1);
+	const [limit, setLimit] = useState(25);
 
-	// Mock data
-	const repairCenters: RepairCenter[] = useMemo(
-		() => [
-			{
-				id: "rc_001",
-				name: "Sapphire Repair Center Lagos",
-				address: "Plot 15, Admiralty Way, Lekki Phase 1",
-				state: "Lagos",
-				lga: "Eti-Osa",
-				phoneNumber: "+234-903-123-4567",
-				email: "lagos@sapphire-repair.com",
-				serviceCentersCount: 12,
-				totalRepairs: 2450,
-				monthlyRevenue: 15750000,
-				status: "active" as const,
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-01-15T10:30:00Z",
-				lastUpdatedAt: "2024-12-20T14:45:00Z",
-			},
-			{
-				id: "rc_002",
-				name: "TechFix Repair Center Abuja",
-				address: "Suite 203, Central Business District",
-				state: "FCT",
-				lga: "Abuja Municipal",
-				phoneNumber: "+234-803-987-6543",
-				email: "abuja@techfix-repair.com",
-				serviceCentersCount: 8,
-				totalRepairs: 1890,
-				monthlyRevenue: 12300000,
-				status: "active" as const,
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-02-10T09:15:00Z",
-				lastUpdatedAt: "2024-12-19T16:20:00Z",
-			},
-			{
-				id: "rc_003",
-				name: "Mobile Masters Repair Center Kano",
-				address: "No. 45, IBB Way, Nassarawa GRA",
-				state: "Kano",
-				lga: "Nassarawa",
-				phoneNumber: "+234-703-555-7890",
-				email: "kano@mobilemasters-repair.com",
-				serviceCentersCount: 6,
-				totalRepairs: 1234,
-				monthlyRevenue: 8500000,
-				status: "active" as const,
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-03-05T11:45:00Z",
-				lastUpdatedAt: "2024-12-18T13:30:00Z",
-			},
-			{
-				id: "rc_004",
-				name: "Smart Device Repair Center Port Harcourt",
-				address: "KM 5, East-West Road, GRA Phase 2",
-				state: "Rivers",
-				lga: "Port Harcourt",
-				phoneNumber: "+234-813-444-2222",
-				email: "portharcourt@smartdevice-repair.com",
-				serviceCentersCount: 4,
-				totalRepairs: 890,
-				monthlyRevenue: 6200000,
-				status: "suspended" as const,
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-04-12T08:20:00Z",
-				lastUpdatedAt: "2024-12-15T10:10:00Z",
-			},
+	// Fetch repair stores
+	const {
+		data: repairStoresData,
+		mutate,
+		isLoading,
+	} = useSWR(
+		[
+			"repair-stores",
+			page,
+			limit,
+			filterValue,
+			locationFilter,
+			Array.from(statusFilter)[0],
 		],
-		[]
+		() =>
+			getAllRepairStores({
+				page,
+				limit,
+				search: filterValue || undefined,
+				location: locationFilter || undefined,
+				status: Array.from(statusFilter)[0] as any,
+			})
 	);
+
+	const repairStores = useMemo(
+		() => repairStoresData?.data || [],
+		[repairStoresData]
+	);
+	const total = repairStoresData?.total || 0;
+	const totalPages = repairStoresData?.totalPages || 1;
 
 	// Statistics
 	const stats = useMemo(
 		() => ({
-			totalCenters: repairCenters.length,
-			activeCenters: repairCenters.filter((c) => c.status === "active").length,
-			totalServiceCenters: repairCenters.reduce(
-				(sum, c) => sum + c.serviceCentersCount,
+			totalCenters: total,
+			activeCenters: repairStores.filter((s) => s.status === "ACTIVE").length,
+			totalServiceCenters: repairStores.reduce(
+				(sum, s) => sum + (s.service_centers_count || 0),
 				0
 			),
-			totalRevenue: repairCenters.reduce((sum, c) => sum + c.monthlyRevenue, 0),
+			totalRevenue: 0, // TODO: Calculate from actual revenue data when available
 		}),
-		[repairCenters]
+		[repairStores, total]
 	);
 
 	// Handlers
-	const handleCreateRepairCenter = async () => {
-		const { name, address, state, lga, phoneNumber, email } = formData;
+	const handleCreateRepairStore = async () => {
+		const { name, email, phone, location } = formData;
 
-		if (!name || !address || !state || !lga || !phoneNumber || !email) {
+		if (!name || !email || !phone || !location) {
 			showToast({
 				message: "Please fill in all required fields",
 				type: "error",
@@ -205,27 +188,115 @@ export default function AdminRepairCentersView() {
 			return;
 		}
 
-		setIsCreating(true);
+		setIsSubmitting(true);
 		try {
-			// API call to create repair center
+			await createRepairStore(formData);
 			showToast({
-				message: "Repair center created successfully",
+				message: "Repair store created successfully",
 				type: "success",
 			});
-			onCreateModalClose();
 			setFormData({
 				name: "",
-				address: "",
-				state: "",
-				lga: "",
-				phoneNumber: "",
 				email: "",
+				phone: "",
+				description: "",
+				location: "",
+				account_name: "",
+				account_number: "",
+				bank_name: "",
 			});
-		} catch (error) {
-			showToast({ message: "Failed to create repair center", type: "error" });
+			onCreateModalClose();
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to create repair store",
+				type: "error",
+			});
 		} finally {
-			setIsCreating(false);
+			setIsSubmitting(false);
 		}
+	};
+
+	const handleEditRepairStore = async () => {
+		if (!editingId) return;
+
+		const { name, email, phone, location } = formData;
+
+		if (!name || !email || !phone || !location) {
+			showToast({
+				message: "Please fill in all required fields",
+				type: "error",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			await updateRepairStore(editingId, formData);
+			showToast({
+				message: "Repair store updated successfully",
+				type: "success",
+			});
+			setFormData({
+				name: "",
+				email: "",
+				phone: "",
+				description: "",
+				location: "",
+				account_name: "",
+				account_number: "",
+				bank_name: "",
+			});
+			setEditingId(null);
+			onEditModalClose();
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update repair store",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleToggleStatus = async (id: string, currentStatus: string) => {
+		try {
+			if (currentStatus === "ACTIVE") {
+				await deactivateRepairStore(id);
+				showToast({
+					message: "Repair store deactivated successfully",
+					type: "success",
+				});
+			} else {
+				await activateRepairStore(id);
+				showToast({
+					message: "Repair store activated successfully",
+					type: "success",
+				});
+			}
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to toggle repair store status",
+				type: "error",
+			});
+		}
+	};
+
+	const handleEditClick = (store: RepairStore) => {
+		setEditingId(store.id);
+		setFormData({
+			name: store.name,
+			email: store.email,
+			phone: store.phone,
+			description: store.description || "",
+			location: store.location,
+			account_name: store.account_name || "",
+			account_number: store.account_number || "",
+			bank_name: store.bank_name || "",
+		});
+		onEditModalOpen();
 	};
 
 	const handleSelectionChange = (keys: any) => {
@@ -251,7 +322,7 @@ export default function AdminRepairCentersView() {
 	};
 
 	// Render cell content
-	const renderCell = (item: RepairCenter, columnKey: React.Key) => {
+	const renderCell = (item: RepairStore, columnKey: React.Key) => {
 		switch (columnKey) {
 			case "name":
 				return (
@@ -265,33 +336,31 @@ export default function AdminRepairCentersView() {
 			case "location":
 				return (
 					<div className="flex flex-col">
-						<p className="text-bold text-sm">
-							{item.state}, {item.lga}
-						</p>
-						<p className="text-sm text-default-400">{item.address}</p>
+						<p className="text-bold text-sm">{item.location}</p>
 					</div>
 				);
-			case "serviceCentersCount":
+			case "contact":
+				return (
+					<div className="flex flex-col">
+						<p className="text-bold text-sm">{item.phone}</p>
+						<p className="text-sm text-default-400">{item.email}</p>
+					</div>
+				);
+			case "service_centers_count":
 				return (
 					<div className="flex items-center gap-2">
 						<Building2 size={16} className="text-default-400" />
-						<span className="text-sm">{item.serviceCentersCount}</span>
+						<span className="text-sm">{item.service_centers_count || 0}</span>
 					</div>
 				);
-			case "totalRepairs":
+			case "bank":
 				return (
-					<div className="flex items-center gap-2">
-						<Wrench size={16} className="text-default-400" />
-						<span className="text-sm">
-							{item.totalRepairs.toLocaleString()}
-						</span>
+					<div className="flex flex-col">
+						<p className="text-bold text-sm">{item.account_name || "N/A"}</p>
+						<p className="text-sm text-default-400">
+							{item.account_number || "N/A"} - {item.bank_name || "N/A"}
+						</p>
 					</div>
-				);
-			case "monthlyRevenue":
-				return (
-					<span className="text-sm font-semibold text-success">
-						{formatCurrency(item.monthlyRevenue)}
-					</span>
 				);
 			case "status":
 				return (
@@ -304,10 +373,10 @@ export default function AdminRepairCentersView() {
 						{item.status}
 					</Chip>
 				);
-			case "createdAt":
+			case "created_at":
 				return (
 					<span className="text-sm">
-						{new Date(item.createdAt).toLocaleDateString()}
+						{new Date(item.created_at).toLocaleDateString()}
 					</span>
 				);
 			case "actions":
@@ -332,26 +401,22 @@ export default function AdminRepairCentersView() {
 								<DropdownItem
 									key="edit"
 									startContent={<Edit size={16} />}
-									onPress={() => {
-										/* Handle edit */
-									}}
+									onPress={() => handleEditClick(item)}
 								>
 									Edit Center
 								</DropdownItem>
 								<DropdownItem
 									key="toggle"
 									startContent={
-										item.status === "active" ? (
+										item.status === "ACTIVE" ? (
 											<PowerOff size={16} />
 										) : (
 											<Power size={16} />
 										)
 									}
-									onPress={() => {
-										/* Handle toggle status */
-									}}
+									onPress={() => handleToggleStatus(item.id, item.status)}
 								>
-									{item.status === "active" ? "Suspend" : "Activate"}
+									{item.status === "ACTIVE" ? "Deactivate" : "Activate"}
 								</DropdownItem>
 								<DropdownItem
 									key="delete"
@@ -369,7 +434,7 @@ export default function AdminRepairCentersView() {
 					</div>
 				);
 			default:
-				return <span>{String(item[columnKey as keyof RepairCenter])}</span>;
+				return <span>{String(item[columnKey as keyof RepairStore])}</span>;
 		}
 	};
 
@@ -440,12 +505,12 @@ export default function AdminRepairCentersView() {
 			</div>
 
 			{/* Repair Centers Table */}
-			<GenericTable<RepairCenter>
+			<GenericTable<RepairStore>
 				columns={columns}
-				data={repairCenters}
-				allCount={repairCenters.length}
-				exportData={repairCenters}
-				isLoading={false}
+				data={repairStores}
+				allCount={repairStores.length}
+				exportData={repairStores}
+				isLoading={isLoading}
 				filterValue={filterValue}
 				onFilterChange={setFilterValue}
 				statusOptions={statusOptions}
@@ -453,14 +518,14 @@ export default function AdminRepairCentersView() {
 				onStatusChange={setStatusFilter}
 				statusColorMap={statusColorMap}
 				showStatus={true}
-				sortDescriptor={{ column: "createdAt", direction: "descending" }}
+				sortDescriptor={{ column: "created_at", direction: "descending" }}
 				onSortChange={() => {}}
-				page={1}
-				pages={1}
-				onPageChange={() => {}}
+				page={page}
+				pages={totalPages}
+				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
-				hasNoRecords={repairCenters.length === 0}
+				hasNoRecords={repairStores.length === 0}
 				searchPlaceholder="Search repair centers by name, location, or email..."
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}
@@ -497,55 +562,54 @@ export default function AdminRepairCentersView() {
 									<Input
 										label="Phone Number"
 										placeholder="e.g., +234-903-123-4567"
-										value={formData.phoneNumber}
+										value={formData.phone}
 										onValueChange={(value) =>
-											setFormData({ ...formData, phoneNumber: value })
+											setFormData({ ...formData, phone: value })
 										}
 										isRequired
 									/>
-									<Select
-										label="State"
-										placeholder="Select state"
-										selectedKeys={formData.state ? [formData.state] : []}
-										onSelectionChange={(keys) =>
-											setFormData({
-												...formData,
-												state: Array.from(keys)[0] as string,
-											})
-										}
-										isRequired
-									>
-										<SelectItem key="Lagos" value="Lagos">
-											Lagos
-										</SelectItem>
-										<SelectItem key="FCT" value="FCT">
-											FCT (Abuja)
-										</SelectItem>
-										<SelectItem key="Kano" value="Kano">
-											Kano
-										</SelectItem>
-										<SelectItem key="Rivers" value="Rivers">
-											Rivers
-										</SelectItem>
-									</Select>
 									<Input
-										label="LGA"
-										placeholder="e.g., Eti-Osa"
-										value={formData.lga}
+										label="Location"
+										placeholder="e.g., Lagos, Nigeria"
+										value={formData.location}
 										onValueChange={(value) =>
-											setFormData({ ...formData, lga: value })
+											setFormData({ ...formData, location: value })
 										}
 										isRequired
+									/>
+									<Input
+										label="Account Name"
+										placeholder="e.g., Sapphire Repairs Ltd"
+										value={formData.account_name}
+										onValueChange={(value) =>
+											setFormData({ ...formData, account_name: value })
+										}
+									/>
+									<Input
+										label="Account Number"
+										placeholder="e.g., 0123456789"
+										value={formData.account_number}
+										onValueChange={(value) =>
+											setFormData({ ...formData, account_number: value })
+										}
+									/>
+									<Input
+										label="Bank Name"
+										placeholder="e.g., First Bank of Nigeria"
+										value={formData.bank_name}
+										onValueChange={(value) =>
+											setFormData({ ...formData, bank_name: value })
+										}
 									/>
 								</div>
-								<Input
-									label="Address"
-									placeholder="e.g., Plot 15, Admiralty Way, Lekki Phase 1"
-									value={formData.address}
+								<Textarea
+									label="Description"
+									placeholder="Enter repair center description..."
+									value={formData.description}
 									onValueChange={(value) =>
-										setFormData({ ...formData, address: value })
+										setFormData({ ...formData, description: value })
 									}
-									isRequired
+									minRows={3}
 								/>
 							</ModalBody>
 							<ModalFooter>
@@ -554,10 +618,106 @@ export default function AdminRepairCentersView() {
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleCreateRepairCenter}
-									isLoading={isCreating}
+									onPress={handleCreateRepairStore}
+									isLoading={isSubmitting}
 								>
 									Create Repair Center
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Edit Repair Center Modal */}
+			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="2xl">
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Edit Repair Center</ModalHeader>
+							<ModalBody>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<Input
+										label="Repair Center Name"
+										placeholder="e.g., Sapphire Repair Center Lagos"
+										value={formData.name}
+										onValueChange={(value) =>
+											setFormData({ ...formData, name: value })
+										}
+										isRequired
+									/>
+									<Input
+										label="Email Address"
+										placeholder="e.g., lagos@sapphire-repair.com"
+										value={formData.email}
+										onValueChange={(value) =>
+											setFormData({ ...formData, email: value })
+										}
+										isRequired
+									/>
+									<Input
+										label="Phone Number"
+										placeholder="e.g., +234-903-123-4567"
+										value={formData.phone}
+										onValueChange={(value) =>
+											setFormData({ ...formData, phone: value })
+										}
+										isRequired
+									/>
+									<Input
+										label="Location"
+										placeholder="e.g., Lagos, Nigeria"
+										value={formData.location}
+										onValueChange={(value) =>
+											setFormData({ ...formData, location: value })
+										}
+										isRequired
+									/>
+									<Input
+										label="Account Name"
+										placeholder="e.g., Sapphire Repairs Ltd"
+										value={formData.account_name}
+										onValueChange={(value) =>
+											setFormData({ ...formData, account_name: value })
+										}
+									/>
+									<Input
+										label="Account Number"
+										placeholder="e.g., 0123456789"
+										value={formData.account_number}
+										onValueChange={(value) =>
+											setFormData({ ...formData, account_number: value })
+										}
+									/>
+									<Input
+										label="Bank Name"
+										placeholder="e.g., First Bank of Nigeria"
+										value={formData.bank_name}
+										onValueChange={(value) =>
+											setFormData({ ...formData, bank_name: value })
+										}
+									/>
+								</div>
+								<Textarea
+									label="Description"
+									placeholder="Enter repair center description..."
+									value={formData.description}
+									onValueChange={(value) =>
+										setFormData({ ...formData, description: value })
+									}
+									minRows={3}
+								/>
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={onEditModalClose}>
+									Cancel
+								</Button>
+								<Button
+									color="primary"
+									onPress={handleEditRepairStore}
+									isLoading={isSubmitting}
+								>
+									Update Repair Center
 								</Button>
 							</ModalFooter>
 						</>

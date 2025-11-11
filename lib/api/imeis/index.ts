@@ -63,9 +63,18 @@ export interface ValidateImeiDto {
 }
 
 export interface ValidateImeiResponse {
-	valid: boolean;
-	imei?: Imei;
-	message: string;
+	imei_id: string;
+	imei: string;
+	exists: boolean;
+	product_id: string;
+	product_name: string;
+	supplier: string;
+	expiry_date: string;
+	is_used: boolean;
+	is_expired: boolean;
+	is_eligible: boolean;
+	eligibility_reason: string;
+	repair_cost?: number; // Optional: may be included in future API updates
 }
 
 export interface GetImeisParams {
@@ -138,7 +147,7 @@ export async function getImeiUploads(
 export async function getImeiUploadById(
 	id: string
 ): Promise<ImeiUploadWithDetails> {
-	return apiCall(`/api/v1/imeis/uploads/${id}`, "GET");
+	return apiCall(`/imeis/uploads/${id}`, "GET");
 }
 
 /**
@@ -162,7 +171,7 @@ export async function getAllImeis(
  */
 export async function validateImei(
 	data: ValidateImeiDto
-): Promise<BaseApiResponse<ValidateImeiResponse>> {
+): Promise<ValidateImeiResponse> {
 	return apiCall("/imeis/validate", "POST", data);
 }
 
