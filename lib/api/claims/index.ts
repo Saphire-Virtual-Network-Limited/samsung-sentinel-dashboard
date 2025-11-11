@@ -12,8 +12,10 @@ import {
 // Types & Interfaces
 export interface Claim {
 	id: string;
+	created_at: string;
+	updated_at: string;
 	claim_number: string;
-	imei: string;
+	imei_id: string;
 	product_id: string;
 	service_center_id: string;
 	engineer_id: string;
@@ -21,22 +23,77 @@ export interface Claim {
 	customer_last_name: string;
 	customer_phone: string;
 	customer_email?: string;
-	repair_price: number;
+	repair_price: string | number;
 	description?: string;
 	status: ClaimStatus;
 	payment_status: PaymentStatus;
-	approved_by_id?: string;
-	approved_at?: string;
-	approval_notes?: string;
-	rejected_reason?: string;
-	rejected_notes?: string;
+	rejection_reason?: string;
 	completed_at?: string;
-	completion_notes?: string;
-	authorized_by_id?: string;
+	completed_by_id?: string;
+	approved_at?: string;
+	approved_by_id?: string;
+	rejected_at?: string;
+	rejected_by_id?: string;
 	authorized_at?: string;
-	authorization_notes?: string;
-	createdAt: string;
-	updatedAt: string;
+	authorized_by_id?: string;
+	paid_at?: string;
+	paid_by_id?: string;
+	transaction_id?: string;
+	reference_id?: string;
+	// Populated relations when fetching single claim
+	imei?: {
+		id: string;
+		imei: string;
+		supplier: string;
+		expiry_date: string;
+		is_used: boolean;
+		product_id: string;
+	};
+	product?: {
+		id: string;
+		name: string;
+		sapphire_cost: string;
+		repair_cost: string;
+		status: string;
+	};
+	service_center?: {
+		id: string;
+		name: string;
+		email: string;
+		phone: string;
+		state: string;
+		city: string;
+		address: string;
+		repair_store_id: string;
+		repair_store?: any;
+	};
+	engineer?: {
+		id: string;
+		user_id: string;
+		service_center_id: string;
+		description?: string;
+		user?: {
+			id: string;
+			name: string;
+			email: string;
+			phone: string;
+			role: string;
+		};
+	};
+	timeline?: Array<{
+		id: string;
+		created_at: string;
+		event: string;
+		details: any;
+		performed_by_id: string;
+		performed_at: string;
+		performed_by?: {
+			id: string;
+			name: string;
+			email: string;
+			role: string;
+		};
+	}>;
 }
 
 export interface CreateClaimDto {

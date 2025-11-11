@@ -122,47 +122,49 @@ export default function AccessLayoutView({
 	);
 
 	const isDisabled = false; // userResponse?.role === "SALES";
-	useEffect(() => {
-		const fetchProducts = async () => {
-			try {
-				const response = await getAllProducts({ page: 1, limit: 1000 });
-				const productsList = response.data.map((product) => ({
-					label: product.name,
-					value: product.id,
-				}));
-				setProducts(productsList || []);
 
-				const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
-				const lastSelectedName = localStorage.getItem(
-					"Sapphire-Credit-Product-Name"
-				);
+	// Removed fetchProducts - no longer needed
+	// useEffect(() => {
+	// 	const fetchProducts = async () => {
+	// 		try {
+	// 			const response = await getAllProducts({ page: 1, limit: 1000 });
+	// 			const productsList = response.data.map((product) => ({
+	// 				label: product.name,
+	// 				value: product.id,
+	// 			}));
+	// 			setProducts(productsList || []);
 
-				if (
-					lastSelectedId &&
-					lastSelectedName &&
-					productsList?.some(
-						(p: { label: string; value: string }) => p.value === lastSelectedId
-					)
-				) {
-					setSelectedProduct([lastSelectedId]);
-					await handleProductSelect(lastSelectedId, lastSelectedName);
-				} else if (productsList && productsList.length > 0) {
-					setSelectedProduct([productsList[0].value]);
-					await handleProductSelect(
-						productsList[0].value,
-						productsList[0].label
-					);
-				}
-			} catch (error) {
-				console.error("Error fetching products:", error);
-				setProducts([]);
-			} finally {
-				setLoading(false);
-			}
-		};
+	// 			const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
+	// 			const lastSelectedName = localStorage.getItem(
+	// 				"Sapphire-Credit-Product-Name"
+	// 			);
 
-		fetchProducts();
-	}, [handleProductSelect]);
+	// 			if (
+	// 				lastSelectedId &&
+	// 				lastSelectedName &&
+	// 				productsList?.some(
+	// 					(p: { label: string; value: string }) => p.value === lastSelectedId
+	// 				)
+	// 			) {
+	// 				setSelectedProduct([lastSelectedId]);
+	// 				await handleProductSelect(lastSelectedId, lastSelectedName);
+	// 			} else if (productsList && productsList.length > 0) {
+	// 				setSelectedProduct([productsList[0].value]);
+	// 				await handleProductSelect(
+	// 					productsList[0].value,
+	// 					productsList[0].label
+	// 				);
+	// 			}
+	// 		} catch (error) {
+	// 			console.error("Error fetching products:", error);
+	// 			setProducts([]);
+	// 		} finally {
+	// 			setLoading(false);
+	// 		}
+	// 	};
+
+	// 	fetchProducts();
+	// }, [handleProductSelect]);
 
 	return (
 		<SidebarProvider>

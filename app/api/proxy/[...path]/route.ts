@@ -58,7 +58,7 @@ async function proxyRequest(
 	const searchParams = request.nextUrl.searchParams.toString();
 	const fullUrl = searchParams ? `${url}?${searchParams}` : url;
 
-	// Get request body if not GET
+	// Get request body if not GET/DELETE
 	let body = undefined;
 	let parsedBody = undefined;
 	if (method !== "GET" && method !== "DELETE") {
@@ -80,11 +80,13 @@ async function proxyRequest(
 		// Forward headers
 		const headers: HeadersInit = {};
 		request.headers.forEach((value, key) => {
-			// Skip host and other headers that shouldn't be forwarded
+			const lowerKey = key.toLowerCase();
+			// Skip headers that shouldn't be forwarded
 			if (
-				!key.toLowerCase().startsWith("host") &&
-				!key.toLowerCase().startsWith("connection") &&
-				!key.toLowerCase().startsWith("content-length")
+				lowerKey !== "host" &&
+				lowerKey !== "connection" &&
+				lowerKey !== "content-length" &&
+				lowerKey !== "accept-encoding" // KEY FIX: Don't request compressed response
 			) {
 				headers[key] = value;
 			}
@@ -95,11 +97,10 @@ async function proxyRequest(
 			method,
 			headers,
 			body,
-			// Add timeout
-			signal: AbortSignal.timeout(30000), // 30 seconds
+			signal: AbortSignal.timeout(30000),
 		});
 
-		// Get response body
+		// Get response body as text (fetch automatically decompresses)
 		const responseData = await response.text();
 		let parsedResponse = undefined;
 		try {
@@ -111,7 +112,7 @@ async function proxyRequest(
 		// Log response on server console
 		console.log(
 			`[PROXY RESPONSE ${response.status}]`,
-			parsedResponse || responseData
+			parsedResponse || responseData.substring(0, 200)
 		);
 
 		// If debug mode is enabled, add debug info to response
@@ -123,41 +124,33 @@ async function proxyRequest(
 				responseStatus: response.status,
 				timestamp: new Date().toISOString(),
 			};
-
-			// Create response with debug info
-			const nextResponse = NextResponse.json(parsedResponse, {
-				status: response.status,
-				statusText: response.statusText,
-			});
-
-			// Add CORS headers
-			nextResponse.headers.set("Access-Control-Allow-Origin", "*");
-			nextResponse.headers.set(
-				"Access-Control-Allow-Methods",
-				"GET, POST, PUT, PATCH, DELETE, OPTIONS"
-			);
-			nextResponse.headers.set(
-				"Access-Control-Allow-Headers",
-				"Content-Type, Authorization, X-Requested-With"
-			);
-
-			return nextResponse;
 		}
 
-		// Create response with CORS headers (no debug)
-		const nextResponse = new NextResponse(responseData, {
-			status: response.status,
-			statusText: response.statusText,
-		});
+		// Create response - let Next.js handle it properly
+		const nextResponse = parsedResponse
+			? NextResponse.json(parsedResponse, {
+					status: response.status,
+					statusText: response.statusText,
+			  })
+			: new NextResponse(responseData, {
+					status: response.status,
+					statusText: response.statusText,
+					headers: {
+						"Content-Type":
+							response.headers.get("content-type") || "text/plain",
+					},
+			  });
 
-		// Copy response headers (but exclude compression-related headers to avoid decoding errors)
+		// Copy safe response headers
 		response.headers.forEach((value, key) => {
 			const lowerKey = key.toLowerCase();
-			// Skip compression and transfer encoding headers
+			// Only copy specific safe headers
 			if (
-				lowerKey !== "content-encoding" &&
-				lowerKey !== "content-length" &&
-				lowerKey !== "transfer-encoding"
+				lowerKey === "content-type" ||
+				lowerKey === "cache-control" ||
+				lowerKey === "etag" ||
+				lowerKey === "last-modified" ||
+				lowerKey.startsWith("x-")
 			) {
 				nextResponse.headers.set(key, value);
 			}

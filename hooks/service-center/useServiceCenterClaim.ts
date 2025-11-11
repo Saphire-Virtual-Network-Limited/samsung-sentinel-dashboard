@@ -1,114 +1,31 @@
 import useSWR, { mutate } from "swr";
+import {
+	getClaimById,
+	completeClaim,
+	approveClaim,
+	rejectClaim,
+	authorizePayment,
+	type Claim,
+	type CompleteClaimDto,
+	type ApproveClaimDto,
+	type RejectClaimDto,
+	type AuthorizePaymentDto,
+} from "@/lib/api/claims";
 
-export interface ServiceCenterClaim {
-	id: string;
-	imei: string;
-	customerName: string;
-	customerPhone: string;
-	customerEmail?: string;
-	customerAddress?: string;
-	deviceBrand: string;
-	deviceModel: string;
-	devicePrice?: number;
-	faultType: string;
-	faultDescription?: string;
-	repairCost?: number;
-	dateSubmitted: string;
-	dateUpdated?: string;
-	status: string;
-	deviceStatus?: string;
-	engineer?: string;
-	engineerPhone?: string;
-	estimatedCompletionDate?: string;
-	warrantyStartDate?: string;
-	warrantyEndDate?: string;
-	partsRequired?: any[];
-	repairHistory?: any[];
-	statusHistory?: any[];
-	repairStatus?: "pending" | "awaiting-parts" | "received-device" | "completed";
-}
+export type { Claim as ServiceCenterClaim } from "@/lib/api/claims";
 
-// Mock data fetcher
-const fetcher = (url: string): Promise<ServiceCenterClaim> => {
-	return Promise.resolve({
-		id: "SC001",
-		imei: "123456789012345",
-		customerName: "Jane Smith",
-		customerPhone: "+234802345678",
-		customerEmail: "jane.smith@email.com",
-		customerAddress: "456 Market Street, Abuja, Nigeria",
-		deviceBrand: "Samsung",
-		deviceModel: "Galaxy S22",
-		devicePrice: 450000,
-		faultType: "Battery Drain",
-		faultDescription:
-			"Device battery drains quickly even when not in use. Battery life reduced to 2-3 hours.",
-		dateSubmitted: "2024-01-18T09:15:00Z",
-		dateUpdated: "2024-01-18T16:30:00Z",
-		status: "in-progress",
-		deviceStatus: "Under Diagnosis",
-		repairCost: 35000,
-		engineer: "Eng. Sarah Johnson",
-		engineerPhone: "+234901234567",
-		estimatedCompletionDate: "2024-01-22T17:00:00Z",
-		warrantyStartDate: "2023-06-15T00:00:00Z",
-		warrantyEndDate: "2024-06-15T00:00:00Z",
-		partsRequired: [
-			{
-				partName: "Battery",
-				partCode: "SM-G996B-BAT",
-				cost: 25000,
-				availability: "In Stock",
-			},
-			{
-				partName: "Charging Port",
-				partCode: "SM-G996B-PORT",
-				cost: 8000,
-				availability: "Ordered",
-			},
-		],
-		repairStatus: "awaiting-parts" as const,
-		repairHistory: [
-			{
-				id: "REP001",
-				date: "2024-01-18T10:00:00Z",
-				action: "Initial Diagnosis",
-				engineer: "Eng. Sarah Johnson",
-				findings: "Battery health at 65%, charging port shows signs of wear",
-				status: "completed",
-			},
-			{
-				id: "REP002",
-				date: "2024-01-18T14:30:00Z",
-				action: "Parts Assessment",
-				engineer: "Eng. Sarah Johnson",
-				findings: "Battery replacement required, charging port needs cleaning",
-				status: "completed",
-			},
-		],
-		statusHistory: [
-			{
-				id: "ST001",
-				date: "2024-01-18T09:15:00Z",
-				status: "submitted",
-				user: "Service Center Staff",
-				notes: "Claim submitted by customer",
-			},
-			{
-				id: "ST002",
-				date: "2024-01-18T10:00:00Z",
-				status: "in-progress",
-				user: "Eng. Sarah Johnson",
-				notes: "Diagnosis started",
-			},
-		],
-	});
+// Fetcher function that calls the real API
+const fetcher = async (claimId: string): Promise<Claim> => {
+	const response = await getClaimById(claimId);
+	// API returns claim object directly (not wrapped in BaseApiResponse)
+	// Type definitions say BaseApiResponse<Claim> but actual API returns Claim
+	return response as unknown as Claim;
 };
 
 export const useServiceCenterClaim = (claimId: string) => {
 	const { data, error, mutate, isLoading } = useSWR(
 		claimId ? `/api/service-center/claims/${claimId}` : null,
-		fetcher
+		() => fetcher(claimId)
 	);
 
 	return {
@@ -120,81 +37,56 @@ export const useServiceCenterClaim = (claimId: string) => {
 };
 
 export const useServiceCenterClaimActions = () => {
-	const updateStatus = async (
+	/**
+	 * Mark claim as completed (Engineer only)
+	 */
+	const markAsCompleted = async (claimId: string, data?: CompleteClaimDto) => {
+		const response = await completeClaim(claimId, data);
+		// Refresh the claim data
+		await mutate(`/api/service-center/claims/${claimId}`);
+		return response;
+	};
+
+	/**
+	 * Approve claim (Samsung Partner only)
+	 */
+	const approveClaim_Action = async (
 		claimId: string,
-		status: string,
-		notes: string
+		data?: ApproveClaimDto
 	) => {
-		// API call to update claim status (mock)
-		// update SWR cache for the claim
-		const key = `/api/service-center/claims/${claimId}`;
-		await mutate(
-			key,
-			(current: any) => {
-				if (!current) return current;
-				const historyEntry = {
-					id: `ST${Date.now()}`,
-					date: new Date().toISOString(),
-					status,
-					user: "Service Center Staff",
-					notes,
-				};
-				return {
-					...current,
-					status,
-					statusHistory: [historyEntry, ...(current.statusHistory || [])],
-				};
-			},
-			false
-		);
-		return Promise.resolve();
+		const response = await approveClaim(claimId, data);
+		// Refresh the claim data
+		await mutate(`/api/service-center/claims/${claimId}`);
+		return response;
 	};
 
-	type Doc = {
-		id: string;
-		name: string;
-		type?: string;
-		url?: string;
+	/**
+	 * Reject claim (Samsung Partner only)
+	 */
+	const rejectClaim_Action = async (claimId: string, data: RejectClaimDto) => {
+		const response = await rejectClaim(claimId, data);
+		// Refresh the claim data
+		await mutate(`/api/service-center/claims/${claimId}`);
+		return response;
 	};
 
-	// Document functions removed - focusing on repair status management
-
-	const updateRepairStatus = async (
-		claimId: string, 
-		newRepairStatus: "pending" | "awaiting-parts" | "received-device" | "completed",
-		notes?: string
+	/**
+	 * Authorize payment (Samsung Partner only)
+	 */
+	const authorizePayment_Action = async (
+		claimId: string,
+		data?: AuthorizePaymentDto
 	) => {
-		// API call to update repair status (mocked)
-		const key = `/api/service-center/claims/${claimId}`;
-		
-		await mutate(
-			key,
-			(current: any) => {
-				if (!current) return current;
-				
-				const historyEntry = {
-					id: `ST${Date.now()}`,
-					date: new Date().toISOString(),
-					status: `repair-${newRepairStatus}`,
-					user: "Service Center Staff",
-					notes: notes || `Repair status updated to ${newRepairStatus.replace('-', ' ')}`,
-				};
-				
-				return {
-					...current,
-					repairStatus: newRepairStatus,
-					dateUpdated: new Date().toISOString(),
-					statusHistory: [historyEntry, ...(current.statusHistory || [])],
-				};
-			},
-			false
-		);
-
-		return Promise.resolve();
+		const response = await authorizePayment(claimId, data);
+		// Refresh the claim data
+		await mutate(`/api/service-center/claims/${claimId}`);
+		return response;
 	};
 
 	return {
-		updateStatus,
-		updateRepairStatus,
+		markAsCompleted,
+		approveClaim: approveClaim_Action,
+		rejectClaim: rejectClaim_Action,
+		authorizePayment: authorizePayment_Action,
 	};
 };

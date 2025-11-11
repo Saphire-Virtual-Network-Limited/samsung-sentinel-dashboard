@@ -178,7 +178,7 @@ const CreateClaimView = () => {
 		// Note: deviceRepairPrice will be 0 if not provided by API - backend should handle default value
 		setIsCreating(true);
 		try {
-			await createClaim({
+			const response = await createClaim({
 				imei: claimData.imei,
 				customer_first_name: claimData.firstName,
 				customer_last_name: claimData.lastName,
@@ -187,8 +187,14 @@ const CreateClaimView = () => {
 				repair_price: claimData.deviceRepairPrice,
 				description: claimData.description,
 			});
-			showToast({ type: "success", message: "Claim created successfully" });
-			router.push("/access/service-center/claims/pending");
+
+			showToast({
+				type: "success",
+				message: `Claim ${response.data.claim_number} created successfully`,
+			});
+
+			// Navigate to the claim detail view
+			router.push(`/access/service-center/claims/${response.data.id}`);
 		} catch (error: any) {
 			showToast({
 				type: "error",
