@@ -259,16 +259,15 @@ const ViewClaimDetailView = () => {
 			{/* Header */}
 			<div className="mb-6">
 				<div className="flex items-center gap-4 mb-4">
-				<Button isIconOnly variant="light" onPress={() => router.back()}>
-					<ArrowLeft size={20} />
-				</Button>
-				<div>
-					<h1 className="text-2xl font-bold text-gray-900">
-						Claim Details
-					</h1>
-					<p className="text-gray-600">Claim ID: {claim?.claim_number}</p>
-				</div>
-			</div>				{/* Status and Actions */}
+					<Button isIconOnly variant="light" onPress={() => router.back()}>
+						<ArrowLeft size={20} />
+					</Button>
+					<div>
+						<h1 className="text-2xl font-bold text-gray-900">Claim Details</h1>
+						<p className="text-gray-600">Claim ID: {claim?.claim_number}</p>
+					</div>
+				</div>{" "}
+				{/* Status and Actions */}
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-4">
 						<Chip
@@ -458,9 +457,10 @@ const ViewClaimDetailView = () => {
 											</p>
 											{entry.details && (
 												<p className="text-sm text-gray-700 mt-1">
-													{typeof entry.details === 'string' 
-														? entry.details 
-														: entry.details.notes || JSON.stringify(entry.details)}
+													{typeof entry.details === "string"
+														? entry.details
+														: entry.details.notes ||
+														  JSON.stringify(entry.details)}
 												</p>
 											)}
 											<div className="flex items-center gap-2 mt-2">
@@ -538,9 +538,10 @@ const ViewClaimDetailView = () => {
 													</p>
 													{status.details && (
 														<p className="text-xs text-gray-500">
-															{typeof status.details === 'string' 
-																? status.details 
-																: status.details.notes || JSON.stringify(status.details)}
+															{typeof status.details === "string"
+																? status.details
+																: status.details.notes ||
+																  JSON.stringify(status.details)}
 														</p>
 													)}
 													<p className="text-xs text-gray-400 mt-1">
