@@ -58,7 +58,6 @@ const paymentColorMap = {
 	unpaid: "warning" as const,
 };
 
-
 export default function RepairStoreClaimsView() {
 	const router = useRouter();
 
@@ -98,7 +97,10 @@ export default function RepairStoreClaimsView() {
 		const pending = claims.filter((c) => c.status === "pending").length;
 		const approved = claims.filter((c) => c.status === "approved").length;
 		const paid = claims.filter((c) => c.paymentStatus === "paid").length;
-		const totalAmount = claims.reduce((sum, claim) => sum + claim.repairCost, 0);
+		const totalAmount = claims.reduce(
+			(sum, claim) => sum + claim.repairCost,
+			0
+		);
 
 		return {
 			totalClaims: total,
@@ -349,7 +351,6 @@ export default function RepairStoreClaimsView() {
 							<ModalBody>
 								{selectedClaim && (
 									<div className="space-y-6">
-
 										{/* Customer Information */}
 										<Card>
 											<CardHeader>
@@ -397,9 +398,7 @@ export default function RepairStoreClaimsView() {
 														</p>
 													</div>
 													<div>
-														<p className="text-sm text-gray-600">
-															Repair Cost
-														</p>
+														<p className="text-sm text-gray-600">Repair Cost</p>
 														<p className="font-medium text-lg">
 															{formatCurrency(selectedClaim.repairCost)}
 														</p>
@@ -411,8 +410,9 @@ export default function RepairStoreClaimsView() {
 														<Chip
 															color={
 																selectedClaim.paymentStatus
-																	? paymentColorMap[selectedClaim.paymentStatus] ||
-																	  "default"
+																	? paymentColorMap[
+																			selectedClaim.paymentStatus
+																	  ] || "default"
 																	: "default"
 															}
 															size="sm"
@@ -457,7 +457,9 @@ export default function RepairStoreClaimsView() {
 													</div>
 													{selectedClaim.approvedAt && (
 														<div>
-															<p className="text-sm text-gray-600">Approved At</p>
+															<p className="text-sm text-gray-600">
+																Approved At
+															</p>
 															<p className="font-medium">
 																{formatDate(selectedClaim.approvedAt)}
 															</p>
