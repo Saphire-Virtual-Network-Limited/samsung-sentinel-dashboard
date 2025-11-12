@@ -74,9 +74,18 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 		serviceCenterId: claim.service_center_id,
 		engineerName: claim.engineer?.user?.name || "",
 		completedAt: claim.completed_at || undefined,
+		completedById: claim.completed_by_id || undefined,
 		approvedAt: claim.approved_at || undefined,
+		approvedById: claim.approved_by_id || undefined,
 		rejectedAt: claim.rejected_at || undefined,
+		rejectedById: claim.rejected_by_id || undefined,
 		rejectionReason: claim.rejection_reason || undefined,
+		authorizedAt: claim.authorized_at || undefined,
+		authorizedById: claim.authorized_by_id || undefined,
+		paidAt: claim.paid_at || undefined,
+		paidById: claim.paid_by_id || undefined,
+		transactionId: claim.transaction_id || undefined,
+		referenceId: claim.reference_id || undefined,
 	};
 }
 

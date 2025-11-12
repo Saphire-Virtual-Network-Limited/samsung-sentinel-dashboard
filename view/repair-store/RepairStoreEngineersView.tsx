@@ -41,6 +41,8 @@ const columns: ColumnDef[] = [
 	{ name: "Engineer", uid: "engineer", sortable: true },
 	{ name: "Service Center", uid: "serviceCenter", sortable: true },
 	{ name: "Contact", uid: "contact", sortable: true },
+	{ name: "Description", uid: "description", sortable: false },
+	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -108,9 +110,15 @@ export default function RepairStoreEngineersView() {
 			case "engineer":
 				return (
 					<div className="flex items-center gap-3">
-						<Avatar name={row.name} size="sm" className="flex-shrink-0" />
+						<Avatar
+							name={row.user?.name || row.name || "N/A"}
+							size="sm"
+							className="flex-shrink-0"
+						/>
 						<div className="flex flex-col">
-							<p className="text-bold text-sm">{row.name}</p>
+							<p className="text-bold text-sm">
+								{row.user?.name || row.name || "N/A"}
+							</p>
 							<p className="text-bold text-xs text-default-400">
 								ID: {row.id.slice(0, 8)}...
 							</p>
@@ -128,9 +136,34 @@ export default function RepairStoreEngineersView() {
 			case "contact":
 				return (
 					<div className="flex flex-col">
-						<p className="text-sm">{row.phone}</p>
-						<p className="text-xs text-default-400">{row.email}</p>
+						<p className="text-sm">{row.user?.phone || row.phone || "N/A"}</p>
+						<p className="text-xs text-default-400">
+							{row.user?.email || row.email || "N/A"}
+						</p>
 					</div>
+				);
+			case "description":
+				return (
+					<p className="text-sm text-gray-600">
+						{row.description || "No description"}
+					</p>
+				);
+			case "status":
+				return (
+					<Chip
+						color={
+							row.user?.status === "ACTIVE"
+								? "success"
+								: row.user?.status === "SUSPENDED"
+								? "warning"
+								: "danger"
+						}
+						size="sm"
+						variant="flat"
+						className="capitalize"
+					>
+						{row.user?.status || "N/A"}
+					</Chip>
 				);
 			case "actions":
 				return (

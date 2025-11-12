@@ -28,13 +28,32 @@ function buildQueryString(params?: Record<string, any>): string {
 // Types & Interfaces
 export interface Engineer {
 	id: string;
-	name: string;
-	email: string;
-	phone: string;
+	created_at: string;
+	updated_at: string;
+	created_by_id: string;
+	updated_by_id: string | null;
+	user_id: string;
 	service_center_id: string;
 	description?: string;
-	createdAt: string;
-	updatedAt: string;
+	user: {
+		id: string;
+		created_at: string;
+		updated_at: string;
+		email: string;
+		name: string;
+		phone: string;
+		role: string;
+		status: string;
+		last_login: string | null;
+		created_by_id: string | null;
+		deleted_at: string | null;
+	};
+	// Computed fields for backward compatibility
+	name?: string;
+	email?: string;
+	phone?: string;
+	createdAt?: string;
+	updatedAt?: string;
 }
 
 export interface CreateEngineerDto {

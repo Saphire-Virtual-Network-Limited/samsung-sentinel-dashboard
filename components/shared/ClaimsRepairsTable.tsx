@@ -29,6 +29,7 @@ import testData from "@/lib/testData/claimsRepairsTestData.json";
 
 export type ClaimRepairRole =
 	| "service-center"
+	| "repair_store"
 	| "samsung-partners"
 	| "samsung-sentinel";
 
@@ -52,9 +53,18 @@ export interface ClaimRepairItem {
 	serviceCenterId?: string;
 	engineerName?: string;
 	completedAt?: string;
+	completedById?: string;
 	approvedAt?: string;
+	approvedById?: string;
 	rejectedAt?: string;
+	rejectedById?: string;
 	rejectionReason?: string;
+	authorizedAt?: string;
+	authorizedById?: string;
+	paidAt?: string;
+	paidById?: string;
+	transactionId?: string;
+	referenceId?: string;
 }
 
 export interface ClaimsRepairsTableProps {
@@ -204,6 +214,20 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			});
 		}
 
+		// Add rejection details for rejected claims (all roles)
+		if (role === "service-center" || role === "repair_store") {
+			baseColumns.push({
+				name: "Rejection Info",
+				uid: "rejectionInfo",
+				sortable: false,
+			});
+			baseColumns.push({
+				name: "Completion Info",
+				uid: "completionInfo",
+				sortable: false,
+			});
+		}
+
 		// Add payment columns if needed
 		if (showPaymentColumns) {
 			const paymentColumns: ColumnDef[] = [
@@ -229,7 +253,76 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				sortable: true,
 			});
 
+			// Add payment details for paid claims
+			paymentColumns.push({
+				name: "Payment Details",
+				uid: "paymentDetails",
+				sortable: false,
+			});
+
 			baseColumns.push(...paymentColumns);
+		}
+
+		// Add all audit fields for Samsung admin
+		if (role === "samsung-sentinel") {
+			baseColumns.push(
+				{
+					name: "Approved Info",
+					uid: "approvedInfo",
+					sortable: false,
+				},
+				{
+					name: "Authorized Info",
+					uid: "authorizedInfo",
+					sortable: false,
+				},
+				{
+					name: "Rejected Info",
+					uid: "rejectedInfo",
+					sortable: false,
+				},
+				{
+					name: "Completed Info",
+					uid: "completedInfo",
+					sortable: false,
+				},
+				{
+					name: "Paid Info",
+					uid: "paidInfo",
+					sortable: false,
+				}
+			);
+		}
+
+		// Samsung partners need to see ALL details
+		if (role === "samsung-partners") {
+			baseColumns.push(
+				{
+					name: "Approved Info",
+					uid: "approvedInfo",
+					sortable: false,
+				},
+				{
+					name: "Authorized Info",
+					uid: "authorizedInfo",
+					sortable: false,
+				},
+				{
+					name: "Rejected Info",
+					uid: "rejectedInfo",
+					sortable: false,
+				},
+				{
+					name: "Completed Info",
+					uid: "completedInfo",
+					sortable: false,
+				},
+				{
+					name: "Paid Info",
+					uid: "paidInfo",
+					sortable: false,
+				}
+			);
 		}
 
 		// Always add actions column
@@ -485,6 +578,138 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "engineerName":
 				return <span className="text-sm">{item.engineerName || "N/A"}</span>;
+
+			case "rejectionInfo":
+				return item.status === "rejected" ? (
+					<div className="text-xs space-y-1">
+						{item.rejectedAt && (
+							<div className="text-gray-600">{formatDate(item.rejectedAt)}</div>
+						)}
+						{item.rejectionReason && (
+							<div className="text-danger-600 line-clamp-2">
+								{item.rejectionReason}
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "completionInfo":
+				return item.completedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.completedAt)}</div>
+						{item.completedById && (
+							<div className="text-gray-500 font-mono">
+								{item.completedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "paymentDetails":
+				return item.paymentStatus === "paid" ? (
+					<div className="text-xs space-y-1">
+						{item.paidAt && (
+							<div className="text-gray-600">{formatDate(item.paidAt)}</div>
+						)}
+						{item.transactionId && (
+							<div className="text-gray-500 font-mono truncate max-w-[120px]">
+								Txn: {item.transactionId}
+							</div>
+						)}
+						{item.referenceId && (
+							<div className="text-gray-500">Ref: {item.referenceId}</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "approvedInfo":
+				return item.approvedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.approvedAt)}</div>
+						{item.approvedById && (
+							<div className="text-gray-500 font-mono">
+								{item.approvedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "authorizedInfo":
+				return item.authorizedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.authorizedAt)}</div>
+						{item.authorizedById && (
+							<div className="text-gray-500 font-mono">
+								{item.authorizedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "rejectedInfo":
+				return item.rejectedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.rejectedAt)}</div>
+						{item.rejectedById && (
+							<div className="text-gray-500 font-mono">
+								{item.rejectedById.slice(0, 8)}...
+							</div>
+						)}
+						{item.rejectionReason && (
+							<div className="text-danger-600 line-clamp-2">
+								{item.rejectionReason}
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "completedInfo":
+				return item.completedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.completedAt)}</div>
+						{item.completedById && (
+							<div className="text-gray-500 font-mono">
+								{item.completedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "paidInfo":
+				return item.paidAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.paidAt)}</div>
+						{item.paidById && (
+							<div className="text-gray-500 font-mono">
+								{item.paidById.slice(0, 8)}...
+							</div>
+						)}
+						{item.transactionId && (
+							<div className="text-gray-500 font-mono truncate max-w-[120px]">
+								{item.transactionId}
+							</div>
+						)}
+						{item.referenceId && (
+							<div className="text-gray-500">Ref: {item.referenceId}</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
 
 			case "actions":
 				return (

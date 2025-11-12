@@ -27,10 +27,11 @@ import {
 	FileText,
 	CreditCard,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/lib";
 import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
 import { ClaimRepairItem } from "@/components/shared/ClaimsRepairsTable";
+import { completeClaim } from "@/lib/api/claims";
 
 const columns: ColumnDef[] = [
 	{ name: "Claim ID", uid: "claimId", sortable: true },
@@ -42,6 +43,9 @@ const columns: ColumnDef[] = [
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Payment", uid: "payment", sortable: true },
 	{ name: "Submitted", uid: "submitted", sortable: true },
+	{ name: "Completed", uid: "completed", sortable: true },
+	{ name: "Rejected", uid: "rejected", sortable: true },
+	{ name: "Payment Details", uid: "paymentDetails", sortable: false },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -60,6 +64,11 @@ const paymentColorMap = {
 
 export default function RepairStoreClaimsView() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	// Get filters from URL params
+	const statusFilter = searchParams.get("status") || "";
+	const paymentFilter = searchParams.get("payment") || "";
 
 	// Modal states
 	const {
@@ -72,11 +81,11 @@ export default function RepairStoreClaimsView() {
 		null
 	);
 	const [adminNotes, setAdminNotes] = useState("");
+	const [isCompleting, setIsCompleting] = useState(false);
+	const [completeNotes, setCompleteNotes] = useState("");
 
 	// Filter states
 	const [filterValue, setFilterValue] = useState("");
-	const [statusFilter, setStatusFilter] = useState("");
-	const [paymentFilter, setPaymentFilter] = useState("");
 
 	// Use Claims API hook
 	const {
@@ -86,7 +95,7 @@ export default function RepairStoreClaimsView() {
 		refetch,
 	} = useClaimsApi({
 		role: "repair_store",
-		status: statusFilter,
+		status: statusFilter === "all" ? undefined : statusFilter,
 		payment: paymentFilter,
 		search: filterValue,
 	});
@@ -138,6 +147,38 @@ export default function RepairStoreClaimsView() {
 			month: "short",
 			day: "numeric",
 		});
+	};
+
+	// Handle mark as completed
+	const handleCompleteClaim = async () => {
+		if (!selectedClaim) return;
+
+		setIsCompleting(true);
+		try {
+			await completeClaim(selectedClaim.id, {
+				notes: completeNotes || undefined,
+			});
+
+			showToast({
+				type: "success",
+				message: "Claim marked as completed successfully",
+			});
+
+			// Refresh claims list
+			await refetch();
+
+			// Close modal and reset states
+			onViewModalClose();
+			setCompleteNotes("");
+			setSelectedClaim(null);
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error.message || "Failed to mark claim as completed",
+			});
+		} finally {
+			setIsCompleting(false);
+		}
 	};
 
 	// Render cell content
@@ -225,6 +266,50 @@ export default function RepairStoreClaimsView() {
 				);
 			case "submitted":
 				return <p className="text-sm">{formatDate(row.createdAt)}</p>;
+			case "completed":
+				return row.completedAt ? (
+					<div className="flex flex-col">
+						<p className="text-sm">{formatDate(row.completedAt)}</p>
+						{row.completedById && (
+							<p className="text-xs text-default-400">
+								By: {row.completedById.slice(0, 8)}...
+							</p>
+						)}
+					</div>
+				) : (
+					<p className="text-sm text-default-400">-</p>
+				);
+			case "rejected":
+				return row.status === "rejected" ? (
+					<div className="flex flex-col">
+						{row.rejectedAt && (
+							<p className="text-sm">{formatDate(row.rejectedAt)}</p>
+						)}
+						{row.rejectionReason && (
+							<p className="text-xs text-default-400 line-clamp-2">
+								{row.rejectionReason}
+							</p>
+						)}
+					</div>
+				) : (
+					<p className="text-sm text-default-400">-</p>
+				);
+			case "paymentDetails":
+				return row.paymentStatus === "paid" ? (
+					<div className="flex flex-col">
+						{row.paidAt && <p className="text-sm">{formatDate(row.paidAt)}</p>}
+						{row.transactionId && (
+							<p className="text-xs text-default-400">
+								Txn: {row.transactionId.slice(0, 12)}...
+							</p>
+						)}
+						{row.referenceId && (
+							<p className="text-xs text-default-400">Ref: {row.referenceId}</p>
+						)}
+					</div>
+				) : (
+					<p className="text-sm text-default-400">-</p>
+				);
 			case "actions":
 				return (
 					<div className="flex justify-end">
@@ -521,6 +606,67 @@ export default function RepairStoreClaimsView() {
 																</p>
 															</div>
 														)}
+														{selectedClaim.paidAt && (
+															<div>
+																<p className="text-sm text-gray-600">Paid At</p>
+																<p className="font-medium">
+																	{formatDate(selectedClaim.paidAt)}
+																</p>
+															</div>
+														)}
+														{selectedClaim.transactionId && (
+															<div>
+																<p className="text-sm text-gray-600">
+																	Transaction ID
+																</p>
+																<p className="font-medium">
+																	{selectedClaim.transactionId}
+																</p>
+															</div>
+														)}
+														{selectedClaim.referenceId && (
+															<div>
+																<p className="text-sm text-gray-600">
+																	Reference ID
+																</p>
+																<p className="font-medium">
+																	{selectedClaim.referenceId}
+																</p>
+															</div>
+														)}
+													</div>
+												</CardBody>
+											</Card>
+										)}
+
+										{/* Completed At Information */}
+										{selectedClaim.completedAt && (
+											<Card>
+												<CardHeader>
+													<h3 className="text-lg font-semibold">
+														Completion Information
+													</h3>
+												</CardHeader>
+												<CardBody>
+													<div className="space-y-2">
+														<div>
+															<p className="text-sm text-gray-600">
+																Completed At
+															</p>
+															<p className="font-medium">
+																{formatDate(selectedClaim.completedAt)}
+															</p>
+														</div>
+														{selectedClaim.completedById && (
+															<div>
+																<p className="text-sm text-gray-600">
+																	Completed By ID
+																</p>
+																<p className="font-medium text-xs">
+																	{selectedClaim.completedById}
+																</p>
+															</div>
+														)}
 													</div>
 												</CardBody>
 											</Card>
@@ -528,10 +674,38 @@ export default function RepairStoreClaimsView() {
 									</div>
 								)}
 							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={onViewModalClose}>
-									Close
-								</Button>
+							<ModalFooter className="flex-col items-stretch gap-3">
+								{/* Completion Notes - Only show for approved claims */}
+								{selectedClaim?.status === "approved" && (
+									<Textarea
+										label="Completion Notes (Optional)"
+										placeholder="Add any notes about the completion..."
+										value={completeNotes}
+										onValueChange={setCompleteNotes}
+										minRows={2}
+										maxRows={4}
+										classNames={{
+											input: "text-sm",
+										}}
+									/>
+								)}
+
+								<div className="flex justify-end gap-2">
+									<Button variant="light" onPress={onViewModalClose}>
+										Close
+									</Button>
+
+									{/* Mark as Completed button - Only show for approved claims */}
+									{selectedClaim?.status === "approved" && (
+										<Button
+											color="primary"
+											isLoading={isCompleting}
+											onPress={handleCompleteClaim}
+										>
+											Mark as Completed
+										</Button>
+									)}
+								</div>
 							</ModalFooter>
 						</>
 					)}

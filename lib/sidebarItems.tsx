@@ -301,10 +301,6 @@ export function getRepairStoreItems(options: MenuOptions): MenuItem[] {
 							url: "/access/repair-store/claims?status=approved",
 						},
 						{
-							title: "In Progress",
-							url: "/access/repair-store/claims?status=in-progress",
-						},
-						{
 							title: "Completed",
 							url: "/access/repair-store/claims?status=completed",
 						},

@@ -58,6 +58,8 @@ const engineerColumns: ColumnDef[] = [
 	{ name: "Engineer", uid: "engineer", sortable: true },
 	{ name: "Email", uid: "email", sortable: true },
 	{ name: "Phone", uid: "phone", sortable: true },
+	{ name: "Description", uid: "description", sortable: false },
+	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Created", uid: "created", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
@@ -234,26 +236,62 @@ export default function RepairStoreSingleServiceCenterView({
 			case "engineer":
 				return (
 					<div className="flex items-center gap-3">
-						<Avatar name={row.name} size="sm" className="flex-shrink-0" />
+						<Avatar
+							name={row.user?.name || row.name || "N/A"}
+							size="sm"
+							className="flex-shrink-0"
+						/>
 						<div className="flex flex-col">
-							<p className="text-bold text-sm">{row.name}</p>
+							<p className="text-bold text-sm">
+								{row.user?.name || row.name || "N/A"}
+							</p>
 							<p className="text-bold text-xs text-default-400">ID: {row.id}</p>
 						</div>
 					</div>
 				);
 			case "email":
-				return <p className="text-sm">{row.email}</p>;
+				return (
+					<p className="text-sm">{row.user?.email || row.email || "N/A"}</p>
+				);
 			case "phone":
-				return <p className="text-sm">{row.phone}</p>;
+				return (
+					<p className="text-sm">{row.user?.phone || row.phone || "N/A"}</p>
+				);
+			case "description":
+				return (
+					<p className="text-sm text-gray-600">
+						{row.description || "No description"}
+					</p>
+				);
+			case "status":
+				return (
+					<Chip
+						color={
+							row.user?.status === "ACTIVE"
+								? "success"
+								: row.user?.status === "SUSPENDED"
+								? "warning"
+								: "danger"
+						}
+						size="sm"
+						variant="flat"
+						className="capitalize"
+					>
+						{row.user?.status || "N/A"}
+					</Chip>
+				);
 			case "created":
 				return (
 					<p className="text-sm">
-						{row.createdAt
-							? new Date(row.createdAt).toLocaleDateString("en-US", {
-									year: "numeric",
-									month: "short",
-									day: "numeric",
-							  })
+						{row.created_at || row.createdAt
+							? new Date(row.created_at || row.createdAt!).toLocaleDateString(
+									"en-US",
+									{
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									}
+							  )
 							: "N/A"}
 					</p>
 				);
@@ -267,9 +305,6 @@ export default function RepairStoreSingleServiceCenterView({
 								</Button>
 							</DropdownTrigger>
 							<DropdownMenu>
-								<DropdownItem key="view" startContent={<Eye size={16} />}>
-									View Profile
-								</DropdownItem>
 								<DropdownItem
 									key="delete"
 									className="text-danger"
@@ -416,9 +451,7 @@ export default function RepairStoreSingleServiceCenterView({
 									</div>
 									<div>
 										<p className="text-sm text-gray-600">Total Engineers</p>
-										<p className="font-medium">
-											{serviceCenter.engineers_count || 0}
-										</p>
+										<p className="font-medium">{engineers?.length || 0}</p>
 									</div>
 								</div>
 							</div>

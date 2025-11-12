@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import {
 	getServiceCenterById,
@@ -10,12 +10,13 @@ import {
 } from "@/lib/api";
 import { showToast } from "@/lib";
 import { useRepairStoreEngineers } from "./useRepairStoreEngineers";
+import type { Engineer } from "@/lib/api";
 
 export function useRepairStoreSingleServiceCenter(serviceCenterId: string) {
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [isChangingStatus, setIsChangingStatus] = useState(false);
 
-	// Fetch service center details
+	// Fetch service center details (which includes engineers array)
 	const {
 		data: serviceCenter,
 		error,
@@ -30,17 +31,44 @@ export function useRepairStoreSingleServiceCenter(serviceCenterId: string) {
 		}
 	);
 
-	// Fetch engineers for this service center
+	// Extract engineers from the service center response
+	const engineers = useMemo(() => {
+		return (serviceCenter?.engineers as Engineer[]) || [];
+	}, [serviceCenter]);
+
+	// Also get the engineers hook for CRUD operations
 	const {
-		engineers,
-		isLoading: isLoadingEngineers,
-		handleCreate: handleCreateEngineer,
-		handleUpdate: handleUpdateEngineer,
-		handleDelete: handleDeleteEngineer,
-		handleResendInvitation,
+		handleCreate: createEngineer,
+		handleUpdate: updateEngineer,
+		handleDelete: deleteEngineer,
+		handleResendInvitation: resendInvitation,
 	} = useRepairStoreEngineers({
 		service_center_id: serviceCenterId,
 	});
+
+	// Wrap engineer CRUD to also refresh service center data
+	const handleCreateEngineer = async (data: any) => {
+		const result = await createEngineer(data);
+		mutate(); // Refresh service center to get updated engineers list
+		return result;
+	};
+
+	const handleUpdateEngineer = async (id: string, data: any) => {
+		const result = await updateEngineer(id, data);
+		mutate(); // Refresh service center to get updated engineers list
+		return result;
+	};
+
+	const handleDeleteEngineer = async (id: string) => {
+		const result = await deleteEngineer(id);
+		mutate(); // Refresh service center to get updated engineers list
+		return result;
+	};
+
+	const handleResendInvitation = async (id: string) => {
+		const result = await resendInvitation(id);
+		return result;
+	};
 
 	// Update service center
 	const handleUpdate = async (data: UpdateServiceCenterDto) => {
@@ -134,9 +162,9 @@ export function useRepairStoreSingleServiceCenter(serviceCenterId: string) {
 		isUpdating,
 		isChangingStatus,
 
-		// Engineers data
-		engineers: engineers || [],
-		isLoadingEngineers,
+		// Engineers data (from service center response)
+		engineers,
+		isLoadingEngineers: isLoading, // Engineers load with service center
 		handleCreateEngineer,
 		handleUpdateEngineer,
 		handleDeleteEngineer,

@@ -46,3 +46,6 @@ export * from "./partners";
 
 // Export audit APIs
 export * from "./audit";
+
+// Export dashboard APIs
+export * from "./dashboard";
