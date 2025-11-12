@@ -11,6 +11,7 @@ import {
 	type RejectClaimDto,
 	type AuthorizePaymentDto,
 } from "@/lib/api/claims";
+import { getAccessToken } from "@/lib/api/shared/tokenManager";
 
 export type { Claim as ServiceCenterClaim } from "@/lib/api/claims";
 
@@ -23,8 +24,11 @@ const fetcher = async (claimId: string): Promise<Claim> => {
 };
 
 export const useServiceCenterClaim = (claimId: string) => {
+	// Only fetch if we have an access token
+	const hasToken = typeof window !== "undefined" && getAccessToken();
+
 	const { data, error, mutate, isLoading } = useSWR(
-		claimId ? `/api/service-center/claims/${claimId}` : null,
+		hasToken && claimId ? `/api/service-center/claims/${claimId}` : null,
 		() => fetcher(claimId)
 	);
 

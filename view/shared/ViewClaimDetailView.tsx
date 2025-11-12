@@ -40,10 +40,16 @@ import { ClaimStatus, PaymentStatus } from "@/lib/api/shared/types";
 
 import { ConfirmationModal } from "@/components/reususables";
 
-const ViewClaimDetailView = () => {
+interface ViewClaimDetailViewProps {
+	claimId?: string; // Optional prop for modal usage
+}
+
+const ViewClaimDetailView = ({
+	claimId: propClaimId,
+}: ViewClaimDetailViewProps = {}) => {
 	const params = useParams();
 	const router = useRouter();
-	const claimId = params?.id as string;
+	const claimId = propClaimId || (params?.id as string);
 
 	const [newStatus, setNewStatus] = useState("");
 	const [statusNotes, setStatusNotes] = useState("");

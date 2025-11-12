@@ -676,7 +676,7 @@ const ServiceCenterDashboardView = () => {
 																				startContent={<Eye size={14} />}
 																				onPress={() => {
 																					router.push(
-																						`/access/service-center/claims/view/${claim.id}`
+																						`/access/service-center/claims/${claim.id}`
 																					);
 																					handleSearchModalClose();
 																				}}

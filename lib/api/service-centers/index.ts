@@ -4,6 +4,27 @@ import { apiCall, BaseApiResponse, UserStatus } from "../shared";
 // SERVICE CENTERS APIs
 // ============================================================================
 
+// Helper function to build clean query strings without undefined values
+function buildQueryString(params?: Record<string, any>): string {
+	if (!params) return "";
+
+	const cleanParams: Record<string, string> = {};
+
+	Object.entries(params).forEach(([key, value]) => {
+		if (
+			value !== undefined &&
+			value !== null &&
+			value !== "" &&
+			value !== "undefined"
+		) {
+			cleanParams[key] = String(value);
+		}
+	});
+
+	const queryString = new URLSearchParams(cleanParams).toString();
+	return queryString ? `?${queryString}` : "";
+}
+
 // Types & Interfaces
 export interface ServiceCenter {
 	id: string;
@@ -94,10 +115,8 @@ export async function createServiceCenter(
 export async function getAllServiceCenters(
 	params?: GetServiceCentersParams
 ): Promise<PaginatedServiceCentersResponse> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
-	return apiCall(`/service-centers?${queryParams}`, "GET");
+	const queryString = buildQueryString(params as Record<string, any>);
+	return apiCall(`/service-centers${queryString}`, "GET");
 }
 
 /**

@@ -7,7 +7,6 @@ import {
 	CardBody,
 	CardHeader,
 	Chip,
-	Avatar,
 	Modal,
 	ModalContent,
 	ModalHeader,
@@ -15,10 +14,6 @@ import {
 	ModalFooter,
 	useDisclosure,
 	Textarea,
-	Dropdown,
-	DropdownTrigger,
-	DropdownMenu,
-	DropdownItem,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -26,38 +21,16 @@ import GenericTable, {
 import { StatCard } from "@/components/atoms/StatCard";
 import {
 	Eye,
-	EllipsisVertical,
 	CheckCircle,
 	XCircle,
 	Clock,
-	MessageSquare,
 	FileText,
 	CreditCard,
-	AlertCircle,
-	TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/lib";
-
-interface Claim {
-	id: string;
-	customerName: string;
-	customerPhone: string;
-	deviceModel: string;
-	issue: string;
-	claimAmount: number;
-	serviceCenterName: string;
-	serviceCenterId: string;
-	engineerName: string;
-	engineerId: string;
-	status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
-	priority: "low" | "medium" | "high" | "urgent";
-	submittedDate: string;
-	updatedDate: string;
-	completionDate?: string;
-	adminNotes?: string;
-	attachments?: string[];
-}
+import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
+import { ClaimRepairItem } from "@/components/shared/ClaimsRepairsTable";
 
 const columns: ColumnDef[] = [
 	{ name: "Claim ID", uid: "claimId", sortable: true },
@@ -66,8 +39,8 @@ const columns: ColumnDef[] = [
 	{ name: "Service Center", uid: "serviceCenter", sortable: true },
 	{ name: "Engineer", uid: "engineer", sortable: true },
 	{ name: "Amount", uid: "amount", sortable: true },
-	{ name: "Priority", uid: "priority", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
+	{ name: "Payment", uid: "payment", sortable: true },
 	{ name: "Submitted", uid: "submitted", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
@@ -76,16 +49,15 @@ const statusColorMap = {
 	pending: "warning" as const,
 	approved: "success" as const,
 	rejected: "danger" as const,
-	in_progress: "primary" as const,
-	completed: "success" as const,
+	authorized: "primary" as const,
+	paid: "success" as const,
 };
 
-const priorityColorMap = {
-	low: "default" as const,
-	medium: "warning" as const,
-	high: "danger" as const,
-	urgent: "danger" as const,
+const paymentColorMap = {
+	paid: "success" as const,
+	unpaid: "warning" as const,
 };
+
 
 export default function RepairStoreClaimsView() {
 	const router = useRouter();
@@ -97,199 +69,54 @@ export default function RepairStoreClaimsView() {
 		onClose: onViewModalClose,
 	} = useDisclosure();
 
-	const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+	const [selectedClaim, setSelectedClaim] = useState<ClaimRepairItem | null>(
+		null
+	);
 	const [adminNotes, setAdminNotes] = useState("");
 
 	// Filter states
 	const [filterValue, setFilterValue] = useState("");
-	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
-	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+	const [statusFilter, setStatusFilter] = useState("");
+	const [paymentFilter, setPaymentFilter] = useState("");
 
-	// Mock data
-	const claims: Claim[] = useMemo(
-		() => [
-			{
-				id: "CLM_001",
-				customerName: "Adebayo Johnson",
-				customerPhone: "+234 801 234 5678",
-				deviceModel: "Samsung Galaxy S23",
-				issue: "Screen Replacement",
-				claimAmount: 45000,
-				serviceCenterName: "Sapphire Tech Hub Lagos",
-				serviceCenterId: "sc_001",
-				engineerName: "John Adebayo",
-				engineerId: "eng_001",
-				status: "pending",
-				priority: "high",
-				submittedDate: "2024-10-15T10:30:00Z",
-				updatedDate: "2024-10-15T10:30:00Z",
-				adminNotes: "",
-				attachments: ["receipt.pdf", "damage_photo.jpg"],
-			},
-			{
-				id: "CLM_002",
-				customerName: "Fatima Ibrahim",
-				customerPhone: "+234 802 345 6789",
-				deviceModel: "iPhone 14 Pro",
-				issue: "Battery Replacement",
-				claimAmount: 35000,
-				serviceCenterName: "Sapphire Tech Hub Abuja",
-				serviceCenterId: "sc_002",
-				engineerName: "Sarah Ibrahim",
-				engineerId: "eng_002",
-				status: "in_progress",
-				priority: "medium",
-				submittedDate: "2024-10-14T15:20:00Z",
-				updatedDate: "2024-10-15T09:45:00Z",
-				adminNotes: "Customer confirmed battery issue. Replacement approved.",
-			},
-			{
-				id: "CLM_003",
-				customerName: "Michael Okonkwo",
-				customerPhone: "+234 803 456 7890",
-				deviceModel: "Samsung Galaxy Note 20",
-				issue: "Water Damage Repair",
-				claimAmount: 62000,
-				serviceCenterName: "Sapphire Tech Hub Lagos",
-				serviceCenterId: "sc_001",
-				engineerName: "Michael Okafor",
-				engineerId: "eng_003",
-				status: "completed",
-				priority: "urgent",
-				submittedDate: "2024-10-12T11:15:00Z",
-				updatedDate: "2024-10-14T16:30:00Z",
-				completionDate: "2024-10-14T16:30:00Z",
-				adminNotes: "Successfully repaired. Customer satisfied.",
-				attachments: ["before.jpg", "after.jpg", "invoice.pdf"],
-			},
-			{
-				id: "CLM_004",
-				customerName: "Grace Okoro",
-				customerPhone: "+234 804 567 8901",
-				deviceModel: "iPhone 13",
-				issue: "Camera Module Replacement",
-				claimAmount: 28000,
-				serviceCenterName: "Sapphire Tech Hub Port Harcourt",
-				serviceCenterId: "sc_003",
-				engineerName: "Ahmed Hassan",
-				engineerId: "eng_005",
-				status: "approved",
-				priority: "low",
-				submittedDate: "2024-10-13T14:45:00Z",
-				updatedDate: "2024-10-15T11:20:00Z",
-				adminNotes: "Approved for repair. Awaiting parts delivery.",
-			},
-			{
-				id: "CLM_005",
-				customerName: "Yusuf Mohammed",
-				customerPhone: "+234 805 678 9012",
-				deviceModel: "Samsung Galaxy A54",
-				issue: "Charging Port Repair",
-				claimAmount: 15000,
-				serviceCenterName: "Sapphire Tech Hub Kano",
-				serviceCenterId: "sc_004",
-				engineerName: "Grace Okoro",
-				engineerId: "eng_006",
-				status: "rejected",
-				priority: "low",
-				submittedDate: "2024-10-11T09:30:00Z",
-				updatedDate: "2024-10-12T10:15:00Z",
-				adminNotes: "Device damage not covered under warranty terms.",
-			},
-		],
-		[]
-	);
+	// Use Claims API hook
+	const {
+		data: claims,
+		isLoading,
+		error,
+		refetch,
+	} = useClaimsApi({
+		role: "repair_store",
+		status: statusFilter,
+		payment: paymentFilter,
+		search: filterValue,
+	});
 
-	// Statistics
+	// Calculate statistics
 	const stats = useMemo(() => {
-		const totalClaims = claims.length;
-		const pendingClaims = claims.filter((c) => c.status === "pending").length;
-		const approvedClaims = claims.filter((c) => c.status === "approved").length;
-		const completedClaims = claims.filter(
-			(c) => c.status === "completed"
-		).length;
-		const totalAmount = claims
-			.filter((c) => c.status === "completed" || c.status === "approved")
-			.reduce((sum, c) => sum + c.claimAmount, 0);
+		const total = claims.length;
+		const pending = claims.filter((c) => c.status === "pending").length;
+		const approved = claims.filter((c) => c.status === "approved").length;
+		const paid = claims.filter((c) => c.paymentStatus === "paid").length;
+		const totalAmount = claims.reduce((sum, claim) => sum + claim.repairCost, 0);
 
 		return {
-			totalClaims,
-			pendingClaims,
-			approvedClaims,
-			completedClaims,
+			totalClaims: total,
+			pendingClaims: pending,
+			approvedClaims: approved,
+			paidClaims: paid,
 			totalAmount,
 		};
 	}, [claims]);
 
-	const handleViewClaim = (claim: Claim) => {
+	const handleViewClaim = (claim: ClaimRepairItem) => {
 		setSelectedClaim(claim);
-		setAdminNotes(claim.adminNotes || "");
+		setAdminNotes("");
 		onViewModalOpen();
 	};
 
-	const handleUpdateClaimStatus = async (
-		claimId: string,
-		newStatus: string,
-		notes?: string
-	) => {
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			showToast({
-				message: `Claim ${newStatus} successfully`,
-				type: "success",
-			});
-		} catch (error) {
-			showToast({
-				message: "Failed to update claim status",
-				type: "error",
-			});
-		}
-	};
-
-	// Bulk actions
-	const handleBulkApprove = async () => {
-		if (selectedKeys.size === 0) return;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} claims approved successfully`,
-				type: "success",
-			});
-			setSelectedKeys(new Set());
-		} catch (error) {
-			showToast({ message: "Failed to approve claims", type: "error" });
-		}
-	};
-
-	const handleBulkReject = async () => {
-		if (selectedKeys.size === 0) return;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} claims rejected successfully`,
-				type: "success",
-			});
-			setSelectedKeys(new Set());
-		} catch (error) {
-			showToast({ message: "Failed to reject claims", type: "error" });
-		}
-	};
-
-	// Selection handler
-	const handleSelectionChange = (keys: any) => {
-		if (keys === "all") {
-			if (selectedKeys.size === claims.length) {
-				setSelectedKeys(new Set());
-			} else {
-				setSelectedKeys(new Set(claims.map((item) => item.id)));
-			}
-		} else {
-			setSelectedKeys(new Set(Array.from(keys)));
-		}
-	};
-
 	// Export function
-	const exportFn = async (data: Claim[]) => {
+	const exportFn = async (data: ClaimRepairItem[]) => {
 		console.log("Exporting claims:", data);
 	};
 
@@ -312,14 +139,14 @@ export default function RepairStoreClaimsView() {
 	};
 
 	// Render cell content
-	const renderCell = (row: Claim, key: string) => {
+	const renderCell = (row: ClaimRepairItem, key: string) => {
 		switch (key) {
 			case "claimId":
 				return (
 					<div className="flex flex-col">
-						<p className="text-bold text-sm">{row.id}</p>
+						<p className="text-bold text-sm">{row.claimId}</p>
 						<p className="text-bold text-xs text-default-400">
-							{row.attachments?.length || 0} attachments
+							IMEI: {row.imei}
 						</p>
 					</div>
 				);
@@ -327,119 +154,86 @@ export default function RepairStoreClaimsView() {
 				return (
 					<div className="flex flex-col">
 						<p className="text-sm font-medium">{row.customerName}</p>
-						<p className="text-xs text-default-400">{row.customerPhone}</p>
 					</div>
 				);
 			case "device":
 				return (
 					<div className="flex flex-col">
-						<p className="text-sm font-medium">{row.deviceModel}</p>
-						<p className="text-xs text-default-400">{row.issue}</p>
+						<p className="text-sm font-medium">{row.deviceName}</p>
+						<p className="text-xs text-default-400">{row.faultType}</p>
 					</div>
 				);
 			case "serviceCenter":
 				return (
 					<div className="flex flex-col">
 						<p className="text-sm">{row.serviceCenterName}</p>
-						<Button
-							size="sm"
-							variant="light"
-							className="h-auto p-0 text-xs text-primary"
-							onPress={() =>
-								router.push(
-									`/access/repair-store/service-centers/${row.serviceCenterId}`
-								)
-							}
-						>
-							View Center
-						</Button>
+						{row.serviceCenterId && (
+							<Button
+								size="sm"
+								variant="light"
+								className="h-auto p-0 text-xs text-primary"
+								onPress={() =>
+									router.push(
+										`/access/repair-store/service-centers/${row.serviceCenterId}`
+									)
+								}
+							>
+								View Center
+							</Button>
+						)}
 					</div>
 				);
 			case "engineer":
 				return (
-					<div className="flex items-center gap-2">
-						<Avatar name={row.engineerName} size="sm" />
-						<div className="flex flex-col">
-							<p className="text-sm">{row.engineerName}</p>
-							<p className="text-xs text-default-400">ID: {row.engineerId}</p>
-						</div>
+					<div className="flex flex-col">
+						<p className="text-sm">{row.engineerName || "Not assigned"}</p>
 					</div>
 				);
 			case "amount":
 				return (
 					<p className="text-sm font-medium">
-						{formatCurrency(row.claimAmount)}
+						{formatCurrency(row.repairCost)}
 					</p>
-				);
-			case "priority":
-				return (
-					<Chip
-						color={priorityColorMap[row.priority]}
-						size="sm"
-						variant="flat"
-						className="capitalize"
-					>
-						{row.priority}
-					</Chip>
 				);
 			case "status":
 				return (
 					<Chip
-						color={statusColorMap[row.status]}
+						color={statusColorMap[row.status] || "default"}
 						size="sm"
 						variant="flat"
 						className="capitalize"
 					>
-						{row.status.replace("_", " ")}
+						{row.status}
+					</Chip>
+				);
+			case "payment":
+				return (
+					<Chip
+						color={
+							row.paymentStatus
+								? paymentColorMap[row.paymentStatus] || "default"
+								: "default"
+						}
+						size="sm"
+						variant="flat"
+						className="capitalize"
+					>
+						{row.paymentStatus}
 					</Chip>
 				);
 			case "submitted":
-				return <p className="text-sm">{formatDate(row.submittedDate)}</p>;
+				return <p className="text-sm">{formatDate(row.createdAt)}</p>;
 			case "actions":
 				return (
 					<div className="flex justify-end">
-						<Dropdown>
-							<DropdownTrigger>
-								<Button isIconOnly size="sm" variant="light">
-									<EllipsisVertical className="text-default-300" />
-								</Button>
-							</DropdownTrigger>
-							<DropdownMenu>
-								<DropdownItem
-									key="view"
-									startContent={<Eye size={16} />}
-									onPress={() => handleViewClaim(row)}
-								>
-									View Details
-								</DropdownItem>
-								{row.status === "pending" ? (
-									<React.Fragment>
-										<DropdownItem
-											key="approve"
-											className="text-success"
-											color="success"
-											startContent={<CheckCircle size={16} />}
-											onPress={() =>
-												handleUpdateClaimStatus(row.id, "approved")
-											}
-										>
-											Approve Claim
-										</DropdownItem>
-										<DropdownItem
-											key="reject"
-											className="text-danger"
-											color="danger"
-											startContent={<XCircle size={16} />}
-											onPress={() =>
-												handleUpdateClaimStatus(row.id, "rejected")
-											}
-										>
-											Reject Claim
-										</DropdownItem>
-									</React.Fragment>
-								) : null}
-							</DropdownMenu>
-						</Dropdown>
+						<Button
+							isIconOnly
+							size="sm"
+							variant="light"
+							onPress={() => handleViewClaim(row)}
+						>
+							<Eye className="text-default-300" />
+						</Button>
 					</div>
 				);
 			default:
@@ -448,11 +242,17 @@ export default function RepairStoreClaimsView() {
 	};
 
 	const statusOptions = [
+		{ name: "All", uid: "all" },
 		{ name: "Pending", uid: "pending" },
 		{ name: "Approved", uid: "approved" },
 		{ name: "Rejected", uid: "rejected" },
-		{ name: "In Progress", uid: "in_progress" },
-		{ name: "Completed", uid: "completed" },
+		{ name: "Authorized", uid: "authorized" },
+	];
+
+	const paymentOptions = [
+		{ name: "All", uid: "all" },
+		{ name: "Paid", uid: "paid" },
+		{ name: "Unpaid", uid: "unpaid" },
 	];
 
 	return (
@@ -467,35 +267,6 @@ export default function RepairStoreClaimsView() {
 						Review and manage repair claims from all service centers
 					</p>
 				</div>
-				{selectedKeys.size > 0 && (
-					<div className="flex items-center gap-2">
-						<Button
-							color="success"
-							variant="flat"
-							startContent={<CheckCircle size={16} />}
-							onPress={handleBulkApprove}
-							size="sm"
-						>
-							Approve ({selectedKeys.size})
-						</Button>
-						<Button
-							color="danger"
-							variant="flat"
-							startContent={<XCircle size={16} />}
-							onPress={handleBulkReject}
-							size="sm"
-						>
-							Reject ({selectedKeys.size})
-						</Button>
-						<Button
-							variant="light"
-							onPress={() => setSelectedKeys(new Set())}
-							size="sm"
-						>
-							Clear Selection
-						</Button>
-					</div>
-				)}
 			</div>
 
 			{/* Statistics Cards */}
@@ -516,9 +287,9 @@ export default function RepairStoreClaimsView() {
 					icon={<CheckCircle className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Completed"
-					value={stats.completedClaims.toString()}
-					icon={<TrendingUp className="w-5 h-5" />}
+					title="Paid"
+					value={stats.paidClaims.toString()}
+					icon={<CheckCircle className="w-5 h-5" />}
 				/>
 				<StatCard
 					title="Total Amount"
@@ -528,20 +299,15 @@ export default function RepairStoreClaimsView() {
 			</div>
 
 			{/* Claims Table */}
-			<GenericTable<Claim>
+			<GenericTable<ClaimRepairItem>
 				columns={columns}
 				data={claims}
 				allCount={claims.length}
 				exportData={claims}
-				isLoading={false}
+				isLoading={isLoading}
 				filterValue={filterValue}
 				onFilterChange={setFilterValue}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={true}
-				sortDescriptor={{ column: "submittedDate", direction: "descending" }}
+				sortDescriptor={{ column: "createdAt", direction: "descending" }}
 				onSortChange={() => {}}
 				page={1}
 				pages={1}
@@ -549,10 +315,7 @@ export default function RepairStoreClaimsView() {
 				exportFn={exportFn}
 				renderCell={renderCell}
 				hasNoRecords={claims.length === 0}
-				searchPlaceholder="Search claims by ID, customer name, or device model..."
-				selectedKeys={selectedKeys}
-				onSelectionChange={handleSelectionChange}
-				selectionMode="multiple"
+				searchPlaceholder="Search by claim ID, IMEI, or customer name..."
 				showRowsPerPageSelector={true}
 			/>
 
@@ -568,24 +331,25 @@ export default function RepairStoreClaimsView() {
 						<>
 							<ModalHeader>
 								<div className="flex items-center gap-2">
-									<span>Claim Details - {selectedClaim?.id}</span>
+									<span>Claim Details - {selectedClaim?.claimId}</span>
 									<Chip
 										color={
 											selectedClaim
-												? statusColorMap[selectedClaim.status]
+												? statusColorMap[selectedClaim.status] || "default"
 												: "default"
 										}
 										size="sm"
 										variant="flat"
 										className="capitalize"
 									>
-										{selectedClaim?.status.replace("_", " ")}
+										{selectedClaim?.status}
 									</Chip>
 								</div>
 							</ModalHeader>
 							<ModalBody>
 								{selectedClaim && (
 									<div className="space-y-6">
+
 										{/* Customer Information */}
 										<Card>
 											<CardHeader>
@@ -602,10 +366,8 @@ export default function RepairStoreClaimsView() {
 														</p>
 													</div>
 													<div>
-														<p className="text-sm text-gray-600">Phone</p>
-														<p className="font-medium">
-															{selectedClaim.customerPhone}
-														</p>
+														<p className="text-sm text-gray-600">IMEI</p>
+														<p className="font-medium">{selectedClaim.imei}</p>
 													</div>
 												</div>
 											</CardBody>
@@ -625,30 +387,39 @@ export default function RepairStoreClaimsView() {
 															Device Model
 														</p>
 														<p className="font-medium">
-															{selectedClaim.deviceModel}
+															{selectedClaim.deviceName}
 														</p>
 													</div>
 													<div>
-														<p className="text-sm text-gray-600">Issue</p>
-														<p className="font-medium">{selectedClaim.issue}</p>
+														<p className="text-sm text-gray-600">Fault Type</p>
+														<p className="font-medium">
+															{selectedClaim.faultType}
+														</p>
 													</div>
 													<div>
 														<p className="text-sm text-gray-600">
-															Claim Amount
+															Repair Cost
 														</p>
 														<p className="font-medium text-lg">
-															{formatCurrency(selectedClaim.claimAmount)}
+															{formatCurrency(selectedClaim.repairCost)}
 														</p>
 													</div>
 													<div>
-														<p className="text-sm text-gray-600">Priority</p>
+														<p className="text-sm text-gray-600">
+															Payment Status
+														</p>
 														<Chip
-															color={priorityColorMap[selectedClaim.priority]}
+															color={
+																selectedClaim.paymentStatus
+																	? paymentColorMap[selectedClaim.paymentStatus] ||
+																	  "default"
+																	: "default"
+															}
 															size="sm"
 															variant="flat"
 															className="capitalize"
 														>
-															{selectedClaim.priority}
+															{selectedClaim.paymentStatus}
 														</Chip>
 													</div>
 												</div>
@@ -675,111 +446,82 @@ export default function RepairStoreClaimsView() {
 													<div>
 														<p className="text-sm text-gray-600">Engineer</p>
 														<p className="font-medium">
-															{selectedClaim.engineerName}
+															{selectedClaim.engineerName || "Not assigned"}
 														</p>
 													</div>
 													<div>
 														<p className="text-sm text-gray-600">Submitted</p>
 														<p className="font-medium">
-															{formatDate(selectedClaim.submittedDate)}
+															{formatDate(selectedClaim.createdAt)}
 														</p>
 													</div>
-													<div>
-														<p className="text-sm text-gray-600">
-															Last Updated
-														</p>
-														<p className="font-medium">
-															{formatDate(selectedClaim.updatedDate)}
-														</p>
-													</div>
-													{selectedClaim.completionDate && (
-														<div className="md:col-span-2">
+													{selectedClaim.approvedAt && (
+														<div>
+															<p className="text-sm text-gray-600">Approved At</p>
+															<p className="font-medium">
+																{formatDate(selectedClaim.approvedAt)}
+															</p>
+														</div>
+													)}
+													{selectedClaim.completedAt && (
+														<div>
 															<p className="text-sm text-gray-600">
-																Completion Date
+																Completed At
 															</p>
 															<p className="font-medium">
-																{formatDate(selectedClaim.completionDate)}
+																{formatDate(selectedClaim.completedAt)}
 															</p>
+														</div>
+													)}
+													{selectedClaim.rejectedAt && (
+														<div className="md:col-span-2">
+															<p className="text-sm text-gray-600">
+																Rejected At
+															</p>
+															<p className="font-medium">
+																{formatDate(selectedClaim.rejectedAt)}
+															</p>
+															{selectedClaim.rejectionReason && (
+																<p className="text-sm text-danger mt-2">
+																	Reason: {selectedClaim.rejectionReason}
+																</p>
+															)}
 														</div>
 													)}
 												</div>
 											</CardBody>
 										</Card>
 
-										{/* Attachments */}
-										{selectedClaim.attachments &&
-											selectedClaim.attachments.length > 0 && (
-												<Card>
-													<CardHeader>
-														<h3 className="text-lg font-semibold">
-															Attachments
-														</h3>
-													</CardHeader>
-													<CardBody>
-														<div className="flex flex-wrap gap-2">
-															{selectedClaim.attachments.map((attachment) => (
-																<Chip
-																	key={attachment}
-																	variant="flat"
-																	startContent={<FileText size={14} />}
-																>
-																	{attachment}
-																</Chip>
-															))}
+										{selectedClaim.transactionRef && (
+											<Card>
+												<CardHeader>
+													<h3 className="text-lg font-semibold">
+														Payment Information
+													</h3>
+												</CardHeader>
+												<CardBody>
+													<div className="space-y-2">
+														<div>
+															<p className="text-sm text-gray-600">
+																Transaction Reference
+															</p>
+															<p className="font-medium">
+																{selectedClaim.transactionRef}
+															</p>
 														</div>
-													</CardBody>
-												</Card>
-											)}
-
-										{/* Admin Notes */}
-										<Card>
-											<CardHeader>
-												<h3 className="text-lg font-semibold">Admin Notes</h3>
-											</CardHeader>
-											<CardBody>
-												<Textarea
-													placeholder="Add notes about this claim..."
-													value={adminNotes}
-													onValueChange={setAdminNotes}
-													minRows={3}
-													maxRows={6}
-												/>
-											</CardBody>
-										</Card>
-
-										{/* Action Buttons */}
-										{selectedClaim.status === "pending" && (
-											<div className="flex gap-2">
-												<Button
-													color="success"
-													startContent={<CheckCircle size={16} />}
-													onPress={() => {
-														handleUpdateClaimStatus(
-															selectedClaim.id,
-															"approved",
-															adminNotes
-														);
-														onViewModalClose();
-													}}
-												>
-													Approve Claim
-												</Button>
-												<Button
-													color="danger"
-													variant="flat"
-													startContent={<XCircle size={16} />}
-													onPress={() => {
-														handleUpdateClaimStatus(
-															selectedClaim.id,
-															"rejected",
-															adminNotes
-														);
-														onViewModalClose();
-													}}
-												>
-													Reject Claim
-												</Button>
-											</div>
+														{selectedClaim.sessionId && (
+															<div>
+																<p className="text-sm text-gray-600">
+																	Session ID
+																</p>
+																<p className="font-medium">
+																	{selectedClaim.sessionId}
+																</p>
+															</div>
+														)}
+													</div>
+												</CardBody>
+											</Card>
 										)}
 									</div>
 								)}
@@ -788,22 +530,6 @@ export default function RepairStoreClaimsView() {
 								<Button variant="light" onPress={onViewModalClose}>
 									Close
 								</Button>
-								{selectedClaim && selectedClaim.status !== "pending" && (
-									<Button
-										color="primary"
-										startContent={<MessageSquare size={16} />}
-										onPress={() => {
-											// Save admin notes
-											showToast({
-												message: "Notes updated successfully",
-												type: "success",
-											});
-											onViewModalClose();
-										}}
-									>
-										Save Notes
-									</Button>
-								)}
 							</ModalFooter>
 						</>
 					)}

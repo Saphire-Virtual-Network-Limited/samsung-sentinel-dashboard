@@ -42,7 +42,7 @@ export interface ClaimRepairItem {
 	model: string;
 	faultType: string;
 	repairCost: number;
-	status: "pending" | "approved" | "rejected";
+	status: "pending" | "approved" | "rejected" | "authorized";
 	repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed";
 	paymentStatus?: "paid" | "unpaid";
 	transactionRef?: string;
@@ -55,7 +55,6 @@ export interface ClaimRepairItem {
 	approvedAt?: string;
 	rejectedAt?: string;
 	rejectionReason?: string;
-	authorizedForPayment?: boolean;
 }
 
 export interface ClaimsRepairsTableProps {
@@ -72,7 +71,14 @@ export interface ClaimsRepairsTableProps {
 	onBulkReject?: (claimIds: string[], reason: string) => void;
 	onBulkAuthorizePayment?: (claimIds: string[]) => void;
 	onViewDetails?: (claim: ClaimRepairItem) => void;
-	onUpdateRepairStatus?: (claimId: string, newRepairStatus: "pending" | "awaiting-parts" | "received-device" | "completed") => void;
+	onUpdateRepairStatus?: (
+		claimId: string,
+		newRepairStatus:
+			| "pending"
+			| "awaiting-parts"
+			| "received-device"
+			| "completed"
+	) => void;
 	showPaymentColumns?: boolean;
 	enableMultiSelect?: boolean;
 	onDateFilterChange?: (start: string, end: string) => void;
@@ -175,11 +181,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				sortable: true,
 			},
 			{
-				name: "Repair Status",
-				uid: "repairStatus",
-				sortable: true,
-			},
-			{
 				name: "Date",
 				uid: "createdAt",
 				sortable: true,
@@ -211,11 +212,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					uid: "paymentStatus",
 					sortable: true,
 				},
-				{
-					name: "Authorization",
-					uid: "authorizedForPayment",
-					sortable: true,
-				},
 			];
 
 			// Add bank details column for samsung-sentinel only
@@ -227,18 +223,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				});
 			}
 
-			paymentColumns.push(
-				{
-					name: "Transaction Ref",
-					uid: "transactionRef",
-					sortable: true,
-				},
-				{
-					name: "Completed Date",
-					uid: "completedAt",
-					sortable: true,
-				}
-			);
+			paymentColumns.push({
+				name: "Completed Date",
+				uid: "completedAt",
+				sortable: true,
+			});
 
 			baseColumns.push(...paymentColumns);
 		}
@@ -260,7 +249,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				startContent={<Eye className="h-4 w-4" />}
 				onPress={() => handleViewDetailsClick(item)}
 			>
-				View Details
+				Expand
 			</DropdownItem>,
 		];
 
@@ -301,13 +290,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Partners: Authorize payment for approved claims with completed repairs
+		// Samsung Partners: Authorize payment for approved claims
 		if (
 			role === "samsung-partners" &&
 			item.status === "approved" &&
-			item.repairStatus === "completed" &&
-			item.paymentStatus === "unpaid" &&
-			!item.authorizedForPayment
+			item.paymentStatus === "unpaid"
 		) {
 			items.push(
 				<DropdownItem
@@ -321,13 +308,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Sentinel Actions: Execute payment for authorized claims
+		// Samsung Sentinel Actions: Execute payment for authorized claims (status=AUTHORIZED)
 		if (
 			role === "samsung-sentinel" &&
 			item.status === "approved" &&
-			item.repairStatus === "completed" &&
-			item.paymentStatus === "unpaid" &&
-			item.authorizedForPayment
+			item.paymentStatus === "unpaid"
 		) {
 			items.push(
 				<DropdownItem
@@ -337,24 +322,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					color="success"
 				>
 					Execute Payment
-				</DropdownItem>
-			);
-		}
-
-		// Service Center: Update repair status for approved claims (except completed)
-		if (
-			role === "service-center" &&
-			item.status === "approved" &&
-			item.repairStatus !== "completed"
-		) {
-			items.push(
-				<DropdownItem
-					key="update-repair"
-					startContent={<Wrench className="h-4 w-4" />}
-					onPress={() => onUpdateRepairStatus?.(item.id, item.repairStatus)}
-					color="warning"
-				>
-					Update Repair Status
 				</DropdownItem>
 			);
 		}
@@ -370,10 +337,10 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			// Fall back to navigation (for dedicated pages)
 			const basePath =
 				role === "service-center"
-					? "/access/service-center/claims/view"
+					? "/access/service-center/claims"
 					: role === "samsung-partners"
-					? "/access/samsung-partners/repair-claims/view"
-					: "/access/samsung-sentinel/repairs/view";
+					? "/access/samsung-partners/repair-claims"
+					: "/access/repair-store/repairs";
 			router.push(`${basePath}/${item.claimId}`);
 		}
 	};
@@ -415,21 +382,9 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "repairCost":
 				return (
-					<div className="flex items-center gap-2">
-						<span className="font-medium">
-							₦{Number(item.repairCost).toLocaleString()}
-						</span>
-						{item.authorizedForPayment && (
-							<Chip
-								color="success"
-								size="sm"
-								variant="flat"
-								className="text-xs px-1"
-							>
-								✓ Authorized
-							</Chip>
-						)}
-					</div>
+					<span className="font-medium">
+						₦{Number(item.repairCost).toLocaleString()}
+					</span>
 				);
 
 			case "status":
@@ -460,46 +415,15 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					</div>
 				);
 
-			case "repairStatus":
-				const repairStatusColors: Record<string, any> = {
-					pending: "warning",
-					"awaiting-parts": "secondary",
-					"received-device": "primary",
-					completed: "success",
-				};
-				return (
-					<div className="flex items-center gap-2">
-						<Chip
-							color={repairStatusColors[item.repairStatus || "pending"] || "default"}
-							variant="flat"
-							size="sm"
-							startContent={<Wrench size={12} />}
-							className={cellClassName}
-						>
-							{(item.repairStatus || "pending").toUpperCase().replace("-", " ")}
-						</Chip>
-					</div>
-				);
-
 			case "paymentStatus":
 				return item.paymentStatus ? (
-					<div className="flex items-center gap-2">
-						<Chip
-							color={item.paymentStatus === "paid" ? "success" : "warning"}
-							variant="flat"
-							size="sm"
-						>
-							{item.paymentStatus.toUpperCase()}
-						</Chip>
-						{item.paymentStatus === "unpaid" && item.authorizedForPayment && (
-							<span
-								className="text-xs text-success-600 dark:text-success-400"
-								title="Authorized for payment"
-							>
-								🔓
-							</span>
-						)}
-					</div>
+					<Chip
+						color={item.paymentStatus === "paid" ? "success" : "warning"}
+						variant="flat"
+						size="sm"
+					>
+						{item.paymentStatus.toUpperCase()}
+					</Chip>
 				) : (
 					<span className="text-gray-400">N/A</span>
 				);
@@ -521,7 +445,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "bankDetails":
 				// Bank details are loaded from test data via serviceCenterId
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "approved" && item.repairStatus === "completed") {
+				if (item.serviceCenterId && item.status === "approved") {
 					const serviceCenter = testData.serviceCenters.find(
 						(sc: any) => sc.id === item.serviceCenterId
 					);
@@ -553,8 +477,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "createdAt":
 				return <span className="text-sm">{formatDate(item.createdAt)}</span>;
-
-
 
 			case "serviceCenterName":
 				return (
@@ -606,7 +528,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		return new Set(
 			data
 				.filter(
-					(item) => !(item.status === "approved" && item.repairStatus === "completed") || item.paymentStatus === "paid"
+					(item) => item.status !== "approved" || item.paymentStatus === "paid"
 				)
 				.map((item) => item.id)
 		);
@@ -647,12 +569,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			// Add payment columns if visible
 			if (showPaymentColumns) {
-				exportHeaders.push(
-					"Payment Status",
-					"Transaction Ref",
-					"Completed Date",
-					"Authorized"
-				);
+				exportHeaders.push("Payment Status", "Completed Date");
 				if (role === "samsung-sentinel") {
 					exportHeaders.push("Bank Name", "Account Number", "Account Name");
 				}
@@ -685,9 +602,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				if (showPaymentColumns) {
 					row.push(
 						item.paymentStatus || "N/A",
-						item.transactionRef || "N/A",
-						item.completedAt ? formatDate(item.completedAt) : "N/A",
-						item.authorizedForPayment ? "Yes" : "No"
+						item.completedAt ? formatDate(item.completedAt) : "N/A"
 					);
 
 					// Add bank details for samsung-sentinel

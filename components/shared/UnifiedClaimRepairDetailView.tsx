@@ -141,7 +141,8 @@ const UnifiedClaimRepairDetailView: React.FC<
 
 	const isPaid = claimData.paymentStatus === "paid";
 	const isUnpaidCompleted =
-		claimData.repairStatus === "completed" && claimData.paymentStatus === "unpaid";
+		claimData.repairStatus === "completed" &&
+		claimData.paymentStatus === "unpaid";
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -192,11 +193,10 @@ const UnifiedClaimRepairDetailView: React.FC<
 							</>
 						)}
 
-					{/* Samsung Partners: Authorize payment for completed/unpaid claims */}
+					{/* Samsung Partners: Authorize payment for approved/unpaid claims */}
 					{role === "samsung-partners" &&
-						claimData.repairStatus === "completed" &&
+						claimData.status === "approved" &&
 						claimData.paymentStatus === "unpaid" &&
-						!claimData.authorizedForPayment &&
 						onAuthorizePayment && (
 							<Button
 								color="primary"
@@ -208,11 +208,10 @@ const UnifiedClaimRepairDetailView: React.FC<
 							</Button>
 						)}
 
-					{/* Samsung Sentinel: Execute payment for authorized claims */}
+					{/* Samsung Sentinel: Execute payment for approved/unpaid claims */}
 					{role === "samsung-sentinel" &&
-						claimData.repairStatus === "completed" &&
+						claimData.status === "approved" &&
 						claimData.paymentStatus === "unpaid" &&
-						claimData.authorizedForPayment &&
 						onExecutePayment && (
 							<Button
 								color="success"
@@ -272,7 +271,7 @@ const UnifiedClaimRepairDetailView: React.FC<
 			{/* Authorization Status Banner for Samsung Sentinel */}
 			{role === "samsung-sentinel" &&
 				isUnpaidCompleted &&
-				(claimData.authorizedForPayment ? (
+				(claimData.status === "authorized" ? (
 					<Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
 						<CardBody>
 							<div className="flex items-start gap-3">

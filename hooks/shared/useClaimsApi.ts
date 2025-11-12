@@ -1,0 +1,375 @@
+"use client";
+
+import useSWR from "swr";
+import { useState, useCallback } from "react";
+import {
+	getAllClaims,
+	approveClaim,
+	rejectClaim,
+	authorizePayment,
+	Claim,
+	GetClaimsParams,
+	ApproveClaimDto,
+	RejectClaimDto,
+	AuthorizePaymentDto,
+} from "@/lib/api/claims";
+import { getAccessToken } from "@/lib/api/shared/tokenManager";
+import { ClaimRepairItem } from "@/components/shared/ClaimsRepairsTable";
+import { showToast } from "@/lib/showNotification";
+import { ClaimStatus, PaymentStatus } from "@/lib/api/shared";
+
+export interface UseClaimsApiOptions {
+	role: string;
+	status?: string;
+	payment?: string;
+	search?: string;
+	startDate?: string;
+	endDate?: string;
+}
+
+export interface UseClaimsApiReturn {
+	data: ClaimRepairItem[];
+	isLoading: boolean;
+	error: Error | null;
+	refetch: () => Promise<void>;
+	approveHandler: (claimId: string) => Promise<void>;
+	rejectHandler: (claimId: string, reason: string) => Promise<void>;
+	authorizePaymentHandler: (claimId: string) => Promise<void>;
+	executePaymentHandler: (
+		claimId: string,
+		transactionRef: string
+	) => Promise<void>;
+	executeBulkPaymentHandler: (
+		claimIds: string[],
+		transactionRef: string
+	) => Promise<void>;
+	bulkApproveHandler: (claimIds: string[]) => Promise<void>;
+	bulkRejectHandler: (claimIds: string[], reason: string) => Promise<void>;
+	bulkAuthorizePaymentHandler: (claimIds: string[]) => Promise<void>;
+	updateRepairStatusHandler: (
+		claimId: string,
+		repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed"
+	) => Promise<void>;
+}
+
+// Transform API Claim to ClaimRepairItem format
+function transformClaim(claim: Claim): ClaimRepairItem {
+	return {
+		id: claim.id,
+		claimId: claim.claim_number,
+		customerName: `${claim.customer_first_name} ${claim.customer_last_name}`,
+		imei: claim.imei?.imei || "",
+		deviceName: claim.product?.name || "",
+		brand: "Samsung", // Default brand
+		model: claim.product?.name || "",
+		faultType: claim.description || "",
+		repairCost: Number(claim.repair_price) || 0,
+		status: claim.status.toLowerCase() as "pending" | "approved" | "rejected",
+		repairStatus: "pending", // Default as not provided by API
+		paymentStatus: claim.payment_status.toLowerCase() as "paid" | "unpaid",
+		transactionRef: claim.transaction_id || undefined,
+		sessionId: claim.reference_id || undefined,
+		createdAt: claim.created_at,
+		serviceCenterName: claim.service_center?.name || "",
+		serviceCenterId: claim.service_center_id,
+		engineerName: claim.engineer?.user?.name || "",
+		completedAt: claim.completed_at || undefined,
+		approvedAt: claim.approved_at || undefined,
+		rejectedAt: claim.rejected_at || undefined,
+		rejectionReason: claim.rejection_reason || undefined,
+	};
+}
+
+export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
+	const { role, status, payment, search, startDate, endDate } = options;
+
+	// Build API params
+	const getParams = useCallback((): GetClaimsParams => {
+		const params: GetClaimsParams = {
+			page: 1,
+			limit: 100, // Adjust as needed
+		};
+
+		// Map status filter - only add if valid
+		if (status && status !== "all" && status !== "undefined") {
+			params.status = status.toUpperCase() as ClaimStatus;
+		}
+
+		// Map payment filter - only add if valid
+		if (payment && payment !== "all" && payment !== "undefined") {
+			params.payment_status = payment.toUpperCase() as PaymentStatus;
+		}
+
+		// Search filters - only add if valid and not empty
+		if (search && search !== "undefined" && search.trim()) {
+			const trimmedSearch = search.trim();
+			// Try to determine if it's IMEI, claim number, or customer name
+			if (trimmedSearch.startsWith("CLM-")) {
+				params.claim_number = trimmedSearch;
+			} else if (/^\d+$/.test(trimmedSearch)) {
+				params.imei = trimmedSearch;
+			} else {
+				params.customer_name = trimmedSearch;
+			}
+		}
+
+		return params;
+	}, [status, payment, search]);
+
+	// SWR fetcher
+	const fetcher = async () => {
+		const hasToken = typeof window !== "undefined" && getAccessToken();
+		if (!hasToken) {
+			return [];
+		}
+
+		try {
+			const params = getParams();
+			const response = await getAllClaims(params);
+
+			// API returns { data: Claim[], total, page, limit, totalPages }
+			const claims = response.data || [];
+			return claims.map(transformClaim);
+		} catch (error) {
+			console.error("Error fetching claims:", error);
+			throw error;
+		}
+	};
+
+	// Use SWR
+	const hasToken = typeof window !== "undefined" && getAccessToken();
+	const { data, error, mutate, isLoading } = useSWR<ClaimRepairItem[]>(
+		hasToken ? ["claims", status, payment, search] : null,
+		fetcher,
+		{
+			revalidateOnFocus: false,
+			dedupingInterval: 5000,
+		}
+	);
+
+	// Refetch function
+	const refetch = useCallback(async () => {
+		await mutate();
+	}, [mutate]);
+
+	// Approve handler
+	const approveHandler = useCallback(
+		async (claimId: string) => {
+			try {
+				const approveData: ApproveClaimDto = {
+					notes: "Claim approved",
+				};
+				await approveClaim(claimId, approveData);
+				showToast({
+					message: "Claim approved successfully",
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to approve claim",
+					type: "error",
+				});
+				throw error;
+			}
+		},
+		[refetch]
+	);
+
+	// Reject handler
+	const rejectHandler = useCallback(
+		async (claimId: string, reason: string) => {
+			try {
+				const rejectData: RejectClaimDto = {
+					reason,
+					notes: reason,
+				};
+				await rejectClaim(claimId, rejectData);
+				showToast({
+					message: "Claim rejected",
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to reject claim",
+					type: "error",
+				});
+				throw error;
+			}
+		},
+		[refetch]
+	);
+
+	// Authorize payment handler
+	const authorizePaymentHandler = useCallback(
+		async (claimId: string) => {
+			try {
+				const authorizeData: AuthorizePaymentDto = {
+					notes: "Payment authorized",
+				};
+				await authorizePayment(claimId, authorizeData);
+				showToast({
+					message: "Payment authorized successfully",
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to authorize payment",
+					type: "error",
+				});
+				throw error;
+			}
+		},
+		[refetch]
+	);
+
+	// Execute payment handler (placeholder - API doesn't have this endpoint yet)
+	const executePaymentHandler = useCallback(
+		async (claimId: string, transactionRef: string) => {
+			try {
+				showToast({
+					message: "Payment execution not implemented yet",
+					type: "info",
+				});
+				// TODO: Implement when API endpoint is available
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to execute payment",
+					type: "error",
+				});
+			}
+		},
+		[]
+	);
+
+	// Bulk approve handler
+	const bulkApproveHandler = useCallback(
+		async (claimIds: string[]) => {
+			try {
+				await Promise.all(
+					claimIds.map((id) => approveClaim(id, { notes: "Bulk approved" }))
+				);
+				showToast({
+					message: `${claimIds.length} claims approved successfully`,
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to approve claims",
+					type: "error",
+				});
+			}
+		},
+		[refetch]
+	);
+
+	// Bulk reject handler
+	const bulkRejectHandler = useCallback(
+		async (claimIds: string[], reason: string) => {
+			try {
+				await Promise.all(
+					claimIds.map((id) => rejectClaim(id, { reason, notes: reason }))
+				);
+				showToast({
+					message: `${claimIds.length} claims rejected`,
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to reject claims",
+					type: "error",
+				});
+			}
+		},
+		[refetch]
+	);
+
+	// Bulk authorize payment handler
+	const bulkAuthorizePaymentHandler = useCallback(
+		async (claimIds: string[]) => {
+			try {
+				await Promise.all(
+					claimIds.map((id) =>
+						authorizePayment(id, { notes: "Bulk payment authorized" })
+					)
+				);
+				showToast({
+					message: `${claimIds.length} payments authorized successfully`,
+					type: "success",
+				});
+				await refetch();
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to authorize payments",
+					type: "error",
+				});
+			}
+		},
+		[refetch]
+	);
+
+	// Execute bulk payment handler (placeholder)
+	const executeBulkPaymentHandler = useCallback(
+		async (claimIds: string[], transactionRef: string) => {
+			try {
+				showToast({
+					message: "Bulk payment execution not implemented yet",
+					type: "info",
+				});
+				// TODO: Implement when API endpoint is available
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to execute bulk payment",
+					type: "error",
+				});
+			}
+		},
+		[]
+	);
+
+	// Update repair status handler (placeholder - not in current API)
+	const updateRepairStatusHandler = useCallback(
+		async (
+			claimId: string,
+			repairStatus:
+				| "pending"
+				| "awaiting-parts"
+				| "received-device"
+				| "completed"
+		) => {
+			try {
+				showToast({
+					message: "Repair status update not implemented yet",
+					type: "info",
+				});
+				// TODO: Implement when API endpoint is available
+			} catch (error: any) {
+				showToast({
+					message: error.message || "Failed to update repair status",
+					type: "error",
+				});
+			}
+		},
+		[]
+	);
+
+	return {
+		data: data || [],
+		isLoading,
+		error: error || null,
+		refetch,
+		approveHandler,
+		rejectHandler,
+		authorizePaymentHandler,
+		executePaymentHandler,
+		executeBulkPaymentHandler,
+		bulkApproveHandler,
+		bulkRejectHandler,
+		bulkAuthorizePaymentHandler,
+		updateRepairStatusHandler,
+	};
+}

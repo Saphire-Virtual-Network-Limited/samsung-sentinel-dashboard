@@ -9,6 +9,27 @@ import {
 // CLAIMS APIs
 // ============================================================================
 
+// Helper function to build clean query strings without undefined values
+function buildQueryString(params?: Record<string, any>): string {
+	if (!params) return "";
+
+	const cleanParams: Record<string, string> = {};
+
+	Object.entries(params).forEach(([key, value]) => {
+		if (
+			value !== undefined &&
+			value !== null &&
+			value !== "" &&
+			value !== "undefined"
+		) {
+			cleanParams[key] = String(value);
+		}
+	});
+
+	const queryString = new URLSearchParams(cleanParams).toString();
+	return queryString ? `?${queryString}` : "";
+}
+
 // Types & Interfaces
 export interface Claim {
 	id: string;
@@ -170,10 +191,8 @@ export async function createClaim(
 export async function getAllClaims(
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
-	return apiCall(`/claims?${queryParams}`, "GET");
+	const queryString = buildQueryString(params as Record<string, any>);
+	return apiCall(`/claims${queryString}`, "GET");
 }
 
 /**
@@ -244,11 +263,9 @@ export async function getClaimsByServiceCenter(
 	service_center_id: string,
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
+	const queryString = buildQueryString(params as Record<string, any>);
 	return apiCall(
-		`/claims/service-center/${service_center_id}?${queryParams}`,
+		`/claims/service-center/${service_center_id}${queryString}`,
 		"GET"
 	);
 }
@@ -276,11 +293,9 @@ export async function getClaimsByRepairStore(
 	repair_store_id: string,
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
+	const queryString = buildQueryString(params as Record<string, any>);
 	return apiCall(
-		`/claims/repair-store/${repair_store_id}?${queryParams}`,
+		`/claims/repair-store/${repair_store_id}${queryString}`,
 		"GET"
 	);
 }

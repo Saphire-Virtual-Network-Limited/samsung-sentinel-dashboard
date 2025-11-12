@@ -4,6 +4,27 @@ import { apiCall, BaseApiResponse } from "../shared";
 // ENGINEERS APIs
 // ============================================================================
 
+// Helper function to build clean query strings without undefined values
+function buildQueryString(params?: Record<string, any>): string {
+	if (!params) return "";
+
+	const cleanParams: Record<string, string> = {};
+
+	Object.entries(params).forEach(([key, value]) => {
+		if (
+			value !== undefined &&
+			value !== null &&
+			value !== "" &&
+			value !== "undefined"
+		) {
+			cleanParams[key] = String(value);
+		}
+	});
+
+	const queryString = new URLSearchParams(cleanParams).toString();
+	return queryString ? `?${queryString}` : "";
+}
+
 // Types & Interfaces
 export interface Engineer {
 	id: string;
@@ -63,10 +84,8 @@ export async function createEngineer(
 export async function getAllEngineers(
 	params?: GetEngineersParams
 ): Promise<BaseApiResponse<Engineer[]>> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
-	return apiCall(`/engineers?${queryParams}`, "GET");
+	const queryString = buildQueryString(params as Record<string, any>);
+	return apiCall(`/engineers${queryString}`, "GET");
 }
 
 /**

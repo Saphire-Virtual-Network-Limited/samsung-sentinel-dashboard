@@ -91,6 +91,8 @@ export interface UserProfile {
 	last_login: string | null;
 	created_by_id: string | null;
 	deleted_at: string | null;
+	repair_store_id?: string;
+	service_center_id?: string;
 }
 
 // API Functions

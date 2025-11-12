@@ -27,8 +27,8 @@ import ClaimsRepairsTable, {
 	ClaimRepairRole,
 	ClaimRepairItem,
 } from "@/components/shared/ClaimsRepairsTable";
-import UnifiedClaimRepairDetailView from "@/components/shared/UnifiedClaimRepairDetailView";
-import { useClaimsData } from "@/hooks/shared/useClaimsData";
+import ViewClaimDetailView from "@/view/shared/ViewClaimDetailView";
+import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
 
 export interface UnifiedClaimsViewProps {
 	role: ClaimRepairRole;
@@ -48,9 +48,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	);
 	const [paymentFilter, setPaymentFilter] = useState(
 		searchParams.get("payment") || "all"
-	);
-	const [repairStatusFilter, setRepairStatusFilter] = useState(
-		searchParams.get("repairStatus") || "all"
 	);
 	const [startDate, setStartDate] = useState<string | undefined>(
 		searchParams.get("startDate") || undefined
@@ -72,7 +69,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 
 		if (activeTab !== "all") params.set("status", activeTab);
 		if (paymentFilter !== "all") params.set("payment", paymentFilter);
-		if (repairStatusFilter !== "all") params.set("repairStatus", repairStatusFilter);
 		if (searchQuery) params.set("search", searchQuery);
 		if (startDate) params.set("startDate", startDate);
 		if (endDate) params.set("endDate", endDate);
@@ -84,7 +80,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		if (window.location.search !== (queryString ? `?${queryString}` : "")) {
 			router.replace(newUrl, { scroll: false });
 		}
-	}, [activeTab, paymentFilter, repairStatusFilter, searchQuery, startDate, endDate, router]);
+	}, [activeTab, paymentFilter, searchQuery, startDate, endDate, router]);
 
 	// Fetch data based on role, status, payment filter, and date range
 	const {
@@ -101,11 +97,10 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		bulkAuthorizePaymentHandler,
 		updateRepairStatusHandler,
 		refetch,
-	} = useClaimsData({
+	} = useClaimsApi({
 		role,
 		status: activeTab,
 		payment: paymentFilter,
-		repairStatus: repairStatusFilter,
 		search: searchQuery,
 		startDate,
 		endDate,
@@ -115,53 +110,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const handleViewDetails = (claim: ClaimRepairItem) => {
 		setSelectedClaim(claim);
 		onOpen();
-	};
-
-	// Get bank details for selected claim
-	const getBankDetails = (claim: ClaimRepairItem | null) => {
-		if (
-			!claim ||
-			!(claim.status === "approved" && claim.repairStatus === "completed") ||
-			claim.paymentStatus !== "unpaid"
-		) {
-			return undefined;
-		}
-
-		return {
-			bankName: ["GTBank", "Access Bank", "First Bank", "Zenith Bank"][
-				parseInt(claim.id) % 4
-			],
-			accountNumber: String(1000000000 + parseInt(claim.id)),
-			accountName: `${claim.serviceCenterName} Account`,
-		};
-	};
-
-	// Wrap action handlers to refetch and close modal
-	const handleApprove = async (claimId: string) => {
-		await approveHandler(claimId);
-		await refetch();
-		onClose();
-	};
-
-	const handleReject = async (claimId: string, reason: string) => {
-		await rejectHandler(claimId, reason);
-		await refetch();
-		onClose();
-	};
-
-	const handleAuthorizePayment = async (claimId: string) => {
-		await authorizePaymentHandler(claimId);
-		await refetch();
-		onClose();
-	};
-
-	const handleExecutePayment = async (
-		claimId: string,
-		transactionRef: string
-	) => {
-		await executePaymentHandler(claimId, transactionRef);
-		await refetch();
-		onClose();
 	};
 
 	// Handle tab change
@@ -247,36 +195,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				title: "Paid",
 			},
 		];
-	};
-
-	const getRepairStatusTabs = () => {
-		return [
-			{
-				key: "all",
-				title: "All",
-			},
-			{
-				key: "pending",
-				title: "Pending",
-			},
-			{
-				key: "awaiting-parts",
-				title: "Awaiting Parts",
-			},
-			{
-				key: "received-device",
-				title: "Device Received",
-			},
-			{
-				key: "completed",
-				title: "Completed",
-			},
-		];
-	};
-
-	// Handle repair status filter change
-	const handleRepairStatusFilterChange = (key: string) => {
-		setRepairStatusFilter(key);
 	};
 
 	return (
@@ -379,51 +297,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 									</Card>
 								)}
 
-							{/* Repair Status Filter for Service Center */}
-							{role === "service-center" && (
-								<Card className="mb-4">
-									<CardBody className="flex flex-row items-center gap-3 p-3">
-										<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-											Repair Status:
-										</span>
-										<div className="flex gap-2">
-											{getRepairStatusTabs().map((repairTab) => (
-												<Button
-													key={repairTab.key}
-													size="sm"
-													variant={
-														repairStatusFilter === repairTab.key
-															? "solid"
-															: "flat"
-													}
-													color={
-														repairStatusFilter === repairTab.key
-															? "secondary"
-															: "default"
-													}
-													onPress={() =>
-														handleRepairStatusFilterChange(repairTab.key)
-													}
-													className={
-														repairStatusFilter === repairTab.key
-															? "font-semibold"
-															: ""
-													}
-												>
-													{repairTab.title}
-													{repairStatusFilter === repairTab.key &&
-														repairTab.key !== "all" && (
-															<span className="ml-2 text-xs">
-																({data?.length || 0})
-															</span>
-														)}
-												</Button>
-											))}
-										</div>
-									</CardBody>
-								</Card>
-							)}
-
 							<ClaimsRepairsTable
 								data={data}
 								isLoading={isLoading}
@@ -479,15 +352,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				<ModalContent>
 					<ModalBody className="p-0">
 						{selectedClaim && (
-							<UnifiedClaimRepairDetailView
-								claimData={selectedClaim}
-								role={role}
-								onApprove={handleApprove}
-								onReject={handleReject}
-								onAuthorizePayment={handleAuthorizePayment}
-								onExecutePayment={handleExecutePayment}
-								serviceCenterBankDetails={getBankDetails(selectedClaim)}
-							/>
+							<ViewClaimDetailView claimId={selectedClaim.id} />
 						)}
 					</ModalBody>
 				</ModalContent>
