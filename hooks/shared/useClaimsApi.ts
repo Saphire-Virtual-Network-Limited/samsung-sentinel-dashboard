@@ -7,6 +7,8 @@ import {
 	approveClaim,
 	rejectClaim,
 	authorizePayment,
+	bulkAuthorizeClaims,
+	bulkMarkClaimsPaid,
 	Claim,
 	GetClaimsParams,
 	ApproveClaimDto,
@@ -131,7 +133,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 		}
 
 		return params;
-	}, [status, payment, search]);
+	}, [status, payment, search, startDate, endDate]);
 
 	// SWR fetcher
 	const fetcher = async () => {
@@ -242,15 +244,33 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 		[refetch]
 	);
 
-	// Execute payment handler (placeholder - API doesn't have this endpoint yet)
+	// Execute payment handler (mark single claim as paid)
 	const executePaymentHandler = useCallback(
 		async (claimId: string, transactionRef: string) => {
 			try {
-				showToast({
-					message: "Payment execution not implemented yet",
-					type: "info",
+				const response = await bulkMarkClaimsPaid({
+					claim_ids: [claimId],
+					transaction_reference: transactionRef,
+					notes: "Single payment processed",
 				});
-				// TODO: Implement when API endpoint is available
+
+				const { marked_paid, failed } = response.data || {
+					marked_paid: 0,
+					failed: 0,
+				};
+
+				if (marked_paid > 0) {
+					showToast({
+						message: "Claim marked as paid successfully",
+						type: "success",
+					});
+					await refetch();
+				} else {
+					showToast({
+						message: "Failed to mark claim as paid",
+						type: "error",
+					});
+				}
 			} catch (error: any) {
 				showToast({
 					message: error.message || "Failed to execute payment",
@@ -258,7 +278,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 				});
 			}
 		},
-		[]
+		[refetch]
 	);
 
 	// Bulk approve handler
@@ -309,16 +329,30 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 	const bulkAuthorizePaymentHandler = useCallback(
 		async (claimIds: string[]) => {
 			try {
-				await Promise.all(
-					claimIds.map((id) =>
-						authorizePayment(id, { notes: "Bulk payment authorized" })
-					)
-				);
-				showToast({
-					message: `${claimIds.length} payments authorized successfully`,
-					type: "success",
+				const response = await bulkAuthorizeClaims({
+					claim_ids: claimIds,
+					notes: "Bulk payment authorized",
 				});
-				await refetch();
+
+				const { authorized, failed } = response.data || {
+					authorized: 0,
+					failed: 0,
+				};
+
+				if (authorized > 0) {
+					showToast({
+						message: `Successfully authorized ${authorized} claim${
+							authorized > 1 ? "s" : ""
+						}${failed > 0 ? ` (${failed} failed)` : ""}`,
+						type: "success",
+					});
+					await refetch();
+				} else {
+					showToast({
+						message: `Failed to authorize claims: ${failed} failed`,
+						type: "error",
+					});
+				}
 			} catch (error: any) {
 				showToast({
 					message: error.message || "Failed to authorize payments",
@@ -329,15 +363,35 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 		[refetch]
 	);
 
-	// Execute bulk payment handler (placeholder)
+	// Execute bulk payment handler
 	const executeBulkPaymentHandler = useCallback(
 		async (claimIds: string[], transactionRef: string) => {
 			try {
-				showToast({
-					message: "Bulk payment execution not implemented yet",
-					type: "info",
+				const response = await bulkMarkClaimsPaid({
+					claim_ids: claimIds,
+					transaction_reference: transactionRef,
+					notes: "Bulk payment processed",
 				});
-				// TODO: Implement when API endpoint is available
+
+				const { marked_paid, failed } = response.data || {
+					marked_paid: 0,
+					failed: 0,
+				};
+
+				if (marked_paid > 0) {
+					showToast({
+						message: `Successfully marked ${marked_paid} claim${
+							marked_paid > 1 ? "s" : ""
+						} as paid${failed > 0 ? ` (${failed} failed)` : ""}`,
+						type: "success",
+					});
+					await refetch();
+				} else {
+					showToast({
+						message: `Failed to mark claims as paid: ${failed} failed`,
+						type: "error",
+					});
+				}
 			} catch (error: any) {
 				showToast({
 					message: error.message || "Failed to execute bulk payment",
@@ -345,7 +399,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 				});
 			}
 		},
-		[]
+		[refetch]
 	);
 
 	// Update repair status handler (placeholder - not in current API)

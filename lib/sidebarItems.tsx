@@ -161,7 +161,7 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 		{
 			icon: Users2,
 			title: "User Management",
-			url: "/access/admin/users/",
+			url: "/access/samsung-sentinel/users",
 			id: "admin-users",
 		},
 		{

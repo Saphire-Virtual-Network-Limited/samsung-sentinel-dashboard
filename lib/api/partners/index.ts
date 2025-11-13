@@ -47,6 +47,8 @@ export interface DashboardFilterParams {
 export interface PartnersStatistics {
 	filter: {
 		type: string;
+		start_date?: string;
+		end_date?: string;
 	};
 	statistics: {
 		total_claims: number;

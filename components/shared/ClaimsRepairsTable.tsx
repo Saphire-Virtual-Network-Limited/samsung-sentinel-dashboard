@@ -789,10 +789,46 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		return tableData.slice(start, end);
 	}, [tableData, page, rowsPerPage]);
 
-	// Determine disabled keys (non-completed or already paid claims)
+	// Determine disabled keys based on role and current status/payment filter
 	const disabledKeys = useMemo(() => {
 		if (!enableMultiSelect) return new Set<string>();
 
+		// For partners authorizing payment: only completed+unpaid claims are selectable
+		if (
+			role === "samsung-partners" &&
+			status === "completed" &&
+			paymentFilter === "unpaid"
+		) {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							item.status !== "approved" || // Must be completed (approved status in API)
+							item.paymentStatus === "paid" || // Not already paid
+							item.authorizedAt !== undefined // Not already authorized
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// For admin marking as paid: only authorized+unpaid claims are selectable
+		if (
+			role === "samsung-sentinel" &&
+			status === "completed" &&
+			paymentFilter === "unpaid"
+		) {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							!item.authorizedAt || // Must be authorized
+							item.paymentStatus === "paid" // Not already paid
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// Default: disable non-approved or already paid claims
 		return new Set(
 			data
 				.filter(
@@ -800,7 +836,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				)
 				.map((item) => item.id)
 		);
-	}, [data, enableMultiSelect]);
+	}, [data, enableMultiSelect, role, status, paymentFilter]);
 
 	// Calculate total amount for selected claims
 	const selectedTotalAmount = useMemo(() => {

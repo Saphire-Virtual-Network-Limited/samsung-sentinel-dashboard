@@ -12,6 +12,7 @@ import TableSkeleton from "./tableSkeleton";
 import PaymentReceipt from "./paymentReceipt";
 import DynamicQRCode from "./qrCode";
 import DailyDashCard from "./dailyDashCard";
+import GenericTable from "./tableUi";
 // Removed non-Samsung Sentinel components:
 // import InceptionDashCard from "./inceptionDashCard";
 // import DeviceDashAnalytic from "./deviceDashAnalytic";
@@ -56,6 +57,7 @@ export {
 	PaymentReceipt,
 	DynamicQRCode,
 	DailyDashCard,
+	GenericTable,
 	// Removed non-Samsung Sentinel components:
 	// InceptionDashCard,
 	// DeviceDashAnalytic,

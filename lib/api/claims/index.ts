@@ -144,6 +144,17 @@ export interface AuthorizePaymentDto {
 	notes?: string;
 }
 
+export interface BulkAuthorizeDto {
+	claim_ids: string[];
+	notes?: string;
+}
+
+export interface BulkMarkPaidDto {
+	claim_ids: string[];
+	transaction_reference: string;
+	notes?: string;
+}
+
 export interface GetClaimsParams {
 	status?: ClaimStatus;
 	payment_status?: PaymentStatus;
@@ -254,6 +265,45 @@ export async function authorizePayment(
 	data?: AuthorizePaymentDto
 ): Promise<BaseApiResponse<Claim>> {
 	return apiCall(`/claims/${id}/authorize-payment`, "PATCH", data);
+}
+
+/**
+ * Bulk authorize claims
+ * @summary Authorize multiple completed claims at once. Partners and admins only.
+ * @tag Claims
+ */
+export async function bulkAuthorizeClaims(
+	data: BulkAuthorizeDto
+): Promise<BaseApiResponse<{ authorized: number; failed: number }>> {
+	return apiCall("/claims/bulk-authorize", "POST", data);
+}
+
+/**
+ * Bulk mark claims as paid
+ * @summary Mark multiple authorized claims as paid. Admin only.
+ * @tag Claims
+ */
+export async function bulkMarkClaimsPaid(
+	data: BulkMarkPaidDto
+): Promise<BaseApiResponse<{ marked_paid: number; failed: number }>> {
+	return apiCall("/claims/bulk-mark-paid", "POST", data);
+}
+
+/**
+ * Mark single claim as paid
+ * @summary Mark a single authorized claim as paid. Admin only.
+ * @tag Claims
+ */
+export async function markClaimPaid(
+	id: string,
+	transaction_reference: string,
+	notes?: string
+): Promise<BaseApiResponse<Claim>> {
+	return bulkMarkClaimsPaid({
+		claim_ids: [id],
+		transaction_reference,
+		notes,
+	}) as any;
 }
 
 /**
