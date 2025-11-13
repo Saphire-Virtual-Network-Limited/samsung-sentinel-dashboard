@@ -35,13 +35,33 @@ import {
 } from "lucide-react";
 import { useUsersManagement } from "@/hooks/admin/useUsersManagement";
 import { GenericTable } from "@/components/reususables";
-import { cn, GeneralSans_SemiBold, type User, UserRole } from "@/lib";
+import {
+	cn,
+	GeneralSans_SemiBold,
+	type User,
+	UserRole,
+	showToast,
+	register,
+} from "@/lib";
+import { createEngineer } from "@/lib/api/engineers";
+import { getAllServiceCenters } from "@/lib/api/service-centers";
+import useSWR from "swr";
 
 // Role options for filter
 const ROLE_OPTIONS: { value: string; label: string }[] = [
 	{ value: UserRole.ADMIN, label: "Admin" },
 	{ value: UserRole.REPAIR_STORE_ADMIN, label: "Repair Store Admin" },
 	{ value: UserRole.SERVICE_CENTER_ADMIN, label: "Service Center Admin" },
+	{ value: UserRole.ENGINEER, label: "Engineer" },
+	{ value: UserRole.SAMSUNG_PARTNER, label: "Samsung Partner" },
+	{ value: UserRole.FINANCE, label: "Finance" },
+	{ value: UserRole.AUDITOR, label: "Auditor" },
+];
+
+// Role options for user creation (excludes Service Center Admin)
+const CREATE_USER_ROLE_OPTIONS: { value: string; label: string }[] = [
+	{ value: UserRole.ADMIN, label: "Admin" },
+	{ value: UserRole.REPAIR_STORE_ADMIN, label: "Repair Store Admin" },
 	{ value: UserRole.ENGINEER, label: "Engineer" },
 	{ value: UserRole.SAMSUNG_PARTNER, label: "Samsung Partner" },
 	{ value: UserRole.FINANCE, label: "Finance" },
@@ -77,11 +97,31 @@ export default function SamsungSentinelUsersView() {
 	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [editFormData, setEditFormData] = useState({
 		name: "",
 		phone: "",
 	});
+	const [createFormData, setCreateFormData] = useState({
+		email: "",
+		name: "",
+		phone: "",
+		role: "",
+		password: "Password123!", // Default password
+		service_center_id: "",
+		description: "",
+	});
 	const [isSaving, setIsSaving] = useState(false);
+	const [isCreating, setIsCreating] = useState(false);
+	const [serviceCenterSearch, setServiceCenterSearch] = useState("");
+
+	// Fetch service centers for engineer assignment
+	const { data: serviceCentersData } = useSWR(
+		["service-centers-list", serviceCenterSearch],
+		() => getAllServiceCenters({ search: serviceCenterSearch, limit: 50 })
+	);
+
+	const serviceCenters = serviceCentersData?.data || [];
 	const [sortDescriptor, setSortDescriptor] = useState<{
 		column: string;
 		direction: "ascending" | "descending";
@@ -332,6 +372,60 @@ export default function SamsungSentinelUsersView() {
 		}
 	};
 
+	// Handle create user
+	const handleCreateUser = async () => {
+		if (
+			!createFormData.email ||
+			!createFormData.name ||
+			!createFormData.phone ||
+			!createFormData.role
+		) {
+			showToast({
+				type: "error",
+				message: "Please fill in all required fields",
+			});
+			return;
+		}
+
+		try {
+			setIsCreating(true);
+			await register({
+				email: createFormData.email,
+				name: createFormData.name,
+				phone: createFormData.phone,
+				role: createFormData.role,
+				password: createFormData.password,
+			});
+
+			showToast({
+				type: "success",
+				message: "User created successfully! An invitation email will be sent.",
+			});
+
+			setIsCreateModalOpen(false);
+			setCreateFormData({
+				email: "",
+				name: "",
+				phone: "",
+				role: "",
+				password: "Password123!",
+				service_center_id: "",
+				description: "",
+			});
+			setServiceCenterSearch("");
+			// Refresh the users list
+			window.location.reload();
+		} catch (err: any) {
+			console.error("Error creating user:", err);
+			showToast({
+				type: "error",
+				message: err?.message || "Failed to create user",
+			});
+		} finally {
+			setIsCreating(false);
+		}
+	};
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
@@ -353,6 +447,7 @@ export default function SamsungSentinelUsersView() {
 					color="primary"
 					startContent={<UserPlus className="w-4 h-4" />}
 					className="w-full sm:w-auto"
+					onPress={() => setIsCreateModalOpen(true)}
 				>
 					Add New User
 				</Button>
@@ -639,6 +734,181 @@ export default function SamsungSentinelUsersView() {
 							isDisabled={!editFormData.name.trim()}
 						>
 							Save Changes
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Create User Modal */}
+			<Modal
+				isOpen={isCreateModalOpen}
+				onClose={() => {
+					setIsCreateModalOpen(false);
+					setCreateFormData({
+						email: "",
+						name: "",
+						phone: "",
+						role: "",
+						password: "Password123!",
+						service_center_id: "",
+						description: "",
+					});
+					setServiceCenterSearch("");
+				}}
+				size="2xl"
+			>
+				<ModalContent>
+					<ModalHeader className="flex flex-col gap-1">
+						Create New User
+					</ModalHeader>
+					<ModalBody>
+						<div className="space-y-4">
+							<Input
+								label="Full Name"
+								placeholder="Enter full name"
+								value={createFormData.name}
+								onChange={(e) =>
+									setCreateFormData((prev) => ({
+										...prev,
+										name: e.target.value,
+									}))
+								}
+								variant="bordered"
+								isRequired
+							/>
+							<Input
+								label="Email"
+								type="email"
+								placeholder="user@example.com"
+								value={createFormData.email}
+								onChange={(e) =>
+									setCreateFormData((prev) => ({
+										...prev,
+										email: e.target.value,
+									}))
+								}
+								variant="bordered"
+								isRequired
+							/>
+							<Input
+								label="Phone Number"
+								type="tel"
+								placeholder="+2348012345678"
+								value={createFormData.phone}
+								onChange={(e) =>
+									setCreateFormData((prev) => ({
+										...prev,
+										phone: e.target.value,
+									}))
+								}
+								variant="bordered"
+								isRequired
+							/>
+							<Select
+								label="Role"
+								placeholder="Select a role"
+								selectedKeys={createFormData.role ? [createFormData.role] : []}
+								onChange={(e) =>
+									setCreateFormData((prev) => ({
+										...prev,
+										role: e.target.value,
+										service_center_id: "", // Reset service center when role changes
+										description: "",
+									}))
+								}
+								variant="bordered"
+								isRequired
+							>
+								{CREATE_USER_ROLE_OPTIONS.map((role) => (
+									<SelectItem key={role.value} value={role.value}>
+										{role.label}
+									</SelectItem>
+								))}
+							</Select>
+							{/* Service Center Selection for Engineers */}
+							{createFormData.role === "engineer" && (
+								<>
+									<Select
+										label="Service Center"
+										placeholder="Select a service center"
+										selectedKeys={
+											createFormData.service_center_id
+												? [createFormData.service_center_id]
+												: []
+										}
+										onChange={(e) =>
+											setCreateFormData((prev) => ({
+												...prev,
+												service_center_id: e.target.value,
+											}))
+										}
+										variant="bordered"
+										isRequired
+									>
+										{serviceCenters.map((sc: any) => (
+											<SelectItem key={sc.id} value={sc.id}>
+												{sc.name}
+											</SelectItem>
+										))}
+									</Select>
+									<Input
+										label="Description/Specialization"
+										placeholder="e.g., Specialized in Samsung Galaxy repairs"
+										value={createFormData.description}
+										onChange={(e) =>
+											setCreateFormData((prev) => ({
+												...prev,
+												description: e.target.value,
+											}))
+										}
+										variant="bordered"
+									/>
+								</>
+							)}
+							<div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+								<p className="text-sm text-blue-800">
+									<strong>Note:</strong> A temporary password will be assigned.
+									The user will receive an invitation email to set their own
+									password.
+								</p>
+							</div>
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								setIsCreateModalOpen(false);
+								setCreateFormData({
+									email: "",
+									name: "",
+									phone: "",
+									role: "",
+									password: "Password123!",
+									service_center_id: "",
+									description: "",
+								});
+								setServiceCenterSearch("");
+							}}
+							isDisabled={isCreating}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="primary"
+							onPress={handleCreateUser}
+							isLoading={isCreating}
+							isDisabled={
+								!createFormData.email ||
+								!createFormData.name ||
+								!createFormData.phone ||
+								!createFormData.role ||
+								(createFormData.role === "engineer" &&
+									!createFormData.service_center_id)
+							}
+						>
+							{isCreating ? "Creating..." : "Create User"}
 						</Button>
 					</ModalFooter>
 				</ModalContent>
