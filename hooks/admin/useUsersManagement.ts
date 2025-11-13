@@ -40,7 +40,7 @@ export function useUsersManagement() {
 		createdAt: user.created_at || user.createdAt,
 		updatedAt: user.updated_at || user.updatedAt,
 	})) as User[];
-	
+
 	// Calculate total from data length since API doesn't return meta
 	const totalUsers = users.length;
 	const totalPages = Math.ceil(totalUsers / (filters.limit || 10));

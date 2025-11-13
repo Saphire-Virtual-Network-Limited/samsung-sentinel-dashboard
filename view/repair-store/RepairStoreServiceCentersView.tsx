@@ -97,16 +97,16 @@ export default function RepairStoreServiceCentersView() {
 		error,
 		isCreating,
 		isChangingStatus,
-	handleCreate,
-	handleActivate,
-	handleDeactivate,
-} = useRepairStoreServiceCenters({
-	...(statusFilter.size > 0 && { status: Array.from(statusFilter)[0] }),
-	...(stateFilter && { state: stateFilter }),
-	...(filterValue && { search: filterValue }),
-	page,
-	limit: 25,
-});	// Statistics
+		handleCreate,
+		handleActivate,
+		handleDeactivate,
+	} = useRepairStoreServiceCenters({
+		...(statusFilter.size > 0 && { status: Array.from(statusFilter)[0] }),
+		...(stateFilter && { state: stateFilter }),
+		...(filterValue && { search: filterValue }),
+		page,
+		limit: 25,
+	}); // Statistics
 	const stats = useMemo(
 		() => ({
 			totalCenters: total,

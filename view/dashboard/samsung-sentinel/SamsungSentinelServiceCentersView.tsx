@@ -117,18 +117,21 @@ export default function SamsungSentinelServiceCentersView() {
 	const [limit] = useState(25);
 
 	// Fetch service centers with SWR
-const {
-	data: serviceCentersData,
-	mutate,
-	isLoading,
-} = useSWR(["service-centers", page, limit, filterValue, statusFilter], () =>
-	getAllServiceCenters({
-		page,
-		limit,
-		...(filterValue && { search: filterValue }),
-		...(statusFilter.size > 0 && { status: Array.from(statusFilter)[0] as any }),
-	})
-);	const serviceCenters: ServiceCenter[] = useMemo(
+	const {
+		data: serviceCentersData,
+		mutate,
+		isLoading,
+	} = useSWR(["service-centers", page, limit, filterValue, statusFilter], () =>
+		getAllServiceCenters({
+			page,
+			limit,
+			...(filterValue && { search: filterValue }),
+			...(statusFilter.size > 0 && {
+				status: Array.from(statusFilter)[0] as any,
+			}),
+		})
+	);
+	const serviceCenters: ServiceCenter[] = useMemo(
 		() => serviceCentersData?.data || [],
 		[serviceCentersData]
 	);

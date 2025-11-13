@@ -142,18 +142,21 @@ export default function AdminRepairCentersView() {
 			page,
 			limit,
 			filterValue,
-		locationFilter,
-		Array.from(statusFilter)[0],
-	],
-	() =>
-		getAllRepairStores({
-			page,
-			limit,
-			...(filterValue && { search: filterValue }),
-			...(locationFilter && { location: locationFilter }),
-			...(statusFilter.size > 0 && { status: Array.from(statusFilter)[0] as any }),
-		})
-);	const repairStores = useMemo(
+			locationFilter,
+			Array.from(statusFilter)[0],
+		],
+		() =>
+			getAllRepairStores({
+				page,
+				limit,
+				...(filterValue && { search: filterValue }),
+				...(locationFilter && { location: locationFilter }),
+				...(statusFilter.size > 0 && {
+					status: Array.from(statusFilter)[0] as any,
+				}),
+			})
+	);
+	const repairStores = useMemo(
 		() => repairStoresData?.data || [],
 		[repairStoresData]
 	);

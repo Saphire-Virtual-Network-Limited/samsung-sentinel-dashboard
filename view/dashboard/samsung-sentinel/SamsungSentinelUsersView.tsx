@@ -223,17 +223,17 @@ export default function SamsungSentinelUsersView() {
 						{user.status}
 					</Chip>
 				);
-		case "createdAt":
-			return (
-				<p className="text-sm">
-					{new Date(user.createdAt).toLocaleDateString("en-US", {
-						year: "numeric",
-						month: "short",
-						day: "numeric",
-					})}
-				</p>
-			);
-		case "actions":
+			case "createdAt":
+				return (
+					<p className="text-sm">
+						{new Date(user.createdAt).toLocaleDateString("en-US", {
+							year: "numeric",
+							month: "short",
+							day: "numeric",
+						})}
+					</p>
+				);
+			case "actions":
 				return (
 					<Dropdown>
 						<DropdownTrigger>
