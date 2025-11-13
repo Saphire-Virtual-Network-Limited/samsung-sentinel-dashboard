@@ -233,8 +233,8 @@ export function getSamsungPartnersItems(options: MenuOptions): MenuItem[] {
 					url: "/access/samsung-partners/claims?status=approved",
 				},
 				{
-					title: "In Progress",
-					url: "/access/samsung-partners/claims?status=in-progress",
+					title: "Authorized",
+					url: "/access/samsung-partners/claims?status=authorized",
 				},
 				{
 					title: "Completed",
@@ -253,7 +253,7 @@ export function getSamsungPartnersItems(options: MenuOptions): MenuItem[] {
 			subItems: [
 				{
 					title: "Unpaid Repairs",
-					url: "/access/samsung-partners/claims?status=completed&payment=unpaid",
+					url: "/access/samsung-partners/claims?status=authorized",
 				},
 				{
 					title: "Paid Repairs",

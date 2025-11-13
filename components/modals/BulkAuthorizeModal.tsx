@@ -47,16 +47,16 @@ export default function BulkAuthorizeModal({
 				notes: notes || undefined,
 			});
 
-			const { authorized, failed } = response.data || {
-				authorized: 0,
+			const { successful, failed } = response.data || {
+				successful: 0,
 				failed: 0,
 			};
 
-			if (authorized > 0) {
+			if (successful > 0) {
 				showToast({
 					type: "success",
-					message: `Successfully authorized ${authorized} claim${
-						authorized > 1 ? "s" : ""
+					message: `Successfully authorized ${successful} claim${
+						successful > 1 ? "s" : ""
 					}${failed > 0 ? ` (${failed} failed)` : ""}`,
 				});
 				onSuccess?.();

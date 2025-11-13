@@ -58,16 +58,16 @@ export default function BulkMarkPaidModal({
 				notes: notes || undefined,
 			});
 
-			const { marked_paid, failed } = response.data || {
-				marked_paid: 0,
+			const { successful, failed } = response.data || {
+				successful: 0,
 				failed: 0,
 			};
 
-			if (marked_paid > 0) {
+			if (successful > 0) {
 				showToast({
 					type: "success",
-					message: `Successfully marked ${marked_paid} claim${
-						marked_paid > 1 ? "s" : ""
+					message: `Successfully marked ${successful} claim${
+						successful > 1 ? "s" : ""
 					} as paid${failed > 0 ? ` (${failed} failed)` : ""}`,
 				});
 				onSuccess?.();

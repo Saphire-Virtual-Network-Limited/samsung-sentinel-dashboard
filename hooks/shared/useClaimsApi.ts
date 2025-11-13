@@ -66,9 +66,14 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 		model: claim.product?.name || "",
 		faultType: claim.description || "",
 		repairCost: Number(claim.repair_price) || 0,
-		status: claim.status.toLowerCase() as "pending" | "approved" | "rejected",
-		repairStatus: "pending", // Default as not provided by API
-		paymentStatus: claim.payment_status.toLowerCase() as "paid" | "unpaid",
+		status: claim.status as
+			| "PENDING"
+			| "APPROVED"
+			| "REJECTED"
+			| "COMPLETED"
+			| "AUTHORIZED",
+		repairStatus: "PENDING", // Default as not provided by API
+		paymentStatus: claim.payment_status as "PAID" | "UNPAID" | undefined,
 		transactionRef: claim.transaction_id || undefined,
 		sessionId: claim.reference_id || undefined,
 		createdAt: claim.created_at,
@@ -101,14 +106,20 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 			limit: 100, // Adjust as needed
 		};
 
-		// Map status filter - only add if valid
-		if (status && status !== "all" && status !== "undefined") {
-			params.status = status.toUpperCase() as ClaimStatus;
-		}
+		// Handle special "authorized" status - map to completed + unpaid
+		if (status === "authorized") {
+			params.status = "COMPLETED" as ClaimStatus;
+			params.payment_status = "UNPAID" as PaymentStatus;
+		} else {
+			// Map status filter - only add if valid
+			if (status && status !== "all" && status !== "undefined") {
+				params.status = status.toUpperCase() as ClaimStatus;
+			}
 
-		// Map payment filter - only add if valid
-		if (payment && payment !== "all" && payment !== "undefined") {
-			params.payment_status = payment.toUpperCase() as PaymentStatus;
+			// Map payment filter - only add if valid
+			if (payment && payment !== "all" && payment !== "undefined") {
+				params.payment_status = payment.toUpperCase() as PaymentStatus;
+			}
 		}
 
 		// Search filters - only add if valid and not empty
@@ -254,12 +265,12 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 					notes: "Single payment processed",
 				});
 
-				const { marked_paid, failed } = response.data || {
-					marked_paid: 0,
+				const { successful, failed } = response.data || {
+					successful: 0,
 					failed: 0,
 				};
 
-				if (marked_paid > 0) {
+				if (successful > 0) {
 					showToast({
 						message: "Claim marked as paid successfully",
 						type: "success",
@@ -334,15 +345,15 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 					notes: "Bulk payment authorized",
 				});
 
-				const { authorized, failed } = response.data || {
-					authorized: 0,
+				const { successful, failed } = response.data || {
+					successful: 0,
 					failed: 0,
 				};
 
-				if (authorized > 0) {
+				if (successful > 0) {
 					showToast({
-						message: `Successfully authorized ${authorized} claim${
-							authorized > 1 ? "s" : ""
+						message: `Successfully authorized ${successful} claim${
+							successful > 1 ? "s" : ""
 						}${failed > 0 ? ` (${failed} failed)` : ""}`,
 						type: "success",
 					});
@@ -373,15 +384,15 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 					notes: "Bulk payment processed",
 				});
 
-				const { marked_paid, failed } = response.data || {
-					marked_paid: 0,
+				const { successful, failed } = response.data || {
+					successful: 0,
 					failed: 0,
 				};
 
-				if (marked_paid > 0) {
+				if (successful > 0) {
 					showToast({
-						message: `Successfully marked ${marked_paid} claim${
-							marked_paid > 1 ? "s" : ""
+						message: `Successfully marked ${successful} claim${
+							successful > 1 ? "s" : ""
 						} as paid${failed > 0 ? ` (${failed} failed)` : ""}`,
 						type: "success",
 					});

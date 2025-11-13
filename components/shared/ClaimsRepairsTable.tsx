@@ -50,9 +50,9 @@ export interface ClaimRepairItem {
 	model: string;
 	faultType: string;
 	repairCost: number;
-	status: "pending" | "approved" | "rejected" | "authorized";
-	repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed";
-	paymentStatus?: "paid" | "unpaid";
+	status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "AUTHORIZED";
+	repairStatus?: "PENDING" | "AWAITING_PARTS" | "RECEIVED_DEVICE" | "COMPLETED";
+	paymentStatus?: "PAID" | "UNPAID";
 	transactionRef?: string;
 	sessionId?: string;
 	createdAt: string;
@@ -161,16 +161,16 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const filteredData = useMemo(() => {
 		let filtered = [...data];
 
-		// Filter by status
+		// Filter by status (case-insensitive comparison)
 		if (status !== "all") {
-			filtered = filtered.filter((item) => item.status === status);
+			const statusUpper = status.toUpperCase();
+			filtered = filtered.filter((item) => item.status === statusUpper);
 		}
 
-		// Filter by payment status
+		// Filter by payment status (case-insensitive comparison)
 		if (paymentFilter !== "all" && showPaymentColumns) {
-			filtered = filtered.filter(
-				(item) => item.paymentStatus === paymentFilter
-			);
+			const paymentUpper = paymentFilter.toUpperCase();
+			filtered = filtered.filter((item) => item.paymentStatus === paymentUpper);
 		}
 
 		return filtered;
@@ -371,7 +371,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		];
 
 		// Service Center Actions
-		if (role === "service-center" && item.status === "pending") {
+		if (role === "service-center" && item.status === "PENDING") {
 			items.push(
 				<DropdownItem
 					key="edit"
@@ -386,7 +386,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		}
 
 		// Samsung Partners Actions
-		if (role === "samsung-partners" && item.status === "pending") {
+		if (role === "samsung-partners" && item.status === "PENDING") {
 			items.push(
 				<DropdownItem
 					key="approve"
@@ -410,8 +410,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		// Samsung Partners: Authorize payment for approved claims
 		if (
 			role === "samsung-partners" &&
-			item.status === "approved" &&
-			item.paymentStatus === "unpaid"
+			item.status === "COMPLETED" &&
+			item.paymentStatus === "UNPAID"
 		) {
 			items.push(
 				<DropdownItem
@@ -428,8 +428,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		// Samsung Sentinel Actions: Execute payment for authorized claims (status=AUTHORIZED)
 		if (
 			role === "samsung-sentinel" &&
-			item.status === "approved" &&
-			item.paymentStatus === "unpaid"
+			item.status === "COMPLETED" &&
+			item.paymentStatus === "UNPAID"
 		) {
 			items.push(
 				<DropdownItem
@@ -525,22 +525,23 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "status":
 				const statusColors: Record<string, any> = {
-					pending: "warning",
-					approved: "success",
-					rejected: "danger",
-					"in-progress": "primary",
+					PENDING: "warning",
+					APPROVED: "success",
+					REJECTED: "danger",
+					COMPLETED: "primary",
+					AUTHORIZED: "success",
 				};
 				return (
 					<div className="flex items-center gap-2">
 						<Chip
-							color={statusColors[item.status || "pending"] || "default"}
+							color={statusColors[item.status || "PENDING"] || "default"}
 							variant="flat"
 							size="sm"
 							className={cellClassName}
 						>
-							{(item.status || "pending").toUpperCase().replace("-", " ")}
+							{(item.status || "PENDING").toUpperCase().replace("_", " ")}
 						</Chip>
-						{disabled && item.status !== "approved" && (
+						{disabled && item.status !== "COMPLETED" && (
 							<span
 								className="text-xs text-gray-400"
 								title="Not eligible for selection"
@@ -554,7 +555,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "paymentStatus":
 				return item.paymentStatus ? (
 					<Chip
-						color={item.paymentStatus === "paid" ? "success" : "warning"}
+						color={item.paymentStatus === "PAID" ? "success" : "warning"}
 						variant="flat"
 						size="sm"
 					>
@@ -581,7 +582,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "bankDetails":
 				// Bank details are loaded from test data via serviceCenterId
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "approved") {
+				if (item.serviceCenterId && item.status === "COMPLETED") {
 					const serviceCenter = testData.serviceCenters.find(
 						(sc: any) => sc.id === item.serviceCenterId
 					);
@@ -623,7 +624,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				return <span className="text-sm">{item.engineerName || "N/A"}</span>;
 
 			case "rejectionInfo":
-				return item.status === "rejected" ? (
+				return item.status === "REJECTED" ? (
 					<div className="text-xs space-y-1">
 						{item.rejectedAt && (
 							<div className="text-gray-600">{formatDate(item.rejectedAt)}</div>
@@ -653,7 +654,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				);
 
 			case "paymentDetails":
-				return item.paymentStatus === "paid" ? (
+				return item.paymentStatus === "PAID" ? (
 					<div className="text-xs space-y-1">
 						{item.paidAt && (
 							<div className="text-gray-600">{formatDate(item.paidAt)}</div>
@@ -793,7 +794,20 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const disabledKeys = useMemo(() => {
 		if (!enableMultiSelect) return new Set<string>();
 
-		// For partners authorizing payment: only completed+unpaid claims are selectable
+		// For partners viewing pending: only PENDING claims are selectable
+		// Disable: APPROVED, REJECTED, COMPLETED claims
+		if (role === "samsung-partners" && status === "pending") {
+			return new Set(
+				data
+					.filter(
+						(item) => item.status !== "PENDING" // Only pending claims are selectable
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// For partners authorizing payment: only completed+unpaid+not-authorized claims are selectable
+		// Disable: APPROVED, REJECTED, PAID claims, and already authorized claims
 		if (
 			role === "samsung-partners" &&
 			status === "completed" &&
@@ -803,15 +817,17 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				data
 					.filter(
 						(item) =>
-							item.status !== "approved" || // Must be completed (approved status in API)
-							item.paymentStatus === "paid" || // Not already paid
-							item.authorizedAt !== undefined // Not already authorized
+							item.status === "APPROVED" || // Still in approval stage, not completed
+							item.status === "REJECTED" || // Rejected claims
+							item.paymentStatus === "PAID" || // Already paid
+							(item.authorizedAt !== null && item.authorizedAt !== undefined) // Already authorized
 					)
 					.map((item) => item.id)
 			);
 		}
 
 		// For admin marking as paid: only authorized+unpaid claims are selectable
+		// Disable: not authorized yet or already paid
 		if (
 			role === "samsung-sentinel" &&
 			status === "completed" &&
@@ -821,21 +837,15 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				data
 					.filter(
 						(item) =>
-							!item.authorizedAt || // Must be authorized
-							item.paymentStatus === "paid" // Not already paid
+							!item.authorizedAt || // Not authorized yet
+							item.paymentStatus === "PAID" // Already paid (uppercase)
 					)
 					.map((item) => item.id)
 			);
 		}
 
-		// Default: disable non-approved or already paid claims
-		return new Set(
-			data
-				.filter(
-					(item) => item.status !== "approved" || item.paymentStatus === "paid"
-				)
-				.map((item) => item.id)
-		);
+		// Default: no disabled keys for other scenarios
+		return new Set<string>();
 	}, [data, enableMultiSelect, role, status, paymentFilter]);
 
 	// Calculate total amount for selected claims

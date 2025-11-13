@@ -44,7 +44,7 @@ export default function SamsungPartnersHomeView() {
 				icon: FileText,
 				color: "bg-blue-500",
 				textColor: "text-blue-500",
-				href: "/access/samsung-partners/repair-claims",
+				href: "/access/samsung-partners/claims",
 			},
 			{
 				title: "Pending Claims",
@@ -52,7 +52,7 @@ export default function SamsungPartnersHomeView() {
 				icon: Clock,
 				color: "bg-orange-500",
 				textColor: "text-orange-500",
-				href: "/access/samsung-partners/repair-claims/pending",
+				href: "/access/samsung-partners/claims/pending",
 			},
 			{
 				title: "Approved Claims",
@@ -60,7 +60,7 @@ export default function SamsungPartnersHomeView() {
 				icon: CheckCircle,
 				color: "bg-green-500",
 				textColor: "text-green-500",
-				href: "/access/samsung-partners/repair-claims/approved",
+				href: "/access/samsung-partners/claims/approved",
 			},
 			{
 				title: "Rejected Claims",
@@ -68,7 +68,7 @@ export default function SamsungPartnersHomeView() {
 				icon: XCircle,
 				color: "bg-red-500",
 				textColor: "text-red-500",
-				href: "/access/samsung-partners/repair-claims/rejected",
+				href: "/access/samsung-partners/claims/rejected",
 			},
 			{
 				title: "Completed Claims",
@@ -76,7 +76,7 @@ export default function SamsungPartnersHomeView() {
 				icon: Wrench,
 				color: "bg-purple-500",
 				textColor: "text-purple-500",
-				href: "/access/samsung-partners/processed-claims",
+				href: "/access/samsung-partners/claims?status=completed",
 			},
 			{
 				title: "Authorized Claims",
@@ -84,7 +84,7 @@ export default function SamsungPartnersHomeView() {
 				icon: CheckCircle,
 				color: "bg-teal-500",
 				textColor: "text-teal-500",
-				href: "/access/samsung-partners/processed-claims",
+				href: "/access/samsung-partners/claims?status=authorized",
 			},
 			{
 				title: "Paid Claims",
@@ -92,7 +92,7 @@ export default function SamsungPartnersHomeView() {
 				icon: DollarSign,
 				color: "bg-green-600",
 				textColor: "text-green-600",
-				href: "/access/samsung-partners/processed-claims/paid",
+				href: "/access/samsung-partners/claims?status=completed&payment=paid",
 			},
 			{
 				title: "Unpaid Claims",
@@ -100,7 +100,7 @@ export default function SamsungPartnersHomeView() {
 				icon: TrendingUp,
 				color: "bg-yellow-500",
 				textColor: "text-yellow-500",
-				href: "/access/samsung-partners/processed-claims/unpaid",
+				href: "/access/samsung-partners/claims?status=authorized",
 			},
 		],
 		[stats]
@@ -183,7 +183,7 @@ export default function SamsungPartnersHomeView() {
 				<CardBody>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						<Link
-							href="/access/samsung-partners/repair-claims"
+							href="/access/samsung-partners/claims"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
 						>
 							<FileText className="h-6 w-6 text-blue-500" />
@@ -196,7 +196,7 @@ export default function SamsungPartnersHomeView() {
 						</Link>
 
 						<Link
-							href="/access/samsung-partners/repair-claims/pending"
+							href="/access/samsung-partners/claims/pending"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
 						>
 							<Clock className="h-6 w-6 text-orange-500" />
@@ -209,14 +209,14 @@ export default function SamsungPartnersHomeView() {
 						</Link>
 
 						<Link
-							href="/access/samsung-partners/processed-claims"
+							href="/access/samsung-partners/claims?status=completed"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
 						>
 							<Wrench className="h-6 w-6 text-purple-500" />
 							<div>
-								<div className="font-medium">Processed Claims</div>
+								<div className="font-medium">Completed Claims</div>
 								<div className="text-sm text-gray-500">
-									View processed claims
+									View completed claims
 								</div>
 							</div>
 						</Link>

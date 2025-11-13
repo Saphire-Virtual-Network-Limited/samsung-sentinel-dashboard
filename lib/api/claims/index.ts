@@ -204,7 +204,18 @@ export async function createClaim(
 export async function getAllClaims(
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryString = buildQueryString(params as Record<string, any>);
+	// Ensure status and payment_status are uppercase
+	const normalizedParams = params
+		? {
+				...params,
+				status: params.status?.toUpperCase() as ClaimStatus | undefined,
+				payment_status: params.payment_status?.toUpperCase() as
+					| PaymentStatus
+					| undefined,
+		  }
+		: undefined;
+
+	const queryString = buildQueryString(normalizedParams as Record<string, any>);
 	return apiCall(`/claims${queryString}`, "GET");
 }
 
@@ -272,9 +283,18 @@ export async function authorizePayment(
  * @summary Authorize multiple completed claims at once. Partners and admins only.
  * @tag Claims
  */
-export async function bulkAuthorizeClaims(
-	data: BulkAuthorizeDto
-): Promise<BaseApiResponse<{ authorized: number; failed: number }>> {
+export async function bulkAuthorizeClaims(data: BulkAuthorizeDto): Promise<
+	BaseApiResponse<{
+		total_processed: number;
+		successful: number;
+		failed: number;
+		results: Array<{
+			claim_id: string;
+			claim_number: string;
+			success: boolean;
+		}>;
+	}>
+> {
 	return apiCall("/claims/bulk-authorize", "POST", data);
 }
 
@@ -283,9 +303,18 @@ export async function bulkAuthorizeClaims(
  * @summary Mark multiple authorized claims as paid. Admin only.
  * @tag Claims
  */
-export async function bulkMarkClaimsPaid(
-	data: BulkMarkPaidDto
-): Promise<BaseApiResponse<{ marked_paid: number; failed: number }>> {
+export async function bulkMarkClaimsPaid(data: BulkMarkPaidDto): Promise<
+	BaseApiResponse<{
+		total_processed: number;
+		successful: number;
+		failed: number;
+		results: Array<{
+			claim_id: string;
+			claim_number: string;
+			success: boolean;
+		}>;
+	}>
+> {
 	return apiCall("/claims/bulk-mark-paid", "POST", data);
 }
 
@@ -315,7 +344,18 @@ export async function getClaimsByServiceCenter(
 	service_center_id: string,
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryString = buildQueryString(params as Record<string, any>);
+	// Ensure status and payment_status are uppercase
+	const normalizedParams = params
+		? {
+				...params,
+				status: params.status?.toUpperCase() as ClaimStatus | undefined,
+				payment_status: params.payment_status?.toUpperCase() as
+					| PaymentStatus
+					| undefined,
+		  }
+		: undefined;
+
+	const queryString = buildQueryString(normalizedParams as Record<string, any>);
 	return apiCall(
 		`/claims/service-center/${service_center_id}${queryString}`,
 		"GET"
@@ -345,7 +385,18 @@ export async function getClaimsByRepairStore(
 	repair_store_id: string,
 	params?: GetClaimsParams
 ): Promise<BaseApiResponse<Claim[]>> {
-	const queryString = buildQueryString(params as Record<string, any>);
+	// Ensure status and payment_status are uppercase
+	const normalizedParams = params
+		? {
+				...params,
+				status: params.status?.toUpperCase() as ClaimStatus | undefined,
+				payment_status: params.payment_status?.toUpperCase() as
+					| PaymentStatus
+					| undefined,
+		  }
+		: undefined;
+
+	const queryString = buildQueryString(normalizedParams as Record<string, any>);
 	return apiCall(
 		`/claims/repair-store/${repair_store_id}${queryString}`,
 		"GET"
