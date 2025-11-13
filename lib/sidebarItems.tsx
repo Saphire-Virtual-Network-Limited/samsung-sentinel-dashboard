@@ -261,61 +261,64 @@ export function getRepairStoreItems(options: MenuOptions): MenuItem[] {
 			id: "repair-store-dashboard",
 		},
 		{
-			icon: Shield,
-			title: "Repair Store Management",
-			id: "repair-store-management",
+			icon: Store,
+			title: "Service Centers",
+			url: "/access/repair-store/service-centers",
+			id: "repair-store-service-centers",
+		},
+		{
+			icon: Users,
+			title: "Engineers",
+			url: "/access/repair-store/engineers",
+			id: "repair-store-engineers",
+		},
+		{
+			icon: Wrench,
+			title: "Repairs & Claims",
+			id: "repair-store-claims",
 			subItems: [
 				{
-					title: "Service Centers",
-					url: "/access/repair-store/service-centers",
+					title: "All Claims",
+					url: "/access/repair-store/claims?status=all",
 				},
 				{
-					title: "Engineers",
-					url: "/access/repair-store/engineers",
+					title: "Pending",
+					url: "/access/repair-store/claims?status=pending",
 				},
 				{
-					title: "Repairs & Claims",
-					subItems: [
-						{
-							title: "All Claims",
-							url: "/access/repair-store/claims?status=all",
-						},
-						{
-							title: "Pending",
-							url: "/access/repair-store/claims?status=pending",
-						},
-						{
-							title: "Approved",
-							url: "/access/repair-store/claims?status=approved",
-						},
-						{
-							title: "Completed",
-							url: "/access/repair-store/claims?status=completed",
-						},
-						{
-							title: "Rejected",
-							url: "/access/repair-store/claims?status=rejected",
-						},
-					],
+					title: "Approved",
+					url: "/access/repair-store/claims?status=approved",
 				},
 				{
-					title: "Payments",
-					subItems: [
-						{
-							title: "Unpaid Repairs",
-							url: "/access/repair-store/claims?status=completed&payment=unpaid",
-						},
-						{
-							title: "Paid Repairs",
-							url: "/access/repair-store/claims?status=completed&payment=paid",
-						},
-					],
+					title: "Completed",
+					url: "/access/repair-store/claims?status=completed",
 				},
 				{
-					title: "Statistics",
-					url: "/access/repair-store/statistics",
+					title: "Rejected",
+					url: "/access/repair-store/claims?status=rejected",
 				},
 			],
+		},
+		{
+			icon: Receipt,
+			title: "Payments",
+			id: "repair-store-payments",
+			subItems: [
+				{
+					title: "Unpaid Repairs",
+					url: "/access/repair-store/claims?payment=unpaid",
+				},
+				{
+					title: "Paid Repairs",
+					url: "/access/repair-store/claims?payment=paid",
+				},
+			],
+		},
+		{
+			icon: BarChart3,
+			title: "Statistics",
+			url: "/access/repair-store/statistics",
+			id: "repair-store-statistics",
 		},
 	];
 }

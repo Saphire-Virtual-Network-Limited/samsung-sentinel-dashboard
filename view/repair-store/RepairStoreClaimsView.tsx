@@ -32,20 +32,22 @@ import { showToast } from "@/lib";
 import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
 import { ClaimRepairItem } from "@/components/shared/ClaimsRepairsTable";
 import { completeClaim } from "@/lib/api/claims";
+import { useRepairStoreDashboard } from "@/hooks/repair-store/useRepairStoreDashboard";
 
 const columns: ColumnDef[] = [
 	{ name: "Claim ID", uid: "claimId", sortable: true },
 	{ name: "Customer", uid: "customer", sortable: true },
+	{ name: "IMEI", uid: "imei", sortable: true },
 	{ name: "Device", uid: "device", sortable: true },
+	{ name: "Device Fault", uid: "deviceFault", sortable: true },
 	{ name: "Service Center", uid: "serviceCenter", sortable: true },
 	{ name: "Engineer", uid: "engineer", sortable: true },
 	{ name: "Amount", uid: "amount", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Payment", uid: "payment", sortable: true },
+	{ name: "Txn Ref ID", uid: "transactionRef", sortable: true },
 	{ name: "Submitted", uid: "submitted", sortable: true },
 	{ name: "Completed", uid: "completed", sortable: true },
-	{ name: "Rejected", uid: "rejected", sortable: true },
-	{ name: "Payment Details", uid: "paymentDetails", sortable: false },
 	{ name: "Actions", uid: "actions" },
 ];
 
@@ -84,51 +86,62 @@ export default function RepairStoreClaimsView() {
 	const [isCompleting, setIsCompleting] = useState(false);
 	const [completeNotes, setCompleteNotes] = useState("");
 
+	// Pagination states
+	const [page, setPage] = useState(1);
+	const [rowsPerPage, setRowsPerPage] = useState(10);
+
 	// Filter states
 	const [filterValue, setFilterValue] = useState("");
+	const [startDate, setStartDate] = useState<string | undefined>(undefined);
+	const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
-	// Use Claims API hook
+	// Fetch dashboard stats from API
+	const { stats: dashboardStats, isLoading: statsLoading } =
+		useRepairStoreDashboard();
+
+	// Use Claims API hook with pagination
 	const {
 		data: claims,
 		isLoading,
 		error,
 		refetch,
+		pagination,
 	} = useClaimsApi({
 		role: "repair_store",
 		status: statusFilter === "all" ? undefined : statusFilter,
 		payment: paymentFilter,
 		search: filterValue,
+		startDate,
+		endDate,
+		page,
+		limit: rowsPerPage,
 	});
 
-	// Calculate statistics
+	// Use stats from dashboard API
 	const stats = useMemo(() => {
-		const total = claims.length;
-		const pending = claims.filter((c) => c.status === "PENDING").length;
-		const approved = claims.filter((c) => c.status === "APPROVED").length;
-		const paid = claims.filter((c) => c.paymentStatus === "PAID").length;
-		const totalAmount = claims.reduce(
-			(sum, claim) => sum + claim.repairCost,
-			0
-		);
+		if (!dashboardStats?.overview) {
+			return {
+				totalClaims: 0,
+				pendingClaims: 0,
+				approvedClaims: 0,
+				completedClaims: 0,
+				totalRevenue: 0,
+			};
+		}
 
 		return {
-			totalClaims: total,
-			pendingClaims: pending,
-			approvedClaims: approved,
-			paidClaims: paid,
-			totalAmount,
+			totalClaims: dashboardStats.overview.total_repairs || 0,
+			pendingClaims: dashboardStats.overview.pending_claims || 0,
+			approvedClaims: dashboardStats.overview.in_progress_claims || 0,
+			completedClaims: dashboardStats.overview.completed_claims || 0,
+			totalRevenue: dashboardStats.overview.total_revenue || 0,
 		};
-	}, [claims]);
+	}, [dashboardStats]);
 
 	const handleViewClaim = (claim: ClaimRepairItem) => {
 		setSelectedClaim(claim);
 		setAdminNotes("");
 		onViewModalOpen();
-	};
-
-	// Export function
-	const exportFn = async (data: ClaimRepairItem[]) => {
-		console.log("Exporting claims:", data);
 	};
 
 	// Format currency
@@ -147,6 +160,13 @@ export default function RepairStoreClaimsView() {
 			month: "short",
 			day: "numeric",
 		});
+	};
+
+	// Handle date range change
+	const handleDateRangeChange = (start: string, end: string) => {
+		setStartDate(start);
+		setEndDate(end);
+		setPage(1); // Reset to first page on filter change
 	};
 
 	// Handle mark as completed
@@ -188,9 +208,6 @@ export default function RepairStoreClaimsView() {
 				return (
 					<div className="flex flex-col">
 						<p className="text-bold text-sm">{row.claimId}</p>
-						<p className="text-bold text-xs text-default-400">
-							IMEI: {row.imei}
-						</p>
 					</div>
 				);
 			case "customer":
@@ -199,32 +216,27 @@ export default function RepairStoreClaimsView() {
 						<p className="text-sm font-medium">{row.customerName}</p>
 					</div>
 				);
+			case "imei":
+				return <p className="text-sm font-mono text-default-600">{row.imei}</p>;
 			case "device":
-				return (
-					<div className="flex flex-col">
-						<p className="text-sm font-medium">{row.deviceName}</p>
-						<p className="text-xs text-default-400">{row.faultType}</p>
-					</div>
-				);
+				return <p className="text-sm font-medium">{row.deviceName}</p>;
+			case "deviceFault":
+				return <p className="text-sm text-default-600">{row.faultType}</p>;
 			case "serviceCenter":
 				return (
-					<div className="flex flex-col">
-						<p className="text-sm">{row.serviceCenterName}</p>
-						{row.serviceCenterId && (
-							<Button
-								size="sm"
-								variant="light"
-								className="h-auto p-0 text-xs text-primary"
-								onPress={() =>
-									router.push(
-										`/access/repair-store/service-centers/${row.serviceCenterId}`
-									)
-								}
-							>
-								View Center
-							</Button>
-						)}
-					</div>
+					<Button
+						size="sm"
+						variant="light"
+						className="h-auto p-1 text-sm text-primary hover:underline"
+						onPress={() =>
+							router.push(
+								`/access/repair-store/service-centers/${row.serviceCenterId}`
+							)
+						}
+						disabled={!row.serviceCenterId}
+					>
+						{row.serviceCenterName}
+					</Button>
 				);
 			case "engineer":
 				return (
@@ -264,6 +276,14 @@ export default function RepairStoreClaimsView() {
 						{row.paymentStatus}
 					</Chip>
 				);
+			case "transactionRef":
+				return row.transactionRef ? (
+					<p className="text-sm font-mono text-default-600">
+						{row.transactionRef}
+					</p>
+				) : (
+					<p className="text-sm text-default-400">-</p>
+				);
 			case "submitted":
 				return <p className="text-sm">{formatDate(row.createdAt)}</p>;
 			case "completed":
@@ -274,37 +294,6 @@ export default function RepairStoreClaimsView() {
 							<p className="text-xs text-default-400">
 								By: {row.completedById.slice(0, 8)}...
 							</p>
-						)}
-					</div>
-				) : (
-					<p className="text-sm text-default-400">-</p>
-				);
-			case "rejected":
-				return row.status === "REJECTED" ? (
-					<div className="flex flex-col">
-						{row.rejectedAt && (
-							<p className="text-sm">{formatDate(row.rejectedAt)}</p>
-						)}
-						{row.rejectionReason && (
-							<p className="text-xs text-default-400 line-clamp-2">
-								{row.rejectionReason}
-							</p>
-						)}
-					</div>
-				) : (
-					<p className="text-sm text-default-400">-</p>
-				);
-			case "paymentDetails":
-				return row.paymentStatus === "PAID" ? (
-					<div className="flex flex-col">
-						{row.paidAt && <p className="text-sm">{formatDate(row.paidAt)}</p>}
-						{row.transactionId && (
-							<p className="text-xs text-default-400">
-								Txn: {row.transactionId.slice(0, 12)}...
-							</p>
-						)}
-						{row.referenceId && (
-							<p className="text-xs text-default-400">Ref: {row.referenceId}</p>
 						)}
 					</div>
 				) : (
@@ -369,18 +358,18 @@ export default function RepairStoreClaimsView() {
 					icon={<Clock className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Approved"
+					title="In Progress"
 					value={stats.approvedClaims.toString()}
 					icon={<CheckCircle className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Paid"
-					value={stats.paidClaims.toString()}
+					title="Completed"
+					value={stats.completedClaims.toString()}
 					icon={<CheckCircle className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Total Amount"
-					value={formatCurrency(stats.totalAmount)}
+					title="Total Revenue"
+					value={formatCurrency(stats.totalRevenue)}
 					icon={<CreditCard className="w-5 h-5" />}
 				/>
 			</div>
@@ -389,21 +378,27 @@ export default function RepairStoreClaimsView() {
 			<GenericTable<ClaimRepairItem>
 				columns={columns}
 				data={claims}
-				allCount={claims.length}
+				allCount={pagination?.total || 0}
 				exportData={claims}
 				isLoading={isLoading}
 				filterValue={filterValue}
 				onFilterChange={setFilterValue}
 				sortDescriptor={{ column: "createdAt", direction: "descending" }}
 				onSortChange={() => {}}
-				page={1}
-				pages={1}
-				onPageChange={() => {}}
-				exportFn={exportFn}
+				page={page}
+				pages={pagination?.totalPages || 1}
+				onPageChange={setPage}
+				exportFn={(data) => console.log("Export:", data)}
 				renderCell={renderCell}
 				hasNoRecords={claims.length === 0}
 				searchPlaceholder="Search by claim ID, IMEI, or customer name..."
 				showRowsPerPageSelector={true}
+				defaultRowsPerPage={rowsPerPage}
+				onRowsPerPageChange={setRowsPerPage}
+				onDateFilterChange={handleDateRangeChange}
+				initialStartDate={startDate}
+				initialEndDate={endDate}
+				defaultDateRange={{ days: 30 }}
 			/>
 
 			{/* View Claim Details Modal */}

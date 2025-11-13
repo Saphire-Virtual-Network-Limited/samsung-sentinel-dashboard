@@ -40,14 +40,17 @@ import {
 	useServiceCenterComparison,
 	useRepairStoreDetails,
 } from "@/hooks/repair-store/useRepairStoreDashboard";
+import { useRepairStoreServiceCenters } from "@/hooks/repair-store/useRepairStoreServiceCenters";
 import { DashboardFilter } from "@/lib/api/dashboard";
 
 export default function RepairStoreStatisticsView() {
 	// Filter states
 	const [filter, setFilter] = useState<DashboardFilter>("mtd");
-	const [selectedCenter, setSelectedCenter] = useState<Set<string>>(
-		new Set(["all"])
-	);
+	const [selectedCenterId, setSelectedCenterId] = useState<string>("all");
+
+	// Fetch service centers
+	const { serviceCenters: serviceCentersData, isLoading: isLoadingCenters } =
+		useRepairStoreServiceCenters();
 
 	// Fetch dashboard statistics
 	const { stats, isLoading, error } = useRepairStoreDashboard({ filter });
@@ -66,7 +69,8 @@ export default function RepairStoreStatisticsView() {
 		error: detailsError,
 	} = useRepairStoreDetails({
 		filter,
-		// Don't pass service_center_id to get all centers
+		service_center_id:
+			selectedCenterId === "all" ? undefined : selectedCenterId,
 	});
 
 	// Extract data from API response
@@ -84,19 +88,16 @@ export default function RepairStoreStatisticsView() {
 	};
 
 	const handleSelectedCenterChange = (keys: any) => {
-		if (keys === "all") {
-			setSelectedCenter(new Set(["all"]));
-		} else {
-			setSelectedCenter(new Set(Array.from(keys)));
-		}
+		const selected = Array.from(keys)[0] as string;
+		setSelectedCenterId(selected);
 	};
 
-	// Service centers dropdown from API data
+	// Service centers dropdown from fetched service centers
 	const serviceCenters = [
 		{ name: "All Centers", uid: "all" },
-		...(comparisonData?.map((center, idx) => ({
-			name: center.service_center_name || `Service Center ${idx + 1}`,
-			uid: center.service_center_name,
+		...(serviceCentersData?.map((center) => ({
+			name: center.name || "Unknown Center",
+			uid: center.id,
 		})) || []),
 	];
 
@@ -144,9 +145,16 @@ export default function RepairStoreStatisticsView() {
 		[detailsData]
 	);
 
-	// Monthly revenue trend data (from details API)
+	// Monthly revenue trend data (from details API) - format date to month name
 	const monthlyRevenueData = useMemo(
-		() => detailsData?.monthly_revenue_trend || [],
+		() =>
+			detailsData?.monthly_revenue_trend?.map((item) => ({
+				month: new Date(item.date).toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+				}),
+				revenue: item.revenue || 0,
+			})) || [],
 		[detailsData]
 	);
 
@@ -191,20 +199,20 @@ export default function RepairStoreStatisticsView() {
 							</SelectItem>
 						))}
 					</Select>
-					<Select
+					{/**	<Select
 						label="Service Center"
 						className="max-w-xs"
-						selectedKeys={selectedCenter}
+						selectedKeys={new Set([selectedCenterId])}
 						onSelectionChange={handleSelectedCenterChange}
 						size="sm"
-						isDisabled={isLoadingComparisons}
+						isDisabled={isLoadingCenters}
 					>
 						{serviceCenters.map((center) => (
 							<SelectItem key={center.uid} value={center.uid}>
 								{center.name}
 							</SelectItem>
 						))}
-					</Select>
+					</Select> */}
 					<Button
 						color="primary"
 						startContent={<Download size={16} />}

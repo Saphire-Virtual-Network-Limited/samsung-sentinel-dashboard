@@ -80,6 +80,16 @@ export interface ClaimsRepairsTableProps {
 	isLoading?: boolean;
 	error?: any;
 	role: ClaimRepairRole;
+	pagination?: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+	page?: number;
+	onPageChange?: (page: number) => void;
+	rowsPerPage?: number;
+	onRowsPerPageChange?: (rowsPerPage: number) => void;
 	onApprove?: (claimId: string) => void;
 	onReject?: (claimId: string, reason: string) => void;
 	onAuthorizePayment?: (claimId: string) => void;
@@ -110,6 +120,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	isLoading,
 	error,
 	role,
+	pagination: externalPagination,
+	page: externalPage,
+	onPageChange: externalOnPageChange,
+	rowsPerPage: externalRowsPerPage,
+	onRowsPerPageChange: externalOnRowsPerPageChange,
 	onApprove,
 	onReject,
 	onAuthorizePayment,
@@ -128,6 +143,15 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	defaultDateRange,
 }) => {
 	const router = useRouter();
+
+	// Use external pagination if provided, otherwise use internal state
+	const [internalPage, setInternalPage] = useState(1);
+	const [internalRowsPerPage, setInternalRowsPerPage] = useState(10);
+
+	const page = externalPage ?? internalPage;
+	const setPage = externalOnPageChange ?? setInternalPage;
+	const rowsPerPage = externalRowsPerPage ?? internalRowsPerPage;
+	const setRowsPerPage = externalOnRowsPerPageChange ?? setInternalRowsPerPage;
 	const searchParams = useSearchParams();
 	const status = searchParams.get("status") || "all";
 	const paymentFilter = searchParams.get("payment") || "all";
@@ -137,8 +161,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		column: "createdAt",
 		direction: "descending" as "ascending" | "descending",
 	});
-	const [page, setPage] = useState(1);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
 	// Rejection modal state
@@ -255,8 +277,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		// Add rejection details for rejected claims (all roles)
 		if (role === "service-center" || role === "repair_store") {
 			baseColumns.push({
-				name: "Rejection Info",
-				uid: "rejectionInfo",
+				name: "Rejection Reason",
+				uid: "rejectionReason",
+				sortable: false,
+			});
+			baseColumns.push({
+				name: "Transaction Ref",
+				uid: "transactionRef",
 				sortable: false,
 			});
 			baseColumns.push({
@@ -305,6 +332,16 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		if (role === "samsung-sentinel") {
 			baseColumns.push(
 				{
+					name: "Rejection Reason",
+					uid: "rejectionReason",
+					sortable: false,
+				},
+				{
+					name: "Transaction Ref",
+					uid: "transactionRef",
+					sortable: false,
+				},
+				{
 					name: "Approved Info",
 					uid: "approvedInfo",
 					sortable: false,
@@ -335,6 +372,16 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		// Samsung partners need to see ALL details
 		if (role === "samsung-partners") {
 			baseColumns.push(
+				{
+					name: "Rejection Reason",
+					uid: "rejectionReason",
+					sortable: false,
+				},
+				{
+					name: "Transaction Ref",
+					uid: "transactionRef",
+					sortable: false,
+				},
 				{
 					name: "Approved Info",
 					uid: "approvedInfo",
@@ -523,6 +570,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					<span className={`font-medium ${cellClassName}`}>{item.claimId}</span>
 				);
 
+			case "imei":
+				return (
+					<span className={`font-mono text-sm ${cellClassName}`}>
+						{item.imei}
+					</span>
+				);
+
 			case "device":
 				return (
 					<div className={cellClassName}>
@@ -588,7 +642,9 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "transactionRef":
 				return item.transactionRef ? (
-					<span className="font-mono text-xs">{item.transactionRef}</span>
+					<span className="text-sm font-mono text-gray-600">
+						{item.transactionRef}
+					</span>
 				) : (
 					<span className="text-gray-400">-</span>
 				);
@@ -643,6 +699,15 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "engineerName":
 				return <span className="text-sm">{item.engineerName || "N/A"}</span>;
+
+			case "rejectionReason":
+				return item.rejectionReason ? (
+					<div className="text-sm text-danger-600 max-w-xs">
+						{item.rejectionReason}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
 
 			case "rejectionInfo":
 				return item.status === "REJECTED" ? (
@@ -804,12 +869,18 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	}));
 
 	// Pagination
-	const pages = Math.ceil(tableData.length / rowsPerPage);
+	const pages =
+		externalPagination?.totalPages || Math.ceil(tableData.length / rowsPerPage);
 	const paginatedData = useMemo(() => {
+		// If external pagination is provided, data is already paginated
+		if (externalPagination) {
+			return tableData;
+		}
+		// Otherwise, paginate locally
 		const start = (page - 1) * rowsPerPage;
 		const end = start + rowsPerPage;
 		return tableData.slice(start, end);
-	}, [tableData, page, rowsPerPage]);
+	}, [tableData, page, rowsPerPage, externalPagination]);
 
 	// Determine disabled keys based on role and current status/payment filter
 	const disabledKeys = useMemo(() => {

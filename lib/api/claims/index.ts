@@ -3,11 +3,21 @@ import {
 	BaseApiResponse,
 	ClaimStatus,
 	PaymentStatus,
+	PaginatedResponse,
 } from "../shared";
 
 // ============================================================================
 // CLAIMS APIs
 // ============================================================================
+
+// Custom paginated response for claims API (pagination at root level)
+export interface ClaimsPaginatedResponse {
+	data: Claim[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+}
 
 // Helper function to build clean query strings without undefined values
 function buildQueryString(params?: Record<string, any>): string {
@@ -203,7 +213,7 @@ export async function createClaim(
  */
 export async function getAllClaims(
 	params?: GetClaimsParams
-): Promise<BaseApiResponse<Claim[]>> {
+): Promise<ClaimsPaginatedResponse> {
 	// Ensure status and payment_status are uppercase
 	const normalizedParams = params
 		? {

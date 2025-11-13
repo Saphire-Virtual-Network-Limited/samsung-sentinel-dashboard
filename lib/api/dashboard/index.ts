@@ -256,7 +256,7 @@ export interface RepairStoreStatistics {
 }
 
 export interface MonthlyRevenueTrend {
-	month: string;
+	date: string;
 	revenue: number;
 }
 
@@ -297,7 +297,7 @@ export interface ServiceCenterComparison {
 
 export async function getRepairStoreDashboardStats(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<RepairStoreStatistics>> {
+): Promise<RepairStoreStatistics> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -315,7 +315,7 @@ export async function getRepairStoreDetails(
 	params?: DashboardFilterParams & {
 		service_center_id?: string;
 	}
-): Promise<BaseApiResponse<RepairStoreDetails>> {
+): Promise<RepairStoreDetails> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -333,7 +333,7 @@ export async function getRepairStoreDetails(
 
 export async function getServiceCenterComparison(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<ServiceCenterComparison>> {
+): Promise<ServiceCenterComparison> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);

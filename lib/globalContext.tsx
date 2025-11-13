@@ -416,9 +416,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 
 			// Fetch the new user's profile immediately after login
-			await fetchUserProfile();
+			const profile = await getAdminProfile();
+			const userRole = profile.role;
 
-			const redirectTo = callbackUrl === "/" ? "/" : callbackUrl;
+			setUserResponse(profile);
+
+			// Get role-based redirect path
+			const roleBasePath = getRoleBasePath(userRole);
+			const redirectTo = callbackUrl === "/" ? roleBasePath : callbackUrl;
+
 			router.push(redirectTo);
 			showToast({
 				type: "success",

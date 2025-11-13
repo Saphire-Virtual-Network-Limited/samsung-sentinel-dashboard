@@ -61,6 +61,8 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [searchQuery, setSearchQuery] = useState(
 		searchParams.get("search") || ""
 	);
+	const [page, setPage] = useState(1);
+	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	// Payment results modal state
@@ -117,6 +119,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		data,
 		isLoading,
 		error,
+		pagination,
 		approveHandler,
 		rejectHandler,
 		authorizePaymentHandler,
@@ -134,6 +137,8 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		search: searchQuery,
 		startDate,
 		endDate,
+		page,
+		limit: rowsPerPage,
 		onPaymentResults: handlePaymentResults,
 	});
 
@@ -339,6 +344,11 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 								isLoading={isLoading}
 								error={error}
 								role={role}
+								pagination={pagination}
+								page={page}
+								onPageChange={setPage}
+								rowsPerPage={rowsPerPage}
+								onRowsPerPageChange={setRowsPerPage}
 								onApprove={approveHandler}
 								onReject={rejectHandler}
 								onAuthorizePayment={authorizePaymentHandler}
@@ -471,7 +481,9 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 													  }`
 													: `Failed to disburse payments: ${
 															paymentResults.failed
-													  } claim${paymentResults.failed > 1 ? "s" : ""} failed`}
+													  } claim${
+															paymentResults.failed > 1 ? "s" : ""
+													  } failed`}
 											</p>
 										</div>
 									)}
@@ -479,10 +491,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 
 								{/* Close Button */}
 								<div className="mt-6 flex justify-end">
-									<Button
-										color="primary"
-										onPress={onClose}
-									>
+									<Button color="primary" onPress={onClose}>
 										Close
 									</Button>
 								</div>

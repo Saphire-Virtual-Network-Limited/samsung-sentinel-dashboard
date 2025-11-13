@@ -27,6 +27,8 @@ export interface UseClaimsApiOptions {
 	search?: string;
 	startDate?: string;
 	endDate?: string;
+	page?: number;
+	limit?: number;
 	onPaymentResults?: (results: {
 		totalProcessed: number;
 		successful: number;
@@ -39,6 +41,12 @@ export interface UseClaimsApiReturn {
 	data: ClaimRepairItem[];
 	isLoading: boolean;
 	error: Error | null;
+	pagination?: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
 	refetch: () => Promise<void>;
 	approveHandler: (claimId: string) => Promise<void>;
 	rejectHandler: (claimId: string, reason: string) => Promise<void>;
@@ -103,13 +111,23 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 }
 
 export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
-	const { role, status, payment, search, startDate, endDate, onPaymentResults } = options;
+	const {
+		role,
+		status,
+		payment,
+		search,
+		startDate,
+		endDate,
+		page,
+		limit,
+		onPaymentResults,
+	} = options;
 
 	// Build API params
 	const getParams = useCallback((): GetClaimsParams => {
 		const params: GetClaimsParams = {
-			page: 1,
-			limit: 100, // Adjust as needed
+			page: page || 1,
+			limit: limit || 10,
 		};
 
 		// Map status filter - only add if valid
@@ -144,32 +162,56 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 		}
 
 		return params;
-	}, [status, payment, search, startDate, endDate]);
+	}, [status, payment, search, startDate, endDate, page, limit]);
 
 	// SWR fetcher
 	const fetcher = async () => {
 		const hasToken = typeof window !== "undefined" && getAccessToken();
 		if (!hasToken) {
-			return [];
+			return {
+				items: [],
+				pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+			};
 		}
 
 		try {
 			const params = getParams();
 			const response = await getAllClaims(params);
 
-			// API returns { data: Claim[], total, page, limit, totalPages }
+			// API returns { data: Claim[], total, page, limit, totalPages } at root level
 			const claims = response.data || [];
-			return claims.map(transformClaim);
+			return {
+				items: claims.map(transformClaim),
+				pagination: {
+					total: response.total || 0,
+					page: response.page || 1,
+					limit: response.limit || 10,
+					totalPages: response.totalPages || 1,
+				},
+			};
 		} catch (error) {
 			console.error("Error fetching claims:", error);
-			throw error;
+			return {
+				items: [],
+				pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+			};
 		}
 	};
 
 	// Use SWR
 	const hasToken = typeof window !== "undefined" && getAccessToken();
-	const { data, error, mutate, isLoading } = useSWR<ClaimRepairItem[]>(
-		hasToken ? ["claims", status, payment, search, startDate, endDate] : null,
+	const { data, error, mutate, isLoading } = useSWR<{
+		items: ClaimRepairItem[];
+		pagination: {
+			total: number;
+			page: number;
+			limit: number;
+			totalPages: number;
+		};
+	}>(
+		hasToken
+			? ["claims", status, payment, search, startDate, endDate, page, limit]
+			: null,
 		fetcher,
 		{
 			revalidateOnFocus: false,
@@ -453,7 +495,8 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 	);
 
 	return {
-		data: data || [],
+		data: data?.items || [],
+		pagination: data?.pagination,
 		isLoading,
 		error: error || null,
 		refetch,

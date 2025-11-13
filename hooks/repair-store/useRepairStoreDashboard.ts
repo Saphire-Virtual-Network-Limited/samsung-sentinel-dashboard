@@ -11,9 +11,7 @@ import {
 import { BaseApiResponse } from "@/lib/api/shared";
 
 export function useRepairStoreDashboard(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<RepairStoreStatistics>
-	>(
+	const { data, error, mutate, isLoading } = useSWR<RepairStoreStatistics>(
 		options
 			? ["repair-store-dashboard-stats", options]
 			: "repair-store-dashboard-stats",
@@ -25,7 +23,7 @@ export function useRepairStoreDashboard(options?: DashboardFilterParams) {
 	);
 
 	return {
-		stats: data?.data,
+		stats: data,
 		isLoading,
 		error,
 		refetch: mutate,
@@ -35,9 +33,7 @@ export function useRepairStoreDashboard(options?: DashboardFilterParams) {
 export function useRepairStoreDetails(
 	options?: DashboardFilterParams & { service_center_id?: string }
 ) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<RepairStoreDetails>
-	>(
+	const { data, error, mutate, isLoading } = useSWR<RepairStoreDetails>(
 		options
 			? ["repair-store-dashboard-details", options]
 			: "repair-store-dashboard-details",
@@ -49,7 +45,7 @@ export function useRepairStoreDetails(
 	);
 
 	return {
-		details: data?.data,
+		details: data,
 		isLoading,
 		error,
 		refetch: mutate,
@@ -57,9 +53,7 @@ export function useRepairStoreDetails(
 }
 
 export function useServiceCenterComparison(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<ServiceCenterComparison>
-	>(
+	const { data, error, mutate, isLoading } = useSWR<ServiceCenterComparison>(
 		options
 			? ["service-center-comparison", options]
 			: "service-center-comparison",
@@ -71,7 +65,7 @@ export function useServiceCenterComparison(options?: DashboardFilterParams) {
 	);
 
 	return {
-		comparison: data?.data,
+		comparison: data,
 		isLoading,
 		error,
 		refetch: mutate,

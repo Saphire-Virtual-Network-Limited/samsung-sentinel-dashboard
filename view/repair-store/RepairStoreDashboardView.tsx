@@ -100,30 +100,6 @@ export default function RepairStoreDashboardView() {
 		},
 	];
 
-	const recentActivity = [
-		{
-			id: 1,
-			title: "New Service Center Added",
-			description: "Sapphire Tech Hub Kano has been created",
-			time: "2 hours ago",
-			status: "success",
-		},
-		{
-			id: 2,
-			title: "Engineer Assigned",
-			description: "John Doe assigned to Lagos service center",
-			time: "4 hours ago",
-			status: "info",
-		},
-		{
-			id: 3,
-			title: "Repair Completed",
-			description: "Galaxy S23 repair completed at Abuja center",
-			time: "6 hours ago",
-			status: "success",
-		},
-	];
-
 	return (
 		<div className="p-6 space-y-6 min-h-screen">
 			{/* Header */}
@@ -188,7 +164,7 @@ export default function RepairStoreDashboardView() {
 									{overview?.pending_claims || 0}
 								</p>
 							)}
-							<p className="text-sm text-gray-500">Awaiting review</p>
+							<p className="text-sm text-gray-500">Awaiting approval</p>
 						</div>
 					</CardBody>
 				</Card>
@@ -197,7 +173,7 @@ export default function RepairStoreDashboardView() {
 					<CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
 						<div className="flex items-center gap-2">
 							<Package className="w-5 h-5 text-blue-600" />
-							<h3 className="text-lg font-semibold">In Progress</h3>
+							<h3 className="text-lg font-semibold">Authorized</h3>
 						</div>
 					</CardHeader>
 					<CardBody className="p-4">
@@ -230,7 +206,7 @@ export default function RepairStoreDashboardView() {
 									{overview?.completed_claims || 0}
 								</p>
 							)}
-							<p className="text-sm text-gray-500">This month</p>
+							<p className="text-sm text-gray-500">All time</p>
 						</div>
 					</CardBody>
 				</Card>
@@ -269,40 +245,37 @@ export default function RepairStoreDashboardView() {
 					</CardBody>
 				</Card>
 
-				{/* Recent Activity */}
+				{/* Revenue Summary */}
 				<Card className="border border-default-200 shadow-md">
-					<CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
+					<CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
 						<div className="flex items-center gap-2">
-							<AlertCircle className="w-5 h-5 text-emerald-600" />
-							<h3 className="text-lg font-semibold">Recent Activity</h3>
+							<CreditCard className="w-5 h-5 text-green-600" />
+							<h3 className="text-lg font-semibold">Revenue Summary</h3>
 						</div>
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="space-y-4">
-							{recentActivity.map((activity) => (
-								<div key={activity.id} className="flex items-start gap-3">
-									<Chip
-										size="sm"
-										color={
-											activity.status === "success" ? "success" : "primary"
-										}
-										variant="flat"
-									>
-										{activity.status}
-									</Chip>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium text-gray-900">
-											{activity.title}
-										</p>
-										<p className="text-xs text-gray-500">
-											{activity.description}
-										</p>
-										<p className="text-xs text-gray-400 mt-1">
-											{activity.time}
-										</p>
-									</div>
-								</div>
-							))}
+							<div>
+								<p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+								{isLoading ? (
+									<Skeleton className="h-8 w-32 rounded" />
+								) : (
+									<p className="text-2xl font-bold text-green-600">
+										{formatCurrency(overview?.total_revenue || 0)}
+									</p>
+								)}
+							</div>
+							<div className="h-px bg-gray-200" />
+							<div>
+								<p className="text-sm text-gray-600 mb-1">Monthly Revenue</p>
+								{isLoading ? (
+									<Skeleton className="h-6 w-24 rounded" />
+								) : (
+									<p className="text-xl font-semibold text-gray-900">
+										{formatCurrency(overview?.monthly_revenue || 0)}
+									</p>
+								)}
+							</div>
 						</div>
 					</CardBody>
 				</Card>
