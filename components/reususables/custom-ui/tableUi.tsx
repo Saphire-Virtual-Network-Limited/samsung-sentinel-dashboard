@@ -179,22 +179,25 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	}, [initialStartDate, initialEndDate]);
 
 	// --- handle date filter ---
-	const handleDateFilter = (start: string, end: string) => {
-		if (!start || !end) {
-			showToast({ message: "Both dates must be selected.", type: "error" });
-			return;
-		}
-		if (new Date(end) < new Date(start)) {
-			showToast({
-				message: "End date must be after start date.",
-				type: "error",
-			});
-			return;
-		}
-		setStartDate(start);
-		setEndDate(end);
-		onDateFilterChange?.(start, end);
-	};
+	const handleDateFilter = React.useCallback(
+		(start: string, end: string) => {
+			if (!start || !end) {
+				showToast({ message: "Both dates must be selected.", type: "error" });
+				return;
+			}
+			if (new Date(end) < new Date(start)) {
+				showToast({
+					message: "End date must be after start date.",
+					type: "error",
+				});
+				return;
+			}
+			setStartDate(start);
+			setEndDate(end);
+			onDateFilterChange?.(start, end);
+		},
+		[onDateFilterChange]
+	);
 
 	const topContent = (
 		<div className="flex flex-col gap-4">

@@ -163,11 +163,14 @@ export default function RepairStoreClaimsView() {
 	};
 
 	// Handle date range change
-	const handleDateRangeChange = (start: string, end: string) => {
-		setStartDate(start);
-		setEndDate(end);
-		setPage(1); // Reset to first page on filter change
-	};
+	const handleDateRangeChange = React.useCallback(
+		(start: string, end: string) => {
+			setStartDate(start);
+			setEndDate(end);
+			setPage(1); // Reset to first page when date range changes
+		},
+		[]
+	);
 
 	// Handle mark as completed
 	const handleCompleteClaim = async () => {

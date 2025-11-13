@@ -163,10 +163,14 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	};
 
 	// Handle date range change
-	const handleDateRangeChange = (start: string, end: string) => {
-		setStartDate(start);
-		setEndDate(end);
-	};
+	const handleDateRangeChange = React.useCallback(
+		(start: string, end: string) => {
+			setStartDate(start);
+			setEndDate(end);
+			setPage(1); // Reset to first page when date range changes
+		},
+		[]
+	);
 
 	// Determine which tabs to show based on role
 	const getTabs = () => {
