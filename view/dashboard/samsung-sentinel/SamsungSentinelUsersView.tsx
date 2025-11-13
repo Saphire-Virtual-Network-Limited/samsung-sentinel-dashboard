@@ -14,6 +14,11 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
 } from "@heroui/react";
 import {
 	Search,
@@ -72,6 +77,11 @@ export default function SamsungSentinelUsersView() {
 	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editFormData, setEditFormData] = useState({
+		name: "",
+		phone: "",
+	});
+	const [isSaving, setIsSaving] = useState(false);
 	const [sortDescriptor, setSortDescriptor] = useState<{
 		column: string;
 		direction: "ascending" | "descending";
@@ -176,6 +186,10 @@ export default function SamsungSentinelUsersView() {
 				setIsViewModalOpen(true);
 				break;
 			case "edit":
+				setEditFormData({
+					name: user.name,
+					phone: user.phone || "",
+				});
 				setIsEditModalOpen(true);
 				break;
 			case "activate":
@@ -304,6 +318,20 @@ export default function SamsungSentinelUsersView() {
 		console.log("Exporting users:", data);
 	};
 
+	// Handle save user edit
+	const handleSaveEdit = async () => {
+		if (!selectedUser) return;
+
+		setIsSaving(true);
+		const success = await handleUpdateUser(selectedUser.id, editFormData);
+		setIsSaving(false);
+
+		if (success) {
+			setIsEditModalOpen(false);
+			setSelectedUser(null);
+		}
+	};
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
@@ -408,6 +436,213 @@ export default function SamsungSentinelUsersView() {
 					/>
 				</CardBody>
 			</Card>
+
+			{/* View User Modal */}
+			<Modal
+				isOpen={isViewModalOpen}
+				onClose={() => {
+					setIsViewModalOpen(false);
+					setSelectedUser(null);
+				}}
+				size="2xl"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-xl font-semibold">User Details</h3>
+					</ModalHeader>
+					<ModalBody>
+						{selectedUser && (
+							<div className="space-y-4">
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<label className="text-sm text-gray-500">Name</label>
+										<p className="font-medium">{selectedUser.name}</p>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">Email</label>
+										<p className="font-medium">{selectedUser.email}</p>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">Phone</label>
+										<p className="font-medium">{selectedUser.phone || "N/A"}</p>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">Role</label>
+										<Chip
+											color={getRoleColor(selectedUser.role)}
+											variant="flat"
+											size="sm"
+											className="mt-1"
+										>
+											{formatRoleLabel(selectedUser.role)}
+										</Chip>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">Status</label>
+										<Chip
+											color={getStatusColor(selectedUser.status)}
+											variant="flat"
+											size="sm"
+											className="mt-1"
+										>
+											{selectedUser.status}
+										</Chip>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">User ID</label>
+										<p className="font-mono text-sm text-gray-600">
+											{selectedUser.id}
+										</p>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">Created At</label>
+										<p className="text-sm">
+											{new Date(selectedUser.createdAt).toLocaleDateString(
+												"en-US",
+												{
+													year: "numeric",
+													month: "short",
+													day: "numeric",
+													hour: "2-digit",
+													minute: "2-digit",
+												}
+											)}
+										</p>
+									</div>
+									<div>
+										<label className="text-sm text-gray-500">
+											Last Updated
+										</label>
+										<p className="text-sm">
+											{new Date(selectedUser.updatedAt).toLocaleDateString(
+												"en-US",
+												{
+													year: "numeric",
+													month: "short",
+													day: "numeric",
+													hour: "2-digit",
+													minute: "2-digit",
+												}
+											)}
+										</p>
+									</div>
+								</div>
+							</div>
+						)}
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								setIsViewModalOpen(false);
+								setSelectedUser(null);
+							}}
+						>
+							Close
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Edit User Modal */}
+			<Modal
+				isOpen={isEditModalOpen}
+				onClose={() => {
+					setIsEditModalOpen(false);
+					setSelectedUser(null);
+				}}
+				size="lg"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-xl font-semibold">Edit User</h3>
+					</ModalHeader>
+					<ModalBody>
+						{selectedUser && (
+							<div className="space-y-4">
+								<div>
+									<label className="text-sm text-gray-500 mb-1 block">
+										Email (Read-only)
+									</label>
+									<Input
+										value={selectedUser.email}
+										isReadOnly
+										variant="flat"
+										classNames={{
+											input: "bg-gray-100",
+										}}
+									/>
+								</div>
+								<div>
+									<label className="text-sm text-gray-500 mb-1 block">
+										Name <span className="text-red-500">*</span>
+									</label>
+									<Input
+										value={editFormData.name}
+										onChange={(e) =>
+											setEditFormData((prev) => ({
+												...prev,
+												name: e.target.value,
+											}))
+										}
+										placeholder="Enter user name"
+										variant="bordered"
+									/>
+								</div>
+								<div>
+									<label className="text-sm text-gray-500 mb-1 block">
+										Phone
+									</label>
+									<Input
+										value={editFormData.phone}
+										onChange={(e) =>
+											setEditFormData((prev) => ({
+												...prev,
+												phone: e.target.value,
+											}))
+										}
+										placeholder="Enter phone number"
+										variant="bordered"
+									/>
+								</div>
+								<div>
+									<label className="text-sm text-gray-500 mb-1 block">
+										Role (Read-only)
+									</label>
+									<Chip
+										color={getRoleColor(selectedUser.role)}
+										variant="flat"
+										size="md"
+									>
+										{formatRoleLabel(selectedUser.role)}
+									</Chip>
+								</div>
+							</div>
+						)}
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								setIsEditModalOpen(false);
+								setSelectedUser(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="primary"
+							onPress={handleSaveEdit}
+							isLoading={isSaving}
+							isDisabled={!editFormData.name.trim()}
+						>
+							Save Changes
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }

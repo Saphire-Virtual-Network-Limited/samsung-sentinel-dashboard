@@ -221,12 +221,7 @@ export default function AccessLayoutView({
 							// If subtitle is a React component, render it directly (replace the <p> entirely)
 							subtitle
 						) : (
-							// If subtitle is text or null, use the <p> wrapper
-							<p className="text-gray-500 text-xs sm:text-sm transition-all duration-200 ease-in-out">
-								{subtitle !== null
-									? subtitle
-									: `Manage your ${pageTitle.toLowerCase()}`}
-							</p>
+							""
 						)}
 					</div>
 					<div className="min-h-[calc(100vh-12rem)] sm:min-h-[calc(100vh-14rem)] flex-1 rounded-xl md:min-h-min transition-all duration-300 ease-in-out">
