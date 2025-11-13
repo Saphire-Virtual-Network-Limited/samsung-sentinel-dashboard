@@ -34,7 +34,13 @@ export function useUsersManagement() {
 		revalidateOnFocus: false,
 	});
 
-	const users = usersResponse?.data || [];
+	// Map API response to match User interface (convert snake_case to camelCase)
+	const users = (usersResponse?.data || []).map((user: any) => ({
+		...user,
+		createdAt: user.created_at || user.createdAt,
+		updatedAt: user.updated_at || user.updatedAt,
+	})) as User[];
+	
 	// Calculate total from data length since API doesn't return meta
 	const totalUsers = users.length;
 	const totalPages = Math.ceil(totalUsers / (filters.limit || 10));

@@ -44,10 +44,16 @@ export interface GetUsersParams {
 export async function getAllUsers(
 	params?: GetUsersParams
 ): Promise<BaseApiResponse<User[]>> {
-	const queryParams = new URLSearchParams(
-		params as Record<string, string>
-	).toString();
-	return apiCall(`/users?${queryParams}`, "GET");
+	const queryParams = new URLSearchParams();
+	if (params) {
+		if (params.role) queryParams.append("role", params.role);
+		if (params.status) queryParams.append("status", params.status);
+		if (params.search) queryParams.append("search", params.search);
+		if (params.page) queryParams.append("page", params.page.toString());
+		if (params.limit) queryParams.append("limit", params.limit.toString());
+	}
+	const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+	return apiCall(`/users${query}`, "GET");
 }
 
 /**

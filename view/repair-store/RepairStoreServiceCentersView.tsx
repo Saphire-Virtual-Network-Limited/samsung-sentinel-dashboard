@@ -97,18 +97,16 @@ export default function RepairStoreServiceCentersView() {
 		error,
 		isCreating,
 		isChangingStatus,
-		handleCreate,
-		handleActivate,
-		handleDeactivate,
-	} = useRepairStoreServiceCenters({
-		status: statusFilter.size > 0 ? Array.from(statusFilter)[0] : undefined,
-		state: stateFilter || undefined,
-		search: filterValue || undefined,
-		page,
-		limit: 25,
-	});
-
-	// Statistics
+	handleCreate,
+	handleActivate,
+	handleDeactivate,
+} = useRepairStoreServiceCenters({
+	...(statusFilter.size > 0 && { status: Array.from(statusFilter)[0] }),
+	...(stateFilter && { state: stateFilter }),
+	...(filterValue && { search: filterValue }),
+	page,
+	limit: 25,
+});	// Statistics
 	const stats = useMemo(
 		() => ({
 			totalCenters: total,
