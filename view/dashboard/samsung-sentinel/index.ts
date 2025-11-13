@@ -6,3 +6,5 @@ export { default as SingleServiceCenterView } from "./SingleServiceCenterView";
 export { default as SingleProductView } from "./SingleProductView";
 export { default as SamsungSentinelUploadDetailsView } from "./SamsungSentinelUploadDetailsView";
 export { default as SamsungSentinelUsersView } from "./SamsungSentinelUsersView";
+export { default as AdminRepairCentersView } from "./AdminRepairCentersView";
+export { default as AdminRepairCenterDetailView } from "./AdminRepairCenterDetailView";

@@ -7,13 +7,18 @@ import {
 import { BaseApiResponse } from "@/lib/api/shared";
 
 export function useServiceCenterDashboard(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<ServiceCenterStatistics>
-	>(
+	const { data, error, mutate, isLoading } = useSWR(
 		options
 			? ["service-center-dashboard", options]
 			: "service-center-dashboard",
-		() => getServiceCenterDashboardStats(options),
+		async () => {
+			const result = await getServiceCenterDashboardStats(options);
+			return {
+				data: result,
+				status: "success",
+				message: "",
+			} as BaseApiResponse<ServiceCenterStatistics>;
+		},
 		{
 			revalidateOnFocus: false,
 			revalidateOnReconnect: false,

@@ -97,13 +97,13 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 		{
 			icon: Store,
 			title: "Repair Stores",
-			url: "/access/admin/repair-centers",
+			url: "/access/admin/samsung-sentinel/repair-stores",
 			id: "admin-repair-stores",
 		},
 		{
 			icon: Users,
 			title: "Service Centers",
-			url: "/access/admin/service-centers",
+			url: "/access/admin/samsung-sentinel/service-centers",
 			id: "admin-service-centers",
 		},
 		{
@@ -124,8 +124,8 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 					url: "/access/admin/samsung-sentinel/claims?status=approved",
 				},
 				{
-					title: "In Progress",
-					url: "/access/admin/samsung-sentinel/claims?status=in-progress",
+					title: "Authorized",
+					url: "/access/admin/samsung-sentinel/claims?status=authorized",
 				},
 				{
 					title: "Completed",
@@ -143,25 +143,20 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 			id: "admin-payments",
 			subItems: [
 				{
-					title: "Unpaid Repairs",
-					url: "/access/admin/samsung-sentinel/claims?status=completed&payment=unpaid",
+					title: "Unpaid",
+					url: "/access/admin/samsung-sentinel/claims?payment=unpaid",
 				},
 				{
-					title: "Paid Repairs",
-					url: "/access/admin/samsung-sentinel/claims?status=completed&payment=paid",
+					title: "Paid",
+					url: "/access/admin/samsung-sentinel/claims?payment=paid",
 				},
 			],
 		},
-		{
-			icon: BarChart3,
-			title: "Statistics",
-			url: "/access/admin/samsung-sentinel/statistics",
-			id: "admin-statistics",
-		},
+
 		{
 			icon: Users2,
 			title: "User Management",
-			url: "/access/samsung-sentinel/users",
+			url: "/access/admin/samsung-sentinel/users",
 			id: "admin-users",
 		},
 		{

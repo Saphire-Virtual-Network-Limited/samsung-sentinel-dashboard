@@ -22,21 +22,41 @@ export interface DashboardFilterParams {
 // SERVICE CENTER DASHBOARD
 // ============================================================================
 
+export interface ServiceCenterClaimStatistics {
+	pending: number | null;
+	approved: number | null;
+	rejected: number | null;
+	authorized: number | null;
+	completed: number | null;
+	paid: number | null;
+	total: number;
+}
+
+export interface ServiceCenterAggregates {
+	total_repair_cost: number;
+	average_repair_time_days: string;
+	completion_rate: string;
+}
+
 export interface ServiceCenterStatistics {
-	totalClaims: number;
-	pendingClaims: number;
-	approvedClaims: number;
-	rejectedClaims: number;
-	completedClaims: number;
-	inProgressClaims: number;
-	totalRepairCost: number;
-	averageRepairCost: number;
-	// Add more fields as needed based on API response
+	filter: {
+		type: string;
+		start_date?: string;
+		end_date?: string;
+	};
+	claim_statistics: ServiceCenterClaimStatistics;
+	aggregates: ServiceCenterAggregates;
+	_debug?: {
+		endpoint: string;
+		method: string;
+		responseStatus: number;
+		timestamp: string;
+	};
 }
 
 export async function getServiceCenterDashboardStats(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<ServiceCenterStatistics>> {
+): Promise<ServiceCenterStatistics> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -57,6 +77,8 @@ export async function getServiceCenterDashboardStats(
 export interface AdminStatistics {
 	filter: {
 		type: string;
+		start_date?: string;
+		end_date?: string;
 	};
 	statistics: {
 		authorized_repairs: number;
@@ -68,11 +90,19 @@ export interface AdminStatistics {
 		total_imeis_uploaded: number;
 		claims_rate: string;
 	};
+	_debug?: {
+		endpoint: string;
+		method: string;
+		responseStatus: number;
+		timestamp: string;
+	};
 }
 
 export interface AdminTrends {
 	filter: {
 		type: string;
+		start_date?: string;
+		end_date?: string;
 	};
 	trends: {
 		claims_over_time: Array<{ date: string; count: number }>;
@@ -81,6 +111,12 @@ export interface AdminTrends {
 			paid_amount: number;
 			total_amount: number;
 		}>;
+	};
+	_debug?: {
+		endpoint: string;
+		method: string;
+		responseStatus: number;
+		timestamp: string;
 	};
 }
 
@@ -100,8 +136,16 @@ export interface DeviceModelStat {
 export interface DeviceModelStats {
 	filter: {
 		type: string;
+		start_date?: string;
+		end_date?: string;
 	};
 	device_statistics: DeviceModelStat[];
+	_debug?: {
+		endpoint: string;
+		method: string;
+		responseStatus: number;
+		timestamp: string;
+	};
 }
 
 export interface ServiceCenterStat {
@@ -117,13 +161,21 @@ export interface ServiceCenterStat {
 export interface ServiceCenterStatsResponse {
 	filter: {
 		type: string;
+		start_date?: string;
+		end_date?: string;
 	};
 	service_center_statistics: ServiceCenterStat[];
+	_debug?: {
+		endpoint: string;
+		method: string;
+		responseStatus: number;
+		timestamp: string;
+	};
 }
 
 export async function getAdminStatistics(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<AdminStatistics>> {
+): Promise<AdminStatistics> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -139,7 +191,7 @@ export async function getAdminStatistics(
 
 export async function getAdminTrends(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<AdminTrends>> {
+): Promise<AdminTrends> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -153,7 +205,7 @@ export async function getAdminTrends(
 
 export async function getDeviceModelStats(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<DeviceModelStats>> {
+): Promise<DeviceModelStats> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -169,7 +221,7 @@ export async function getDeviceModelStats(
 
 export async function getServiceCenterStatsForAdmin(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<ServiceCenterStatsResponse>> {
+): Promise<ServiceCenterStatsResponse> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);

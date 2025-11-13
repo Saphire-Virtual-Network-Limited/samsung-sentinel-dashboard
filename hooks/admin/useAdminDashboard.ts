@@ -10,13 +10,17 @@ import {
 	DeviceModelStats,
 	ServiceCenterStatsResponse,
 } from "@/lib/api/dashboard";
-import { BaseApiResponse } from "@/lib/api/shared";
 
 export function useAdminDashboardStatistics(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<AdminStatistics>
-	>(
-		options ? ["admin-dashboard-stats", options] : "admin-dashboard-stats",
+	// Create a serialized key to ensure SWR detects parameter changes
+	const swrKey = options
+		? `admin-dashboard-stats?filter=${options.filter}${
+				options.start_date ? `&start_date=${options.start_date}` : ""
+		  }${options.end_date ? `&end_date=${options.end_date}` : ""}`
+		: "admin-dashboard-stats";
+
+	const { data, error, mutate, isLoading } = useSWR<AdminStatistics>(
+		swrKey,
 		() => getAdminStatistics(options),
 		{
 			revalidateOnFocus: false,
@@ -25,7 +29,7 @@ export function useAdminDashboardStatistics(options?: DashboardFilterParams) {
 	);
 
 	return {
-		stats: data?.data,
+		stats: data,
 		isLoading,
 		error,
 		refetch: mutate,
@@ -33,10 +37,15 @@ export function useAdminDashboardStatistics(options?: DashboardFilterParams) {
 }
 
 export function useAdminTrends(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<AdminTrends>
-	>(
-		options ? ["admin-dashboard-trends", options] : "admin-dashboard-trends",
+	// Create a serialized key to ensure SWR detects parameter changes
+	const swrKey = options
+		? `admin-dashboard-trends?filter=${options.filter}${
+				options.start_date ? `&start_date=${options.start_date}` : ""
+		  }${options.end_date ? `&end_date=${options.end_date}` : ""}`
+		: "admin-dashboard-trends";
+
+	const { data, error, mutate, isLoading } = useSWR<AdminTrends>(
+		swrKey,
 		() => getAdminTrends(options),
 		{
 			revalidateOnFocus: false,
@@ -45,7 +54,7 @@ export function useAdminTrends(options?: DashboardFilterParams) {
 	);
 
 	return {
-		trends: data?.data,
+		trends: data,
 		isLoading,
 		error,
 		refetch: mutate,
@@ -53,12 +62,15 @@ export function useAdminTrends(options?: DashboardFilterParams) {
 }
 
 export function useDeviceModelStats(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<DeviceModelStats>
-	>(
-		options
-			? ["admin-device-model-stats", options]
-			: "admin-device-model-stats",
+	// Create a serialized key to ensure SWR detects parameter changes
+	const swrKey = options
+		? `admin-device-model-stats?filter=${options.filter}${
+				options.start_date ? `&start_date=${options.start_date}` : ""
+		  }${options.end_date ? `&end_date=${options.end_date}` : ""}`
+		: "admin-device-model-stats";
+
+	const { data, error, mutate, isLoading } = useSWR<DeviceModelStats>(
+		swrKey,
 		() => getDeviceModelStats(options),
 		{
 			revalidateOnFocus: false,
@@ -67,7 +79,7 @@ export function useDeviceModelStats(options?: DashboardFilterParams) {
 	);
 
 	return {
-		deviceStats: data?.data,
+		deviceStats: data,
 		isLoading,
 		error,
 		refetch: mutate,
@@ -75,12 +87,15 @@ export function useDeviceModelStats(options?: DashboardFilterParams) {
 }
 
 export function useServiceCenterStatsForAdmin(options?: DashboardFilterParams) {
-	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<ServiceCenterStatsResponse>
-	>(
-		options
-			? ["admin-service-center-stats", options]
-			: "admin-service-center-stats",
+	// Create a serialized key to ensure SWR detects parameter changes
+	const swrKey = options
+		? `admin-service-center-stats?filter=${options.filter}${
+				options.start_date ? `&start_date=${options.start_date}` : ""
+		  }${options.end_date ? `&end_date=${options.end_date}` : ""}`
+		: "admin-service-center-stats";
+
+	const { data, error, mutate, isLoading } = useSWR<ServiceCenterStatsResponse>(
+		swrKey,
 		() => getServiceCenterStatsForAdmin(options),
 		{
 			revalidateOnFocus: false,
@@ -89,7 +104,7 @@ export function useServiceCenterStatsForAdmin(options?: DashboardFilterParams) {
 	);
 
 	return {
-		serviceCenterStats: data?.data,
+		serviceCenterStats: data,
 		isLoading,
 		error,
 		refetch: mutate,

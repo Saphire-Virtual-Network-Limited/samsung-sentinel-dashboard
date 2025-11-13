@@ -10,7 +10,9 @@ import {
 	Chip,
 	Skeleton,
 	Spinner,
+	DatePicker,
 } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 import { StatCard } from "@/components/atoms/StatCard";
 import GenericTable, {
 	ColumnDef,
@@ -22,6 +24,7 @@ import {
 	CreditCard,
 	TrendingUp,
 	CheckCircle,
+	Calendar,
 } from "lucide-react";
 import {
 	AreaChart,
@@ -52,9 +55,16 @@ const FILTER_OPTIONS = [
 ];
 
 export default function SamsungSentinelStatisticsView() {
+	// Get MTD default values
+	const today = new Date();
+	const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+	const defaultStartDate = firstDayOfMonth.toISOString().split("T")[0];
+	const defaultEndDate = today.toISOString().split("T")[0];
+
 	const [filter, setFilter] = useState<DashboardFilter>("mtd");
-	const [customStartDate, setCustomStartDate] = useState<string>("");
-	const [customEndDate, setCustomEndDate] = useState<string>("");
+	const [customStartDate, setCustomStartDate] =
+		useState<string>(defaultStartDate);
+	const [customEndDate, setCustomEndDate] = useState<string>(defaultEndDate);
 
 	// Build filter params based on selection
 	const filterParams = useMemo(() => {
@@ -77,11 +87,14 @@ export default function SamsungSentinelStatisticsView() {
 	const { serviceCenterStats, isLoading: isLoadingServiceCenters } =
 		useServiceCenterStatsForAdmin(filterParams);
 
-	// Handle date range change from GenericTable
-	const handleDateRangeChange = (start: string, end: string) => {
-		setCustomStartDate(start);
-		setCustomEndDate(end);
-		setFilter("custom");
+	// Handle filter selection change
+	const handleFilterChange = (selected: DashboardFilter) => {
+		setFilter(selected);
+		if (selected !== "custom") {
+			// Reset to MTD defaults when switching away from custom
+			setCustomStartDate(defaultStartDate);
+			setCustomEndDate(defaultEndDate);
+		}
 	};
 
 	// Format currency
@@ -197,6 +210,18 @@ export default function SamsungSentinelStatisticsView() {
 					<p className="text-gray-600 dark:text-gray-400">
 						Comprehensive analytics across all service centers
 					</p>
+					{/* Display current date range */}
+					{stats?.filter && (
+						<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+							{stats.filter.start_date && stats.filter.end_date
+								? `Showing data from ${new Date(
+										stats.filter.start_date
+								  ).toLocaleDateString()} to ${new Date(
+										stats.filter.end_date
+								  ).toLocaleDateString()}`
+								: `Filter: ${stats.filter.type}`}
+						</p>
+					)}
 				</div>
 				<div className="w-48">
 					<Select
@@ -204,11 +229,7 @@ export default function SamsungSentinelStatisticsView() {
 						selectedKeys={[filter]}
 						onSelectionChange={(keys) => {
 							const selected = Array.from(keys)[0] as DashboardFilter;
-							setFilter(selected);
-							if (selected !== "custom") {
-								setCustomStartDate("");
-								setCustomEndDate("");
-							}
+							handleFilterChange(selected);
 						}}
 					>
 						{FILTER_OPTIONS.map((option) => (
@@ -219,6 +240,51 @@ export default function SamsungSentinelStatisticsView() {
 					</Select>
 				</div>
 			</div>
+
+			{/* Custom Date Range Picker - Visible when Custom is selected */}
+			{filter === "custom" && (
+				<div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+					<div className="flex items-center gap-2 mb-3">
+						<Calendar className="w-4 h-4 text-primary" />
+						<h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+							Custom Date Range
+						</h4>
+					</div>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<DatePicker
+							label="Start Date"
+							value={customStartDate ? parseDate(customStartDate) : null}
+							onChange={(date) => {
+								if (date) {
+									setCustomStartDate(date.toString());
+								}
+							}}
+							maxValue={customEndDate ? parseDate(customEndDate) : undefined}
+							showMonthAndYearPickers
+						/>
+						<DatePicker
+							label="End Date"
+							value={customEndDate ? parseDate(customEndDate) : null}
+							onChange={(date) => {
+								if (date) {
+									setCustomEndDate(date.toString());
+								}
+							}}
+							minValue={
+								customStartDate ? parseDate(customStartDate) : undefined
+							}
+							showMonthAndYearPickers
+						/>
+					</div>
+					{customStartDate && customEndDate && (
+						<div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+							Showing data from{" "}
+							<strong>{new Date(customStartDate).toLocaleDateString()}</strong>{" "}
+							to <strong>{new Date(customEndDate).toLocaleDateString()}</strong>
+						</div>
+					)}
+				</div>
+			)}
 
 			{/* Overview Statistics */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -346,9 +412,18 @@ export default function SamsungSentinelStatisticsView() {
 										formatter={(value) => formatCurrency(value as number)}
 									/>
 									<Legend />
-									<Bar dataKey="total" fill="#0088FE" name="Total" />
-									<Bar dataKey="paid" fill="#00C49F" name="Paid" />
-									<Bar dataKey="unpaid" fill="#FFBB28" name="Unpaid" />
+									<Bar
+										dataKey="paid"
+										stackId="cost"
+										fill="#00C49F"
+										name="Paid"
+									/>
+									<Bar
+										dataKey="unpaid"
+										stackId="cost"
+										fill="#FFBB28"
+										name="Unpaid"
+									/>
 								</BarChart>
 							</ResponsiveContainer>
 						)}
@@ -382,10 +457,6 @@ export default function SamsungSentinelStatisticsView() {
 						exportFn={(data) => {
 							console.log("Exporting device stats:", data);
 						}}
-						onDateFilterChange={handleDateRangeChange}
-						initialStartDate={customStartDate}
-						initialEndDate={customEndDate}
-						defaultDateRange={{ days: 30 }}
 					/>
 				</CardBody>
 			</Card>
@@ -423,10 +494,6 @@ export default function SamsungSentinelStatisticsView() {
 						exportFn={(data) => {
 							console.log("Exporting service center stats:", data);
 						}}
-						onDateFilterChange={handleDateRangeChange}
-						initialStartDate={customStartDate}
-						initialEndDate={customEndDate}
-						defaultDateRange={{ days: 30 }}
 					/>
 				</CardBody>
 			</Card>

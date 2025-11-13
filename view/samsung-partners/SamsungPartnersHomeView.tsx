@@ -196,7 +196,7 @@ export default function SamsungPartnersHomeView() {
 						</Link>
 
 						<Link
-							href="/access/samsung-partners/claims/pending"
+							href="/access/samsung-partners/claims?status=pending"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
 						>
 							<Clock className="h-6 w-6 text-orange-500" />

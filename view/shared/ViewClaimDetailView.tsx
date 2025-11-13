@@ -443,7 +443,7 @@ const ViewClaimDetailView = ({
 						</InfoCard>
 					)*/}
 
-					{/* Repair History */}
+					{/* Repair History 
 					<InfoCard title="Repair History" icon={<FileText size={20} />}>
 						<div className="space-y-4">
 							{claim?.timeline && claim.timeline.length > 0 ? (
@@ -483,7 +483,7 @@ const ViewClaimDetailView = ({
 								</p>
 							)}
 						</div>
-					</InfoCard>
+					</InfoCard>*/}
 				</div>
 
 				{/* Sidebar */}

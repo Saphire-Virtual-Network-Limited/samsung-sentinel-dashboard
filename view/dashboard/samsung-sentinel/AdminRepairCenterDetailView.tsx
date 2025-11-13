@@ -367,7 +367,9 @@ export default function AdminRepairCenterDetailView() {
 									key="view"
 									startContent={<Eye size={16} />}
 									onPress={() =>
-										router.push(`/access/${role}/service-centers/${item.id}`)
+										router.push(
+											`/access/admin/samsung-sentinel/service-centers/${item.id}`
+										)
 									}
 								>
 									View Details
@@ -427,7 +429,9 @@ export default function AdminRepairCenterDetailView() {
 			<NotFound
 				title="Repair Store Not Found"
 				description="The requested repair store could not be found."
-				onGoBack={() => router.push(`/access/${role}/repair-centers`)}
+				onGoBack={() =>
+					router.push("/access/admin/samsung-sentinel/repair-stores")
+				}
 			/>
 		);
 	if (!repairStore) return null;
@@ -440,7 +444,9 @@ export default function AdminRepairCenterDetailView() {
 					<Button
 						isIconOnly
 						variant="light"
-						onPress={() => router.push(`/access/${role}/repair-centers`)}
+						onPress={() =>
+							router.push("/access/admin/samsung-sentinel/repair-stores")
+						}
 					>
 						<ArrowLeft size={20} />
 					</Button>

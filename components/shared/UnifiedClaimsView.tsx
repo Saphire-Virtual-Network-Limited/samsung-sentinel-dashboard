@@ -63,6 +63,36 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
+	// Payment results modal state
+	const {
+		isOpen: isPaymentResultsOpen,
+		onOpen: onPaymentResultsOpen,
+		onClose: onPaymentResultsClose,
+	} = useDisclosure();
+	const [paymentResults, setPaymentResults] = useState<{
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	} | null>(null);
+
+	// Callback to handle payment results
+	const handlePaymentResults = (results: {
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	}) => {
+		setPaymentResults(results);
+		onPaymentResultsOpen();
+	};
+
+	// Handle payment results modal close - refetch data to ensure fresh state
+	const handlePaymentResultsClose = () => {
+		onPaymentResultsClose();
+		// Optional: refetch here if needed, though it already happens in the handler
+	};
+
 	// Update URL when filters change
 	useEffect(() => {
 		const params = new URLSearchParams();
@@ -104,6 +134,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		search: searchQuery,
 		startDate,
 		endDate,
+		onPaymentResults: handlePaymentResults,
 	});
 
 	// Handle view details
@@ -115,6 +146,10 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	// Handle tab change
 	const handleTabChange = (key: string) => {
 		setActiveTab(key);
+		// Reset payment filter when switching to tabs that don't support it
+		if (key !== "authorized" && key !== "all") {
+			setPaymentFilter("all");
+		}
 	};
 
 	// Handle payment filter change
@@ -174,10 +209,8 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				return allTabs;
 
 			case "samsung-sentinel":
-				// Admin/Sub-admin focus on completed and payment-related tabs
-				return allTabs.filter((tab) =>
-					["all", "completed", "approved", "authorized"].includes(tab.key)
-				);
+				// Admin/Sub-admin see all tabs
+				return allTabs;
 
 			default:
 				return allTabs;
@@ -249,9 +282,9 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 						}
 					>
 						<div className="p-6">
-							{/* Payment Filter for Completed and All Tabs */}
+							{/* Payment Filter for Authorized and All Tabs */}
 							{showPaymentTabs &&
-								(activeTab === "completed" || activeTab === "all") && (
+								(activeTab === "authorized" || activeTab === "all") && (
 									<Card className="mb-4">
 										<CardBody className="flex flex-row items-center gap-3 p-3">
 											<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -292,15 +325,15 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 												))}
 											</div>
 											{role === "samsung-sentinel" &&
+												activeTab === "authorized" &&
 												paymentFilter === "unpaid" && (
 													<span className="ml-auto text-xs text-warning-600 dark:text-warning-400">
-														💳 Payment execution available
+														Payment execution available
 													</span>
 												)}
 										</CardBody>
 									</Card>
-								)}
-
+								)}{" "}
 							<ClaimsRepairsTable
 								data={data}
 								isLoading={isLoading}
@@ -328,9 +361,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 									paymentFilter !== "all"
 								}
 								enableMultiSelect={
-									(role === "samsung-sentinel" &&
-										activeTab === "completed" &&
-										paymentFilter === "unpaid") ||
+									(role === "samsung-sentinel" && activeTab === "authorized") ||
 									(role === "samsung-partners" &&
 										(activeTab === "pending" ||
 											(activeTab === "completed" &&
@@ -359,6 +390,105 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 							<ViewClaimDetailView claimId={selectedClaim.id} />
 						)}
 					</ModalBody>
+				</ModalContent>
+			</Modal>
+
+			{/* Payment Results Modal */}
+			<Modal
+				isOpen={isPaymentResultsOpen}
+				onClose={handlePaymentResultsClose}
+				size="2xl"
+			>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<div className="p-6">
+								<h2 className="text-2xl font-bold mb-4">
+									Bulk Payment Results
+								</h2>
+								<div className="space-y-4">
+									{/* Summary Cards */}
+									<div className="grid grid-cols-3 gap-4">
+										<div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Total Processed
+											</p>
+											<p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+												{paymentResults?.totalProcessed || 0}
+											</p>
+										</div>
+										<div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Successful
+											</p>
+											<p className="text-3xl font-bold text-green-600 dark:text-green-400">
+												{paymentResults?.successful || 0}
+											</p>
+										</div>
+										<div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Failed
+											</p>
+											<p className="text-3xl font-bold text-red-600 dark:text-red-400">
+												{paymentResults?.failed || 0}
+											</p>
+										</div>
+									</div>
+
+									{/* Transaction Reference */}
+									<div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+										<p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+											Transaction Reference
+										</p>
+										<p className="font-mono text-lg font-semibold">
+											{paymentResults?.transactionRef || "N/A"}
+										</p>
+									</div>
+
+									{/* Success/Error Message */}
+									{paymentResults && (
+										<div
+											className={`p-4 rounded-lg ${
+												paymentResults.successful > 0
+													? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+													: "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+											}`}
+										>
+											<p
+												className={`font-medium ${
+													paymentResults.successful > 0
+														? "text-green-800 dark:text-green-200"
+														: "text-red-800 dark:text-red-200"
+												}`}
+											>
+												{paymentResults.successful > 0
+													? `Successfully disbursed payment for ${
+															paymentResults.successful
+													  } claim${paymentResults.successful > 1 ? "s" : ""}${
+															paymentResults.failed > 0
+																? ` (${paymentResults.failed} failed)`
+																: ""
+													  }`
+													: `Failed to disburse payments: ${
+															paymentResults.failed
+													  } claim${paymentResults.failed > 1 ? "s" : ""} failed`}
+											</p>
+										</div>
+									)}
+								</div>
+
+								{/* Close Button */}
+								<div className="mt-6 flex justify-end">
+									<Button
+										color="primary"
+										onPress={onClose}
+									>
+										Close
+									</Button>
+								</div>
+							</div>
+						</>
+					)}
 				</ModalContent>
 			</Modal>
 		</div>

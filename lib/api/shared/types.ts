@@ -11,12 +11,9 @@ export interface ApiCallOptions {
 }
 
 export interface BaseApiResponse<T = any> {
-	statusCode: number;
-	statusType: string;
-	message: string;
+
 	data: T;
-	responseTime: string;
-	channel: string;
+
 }
 
 export interface PaginationParams {

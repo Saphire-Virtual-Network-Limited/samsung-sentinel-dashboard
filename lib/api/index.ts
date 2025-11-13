@@ -47,5 +47,12 @@ export * from "./partners";
 // Export audit APIs
 export * from "./audit";
 
-// Export dashboard APIs
-export * from "./dashboard";
+// Export dashboard APIs - explicitly export to avoid duplicates with partners
+export {
+	getAdminStatistics,
+	getRepairStoreDashboardStats,
+	getServiceCenterDashboardStats,
+	type AdminStatistics,
+	type RepairStoreStatistics,
+	type ServiceCenterStatistics,
+} from "./dashboard";

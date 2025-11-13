@@ -27,6 +27,12 @@ export interface UseClaimsApiOptions {
 	search?: string;
 	startDate?: string;
 	endDate?: string;
+	onPaymentResults?: (results: {
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	}) => void;
 }
 
 export interface UseClaimsApiReturn {
@@ -97,7 +103,7 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 }
 
 export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
-	const { role, status, payment, search, startDate, endDate } = options;
+	const { role, status, payment, search, startDate, endDate, onPaymentResults } = options;
 
 	// Build API params
 	const getParams = useCallback((): GetClaimsParams => {
@@ -378,24 +384,37 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 					notes: "Bulk payment processed",
 				});
 
-				const { successful, failed } = response.data || {
-					successful: 0,
-					failed: 0,
-				};
+				// Response structure: { data: { total_processed, successful, failed, results } }
+				const { successful, failed, total_processed } = response.data;
 
-				if (successful > 0) {
-					showToast({
-						message: `Successfully marked ${successful} claim${
-							successful > 1 ? "s" : ""
-						} as paid${failed > 0 ? ` (${failed} failed)` : ""}`,
-						type: "success",
+				// Refetch data first to update the UI
+				await refetch();
+
+				// Call the results callback if provided (to show modal)
+				if (onPaymentResults) {
+					onPaymentResults({
+						totalProcessed: total_processed,
+						successful,
+						failed,
+						transactionRef,
 					});
-					await refetch();
 				} else {
-					showToast({
-						message: `Failed to mark claims as paid: ${failed} failed`,
-						type: "error",
-					});
+					// Fallback to toast if no callback provided
+					if (successful > 0) {
+						showToast({
+							message: `Successfully disbursed payment for ${successful} claim${
+								successful > 1 ? "s" : ""
+							}${failed > 0 ? ` (${failed} failed)` : ""}`,
+							type: "success",
+						});
+					} else {
+						showToast({
+							message: `Failed to disburse payments: ${failed} claim${
+								failed > 1 ? "s" : ""
+							} failed`,
+							type: "error",
+						});
+					}
 				}
 			} catch (error: any) {
 				showToast({
@@ -404,7 +423,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 				});
 			}
 		},
-		[refetch]
+		[refetch, onPaymentResults]
 	);
 
 	// Update repair status handler (placeholder - not in current API)

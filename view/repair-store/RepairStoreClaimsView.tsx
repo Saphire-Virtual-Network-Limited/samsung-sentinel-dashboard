@@ -50,16 +50,16 @@ const columns: ColumnDef[] = [
 ];
 
 const statusColorMap = {
-	pending: "warning" as const,
-	approved: "success" as const,
-	rejected: "danger" as const,
-	authorized: "primary" as const,
-	paid: "success" as const,
+	PENDING: "warning" as const,
+	APPROVED: "success" as const,
+	REJECTED: "danger" as const,
+	AUTHORIZED: "primary" as const,
+	COMPLETED: "success" as const,
 };
 
 const paymentColorMap = {
-	paid: "success" as const,
-	unpaid: "warning" as const,
+	PAID: "success" as const,
+	UNPAID: "warning" as const,
 };
 
 export default function RepairStoreClaimsView() {
@@ -103,9 +103,9 @@ export default function RepairStoreClaimsView() {
 	// Calculate statistics
 	const stats = useMemo(() => {
 		const total = claims.length;
-		const pending = claims.filter((c) => c.status === "pending").length;
-		const approved = claims.filter((c) => c.status === "approved").length;
-		const paid = claims.filter((c) => c.paymentStatus === "paid").length;
+		const pending = claims.filter((c) => c.status === "PENDING").length;
+		const approved = claims.filter((c) => c.status === "APPROVED").length;
+		const paid = claims.filter((c) => c.paymentStatus === "PAID").length;
 		const totalAmount = claims.reduce(
 			(sum, claim) => sum + claim.repairCost,
 			0
@@ -280,7 +280,7 @@ export default function RepairStoreClaimsView() {
 					<p className="text-sm text-default-400">-</p>
 				);
 			case "rejected":
-				return row.status === "rejected" ? (
+				return row.status === "REJECTED" ? (
 					<div className="flex flex-col">
 						{row.rejectedAt && (
 							<p className="text-sm">{formatDate(row.rejectedAt)}</p>
@@ -295,7 +295,7 @@ export default function RepairStoreClaimsView() {
 					<p className="text-sm text-default-400">-</p>
 				);
 			case "paymentDetails":
-				return row.paymentStatus === "paid" ? (
+				return row.paymentStatus === "PAID" ? (
 					<div className="flex flex-col">
 						{row.paidAt && <p className="text-sm">{formatDate(row.paidAt)}</p>}
 						{row.transactionId && (
@@ -676,7 +676,7 @@ export default function RepairStoreClaimsView() {
 							</ModalBody>
 							<ModalFooter className="flex-col items-stretch gap-3">
 								{/* Completion Notes - Only show for approved claims */}
-								{selectedClaim?.status === "approved" && (
+								{selectedClaim?.status === "APPROVED" && (
 									<Textarea
 										label="Completion Notes (Optional)"
 										placeholder="Add any notes about the completion..."
@@ -696,7 +696,7 @@ export default function RepairStoreClaimsView() {
 									</Button>
 
 									{/* Mark as Completed button - Only show for approved claims */}
-									{selectedClaim?.status === "approved" && (
+									{selectedClaim?.status === "APPROVED" && (
 										<Button
 											color="primary"
 											isLoading={isCompleting}

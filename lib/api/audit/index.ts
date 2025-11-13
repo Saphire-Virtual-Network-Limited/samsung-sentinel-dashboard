@@ -7,14 +7,23 @@ import { apiCall, BaseApiResponse, AuditAction } from "../shared";
 // Types & Interfaces
 export interface AuditLog {
 	id: string;
-	action: AuditAction;
+	created_at: string;
+	updated_at: string;
 	resource_type: string;
 	resource_id: string;
-	performed_by_id: string;
+	action: string;
+	old_values: any;
+	new_values: any;
 	ip_address?: string;
 	user_agent?: string;
-	metadata?: Record<string, any>;
-	createdAt: string;
+	performed_by_id: string;
+	performed_at: string;
+	performed_by?: {
+		id: string;
+		name: string;
+		email: string;
+		role: string;
+	};
 }
 
 export interface GetAuditLogsParams {

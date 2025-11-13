@@ -393,7 +393,9 @@ export default function AdminRepairCentersView() {
 									key="view"
 									startContent={<Eye size={16} />}
 									onPress={() =>
-										router.push(`/access/${role}/repair-centers/${item.id}`)
+										router.push(
+											`/access/admin/samsung-sentinel/repair-stores/${item.id}`
+										)
 									}
 								>
 									View Details

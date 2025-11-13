@@ -16,12 +16,18 @@ import {
 	CardBody,
 	CardHeader,
 	Divider,
+	Tabs,
+	Tab,
+	SortDescriptor,
 } from "@heroui/react";
 import {
 	InfoCard,
 	InfoField,
 	TableSkeleton,
 } from "@/components/reususables/custom-ui";
+import GenericTable, {
+	ColumnDef,
+} from "@/components/reususables/custom-ui/tableUi";
 import { StatCard } from "@/components/atoms/StatCard";
 import {
 	ArrowLeft,
@@ -31,6 +37,7 @@ import {
 	DollarSign,
 	Calendar,
 	TrendingUp,
+	Eye,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
@@ -41,6 +48,7 @@ import {
 	activateProduct,
 	deactivateProduct,
 } from "@/lib/api/products";
+import { getAuditLogsByResource, AuditLog } from "@/lib/api/audit";
 
 const statusColorMap = {
 	ACTIVE: "success" as const,
@@ -70,7 +78,183 @@ export default function SingleProductView({
 		{ revalidateOnFocus: false }
 	);
 
-	const product = productResponse?.data;
+	// Handle both response formats: direct object or wrapped in data property
+	const product =
+		productResponse?.data || (productResponse as Product | undefined);
+
+	// Fetch audit logs
+	const { data: auditLogsResponse, isLoading: isLoadingAuditLogs } = useSWR(
+		productId ? `/audit/product/${productId}` : null,
+		() => getAuditLogsByResource("product", productId),
+		{ revalidateOnFocus: false }
+	);
+
+	const auditLogs =
+		auditLogsResponse?.data || (auditLogsResponse as AuditLog[] | undefined);
+
+	// Transform audit logs into table rows
+	interface AuditTableRow {
+		id: string;
+		action: string;
+		field: string;
+		oldValue: string;
+		newValue: string;
+		modifiedBy: string;
+		modifiedAt: string;
+		auditLog: AuditLog; // Full audit log for detail view
+	}
+
+	const auditTableData = useMemo(() => {
+		if (!auditLogs) return [];
+
+		const rows: AuditTableRow[] = [];
+
+		auditLogs.forEach((log) => {
+			const modifiedBy = log.performed_by
+				? `${log.performed_by.name} (${log.performed_by.email})`
+				: "Unknown";
+			const modifiedAt = new Date(log.performed_at).toLocaleString();
+			const action = log.action.replace(/_/g, " ").toUpperCase();
+
+			// Extract field changes
+			if (log.new_values) {
+				const fields = ["name", "sapphire_cost", "repair_cost", "status"];
+
+				fields.forEach((field) => {
+					if (log.new_values[field] !== undefined) {
+						const oldValue = log.old_values?.[field]
+							? field.includes("cost")
+								? `₦${log.old_values[field]}`
+								: log.old_values[field]
+							: "-";
+						const newValue = field.includes("cost")
+							? `₦${log.new_values[field]}`
+							: log.new_values[field];
+
+						rows.push({
+							id: `${log.id}-${field}`,
+							action,
+							field: field.replace(/_/g, " ").toUpperCase(),
+							oldValue,
+							newValue,
+							modifiedBy,
+							modifiedAt,
+							auditLog: log,
+						});
+					}
+				});
+			} else {
+				// For actions without field changes
+				rows.push({
+					id: log.id,
+					action,
+					field: "-",
+					oldValue: "-",
+					newValue: "-",
+					modifiedBy,
+					modifiedAt,
+					auditLog: log,
+				});
+			}
+		});
+
+		return rows;
+	}, [auditLogs]);
+
+	// Pagination and filter state for audit logs
+	const [auditPage, setAuditPage] = useState(1);
+	const [auditFilterValue, setAuditFilterValue] = useState("");
+	const [auditSortDescriptor, setAuditSortDescriptor] =
+		useState<SortDescriptor>({
+			column: "modifiedAt",
+			direction: "descending",
+		});
+
+	const rowsPerPage = 10;
+	const auditPages = Math.ceil(auditTableData.length / rowsPerPage);
+	const paginatedAuditData = auditTableData.slice(
+		(auditPage - 1) * rowsPerPage,
+		auditPage * rowsPerPage
+	);
+
+	// Define audit table columns
+	const auditColumns: ColumnDef[] = [
+		{
+			name: "Action",
+			uid: "action",
+			sortable: true,
+		},
+		{
+			name: "Field",
+			uid: "field",
+			sortable: true,
+		},
+		{
+			name: "Old Value",
+			uid: "oldValue",
+			sortable: false,
+		},
+		{
+			name: "New Value",
+			uid: "newValue",
+			sortable: false,
+		},
+		{
+			name: "Modified By",
+			uid: "modifiedBy",
+			sortable: true,
+		},
+		{
+			name: "Modified At",
+			uid: "modifiedAt",
+			sortable: true,
+		},
+		{
+			name: "Actions",
+			uid: "actions",
+			sortable: false,
+		},
+	];
+
+	// Render cell function for audit table
+	const renderAuditCell = (row: AuditTableRow, columnKey: string) => {
+		switch (columnKey) {
+			case "action":
+				return row.action;
+			case "field":
+				return row.field;
+			case "oldValue":
+				return row.oldValue;
+			case "newValue":
+				return row.newValue;
+			case "modifiedBy":
+				return row.modifiedBy;
+			case "modifiedAt":
+				return row.modifiedAt;
+			case "actions":
+				return (
+					<Button
+						isIconOnly
+						size="sm"
+						variant="light"
+						onPress={() => {
+							setSelectedAuditLog(row.auditLog);
+							onAuditDetailModalOpen();
+						}}
+					>
+						<Eye size={16} />
+					</Button>
+				);
+			default:
+				return null;
+		}
+	};
+
+	// Export function for audit logs (optional)
+	const exportAuditLogs = (data: AuditTableRow[]) => {
+		console.log("Exporting audit logs:", data);
+		// Implement export logic if needed
+	};
 
 	// Modal states
 	const {
@@ -88,12 +272,20 @@ export default function SingleProductView({
 		onOpen: onEditRepairCostModalOpen,
 		onClose: onEditRepairCostModalClose,
 	} = useDisclosure();
+	const {
+		isOpen: isAuditDetailModalOpen,
+		onOpen: onAuditDetailModalOpen,
+		onClose: onAuditDetailModalClose,
+	} = useDisclosure();
 
 	// Form states
 	const [productName, setProductName] = useState("");
 	const [sapphireCost, setSapphireCost] = useState("");
 	const [repairCost, setRepairCost] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [selectedAuditLog, setSelectedAuditLog] = useState<AuditLog | null>(
+		null
+	);
 
 	// Statistics
 	const stats = useMemo(() => {
@@ -391,7 +583,7 @@ export default function SingleProductView({
 			</InfoCard>
 
 			{/* Statistics */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				<StatCard
 					title="Sapphire Cost"
 					value={`₦${stats.sapphireCost.toLocaleString()}`}
@@ -407,10 +599,28 @@ export default function SingleProductView({
 					value={`₦${stats.totalValue.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
-				<StatCard
-					title="Profit Margin"
-					value={`${stats.profitMargin}%`}
-					icon={<TrendingUp className="w-5 h-5" />}
+			</div>
+
+			{/* Audit Logs Section */}
+			<div>
+				<h3 className="text-lg font-semibold mb-4">Audit History</h3>
+				<GenericTable<AuditTableRow>
+					data={paginatedAuditData}
+					columns={auditColumns}
+					allCount={auditTableData.length}
+					exportData={auditTableData}
+					isLoading={isLoadingAuditLogs}
+					filterValue={auditFilterValue}
+					onFilterChange={setAuditFilterValue}
+					sortDescriptor={auditSortDescriptor}
+					onSortChange={setAuditSortDescriptor}
+					page={auditPage}
+					pages={auditPages}
+					onPageChange={setAuditPage}
+					exportFn={exportAuditLogs}
+					renderCell={renderAuditCell}
+					hasNoRecords={auditTableData.length === 0}
+					searchPlaceholder="Search audit logs..."
 				/>
 			</div>
 
@@ -523,6 +733,173 @@ export default function SingleProductView({
 									isLoading={isLoading}
 								>
 									Save Changes
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Audit Detail Modal */}
+			<Modal
+				isOpen={isAuditDetailModalOpen}
+				onClose={onAuditDetailModalClose}
+				size="2xl"
+			>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<ModalHeader>Audit Log Details</ModalHeader>
+							<ModalBody>
+								{selectedAuditLog && (
+									<div className="space-y-4">
+										{/* Action & Timestamp */}
+										<div className="grid grid-cols-2 gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+													Action
+												</p>
+												<p className="text-base font-medium">
+													{selectedAuditLog.action
+														.replace(/_/g, " ")
+														.toUpperCase()}
+												</p>
+											</div>
+											<div>
+												<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+													Performed At
+												</p>
+												<p className="text-base font-medium">
+													{new Date(
+														selectedAuditLog.performed_at
+													).toLocaleString()}
+												</p>
+											</div>
+										</div>
+
+										<Divider />
+
+										{/* User Information */}
+										<div>
+											<h4 className="text-md font-semibold mb-3">
+												Performed By
+											</h4>
+											<div className="grid grid-cols-2 gap-4">
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Name
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.name || "Unknown"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Email
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.email || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														User ID
+													</p>
+													<p className="text-xs font-mono">
+														{selectedAuditLog.performed_by_id}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Role
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.role || "N/A"}
+													</p>
+												</div>
+											</div>
+										</div>
+
+										<Divider />
+
+										{/* Technical Information */}
+										<div>
+											<h4 className="text-md font-semibold mb-3">
+												Technical Details
+											</h4>
+											<div className="space-y-3">
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														IP Address
+													</p>
+													<p className="text-sm font-mono">
+														{selectedAuditLog.ip_address || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														User Agent
+													</p>
+													<p className="text-sm break-all">
+														{selectedAuditLog.user_agent || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Resource ID
+													</p>
+													<p className="text-xs font-mono">
+														{selectedAuditLog.resource_id}
+													</p>
+												</div>
+											</div>
+										</div>
+
+										{/* Changes */}
+										{selectedAuditLog.new_values && (
+											<>
+												<Divider />
+												<div>
+													<h4 className="text-md font-semibold mb-3">
+														Changes Made
+													</h4>
+													<div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
+														{selectedAuditLog.old_values && (
+															<div>
+																<p className="text-sm font-semibold text-red-600 dark:text-red-400">
+																	Old Values:
+																</p>
+																<pre className="text-xs mt-1 p-2 bg-white dark:bg-gray-900 rounded overflow-auto">
+																	{JSON.stringify(
+																		selectedAuditLog.old_values,
+																		null,
+																		2
+																	)}
+																</pre>
+															</div>
+														)}
+														<div>
+															<p className="text-sm font-semibold text-green-600 dark:text-green-400">
+																New Values:
+															</p>
+															<pre className="text-xs mt-1 p-2 bg-white dark:bg-gray-900 rounded overflow-auto">
+																{JSON.stringify(
+																	selectedAuditLog.new_values,
+																	null,
+																	2
+																)}
+															</pre>
+														</div>
+													</div>
+												</div>
+											</>
+										)}
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button color="primary" onPress={onClose}>
+									Close
 								</Button>
 							</ModalFooter>
 						</>

@@ -20,6 +20,7 @@ import {
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
+import { nanoid } from "nanoid";
 import DocumentsCell from "@/components/reususables/DocumentsCell";
 import {
 	MoreHorizontal,
@@ -156,6 +157,19 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		onClose: onBulkRejectModalClose,
 	} = useDisclosure();
 	const [bulkRejectionReason, setBulkRejectionReason] = useState("");
+
+	// Bulk payment results modal state
+	const {
+		isOpen: isPaymentResultsModalOpen,
+		onOpen: onPaymentResultsModalOpen,
+		onClose: onPaymentResultsModalClose,
+	} = useDisclosure();
+	const [paymentResults, setPaymentResults] = useState<{
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	} | null>(null);
 
 	// Filter data based on search params
 	const filteredData = useMemo(() => {
@@ -425,20 +439,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Sentinel Actions: Execute payment for authorized claims (status=AUTHORIZED)
+		// Samsung Sentinel Actions: Disburse payment for authorized unpaid claims
 		if (
 			role === "samsung-sentinel" &&
-			item.status === "COMPLETED" &&
+			item.status === "AUTHORIZED" &&
 			item.paymentStatus === "UNPAID"
 		) {
 			items.push(
 				<DropdownItem
-					key="execute"
+					key="disburse"
 					startContent={<DollarSign className="h-4 w-4" />}
-					onPress={() => onExecutePayment?.([item.id])}
+					onPress={() => {
+						// Generate unique transaction reference for single payment
+						const today = new Date();
+						const dateStr = today.toISOString().split("T")[0].replace(/-/g, "");
+						const uniqueId = nanoid(8);
+						const transactionRef = `TXN-${dateStr}-1-${uniqueId}`;
+						onBulkPayment?.([item.id], transactionRef);
+					}}
 					color="success"
 				>
-					Execute Payment
+					Disburse Payment
 				</DropdownItem>
 			);
 		}
@@ -841,18 +862,14 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		}
 
 		// For admin marking as paid: only authorized+unpaid claims are selectable
-		// Disable: not authorized yet or already paid
-		if (
-			role === "samsung-sentinel" &&
-			status === "completed" &&
-			paymentFilter === "unpaid"
-		) {
+		// Disable: not authorized or already paid (based on paidAt field)
+		if (role === "samsung-sentinel" && status === "authorized") {
 			return new Set(
 				data
 					.filter(
 						(item) =>
-							!item.authorizedAt || // Not authorized yet
-							item.paymentStatus === "PAID" // Already paid (uppercase)
+							item.status !== "AUTHORIZED" || // Only authorized claims are selectable
+							item.paidAt !== null // Already paid (has paidAt timestamp)
 					)
 					.map((item) => item.id)
 			);
@@ -1013,8 +1030,12 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const handleBulkPaymentClick = () => {
 		if (selectedKeys.size > 0 && onBulkPayment) {
 			const selectedIds = Array.from(selectedKeys) as string[];
-			// Generate a transaction reference (in real implementation, this would come from a modal)
-			const transactionRef = `TXN-${Date.now()}`;
+			// Generate unique transaction reference using date, count, and unique ID
+			const today = new Date();
+			const dateStr = today.toISOString().split("T")[0].replace(/-/g, ""); // YYYYMMDD
+			const count = selectedIds.length;
+			const uniqueId = nanoid(8); // 8 character unique ID
+			const transactionRef = `TXN-${dateStr}-${count}-${uniqueId}`;
 			onBulkPayment(selectedIds, transactionRef);
 			setSelectedKeys(new Set()); // Clear selection
 		}
@@ -1064,12 +1085,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 	// Determine what bulk actions to show
 	const getBulkActions = () => {
-		// Samsung Sentinel: Execute bulk payment for completed/unpaid
-		if (
-			role === "samsung-sentinel" &&
-			status === "completed" &&
-			paymentFilter === "unpaid"
-		) {
+		// Samsung Sentinel: Execute bulk payment for authorized claims
+		if (role === "samsung-sentinel" && status === "authorized") {
 			return (
 				<Button
 					size="sm"
@@ -1077,7 +1094,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					startContent={<DollarSign className="h-4 w-4" />}
 					onPress={handleBulkPaymentClick}
 				>
-					Execute Bulk Payment
+					Disburse Bulk Payment
 				</Button>
 			);
 		}
