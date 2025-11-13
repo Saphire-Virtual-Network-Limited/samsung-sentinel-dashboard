@@ -162,7 +162,7 @@ const ServiceCenterDashboardView = () => {
 	const statCards = [
 		{
 			title: "Pending Claims",
-			value: stats?.claim_statistics?.pending || 0,
+			value: stats?.claim_statistics?.pending?.count || 0,
 			icon: <Clock className="w-8 h-8" />,
 			color: "warning",
 			bgGradient: "from-warning-50 to-warning-100",
@@ -173,7 +173,7 @@ const ServiceCenterDashboardView = () => {
 		},
 		{
 			title: "Approved Claims",
-			value: stats?.claim_statistics?.approved || 0,
+			value: stats?.claim_statistics?.approved?.count || 0,
 			icon: <CheckCircle className="w-8 h-8" />,
 			color: "success",
 			bgGradient: "from-success-50 to-success-100",
@@ -184,7 +184,7 @@ const ServiceCenterDashboardView = () => {
 		},
 		{
 			title: "Authorized Claims",
-			value: stats?.claim_statistics?.authorized || 0,
+			value: stats?.claim_statistics?.authorized?.count || 0,
 			icon: <Wrench className="w-8 h-8" />,
 			color: "primary",
 			bgGradient: "from-primary-50 to-primary-100",
@@ -195,7 +195,7 @@ const ServiceCenterDashboardView = () => {
 		},
 		{
 			title: "Completed",
-			value: stats?.claim_statistics?.completed || 0,
+			value: stats?.claim_statistics?.completed?.count || 0,
 			icon: <CheckCircle className="w-8 h-8" />,
 			color: "success",
 			bgGradient: "from-green-50 to-green-100",
@@ -206,7 +206,7 @@ const ServiceCenterDashboardView = () => {
 		},
 		{
 			title: "Paid Claims",
-			value: stats?.claim_statistics?.paid || 0,
+			value: stats?.claim_statistics?.paid?.count || 0,
 			icon: <DollarSign className="w-8 h-8" />,
 			color: "secondary",
 			bgGradient: "from-purple-50 to-purple-100",
@@ -217,7 +217,7 @@ const ServiceCenterDashboardView = () => {
 		},
 		{
 			title: "Rejected",
-			value: stats?.claim_statistics?.rejected || 0,
+			value: stats?.claim_statistics?.rejected?.count || 0,
 			icon: <XCircle className="w-8 h-8" />,
 			color: "danger",
 			bgGradient: "from-danger-50 to-danger-100",
@@ -555,41 +555,51 @@ const ServiceCenterDashboardView = () => {
 								{[
 									{
 										status: "Pending",
-										count: stats.claim_statistics.pending || 0,
+										count: stats.claim_statistics.pending?.count || 0,
+										percentage:
+											stats.claim_statistics.pending?.percentage || "0%",
 										color: "from-warning-400 to-warning-600",
 									},
 									{
 										status: "Approved",
-										count: stats.claim_statistics.approved || 0,
+										count: stats.claim_statistics.approved?.count || 0,
+										percentage:
+											stats.claim_statistics.approved?.percentage || "0%",
 										color: "from-success-400 to-success-600",
 									},
 									{
 										status: "Authorized",
-										count: stats.claim_statistics.authorized || 0,
+										count: stats.claim_statistics.authorized?.count || 0,
+										percentage:
+											stats.claim_statistics.authorized?.percentage || "0%",
 										color: "from-primary-400 to-primary-600",
 									},
 									{
 										status: "Completed",
-										count: stats.claim_statistics.completed || 0,
+										count: stats.claim_statistics.completed?.count || 0,
+										percentage:
+											stats.claim_statistics.completed?.percentage || "0%",
 										color: "from-green-400 to-green-600",
 									},
 									{
 										status: "Rejected",
-										count: stats.claim_statistics.rejected || 0,
+										count: stats.claim_statistics.rejected?.count || 0,
+										percentage:
+											stats.claim_statistics.rejected?.percentage || "0%",
 										color: "from-danger-400 to-danger-600",
 									},
 									{
 										status: "Paid",
-										count: stats.claim_statistics.paid || 0,
+										count: stats.claim_statistics.paid?.count || 0,
+										percentage: stats.claim_statistics.paid?.percentage || "0%",
 										color: "from-purple-400 to-purple-600",
 									},
 								]
-									.filter((item) => item.count !== null)
+									.filter((item) => item.count > 0)
 									.map((item, index) => {
-										const percentage =
-											stats.claim_statistics.total > 0
-												? (item.count / stats.claim_statistics.total) * 100
-												: 0;
+										const percentageValue = parseFloat(
+											item.percentage.replace("%", "")
+										);
 										return (
 											<div key={index}>
 												<div className="flex items-center justify-between mb-2">
@@ -597,13 +607,13 @@ const ServiceCenterDashboardView = () => {
 														{item.status}
 													</span>
 													<span className="text-sm font-semibold text-gray-900 dark:text-white">
-														{item.count} ({percentage.toFixed(1)}%)
+														{item.count} ({item.percentage})
 													</span>
 												</div>
 												<div className="h-2 bg-default-100 rounded-full overflow-hidden">
 													<div
 														className={`h-full transition-all duration-500 bg-gradient-to-r ${item.color}`}
-														style={{ width: `${percentage}%` }}
+														style={{ width: `${percentageValue}%` }}
 													/>
 												</div>
 											</div>

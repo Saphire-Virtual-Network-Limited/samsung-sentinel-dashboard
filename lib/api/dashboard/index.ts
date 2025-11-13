@@ -23,12 +23,12 @@ export interface DashboardFilterParams {
 // ============================================================================
 
 export interface ServiceCenterClaimStatistics {
-	pending: number | null;
-	approved: number | null;
-	rejected: number | null;
-	authorized: number | null;
-	completed: number | null;
-	paid: number | null;
+	pending: { count: number; percentage: string } | null;
+	approved: { count: number; percentage: string } | null;
+	rejected: { count: number; percentage: string } | null;
+	authorized: { count: number; percentage: string } | null;
+	completed: { count: number; percentage: string } | null;
+	paid: { count: number; percentage: string } | null;
 	total: number;
 }
 

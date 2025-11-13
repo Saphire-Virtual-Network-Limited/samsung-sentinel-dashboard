@@ -24,6 +24,7 @@ import {
 	showToast,
 	validateImei,
 	createClaim,
+	getProductById,
 	type ValidateImeiResponse,
 } from "@/lib";
 
@@ -114,11 +115,29 @@ const CreateClaimView = () => {
 
 			if (result.is_eligible && result.exists) {
 				setValidationData(result);
+
+				// Get repair cost from validation response or fetch from product API
+				let repairCost = result.repair_cost || 0;
+
+				// If repair cost not returned by validation, fetch from product API
+				if (!result.repair_cost && result.product_id) {
+					try {
+						const productResponse = await getProductById(result.product_id);
+						const product = productResponse?.data || productResponse;
+						if (product?.repair_cost) {
+							repairCost = product.repair_cost;
+						}
+					} catch (error) {
+						console.error("Failed to fetch product details:", error);
+						// Continue with repair_cost = 0, backend will handle default
+					}
+				}
+
 				setClaimData((prev) => ({
 					...prev,
 					imei: imeiInput,
 					deviceModel: result.product_name,
-					deviceRepairPrice: result.repair_cost || 0, // Use repair cost from API if available
+					deviceRepairPrice: repairCost,
 				}));
 				showToast({
 					type: "success",
