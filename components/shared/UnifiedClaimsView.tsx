@@ -146,7 +146,11 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				title: "Approved",
 				icon: <CheckCircle className="w-4 h-4" />,
 			},
-
+			{
+				key: "authorized",
+				title: "Authorized",
+				icon: <CheckCircle className="w-4 h-4" />,
+			},
 			{
 				key: "completed",
 				title: "Completed",
@@ -166,13 +170,13 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				return allTabs;
 
 			case "samsung-partners":
-				// Samsung partners see all tabs (can approve/reject)
+				// Samsung partners see all tabs (can approve/reject and authorize payments)
 				return allTabs;
 
 			case "samsung-sentinel":
 				// Admin/Sub-admin focus on completed and payment-related tabs
 				return allTabs.filter((tab) =>
-					["all", "completed", "approved"].includes(tab.key)
+					["all", "completed", "approved", "authorized"].includes(tab.key)
 				);
 
 			default:

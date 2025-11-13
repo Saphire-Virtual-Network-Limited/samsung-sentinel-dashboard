@@ -106,20 +106,14 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 			limit: 100, // Adjust as needed
 		};
 
-		// Handle special "authorized" status - map to completed + unpaid
-		if (status === "authorized") {
-			params.status = "COMPLETED" as ClaimStatus;
-			params.payment_status = "UNPAID" as PaymentStatus;
-		} else {
-			// Map status filter - only add if valid
-			if (status && status !== "all" && status !== "undefined") {
-				params.status = status.toUpperCase() as ClaimStatus;
-			}
+		// Map status filter - only add if valid
+		if (status && status !== "all" && status !== "undefined") {
+			params.status = status.toUpperCase() as ClaimStatus;
+		}
 
-			// Map payment filter - only add if valid
-			if (payment && payment !== "all" && payment !== "undefined") {
-				params.payment_status = payment.toUpperCase() as PaymentStatus;
-			}
+		// Map payment filter - only add if valid
+		if (payment && payment !== "all" && payment !== "undefined") {
+			params.payment_status = payment.toUpperCase() as PaymentStatus;
 		}
 
 		// Search filters - only add if valid and not empty

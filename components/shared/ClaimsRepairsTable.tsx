@@ -806,6 +806,20 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
+		// For partners/admin viewing authorized: only AUTHORIZED claims are selectable
+		// Disable: non-AUTHORIZED claims or already paid
+		if (status === "authorized") {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							item.status !== "AUTHORIZED" || // Only authorized claims
+							item.paymentStatus === "PAID" // Already paid
+					)
+					.map((item) => item.id)
+			);
+		}
+
 		// For partners authorizing payment: only completed+unpaid+not-authorized claims are selectable
 		// Disable: APPROVED, REJECTED, PAID claims, and already authorized claims
 		if (
