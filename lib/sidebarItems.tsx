@@ -14,7 +14,6 @@
 import {
 	Home,
 	Users,
-	Settings,
 	Store,
 	Package,
 	Users2,
@@ -158,12 +157,6 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 			title: "User Management",
 			url: "/access/admin/samsung-sentinel/users",
 			id: "admin-users",
-		},
-		{
-			icon: Settings,
-			title: "Settings",
-			url: "/access/admin/settings",
-			id: "admin-settings",
 		},
 	];
 }
@@ -335,12 +328,6 @@ export function getScanPartnerItems(options: MenuOptions): MenuItem[] {
 			url: "/access/scan-partner/",
 			id: "scan-partner-dashboard",
 		},
-		{
-			icon: Settings,
-			title: "Settings",
-			url: "/access/scan-partner/settings",
-			id: "scan-partner-settings",
-		},
 	];
 }
 
@@ -377,12 +364,6 @@ export function getFinanceItems(options: MenuOptions): MenuItem[] {
 			url: "/access/finance/reports",
 			id: "finance-reports",
 		},
-		{
-			icon: Settings,
-			title: "Settings",
-			url: "/access/finance/settings",
-			id: "finance-settings",
-		},
 	];
 }
 
@@ -405,12 +386,6 @@ export function getAuditItems(options: MenuOptions): MenuItem[] {
 			title: "Reports",
 			url: "/access/audit/reports",
 			id: "audit-reports",
-		},
-		{
-			icon: Settings,
-			title: "Settings",
-			url: "/access/audit/settings",
-			id: "audit-settings",
 		},
 	];
 }
