@@ -8,7 +8,8 @@ import {
 	Select,
 	SelectItem,
 	Button,
-	Chip,
+	Skeleton,
+	Spinner,
 } from "@heroui/react";
 import { StatCard } from "@/components/atoms/StatCard";
 import {
@@ -19,13 +20,10 @@ import {
 	CartesianGrid,
 	Tooltip,
 	ResponsiveContainer,
-	LineChart,
-	Line,
-	PieChart,
-	Pie,
-	Cell,
 	AreaChart,
 	Area,
+	LineChart,
+	Line,
 } from "recharts";
 import {
 	MapPin,
@@ -35,24 +33,54 @@ import {
 	TrendingUp,
 	Calendar,
 	Download,
-	Star,
 	Clock,
 } from "lucide-react";
+import {
+	useRepairStoreDashboard,
+	useServiceCenterComparison,
+	useRepairStoreDetails,
+} from "@/hooks/repair-store/useRepairStoreDashboard";
+import { DashboardFilter } from "@/lib/api/dashboard";
 
 export default function RepairStoreStatisticsView() {
 	// Filter states
-	const [timeRange, setTimeRange] = useState<Set<string>>(new Set(["30days"]));
+	const [filter, setFilter] = useState<DashboardFilter>("mtd");
 	const [selectedCenter, setSelectedCenter] = useState<Set<string>>(
 		new Set(["all"])
 	);
 
+	// Fetch dashboard statistics
+	const { stats, isLoading, error } = useRepairStoreDashboard({ filter });
+
+	// Fetch service center comparison data
+	const {
+		comparison,
+		isLoading: isLoadingComparisons,
+		error: comparisonsError,
+	} = useServiceCenterComparison({ filter });
+
+	// Fetch repair store details (includes monthly revenue trend & performance by state)
+	const {
+		details,
+		isLoading: isLoadingDetails,
+		error: detailsError,
+	} = useRepairStoreDetails({
+		filter,
+		// Don't pass service_center_id to get all centers
+	});
+
+	// Extract data from API response
+	const overview = stats?.overview;
+	const comparisonData = useMemo(
+		() => comparison?.comparison || [],
+		[comparison]
+	);
+	const detailsData = details?.details;
+
 	// Selection handlers
-	const handleTimeRangeChange = (keys: any) => {
-		if (keys === "all") {
-			setTimeRange(new Set(["30days"]));
-		} else {
-			setTimeRange(new Set(Array.from(keys)));
-		}
+	const handleFilterChange = (keys: any) => {
+		const selectedFilter = Array.from(keys)[0] as DashboardFilter;
+		setFilter(selectedFilter);
 	};
 
 	const handleSelectedCenterChange = (keys: any) => {
@@ -63,149 +91,63 @@ export default function RepairStoreStatisticsView() {
 		}
 	};
 
-	// Mock data
+	// Service centers dropdown from API data
 	const serviceCenters = [
 		{ name: "All Centers", uid: "all" },
-		{ name: "Sapphire Tech Hub Lagos", uid: "sc_001" },
-		{ name: "Sapphire Tech Hub Abuja", uid: "sc_002" },
-		{ name: "Sapphire Tech Hub Port Harcourt", uid: "sc_003" },
-		{ name: "Sapphire Tech Hub Kano", uid: "sc_004" },
+		...(comparisonData?.map((center, idx) => ({
+			name: center.service_center_name || `Service Center ${idx + 1}`,
+			uid: center.service_center_name,
+		})) || []),
 	];
 
-	const timeRanges = [
-		{ name: "Last 7 Days", uid: "7days" },
-		{ name: "Last 30 Days", uid: "30days" },
-		{ name: "Last 3 Months", uid: "3months" },
-		{ name: "Last 6 Months", uid: "6months" },
-		{ name: "Last Year", uid: "1year" },
+	const filterOptions = [
+		{ name: "Daily", uid: "daily" },
+		{ name: "Weekly", uid: "weekly" },
+		{ name: "Month to Date", uid: "mtd" },
+		{ name: "All Time", uid: "inception" },
 	];
 
-	// Statistics data
+	// Statistics data from API
 	const overallStats = useMemo(
 		() => ({
-			totalCenters: 4,
-			totalEngineers: 23,
-			totalRepairs: 3456,
-			totalRevenue: 8750000,
-			averageRating: 4.5,
-			monthlyGrowth: 12.5,
+			totalCenters: overview?.total_service_centers || 0,
+			totalEngineers: overview?.total_engineers || 0,
+			totalRepairs: overview?.total_repairs || 0,
+			totalRevenue: overview?.total_revenue || 0,
+			monthlyRevenue: overview?.monthly_revenue || 0,
+			pendingClaims: overview?.pending_claims || 0,
+			inProgressClaims: overview?.in_progress_claims || 0,
+			completedClaims: overview?.completed_claims || 0,
 		}),
-		[]
+		[overview]
 	);
 
-	// Monthly revenue data
-	const monthlyRevenueData = useMemo(
-		() => [
-			{ month: "Jan", revenue: 6800000, repairs: 285 },
-			{ month: "Feb", revenue: 7200000, repairs: 312 },
-			{ month: "Mar", revenue: 7500000, repairs: 328 },
-			{ month: "Apr", revenue: 7800000, repairs: 345 },
-			{ month: "May", revenue: 8100000, repairs: 367 },
-			{ month: "Jun", revenue: 8400000, repairs: 389 },
-			{ month: "Jul", revenue: 8750000, repairs: 412 },
-		],
-		[]
-	);
-
-	// Service center performance data
+	// Service center performance data (from comparison API)
 	const centerPerformanceData = useMemo(
-		() => [
-			{
-				center: "Lagos",
-				repairs: 1245,
-				revenue: 2850000,
-				engineers: 8,
-				rating: 4.7,
-			},
-			{
-				center: "Abuja",
-				repairs: 892,
-				revenue: 2100000,
-				engineers: 6,
-				rating: 4.6,
-			},
-			{
-				center: "Port Harcourt",
-				repairs: 654,
-				revenue: 1750000,
-				engineers: 5,
-				rating: 4.4,
-			},
-			{
-				center: "Kano",
-				repairs: 423,
-				revenue: 1200000,
-				engineers: 4,
-				rating: 4.2,
-			},
-		],
-		[]
+		() =>
+			comparisonData?.map((center) => ({
+				center: center.service_center_name || "Unknown",
+				repairs: center.number_of_repairs || 0,
+				revenue: center.total_revenue || 0,
+				engineers: center.number_of_engineers || 0,
+			})) || [],
+		[comparisonData]
 	);
 
-	// Repair types distribution
-	const repairTypesData = useMemo(
-		() => [
-			{ name: "Screen Repairs", value: 1245, color: "#0088FE" },
-			{ name: "Battery Replacement", value: 892, color: "#00C49F" },
-			{ name: "Water Damage", value: 654, color: "#FFBB28" },
-			{ name: "Camera Issues", value: 423, color: "#FF8042" },
-			{ name: "Charging Port", value: 312, color: "#8884d8" },
-			{ name: "Others", value: 189, color: "#82ca9d" },
-		],
-		[]
+	// State performance data (from details API)
+	const statePerformanceData = useMemo(
+		() =>
+			detailsData?.service_center_performance?.map((state) => ({
+				state: state.state || "Unknown",
+				repairs: state.number_of_repairs || 0,
+			})) || [],
+		[detailsData]
 	);
 
-	// Top engineers data
-	const topEngineersData = useMemo(
-		() => [
-			{
-				name: "John Adebayo",
-				center: "Lagos",
-				repairs: 420,
-				rating: 4.8,
-				revenue: 980000,
-			},
-			{
-				name: "Sarah Ibrahim",
-				center: "Lagos",
-				repairs: 315,
-				rating: 4.6,
-				revenue: 750000,
-			},
-			{
-				name: "Ahmed Hassan",
-				center: "Port Harcourt",
-				repairs: 298,
-				rating: 4.5,
-				revenue: 720000,
-			},
-			{
-				name: "Michael Okafor",
-				center: "Abuja",
-				repairs: 256,
-				rating: 4.4,
-				revenue: 630000,
-			},
-			{
-				name: "Grace Okoro",
-				center: "Kano",
-				repairs: 189,
-				rating: 4.2,
-				revenue: 480000,
-			},
-		],
-		[]
-	);
-
-	// Customer satisfaction data
-	const satisfactionData = useMemo(
-		() => [
-			{ week: "Week 1", satisfaction: 4.2, responses: 45 },
-			{ week: "Week 2", satisfaction: 4.3, responses: 52 },
-			{ week: "Week 3", satisfaction: 4.5, responses: 48 },
-			{ week: "Week 4", satisfaction: 4.7, responses: 56 },
-		],
-		[]
+	// Monthly revenue trend data (from details API)
+	const monthlyRevenueData = useMemo(
+		() => detailsData?.monthly_revenue_trend || [],
+		[detailsData]
 	);
 
 	// Format currency
@@ -239,13 +181,13 @@ export default function RepairStoreStatisticsView() {
 					<Select
 						label="Time Range"
 						className="max-w-xs"
-						selectedKeys={timeRange}
-						onSelectionChange={handleTimeRangeChange}
+						selectedKeys={new Set([filter])}
+						onSelectionChange={handleFilterChange}
 						size="sm"
 					>
-						{timeRanges.map((range) => (
-							<SelectItem key={range.uid} value={range.uid}>
-								{range.name}
+						{filterOptions.map((option) => (
+							<SelectItem key={option.uid} value={option.uid}>
+								{option.name}
 							</SelectItem>
 						))}
 					</Select>
@@ -255,6 +197,7 @@ export default function RepairStoreStatisticsView() {
 						selectedKeys={selectedCenter}
 						onSelectionChange={handleSelectedCenterChange}
 						size="sm"
+						isDisabled={isLoadingComparisons}
 					>
 						{serviceCenters.map((center) => (
 							<SelectItem key={center.uid} value={center.uid}>
@@ -274,39 +217,54 @@ export default function RepairStoreStatisticsView() {
 
 			{/* Overview Statistics */}
 			<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-				<StatCard
-					title="Service Centers"
-					value={overallStats.totalCenters.toString()}
-					icon={<MapPin className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Total Engineers"
-					value={overallStats.totalEngineers.toString()}
-					icon={<Users className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Total Repairs"
-					value={overallStats.totalRepairs.toLocaleString()}
-					icon={<Wrench className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Total Revenue"
-					value={formatCurrency(overallStats.totalRevenue)}
-					icon={<CreditCard className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Average Rating"
-					value={overallStats.averageRating.toString()}
-					icon={<Star className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Monthly Growth"
-					value={`+${overallStats.monthlyGrowth}%`}
-					icon={<TrendingUp className="w-5 h-5" />}
-				/>
+				{isLoading ? (
+					<>
+						{[...Array(6)].map((_, idx) => (
+							<Card key={idx} className="border border-default-200">
+								<CardBody className="p-4">
+									<Skeleton className="h-4 w-24 mb-2 rounded" />
+									<Skeleton className="h-8 w-16 rounded" />
+								</CardBody>
+							</Card>
+						))}
+					</>
+				) : (
+					<>
+						<StatCard
+							title="Service Centers"
+							value={overallStats.totalCenters.toString()}
+							icon={<MapPin className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Total Engineers"
+							value={overallStats.totalEngineers.toString()}
+							icon={<Users className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Total Repairs"
+							value={overallStats.totalRepairs.toLocaleString()}
+							icon={<Wrench className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Total Revenue"
+							value={formatCurrency(overallStats.totalRevenue)}
+							icon={<CreditCard className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Monthly Revenue"
+							value={formatCurrency(overallStats.monthlyRevenue)}
+							icon={<TrendingUp className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Pending Claims"
+							value={overallStats.pendingClaims.toString()}
+							icon={<Clock className="w-5 h-5" />}
+						/>
+					</>
+				)}
 			</div>
 
-			{/* Charts Row 1 */}
+			{/* Charts Grid - Monthly Revenue & State Performance */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Monthly Revenue Trend */}
 				<Card>
@@ -314,39 +272,91 @@ export default function RepairStoreStatisticsView() {
 						<h3 className="text-lg font-semibold">Monthly Revenue Trend</h3>
 					</CardHeader>
 					<CardBody>
-						<ResponsiveContainer width="100%" height={300}>
-							<AreaChart data={monthlyRevenueData}>
-								<CartesianGrid strokeDasharray="3 3" />
-								<XAxis dataKey="month" />
-								<YAxis
-									tickFormatter={(value) => `₦${(value / 1000000).toFixed(1)}M`}
-								/>
-								<Tooltip
-									formatter={(value) => [
-										formatCurrency(value as number),
-										"Revenue",
-									]}
-								/>
-								<Area
-									type="monotone"
-									dataKey="revenue"
-									stroke="#0088FE"
-									fill="#0088FE"
-									fillOpacity={0.3}
-								/>
-							</AreaChart>
-						</ResponsiveContainer>
+						{isLoadingDetails ? (
+							<div className="h-[300px] flex items-center justify-center">
+								<Spinner size="lg" />
+							</div>
+						) : monthlyRevenueData.length === 0 ? (
+							<div className="h-[300px] flex items-center justify-center text-gray-500">
+								No monthly revenue data available
+							</div>
+						) : (
+							<ResponsiveContainer width="100%" height={300}>
+								<AreaChart data={monthlyRevenueData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="month" />
+									<YAxis
+										tickFormatter={(value) =>
+											value >= 1000000
+												? `₦${(value / 1000000).toFixed(1)}M`
+												: value >= 1000
+												? `₦${(value / 1000).toFixed(1)}K`
+												: `₦${value}`
+										}
+									/>
+									<Tooltip
+										formatter={(value) => [
+											formatCurrency(value as number),
+											"Revenue",
+										]}
+									/>
+									<Area
+										type="monotone"
+										dataKey="revenue"
+										stroke="#0088FE"
+										fill="#0088FE"
+										fillOpacity={0.3}
+									/>
+								</AreaChart>
+							</ResponsiveContainer>
+						)}
 					</CardBody>
 				</Card>
 
-				{/* Service Center Performance */}
+				{/* State Performance */}
 				<Card>
 					<CardHeader>
-						<h3 className="text-lg font-semibold">
-							Service Center Performance
-						</h3>
+						<h3 className="text-lg font-semibold">Performance by State</h3>
 					</CardHeader>
 					<CardBody>
+						{isLoadingDetails ? (
+							<div className="h-[300px] flex items-center justify-center">
+								<Spinner size="lg" />
+							</div>
+						) : statePerformanceData.length === 0 ? (
+							<div className="h-[300px] flex items-center justify-center text-gray-500">
+								No state performance data available
+							</div>
+						) : (
+							<ResponsiveContainer width="100%" height={300}>
+								<BarChart data={statePerformanceData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="state" />
+									<YAxis />
+									<Tooltip />
+									<Bar dataKey="repairs" fill="#00C49F" name="Repairs" />
+								</BarChart>
+							</ResponsiveContainer>
+						)}
+					</CardBody>
+				</Card>
+			</div>
+
+			{/* Service Center Performance Chart */}
+			<Card>
+				<CardHeader>
+					<h3 className="text-lg font-semibold">Service Center Performance</h3>
+				</CardHeader>
+				<CardBody>
+					{isLoadingComparisons ? (
+						<div className="h-[300px] flex items-center justify-center">
+							<Spinner size="lg" />
+						</div>
+					) : centerPerformanceData.length === 0 ? (
+						<div className="h-[300px] flex items-center justify-center text-gray-500">
+							No service center data available
+						</div>
+					) : (
 						<ResponsiveContainer width="100%" height={300}>
 							<BarChart data={centerPerformanceData}>
 								<CartesianGrid strokeDasharray="3 3" />
@@ -356,60 +366,7 @@ export default function RepairStoreStatisticsView() {
 								<Bar dataKey="repairs" fill="#0088FE" name="Repairs" />
 							</BarChart>
 						</ResponsiveContainer>
-					</CardBody>
-				</Card>
-			</div>
-
-		
-
-			{/* Top Performers Table */}
-			<Card>
-				<CardHeader>
-					<h3 className="text-lg font-semibold">Top Performing Engineers</h3>
-				</CardHeader>
-				<CardBody>
-					<div className="overflow-x-auto">
-						<table className="w-full">
-							<thead>
-								<tr className="border-b">
-									<th className="text-left p-3">Engineer</th>
-									<th className="text-left p-3">Service Center</th>
-									<th className="text-left p-3">Repairs</th>
-									<th className="text-left p-3">Rating</th>
-									<th className="text-left p-3">Revenue</th>
-								</tr>
-							</thead>
-							<tbody>
-								{topEngineersData.map((engineer, index) => (
-									<tr key={index} className="border-b">
-										<td className="p-3">
-											<div className="flex items-center gap-2">
-												<div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-sm font-bold">
-													{index + 1}
-												</div>
-												<span className="font-medium">{engineer.name}</span>
-											</div>
-										</td>
-										<td className="p-3">{engineer.center}</td>
-										<td className="p-3">
-											<Chip color="primary" variant="flat" size="sm">
-												{engineer.repairs} repairs
-											</Chip>
-										</td>
-										<td className="p-3">
-											<div className="flex items-center gap-1">
-												<Star className="w-4 h-4 text-yellow-500 fill-current" />
-												<span>{engineer.rating}</span>
-											</div>
-										</td>
-										<td className="p-3 font-medium">
-											{formatCurrency(engineer.revenue)}
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+					)}
 				</CardBody>
 			</Card>
 
@@ -419,42 +376,53 @@ export default function RepairStoreStatisticsView() {
 					<h3 className="text-lg font-semibold">Service Center Comparison</h3>
 				</CardHeader>
 				<CardBody>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{centerPerformanceData.map((center) => (
-							<div
-								key={center.center}
-								className="p-4 bg-gray-50 rounded-lg space-y-3"
-							>
-								<div className="flex items-center justify-between">
-									<h4 className="font-semibold">{center.center}</h4>
-									<Chip
-										color="success"
-										variant="flat"
-										size="sm"
-										startContent={<Star className="w-3 h-3" />}
-									>
-										{center.rating}
-									</Chip>
-								</div>
-								<div className="space-y-2">
-									<div className="flex justify-between">
-										<span className="text-sm text-gray-600">Engineers</span>
-										<span className="font-medium">{center.engineers}</span>
-									</div>
-									<div className="flex justify-between">
-										<span className="text-sm text-gray-600">Repairs</span>
-										<span className="font-medium">{center.repairs}</span>
-									</div>
-									<div className="flex justify-between">
-										<span className="text-sm text-gray-600">Revenue</span>
-										<span className="font-medium">
-											{formatCurrency(center.revenue)}
-										</span>
+					{isLoadingComparisons ? (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+							{[...Array(4)].map((_, idx) => (
+								<div key={idx} className="p-4 bg-gray-50 rounded-lg space-y-3">
+									<Skeleton className="h-6 w-32 rounded" />
+									<div className="space-y-2">
+										<Skeleton className="h-4 w-full rounded" />
+										<Skeleton className="h-4 w-full rounded" />
+										<Skeleton className="h-4 w-full rounded" />
 									</div>
 								</div>
-							</div>
-						))}
-					</div>
+							))}
+						</div>
+					) : centerPerformanceData.length === 0 ? (
+						<div className="h-32 flex items-center justify-center text-gray-500">
+							No service center data available
+						</div>
+					) : (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+							{centerPerformanceData.map((center) => (
+								<div
+									key={center.center}
+									className="p-4 bg-gray-50 rounded-lg space-y-3"
+								>
+									<div className="flex items-center justify-between">
+										<h4 className="font-semibold">{center.center}</h4>
+									</div>
+									<div className="space-y-2">
+										<div className="flex justify-between">
+											<span className="text-sm text-gray-600">Engineers</span>
+											<span className="font-medium">{center.engineers}</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-sm text-gray-600">Repairs</span>
+											<span className="font-medium">{center.repairs}</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-sm text-gray-600">Revenue</span>
+											<span className="font-medium">
+												{formatCurrency(center.revenue)}
+											</span>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
 				</CardBody>
 			</Card>
 		</div>

@@ -1,9 +1,9 @@
 import useSWR from "swr";
 import {
-	getPartnersStatistics,
+	getPartnersDashboardStatistics,
 	DashboardFilterParams,
 	PartnersStatistics,
-} from "@/lib/api/dashboard";
+} from "@/lib/api/partners";
 import { BaseApiResponse } from "@/lib/api/shared";
 
 export function usePartnersDashboard(options?: DashboardFilterParams) {
@@ -13,7 +13,7 @@ export function usePartnersDashboard(options?: DashboardFilterParams) {
 		options
 			? ["partners-dashboard-stats", options]
 			: "partners-dashboard-stats",
-		() => getPartnersStatistics(options),
+		() => getPartnersDashboardStatistics(options),
 		{
 			revalidateOnFocus: false,
 			revalidateOnReconnect: false,

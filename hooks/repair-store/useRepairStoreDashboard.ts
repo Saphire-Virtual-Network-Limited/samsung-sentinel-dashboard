@@ -58,7 +58,7 @@ export function useRepairStoreDetails(
 
 export function useServiceCenterComparison(options?: DashboardFilterParams) {
 	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<ServiceCenterComparison[]>
+		BaseApiResponse<ServiceCenterComparison>
 	>(
 		options
 			? ["service-center-comparison", options]
@@ -71,7 +71,7 @@ export function useServiceCenterComparison(options?: DashboardFilterParams) {
 	);
 
 	return {
-		comparisons: data?.data,
+		comparison: data?.data,
 		isLoading,
 		error,
 		refetch: mutate,

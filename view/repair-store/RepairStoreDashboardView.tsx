@@ -21,22 +21,18 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/atoms/StatCard";
 import { useRouter } from "next/navigation";
+import { useRepairStoreDashboard } from "@/hooks/repair-store/useRepairStoreDashboard";
 
 export default function RepairStoreDashboardView() {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = React.useState(false);
 
-	// Mock data - replace with actual API calls
-	const dashboardStats = {
-		totalServiceCenters: 12,
-		activeServiceCenters: 10,
-		totalEngineers: 45,
-		totalRepairs: 1284,
-		monthlyRevenue: 8750000,
-		pendingClaims: 23,
-		inProgressClaims: 67,
-		completedClaims: 194,
-	};
+	// Fetch dashboard statistics with inception filter
+	const { stats, isLoading, error } = useRepairStoreDashboard({
+		filter: "inception",
+	});
+
+	// Extract dashboard data
+	const overview = stats?.overview;
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("en-NG", {
@@ -49,25 +45,25 @@ export default function RepairStoreDashboardView() {
 	const statCards = [
 		{
 			title: "Total Service Centers",
-			value: dashboardStats.totalServiceCenters.toString(),
+			value: overview?.total_service_centers?.toString() || "0",
 			icon: <MapPin className="w-5 h-5" />,
 			link: "/access/repair-store/service-centers",
 		},
 		{
 			title: "Total Engineers",
-			value: dashboardStats.totalEngineers.toString(),
+			value: overview?.total_engineers?.toString() || "0",
 			icon: <Users className="w-5 h-5" />,
 			link: "/access/repair-store/engineers",
 		},
 		{
 			title: "Monthly Revenue",
-			value: formatCurrency(dashboardStats.monthlyRevenue),
+			value: formatCurrency(overview?.monthly_revenue || 0),
 			icon: <CreditCard className="w-5 h-5" />,
 			link: "/access/repair-store/statistics",
 		},
 		{
 			title: "Total Repairs",
-			value: dashboardStats.totalRepairs.toString(),
+			value: overview?.total_repairs?.toString() || "0",
 			icon: <Wrench className="w-5 h-5" />,
 			link: "/access/repair-store/claims",
 		},
@@ -185,9 +181,13 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-orange-600 mb-2">
-								{dashboardStats.pendingClaims}
-							</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-orange-600 mb-2">
+									{overview?.pending_claims || 0}
+								</p>
+							)}
 							<p className="text-sm text-gray-500">Awaiting review</p>
 						</div>
 					</CardBody>
@@ -202,9 +202,13 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-blue-600 mb-2">
-								{dashboardStats.inProgressClaims}
-							</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-blue-600 mb-2">
+									{overview?.in_progress_claims || 0}
+								</p>
+							)}
 							<p className="text-sm text-gray-500">Being repaired</p>
 						</div>
 					</CardBody>
@@ -219,9 +223,13 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-green-600 mb-2">
-								{dashboardStats.completedClaims}
-							</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-green-600 mb-2">
+									{overview?.completed_claims || 0}
+								</p>
+							)}
 							<p className="text-sm text-gray-500">This month</p>
 						</div>
 					</CardBody>

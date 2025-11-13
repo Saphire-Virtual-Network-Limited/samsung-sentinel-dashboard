@@ -55,35 +55,70 @@ export async function getServiceCenterDashboardStats(
 // ============================================================================
 
 export interface AdminStatistics {
-	totalClaims: number;
-	authorizedRepairs: number;
-	totalRepairCost: number;
-	claimsRate: number;
-	// Add more fields based on API response
+	filter: {
+		type: string;
+	};
+	statistics: {
+		authorized_repairs: number;
+		total_repairs: number;
+		total_sapphire_cost: number;
+		total_repair_cost: number;
+		unpaid_repair_cost: number;
+		unpaid_sapphire_cost: number;
+		total_imeis_uploaded: number;
+		claims_rate: string;
+	};
 }
 
 export interface AdminTrends {
-	claims: Array<{ date: string; count: number }>;
-	repairCosts: Array<{ date: string; amount: number }>;
-	// Add more fields based on API response
+	filter: {
+		type: string;
+	};
+	trends: {
+		claims_over_time: Array<{ date: string; count: number }>;
+		repair_cost_over_time: Array<{
+			date: string;
+			paid_amount: number;
+			total_amount: number;
+		}>;
+	};
+}
+
+export interface DeviceModelStat {
+	product_name: string;
+	completed_repairs: number;
+	pending_repairs: number;
+	authorized_repairs: number;
+	rejected_repairs: number;
+	total_claims: number;
+	total_cost: number;
+	total_unpaid_cost: number;
+	total_imeis_uploaded: number;
+	claim_rate: string;
 }
 
 export interface DeviceModelStats {
-	deviceModel: string;
-	totalRepairs: number;
-	totalCost: number;
-	averageCost: number;
-	// Add more fields based on API response
+	filter: {
+		type: string;
+	};
+	device_statistics: DeviceModelStat[];
 }
 
-export interface ServiceCenterStats {
-	serviceCenterId: string;
-	serviceCenterName: string;
-	totalClaims: number;
-	completedClaims: number;
-	totalCost: number;
-	averageCompletionTime: number;
-	// Add more fields based on API response
+export interface ServiceCenterStat {
+	service_center_name: string;
+	location: string;
+	approved_repairs: number;
+	completed_repairs: number;
+	rejected_repairs: number;
+	pending_repairs: number;
+	authorized_repairs: number;
+}
+
+export interface ServiceCenterStatsResponse {
+	filter: {
+		type: string;
+	};
+	service_center_statistics: ServiceCenterStat[];
 }
 
 export async function getAdminStatistics(
@@ -118,7 +153,7 @@ export async function getAdminTrends(
 
 export async function getDeviceModelStats(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<DeviceModelStats[]>> {
+): Promise<BaseApiResponse<DeviceModelStats>> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -134,7 +169,7 @@ export async function getDeviceModelStats(
 
 export async function getServiceCenterStatsForAdmin(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<ServiceCenterStats[]>> {
+): Promise<BaseApiResponse<ServiceCenterStatsResponse>> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);
@@ -153,30 +188,59 @@ export async function getServiceCenterStatsForAdmin(
 // ============================================================================
 
 export interface RepairStoreStatistics {
-	totalClaims: number;
-	pendingClaims: number;
-	approvedClaims: number;
-	completedClaims: number;
-	totalRepairCost: number;
-	totalServiceCenters: number;
-	totalEngineers: number;
-	// Add more fields based on API response
+	filter: {
+		type: string;
+	};
+	overview: {
+		total_service_centers: number;
+		total_engineers: number;
+		monthly_revenue: number;
+		total_revenue: number;
+		total_repairs: number;
+		pending_claims: number;
+		in_progress_claims: number;
+		completed_claims: number;
+	};
+}
+
+export interface MonthlyRevenueTrend {
+	month: string;
+	revenue: number;
+}
+
+export interface ServiceCenterPerformance {
+	state: string;
+	number_of_repairs: number;
 }
 
 export interface RepairStoreDetails {
-	statistics: RepairStoreStatistics;
-	trends: any; // Define based on actual API response
-	// Add more fields based on API response
+	filter: {
+		type: string;
+		service_center_id?: string; // Optional - only present when filtering by specific center
+	};
+	details: {
+		number_of_engineers: number;
+		total_repairs: number;
+		total_revenue: number;
+		monthly_revenue_trend: MonthlyRevenueTrend[];
+		service_center_performance: ServiceCenterPerformance[];
+	};
+}
+
+export interface ServiceCenterComparisonData {
+	service_center_name: string;
+	number_of_engineers: number;
+	number_of_repairs: number;
+	total_revenue: number;
 }
 
 export interface ServiceCenterComparison {
-	serviceCenterId: string;
-	serviceCenterName: string;
-	totalClaims: number;
-	completedClaims: number;
-	avgCompletionTime: number;
-	totalCost: number;
-	// Add more fields based on API response
+	filter: {
+		type: string;
+		start_date?: string;
+		end_date?: string;
+	};
+	comparison: ServiceCenterComparisonData[];
 }
 
 export async function getRepairStoreDashboardStats(
@@ -217,7 +281,7 @@ export async function getRepairStoreDetails(
 
 export async function getServiceCenterComparison(
 	params?: DashboardFilterParams
-): Promise<BaseApiResponse<ServiceCenterComparison[]>> {
+): Promise<BaseApiResponse<ServiceCenterComparison>> {
 	const queryParams = new URLSearchParams();
 	if (params?.filter) queryParams.set("filter", params.filter);
 	if (params?.start_date) queryParams.set("start_date", params.start_date);

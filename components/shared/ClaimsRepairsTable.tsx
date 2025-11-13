@@ -9,6 +9,13 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	Textarea,
+	useDisclosure,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -132,6 +139,23 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const [page, setPage] = useState(1);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
+	// Rejection modal state
+	const {
+		isOpen: isRejectModalOpen,
+		onOpen: onRejectModalOpen,
+		onClose: onRejectModalClose,
+	} = useDisclosure();
+	const [rejectingClaimId, setRejectingClaimId] = useState<string | null>(null);
+	const [rejectionReason, setRejectionReason] = useState("");
+
+	// Bulk rejection modal state
+	const {
+		isOpen: isBulkRejectModalOpen,
+		onOpen: onBulkRejectModalOpen,
+		onClose: onBulkRejectModalClose,
+	} = useDisclosure();
+	const [bulkRejectionReason, setBulkRejectionReason] = useState("");
 
 	// Filter data based on search params
 	const filteredData = useMemo(() => {
@@ -439,8 +463,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	};
 
 	const handleReject = (id: string) => {
-		// Open rejection modal
-		onReject?.(id, "");
+		// Open rejection modal to collect reason
+		setRejectingClaimId(id);
+		setRejectionReason("");
+		onRejectModalOpen();
+	};
+
+	const handleConfirmReject = () => {
+		if (!rejectionReason.trim()) {
+			showToast({
+				type: "error",
+				message: "Please provide a rejection reason",
+			});
+			return;
+		}
+
+		if (rejectingClaimId) {
+			onReject?.(rejectingClaimId, rejectionReason);
+			onRejectModalClose();
+			setRejectingClaimId(null);
+			setRejectionReason("");
+		}
 	};
 
 	// Check if item is disabled for selection
@@ -927,11 +970,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 	const handleBulkRejectClick = () => {
 		if (selectedKeys.size > 0 && onBulkReject) {
+			// Open bulk rejection modal to collect reason
+			setBulkRejectionReason("");
+			onBulkRejectModalOpen();
+		}
+	};
+
+	const handleConfirmBulkReject = () => {
+		if (!bulkRejectionReason.trim()) {
+			showToast({
+				type: "error",
+				message: "Please provide a rejection reason",
+			});
+			return;
+		}
+
+		if (selectedKeys.size > 0 && onBulkReject) {
 			const selectedIds = Array.from(selectedKeys) as string[];
-			// In real implementation, show modal for rejection reason
-			const reason = "Bulk rejection";
-			onBulkReject(selectedIds, reason);
+			onBulkReject(selectedIds, bulkRejectionReason);
+			onBulkRejectModalClose();
 			setSelectedKeys(new Set());
+			setBulkRejectionReason("");
 		}
 	};
 
@@ -1074,6 +1133,115 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					setPage(1);
 				}}
 			/>
+
+			{/* Rejection Confirmation Modal */}
+			<Modal isOpen={isRejectModalOpen} onClose={onRejectModalClose} size="md">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Reject Claim</h3>
+					</ModalHeader>
+					<ModalBody>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+							Please provide a reason for rejecting this claim. This information
+							will be shared with the service center.
+						</p>
+						<Textarea
+							label="Rejection Reason *"
+							placeholder="Enter detailed reason for rejection..."
+							value={rejectionReason}
+							onValueChange={setRejectionReason}
+							rows={4}
+							isRequired
+							variant="bordered"
+							classNames={{
+								input: "min-h-[100px]",
+							}}
+						/>
+						<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+							* Rejection reason is required
+						</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								onRejectModalClose();
+								setRejectionReason("");
+								setRejectingClaimId(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="danger"
+							onPress={handleConfirmReject}
+							isDisabled={!rejectionReason.trim()}
+						>
+							Confirm Rejection
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Bulk Rejection Confirmation Modal */}
+			<Modal
+				isOpen={isBulkRejectModalOpen}
+				onClose={onBulkRejectModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Reject Multiple Claims</h3>
+					</ModalHeader>
+					<ModalBody>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+							You are about to reject{" "}
+							<span className="font-bold text-danger">{selectedKeys.size}</span>{" "}
+							claim{selectedKeys.size !== 1 ? "s" : ""}.
+						</p>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+							Please provide a reason for rejecting these claims. This
+							information will be shared with the service centers.
+						</p>
+						<Textarea
+							label="Rejection Reason *"
+							placeholder="Enter detailed reason for bulk rejection..."
+							value={bulkRejectionReason}
+							onValueChange={setBulkRejectionReason}
+							rows={4}
+							isRequired
+							variant="bordered"
+							classNames={{
+								input: "min-h-[100px]",
+							}}
+						/>
+						<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+							* Rejection reason is required
+						</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								onBulkRejectModalClose();
+								setBulkRejectionReason("");
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="danger"
+							onPress={handleConfirmBulkReject}
+							isDisabled={!bulkRejectionReason.trim()}
+						>
+							Reject {selectedKeys.size} Claim
+							{selectedKeys.size !== 1 ? "s" : ""}
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 };

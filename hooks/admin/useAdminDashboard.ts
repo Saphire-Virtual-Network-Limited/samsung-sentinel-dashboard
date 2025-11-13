@@ -8,7 +8,7 @@ import {
 	AdminStatistics,
 	AdminTrends,
 	DeviceModelStats,
-	ServiceCenterStats,
+	ServiceCenterStatsResponse,
 } from "@/lib/api/dashboard";
 import { BaseApiResponse } from "@/lib/api/shared";
 
@@ -54,7 +54,7 @@ export function useAdminTrends(options?: DashboardFilterParams) {
 
 export function useDeviceModelStats(options?: DashboardFilterParams) {
 	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<DeviceModelStats[]>
+		BaseApiResponse<DeviceModelStats>
 	>(
 		options
 			? ["admin-device-model-stats", options]
@@ -76,7 +76,7 @@ export function useDeviceModelStats(options?: DashboardFilterParams) {
 
 export function useServiceCenterStatsForAdmin(options?: DashboardFilterParams) {
 	const { data, error, mutate, isLoading } = useSWR<
-		BaseApiResponse<ServiceCenterStats[]>
+		BaseApiResponse<ServiceCenterStatsResponse>
 	>(
 		options
 			? ["admin-service-center-stats", options]

@@ -154,6 +154,8 @@ export interface GetClaimsParams {
 	customer_name?: string;
 	page?: number;
 	limit?: number;
+	start_date?: string;
+	end_date?: string;
 }
 
 export interface ClaimStatistics {

@@ -30,6 +30,36 @@ export interface GetPartnersParams {
 	limit?: number;
 }
 
+// Dashboard Types
+export type DashboardFilter =
+	| "daily"
+	| "weekly"
+	| "mtd"
+	| "inception"
+	| "custom";
+
+export interface DashboardFilterParams {
+	filter?: DashboardFilter;
+	start_date?: string;
+	end_date?: string;
+}
+
+export interface PartnersStatistics {
+	filter: {
+		type: string;
+	};
+	statistics: {
+		total_claims: number;
+		pending_claims: number;
+		approved_claims: number;
+		rejected_claims: number;
+		completed_claims: number;
+		authorized_claims: number;
+		paid_claims: number;
+		unpaid_claims: number;
+	};
+}
+
 // API Functions
 
 /**
@@ -92,4 +122,25 @@ export async function deletePartner(id: string): Promise<BaseApiResponse> {
  */
 export async function resendPartnerInvitation(): Promise<BaseApiResponse> {
 	return apiCall("/partners/resend-invitation", "POST");
+}
+
+/**
+ * Get Samsung partners dashboard statistics
+ * @summary Get aggregated claim and repair information for partners dashboard
+ * @tag Samsung Partners Dashboard
+ */
+export async function getPartnersDashboardStatistics(
+	params?: DashboardFilterParams
+): Promise<BaseApiResponse<PartnersStatistics>> {
+	const queryParams = new URLSearchParams();
+	if (params?.filter) queryParams.set("filter", params.filter);
+	if (params?.start_date) queryParams.set("start_date", params.start_date);
+	if (params?.end_date) queryParams.set("end_date", params.end_date);
+
+	const queryString = queryParams.toString();
+	const url = `/partners/dashboard/statistics${
+		queryString ? `?${queryString}` : ""
+	}`;
+
+	return apiCall(url, "GET");
 }

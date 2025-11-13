@@ -122,6 +122,14 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 			}
 		}
 
+		// Date range filters
+		if (startDate && startDate !== "undefined") {
+			params.start_date = startDate;
+		}
+		if (endDate && endDate !== "undefined") {
+			params.end_date = endDate;
+		}
+
 		return params;
 	}, [status, payment, search]);
 
@@ -148,7 +156,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 	// Use SWR
 	const hasToken = typeof window !== "undefined" && getAccessToken();
 	const { data, error, mutate, isLoading } = useSWR<ClaimRepairItem[]>(
-		hasToken ? ["claims", status, payment, search] : null,
+		hasToken ? ["claims", status, payment, search, startDate, endDate] : null,
 		fetcher,
 		{
 			revalidateOnFocus: false,
