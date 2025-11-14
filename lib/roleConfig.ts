@@ -122,9 +122,31 @@ export function isValidPathForRole(
 		return true;
 	}
 
-	const basePath = getRoleBasePath(role);
-	// Allow exact match or subpaths
-	return path === basePath || path.startsWith(basePath + "/");
+	// Get the base path for the user's role
+	const userBasePath = getRoleBasePath(role);
+
+	// Check if the current path matches the user's base path
+	const isUserPath =
+		path === userBasePath || path.startsWith(userBasePath + "/");
+
+	if (!isUserPath) {
+		// Path doesn't belong to user's role, reject it
+		return false;
+	}
+
+	// Additional check: ensure the path doesn't belong to a different role
+	// This prevents users from accessing /access/admin/samsung-sentinel if they're repair_store_admin
+	const allBasePaths = Object.values(ROLE_BASE_PATHS).filter(
+		(p) => p !== userBasePath
+	);
+	for (const otherBasePath of allBasePaths) {
+		// If the path starts with another role's base path, reject it
+		if (path === otherBasePath || path.startsWith(otherBasePath + "/")) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**

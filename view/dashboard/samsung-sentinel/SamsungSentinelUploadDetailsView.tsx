@@ -14,7 +14,7 @@ import {
 import { Button, Card, Chip, SortDescriptor } from "@heroui/react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Upload, AlertCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
@@ -28,6 +28,18 @@ const uploadStatusColorMap: Record<
 	COMPLETED: "success",
 	FAILED: "danger",
 };
+
+// Extended record type to include failed records
+interface ImeiTableRecord extends Partial<Imei> {
+	imei: string;
+	id?: string;
+	supplier?: string;
+	expiry_date?: string;
+	is_used?: boolean;
+	created_at?: string;
+	failure_reason?: string; // For failed records
+	is_failed?: boolean; // Flag for failed records
+}
 
 export default function SamsungSentinelUploadDetailsView() {
 	const params = useParams();
@@ -59,37 +71,82 @@ export default function SamsungSentinelUploadDetailsView() {
 		{ revalidateOnFocus: false }
 	);
 
+	// Combine successful and failed records
+	const allRecords = useMemo(() => {
+		if (!uploadDetails) return [];
+
+		const records: ImeiTableRecord[] = [];
+
+		// Add successful IMEIs
+		if (uploadDetails.imeis) {
+			records.push(
+				...uploadDetails.imeis.map((imei) => ({
+					...imei,
+					is_failed: false,
+				}))
+			);
+		}
+
+		// Add duplicate IMEIs
+		if (uploadDetails.processing_details?.duplicates) {
+			uploadDetails.processing_details.duplicates.forEach((imei) => {
+				records.push({
+					imei: typeof imei === "string" ? imei : imei,
+					is_failed: true,
+					failure_reason: "Duplicate IMEI",
+				});
+			});
+		}
+
+		// Add error IMEIs
+		if (uploadDetails.processing_details?.errors) {
+			uploadDetails.processing_details.errors.forEach((error: any) => {
+				records.push({
+					imei: error.imei || "N/A",
+					is_failed: true,
+					failure_reason: error.error || "Unknown error",
+				});
+			});
+		}
+
+		return records;
+	}, [uploadDetails]);
+
 	// Filter IMEI records
 	const filteredRecords = useMemo(() => {
-		if (!uploadDetails?.imeis) return [];
-
-		let filtered = uploadDetails.imeis;
+		let filtered = allRecords;
 
 		if (filterValue) {
 			const search = filterValue.toLowerCase();
 			filtered = filtered.filter(
 				(record) =>
-					record.imei.includes(search) ||
+					record.imei?.includes(search) ||
 					record.supplier?.toLowerCase().includes(search) ||
-					record.id.toLowerCase().includes(search)
+					record.id?.toLowerCase().includes(search) ||
+					record.failure_reason?.toLowerCase().includes(search)
 			);
 		}
 
 		if (statusFilter.size > 0) {
-			filtered = filtered.filter((record) =>
-				statusFilter.has(record.is_used ? "used" : "available")
-			);
+			filtered = filtered.filter((record) => {
+				if (statusFilter.has("failed")) {
+					return record.is_failed;
+				}
+				if (record.is_failed) return false;
+				return statusFilter.has(record.is_used ? "used" : "available");
+			});
 		}
 
 		return filtered;
-	}, [uploadDetails?.imeis, filterValue, statusFilter]);
+	}, [allRecords, filterValue, statusFilter]);
 
 	// GenericTable columns
 	const columns = [
 		{ name: "IMEI Number", uid: "imei", sortable: true },
+		{ name: "Status", uid: "status", sortable: true },
+		{ name: "Reason", uid: "reason", sortable: false },
 		{ name: "Supplier", uid: "supplier", sortable: true },
 		{ name: "Expiry Date", uid: "expiry_date", sortable: true },
-		{ name: "Status", uid: "is_used", sortable: true },
 		{ name: "Created At", uid: "created_at", sortable: true },
 	];
 
@@ -97,21 +154,20 @@ export default function SamsungSentinelUploadDetailsView() {
 	const pages = Math.ceil(filteredRecords.length / 10) || 1;
 
 	// Render cell content
-	const renderCell = (record: Imei, key: string) => {
+	const renderCell = (record: ImeiTableRecord, key: string) => {
 		if (key === "imei") {
 			return (
 				<span className="font-mono text-sm font-semibold">{record.imei}</span>
 			);
 		}
-		if (key === "supplier") {
-			return record.supplier || "-";
-		}
-		if (key === "expiry_date") {
-			return record.expiry_date
-				? new Date(record.expiry_date).toLocaleDateString()
-				: "-";
-		}
-		if (key === "is_used") {
+		if (key === "status") {
+			if (record.is_failed) {
+				return (
+					<Chip variant="flat" color="danger" size="sm">
+						FAILED
+					</Chip>
+				);
+			}
 			return (
 				<Chip
 					variant="flat"
@@ -122,8 +178,28 @@ export default function SamsungSentinelUploadDetailsView() {
 				</Chip>
 			);
 		}
+		if (key === "reason") {
+			if (record.is_failed && record.failure_reason) {
+				return (
+					<span className="text-sm text-danger-600 dark:text-danger-400">
+						{record.failure_reason}
+					</span>
+				);
+			}
+			return "-";
+		}
+		if (key === "supplier") {
+			return record.supplier || "-";
+		}
+		if (key === "expiry_date") {
+			return record.expiry_date
+				? new Date(record.expiry_date).toLocaleDateString()
+				: "-";
+		}
 		if (key === "created_at") {
-			return new Date(record.created_at).toLocaleDateString();
+			return record.created_at
+				? new Date(record.created_at).toLocaleDateString()
+				: "-";
 		}
 		return "-";
 	};
@@ -137,9 +213,10 @@ export default function SamsungSentinelUploadDetailsView() {
 		// Add headers
 		const headers = [
 			"IMEI Number",
+			"Status",
+			"Failure Reason",
 			"Supplier",
 			"Expiry Date",
-			"Status",
 			"Created At",
 		];
 		worksheet.addRow(headers);
@@ -156,10 +233,13 @@ export default function SamsungSentinelUploadDetailsView() {
 		filteredRecords.forEach((record) => {
 			worksheet.addRow([
 				record.imei,
+				record.is_failed ? "FAILED" : record.is_used ? "USED" : "AVAILABLE",
+				record.failure_reason || "",
 				record.supplier || "",
 				record.expiry_date || "",
-				record.is_used ? "USED" : "AVAILABLE",
-				new Date(record.created_at).toLocaleDateString(),
+				record.created_at
+					? new Date(record.created_at).toLocaleDateString()
+					: "",
 			]);
 		});
 
@@ -184,6 +264,7 @@ export default function SamsungSentinelUploadDetailsView() {
 	const statusOptions = [
 		{ name: "Available", uid: "available" },
 		{ name: "Used", uid: "used" },
+		{ name: "Failed", uid: "failed" },
 	];
 
 	if (isLoading) {
@@ -294,12 +375,46 @@ export default function SamsungSentinelUploadDetailsView() {
 				</InfoCard>
 			</div>
 
+			{/* Processing Errors (if any) */}
+			{uploadDetails.processing_details?.errors &&
+				uploadDetails.processing_details.errors.length > 0 && (
+					<InfoCard
+						title={`Upload Errors (${uploadDetails.processing_details.errors.length})`}
+						icon={<AlertCircle className="w-5 h-5 text-danger-600" />}
+						collapsible={true}
+						defaultExpanded={uploadDetails.failed_records > 0}
+					>
+						<div className="space-y-2 max-h-96 overflow-y-auto">
+							{uploadDetails.processing_details.errors.map(
+								(error: any, index: number) => (
+									<div
+										key={index}
+										className="flex items-start gap-3 p-3 bg-danger-50 dark:bg-danger-900/10 rounded-lg border border-danger-200 dark:border-danger-800"
+									>
+										<AlertCircle className="w-4 h-4 text-danger-600 mt-0.5 flex-shrink-0" />
+										<div className="flex-1">
+											<p className="text-sm font-medium text-danger-800 dark:text-danger-200">
+												{error.imei !== "N/A"
+													? `IMEI: ${error.imei}`
+													: "Row Data"}
+											</p>
+											<p className="text-sm text-danger-700 dark:text-danger-300">
+												{error.error}
+											</p>
+										</div>
+									</div>
+								)
+							)}
+						</div>
+					</InfoCard>
+				)}
+
 			{/* IMEI Records Table */}
 			<Card>
-				<GenericTable<Imei>
+				<GenericTable<ImeiTableRecord>
 					columns={columns}
 					data={filteredRecords}
-					allCount={filteredRecords.length}
+					allCount={allRecords.length}
 					exportData={filteredRecords}
 					isLoading={isLoading}
 					renderCell={renderCell}

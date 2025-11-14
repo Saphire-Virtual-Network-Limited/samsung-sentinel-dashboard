@@ -44,6 +44,7 @@ import {
 	updateServiceCenter,
 	activateServiceCenter,
 	deactivateServiceCenter,
+	getAllRepairStores,
 	type ServiceCenter as APIServiceCenter,
 	type PaginatedServiceCentersResponse,
 } from "@/lib";
@@ -106,8 +107,21 @@ export default function SamsungSentinelServiceCentersView() {
 		account_name: "",
 		account_number: "",
 		bank_name: "",
+		repair_store_id: "",
 	});
 	const [isCreating, setIsCreating] = useState(false);
+	const [repairStoreSearch, setRepairStoreSearch] = useState("");
+
+	// Fetch repair stores for dropdown
+	const { data: repairStoresData } = useSWR(
+		["repair-stores-list", repairStoreSearch],
+		() =>
+			getAllRepairStores({
+				search: repairStoreSearch,
+				limit: 50,
+				status: "ACTIVE" as any,
+			})
+	);
 
 	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
@@ -157,11 +171,20 @@ export default function SamsungSentinelServiceCentersView() {
 
 	// Handlers
 	const handleCreateServiceCenter = async () => {
-		const { name, address, state, city, phone, email } = formData;
+		const { name, address, state, city, phone, email, repair_store_id } =
+			formData;
 
 		if (!name || !address || !state || !city || !phone || !email) {
 			showToast({
 				message: "Please fill in all required fields",
+				type: "error",
+			});
+			return;
+		}
+
+		if (!repair_store_id) {
+			showToast({
+				message: "Please select a repair store",
 				type: "error",
 			});
 			return;
@@ -185,7 +208,9 @@ export default function SamsungSentinelServiceCentersView() {
 				account_name: "",
 				account_number: "",
 				bank_name: "",
+				repair_store_id: "",
 			});
+			setRepairStoreSearch("");
 			onCreateModalClose();
 			mutate();
 		} catch (error: any) {
@@ -497,6 +522,30 @@ export default function SamsungSentinelServiceCentersView() {
 							<ModalHeader>Create New Service Center</ModalHeader>
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<Select
+										label="Repair Store"
+										placeholder="Select repair store"
+										selectedKeys={
+											formData.repair_store_id
+												? new Set([formData.repair_store_id])
+												: new Set()
+										}
+										onSelectionChange={(keys) => {
+											const selectedKey = Array.from(keys)[0] as string;
+											setFormData((prev) => ({
+												...prev,
+												repair_store_id: selectedKey || "",
+											}));
+										}}
+										isRequired
+										isLoading={!repairStoresData}
+									>
+										{(repairStoresData?.data || []).map((store) => (
+											<SelectItem key={store.id} value={store.id}>
+												{store.name}
+											</SelectItem>
+										))}
+									</Select>
 									<Input
 										label="Service Center Name"
 										placeholder="e.g., Sapphire Tech Hub Lagos"
@@ -607,7 +656,8 @@ export default function SamsungSentinelServiceCentersView() {
 										!formData.phone ||
 										!formData.state ||
 										!formData.city ||
-										!formData.address
+										!formData.address ||
+										!formData.repair_store_id
 									}
 								>
 									{isCreating ? "Creating..." : "Create Service Center"}
