@@ -18,6 +18,8 @@ import {
 	DropdownItem,
 	Select,
 	SelectItem,
+	Autocomplete,
+	AutocompleteItem,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -49,6 +51,7 @@ import {
 	type PaginatedServiceCentersResponse,
 } from "@/lib";
 import useSWR from "swr";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface ServiceCenter {
 	id: string;
@@ -112,12 +115,18 @@ export default function SamsungSentinelServiceCentersView() {
 	const [isCreating, setIsCreating] = useState(false);
 	const [repairStoreSearch, setRepairStoreSearch] = useState("");
 
+	// Debounce the search input
+	const debouncedSearch = useDebounce(repairStoreSearch, 500);
+
+	// Track if we're actively searching (debouncing)
+	const isSearching = repairStoreSearch !== debouncedSearch;
+
 	// Fetch repair stores for dropdown
-	const { data: repairStoresData } = useSWR(
-		["repair-stores-list", repairStoreSearch],
+	const { data: repairStoresData, isLoading: isLoadingRepairStores } = useSWR(
+		["repair-stores-list", debouncedSearch],
 		() =>
 			getAllRepairStores({
-				search: repairStoreSearch,
+				search: debouncedSearch,
 				limit: 50,
 				status: "ACTIVE" as any,
 			})
@@ -522,30 +531,38 @@ export default function SamsungSentinelServiceCentersView() {
 							<ModalHeader>Create New Service Center</ModalHeader>
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<Select
+									<Autocomplete
 										label="Repair Store"
-										placeholder="Select repair store"
-										selectedKeys={
-											formData.repair_store_id
-												? new Set([formData.repair_store_id])
-												: new Set()
-										}
-										onSelectionChange={(keys) => {
-											const selectedKey = Array.from(keys)[0] as string;
+										placeholder="Search and select repair store"
+										defaultItems={repairStoresData?.data || []}
+										selectedKey={formData.repair_store_id || null}
+										onSelectionChange={(key) => {
 											setFormData((prev) => ({
 												...prev,
-												repair_store_id: selectedKey || "",
+												repair_store_id: (key as string) || "",
 											}));
 										}}
+										onInputChange={(value) => setRepairStoreSearch(value)}
 										isRequired
-										isLoading={!repairStoresData}
+										isLoading={isLoadingRepairStores || isSearching}
+										allowsCustomValue={false}
+										className="col-span-2"
+										description={
+											isLoadingRepairStores || isSearching
+												? "Loading repair stores..."
+												: !repairStoreSearch &&
+												  (!repairStoresData?.data ||
+														repairStoresData.data.length === 0)
+												? "Type to search repair stores"
+												: undefined
+										}
 									>
-										{(repairStoresData?.data || []).map((store) => (
-											<SelectItem key={store.id} value={store.id}>
+										{(store) => (
+											<AutocompleteItem key={store.id} value={store.id}>
 												{store.name}
-											</SelectItem>
-										))}
-									</Select>
+											</AutocompleteItem>
+										)}
+									</Autocomplete>
 									<Input
 										label="Service Center Name"
 										placeholder="e.g., Sapphire Tech Hub Lagos"
