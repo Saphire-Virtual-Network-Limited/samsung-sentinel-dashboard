@@ -321,7 +321,7 @@ export default function SamsungSentinelIMEIView() {
 	const downloadTemplate = () => {
 		const csvContent = [
 			["Device IMEI", "Distributor", "Expiry Date"],
-			[123456789012345, "Test Distributor", "2025-12-31"],
+			["123456789012345", "Test Distributor", "2025-12-31"],
 		]
 			.map((row) => row.join(","))
 			.join("\n");
