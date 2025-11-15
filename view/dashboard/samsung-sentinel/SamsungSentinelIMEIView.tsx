@@ -317,30 +317,17 @@ export default function SamsungSentinelIMEIView() {
 		}
 	};
 
-	// Download Excel template
+	// Download CSV template
 	const downloadTemplate = () => {
-		const wb = new ExcelJS.Workbook();
-		const ws = wb.addWorksheet("IMEI Template");
+		const csvContent = [
+			["Device IMEI", "Distributor", "Expiry Date"],
+			[123456789012345, "Test Distributor", "2025-12-31"],
+		]
+			.map((row) => row.join(","))
+			.join("\n");
 
-		ws.columns = [
-			{ header: "IMEI", key: "imei", width: 20 },
-			{ header: "Supplier", key: "supplier", width: 25 },
-			{ header: "Expiry Date (Optional)", key: "expiryDate", width: 15 },
-		];
-
-		// Add sample data
-		ws.addRow({
-			imei: "123456789012345",
-			supplier: "Mitsumi",
-			expiryDate: "2025-12-31",
-		});
-
-		wb.xlsx.writeBuffer().then((buffer) => {
-			const blob = new Blob([buffer], {
-				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			});
-			saveAs(blob, "imei_upload_template.xlsx");
-		});
+		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+		saveAs(blob, "imei_upload_template.csv");
 	};
 
 	// Handle file upload

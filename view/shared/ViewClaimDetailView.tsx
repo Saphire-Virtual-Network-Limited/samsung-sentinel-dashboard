@@ -37,6 +37,7 @@ import {
 	useServiceCenterClaimActions,
 } from "@/hooks/service-center/useServiceCenterClaim";
 import { ClaimStatus, PaymentStatus } from "@/lib/api/shared/types";
+import { useAuth } from "@/lib/globalContext";
 
 import { ConfirmationModal } from "@/components/reususables";
 
@@ -91,12 +92,9 @@ const ViewClaimDetailView = ({
 	const { markAsCompleted, approveClaim, rejectClaim, authorizePayment } =
 		useServiceCenterClaimActions();
 
-	// Get user role from context/auth (you'll need to add this)
-	// For now, hardcoded for testing - replace with actual auth context
-	// TODO: Replace with actual auth context like: const { role } = useAuth();
-	const getUserRole = (): "engineer" | "partner" => "engineer";
-	const userRole = getUserRole();
-	// To test partner role, change the return value above to "partner"
+	// Get user role from auth context
+	const { userResponse } = useAuth();
+	const userRole = userResponse?.role;
 
 	// Debug logging
 	React.useEffect(() => {
@@ -299,7 +297,7 @@ const ViewClaimDetailView = ({
 
 					<div className="flex gap-2 flex-wrap">
 						{/* Engineer can mark as completed */}
-						{userRole === "engineer" &&
+						{(userRole === "engineer" || userRole === "repair_store_admin") &&
 							claim?.status === ClaimStatus.PENDING && (
 								<Button color="success" onPress={onCompleteModalOpen}>
 									Mark as Completed
@@ -307,7 +305,7 @@ const ViewClaimDetailView = ({
 							)}
 
 						{/* Samsung Partner actions */}
-						{userRole === "partner" && (
+						{userRole === "samsung_partner" && (
 							<>
 								{claim?.status === ClaimStatus.COMPLETED &&
 									claim?.payment_status === PaymentStatus.UNPAID && (

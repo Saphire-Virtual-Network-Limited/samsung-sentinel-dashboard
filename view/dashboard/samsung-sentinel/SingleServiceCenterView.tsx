@@ -23,6 +23,7 @@ import {
 	DropdownItem,
 	Tabs,
 	Tab,
+	Textarea,
 } from "@heroui/react";
 import {
 	InfoCard,
@@ -62,6 +63,7 @@ import {
 	updateServiceCenter,
 	activateServiceCenter,
 	deactivateServiceCenter,
+	createEngineer,
 	type ServiceCenter as APIServiceCenter,
 } from "@/lib";
 import useSWR from "swr";
@@ -212,7 +214,7 @@ export default function SingleServiceCenterView() {
 		name: "",
 		email: "",
 		phone: "",
-		specialization: "",
+		description: "",
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -312,7 +314,7 @@ export default function SingleServiceCenterView() {
 
 	// Handle add engineer
 	const handleAddEngineer = async () => {
-		const { name, email, phone } = engineerFormData;
+		const { name, email, phone, description } = engineerFormData;
 
 		if (!name || !email || !phone) {
 			showToast({
@@ -322,16 +324,30 @@ export default function SingleServiceCenterView() {
 			return;
 		}
 
+		if (!serviceCenterId) {
+			showToast({
+				message: "Service center ID is required",
+				type: "error",
+			});
+			return;
+		}
+
 		setIsSubmitting(true);
 		try {
-			// TODO: Implement engineer creation API
+			await createEngineer({
+				name,
+				email,
+				phone,
+				service_center_id: serviceCenterId,
+				...(description && { description }),
+			});
 			showToast({ message: "Engineer added successfully", type: "success" });
 			onAddEngineerModalClose();
 			setEngineerFormData({
 				name: "",
 				email: "",
 				phone: "",
-				specialization: "",
+				description: "",
 			});
 			mutate();
 		} catch (error: any) {
@@ -963,28 +979,18 @@ export default function SingleServiceCenterView() {
 										}
 										isRequired
 									/>
-									<Select
-										label="Specialization"
-										placeholder="Select specialization"
-										selectedKeys={
-											engineerFormData.specialization
-												? [engineerFormData.specialization]
-												: []
-										}
-										onSelectionChange={(keys) => {
-											const key = Array.from(keys)[0] as string;
+									<Textarea
+										label="Description (Optional)"
+										placeholder="Add any additional information about the engineer..."
+										value={engineerFormData.description}
+										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
 												...prev,
-												specialization: key,
-											}));
-										}}
-									>
-										{specializations.map((spec) => (
-											<SelectItem key={spec.value} value={spec.value}>
-												{spec.label}
-											</SelectItem>
-										))}
-									</Select>
+												description: value,
+											}))
+										}
+										rows={3}
+									/>
 								</div>
 							</ModalBody>
 							<ModalFooter>
