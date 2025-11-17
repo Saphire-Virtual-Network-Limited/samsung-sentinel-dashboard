@@ -50,7 +50,7 @@ export interface UpdateRepairStoreDto {
 	bank_name?: string;
 }
 
-export interface GetRepairStoresParams {
+export interface GetRepairPartnersParams {
 	status?: UserStatus;
 	location?: string;
 	search?: string;
@@ -58,7 +58,7 @@ export interface GetRepairStoresParams {
 	limit?: number;
 }
 
-export interface PaginatedRepairStoresResponse {
+export interface PaginatedRepairPartnersResponse {
 	data: RepairStore[];
 	total: number;
 	page: number;
@@ -69,83 +69,83 @@ export interface PaginatedRepairStoresResponse {
 // API Functions
 
 /**
- * Create repair store
- * @summary Create a new repair store with admin user. Admin only.
- * @tag Repair Stores
+ * Create repair partner
+ * @summary Create a new repair partner with admin user. Admin only.
+ * @tag Repair Partners
  */
 export async function createRepairStore(
 	data: CreateRepairStoreDto
 ): Promise<RepairStore> {
-	return apiCall("/repair-stores", "POST", data);
+	return apiCall("/repair-partners", "POST", data);
 }
 
 /**
- * Get all repair stores
- * @summary Get all repair stores with filters. Admin only.
- * @tag Repair Stores
+ * Get all repair partners
+ * @summary Get all repair partners with filters. Admin only.
+ * @tag Repair Partners
  */
-export async function getAllRepairStores(
-	params?: GetRepairStoresParams
-): Promise<PaginatedRepairStoresResponse> {
+export async function getAllRepairPartners(
+	params?: GetRepairPartnersParams
+): Promise<PaginatedRepairPartnersResponse> {
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/repair-stores?${queryParams}`, "GET");
+	return apiCall(`/repair-partners?${queryParams}`, "GET");
 }
 
 /**
- * Get my repair store
- * @summary Get repair store for logged-in repair store admin
- * @tag Repair Stores
+ * Get my repair partner
+ * @summary Get repair partner for logged-in repair partner admin
+ * @tag Repair Partners
  */
 export async function getMyRepairStore(): Promise<RepairStore> {
-	return apiCall("/repair-stores/me", "GET");
+	return apiCall("/repair-partners/me", "GET");
 }
 
 /**
- * Get repair store by ID
- * @tag Repair Stores
+ * Get repair partner by ID
+ * @tag Repair Partners
  */
 export async function getRepairStoreById(id: string): Promise<RepairStore> {
-	return apiCall(`/repair-stores/${id}`, "GET");
+	return apiCall(`/repair-partners/${id}`, "GET");
 }
 
 /**
- * Update repair store
- * @tag Repair Stores
+ * Update repair partner
+ * @tag Repair Partners
  */
 export async function updateRepairStore(
 	id: string,
 	data: UpdateRepairStoreDto
 ): Promise<RepairStore> {
-	return apiCall(`/repair-stores/${id}`, "PATCH", data);
+	return apiCall(`/repair-partners/${id}`, "PATCH", data);
 }
 
 /**
- * Activate repair store
- * @tag Repair Stores
+ * Activate repair partner
+ * @tag Repair Partners
  */
 export async function activateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/repair-stores/${id}/activate`, "POST");
+	return apiCall(`/repair-partners/${id}/activate`, "POST");
 }
 
 /**
- * Deactivate repair store
- * @tag Repair Stores
+ * Deactivate repair partner
+ * @tag Repair Partners
  */
 export async function deactivateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/repair-stores/${id}/deactivate`, "POST");
+	return apiCall(`/repair-partners/${id}/deactivate`, "POST");
 }
 
 /**
- * Resend repair store admin invitation
- * @summary Resend invitation email to repair store admin
- * @tag Repair Stores
+ * Resend repair partner admin invitation
+ * @summary Resend invitation email to repair partner admin
+ * @tag Repair Partners
  */
 export async function resendRepairStoreInvitation(): Promise<BaseApiResponse> {
-	return apiCall("/repair-stores/resend-invitation", "POST");
+	return apiCall("/repair-partners/resend-invitation", "POST");
 }

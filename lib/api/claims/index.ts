@@ -387,8 +387,8 @@ export async function getServiceCenterStatistics(
 }
 
 /**
- * Get claims by repair store
- * @summary Get all claims for a specific repair store across all its service centers. Repair store admins can only access their own store. Partners and admins can access all.
+ * Get claims by repair partner
+ * @summary Get all claims for a specific repair partner across all its service centers. Repair store admins can only access their own store. Partners and admins can access all.
  * @tag Claims
  */
 export async function getClaimsByRepairStore(
@@ -414,8 +414,8 @@ export async function getClaimsByRepairStore(
 }
 
 /**
- * Get repair store claim statistics
- * @summary Get statistics for claims in a repair store including status breakdown, payment stats, and service center breakdown
+ * Get repair partner claim statistics
+ * @summary Get statistics for claims in a repair partner including status breakdown, payment stats, and service center breakdown
  * @tag Claims
  */
 export async function getRepairStoreStatistics(

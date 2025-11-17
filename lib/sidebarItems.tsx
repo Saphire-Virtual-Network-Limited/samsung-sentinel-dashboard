@@ -95,9 +95,9 @@ function getAdminRootItems(options: MenuOptions): MenuItem[] {
 		},
 		{
 			icon: Store,
-			title: "Repair Stores",
-			url: "/access/admin/samsung-sentinel/repair-stores",
-			id: "admin-repair-stores",
+			title: "Repair Partners",
+			url: "/access/admin/samsung-sentinel/repair-partners",
+			id: "admin-repair-partners",
 		},
 		{
 			icon: Users,

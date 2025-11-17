@@ -98,7 +98,7 @@ export interface PaginatedServiceCentersResponse {
 
 /**
  * Create service center
- * @summary Create a new service center. Admin can create for any repair store. Repair store admin creates for their own store.
+ * @summary Create a new service center. Admin can create for any repair partner. Repair store admin creates for their own store.
  * @tag Service Centers
  */
 export async function createServiceCenter(

@@ -134,7 +134,7 @@ export default function AdminRepairCenterDetailView() {
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Fetch repair store details
+	// Fetch repair partner details
 	const {
 		data: repairStore,
 		mutate,
@@ -428,9 +428,9 @@ export default function AdminRepairCenterDetailView() {
 		return (
 			<NotFound
 				title="Repair Store Not Found"
-				description="The requested repair store could not be found."
+				description="The requested repair partner could not be found."
 				onGoBack={() =>
-					router.push("/access/admin/samsung-sentinel/repair-stores")
+					router.push("/access/admin/samsung-sentinel/repair-partners")
 				}
 			/>
 		);
@@ -445,7 +445,7 @@ export default function AdminRepairCenterDetailView() {
 						isIconOnly
 						variant="light"
 						onPress={() =>
-							router.push("/access/admin/samsung-sentinel/repair-stores")
+							router.push("/access/admin/samsung-sentinel/repair-partners")
 						}
 					>
 						<ArrowLeft size={20} />

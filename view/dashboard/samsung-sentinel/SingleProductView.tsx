@@ -594,11 +594,7 @@ export default function SingleProductView({
 					value={`₦${stats.repairCost.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
-				<StatCard
-					title="Total Value"
-					value={`₦${stats.totalValue.toLocaleString()}`}
-					icon={<DollarSign className="w-5 h-5" />}
-				/>
+			
 			</div>
 
 			{/* Audit Logs Section */}

@@ -661,7 +661,7 @@ export default function SingleServiceCenterView() {
 					<InfoField label="Phone Number" value={serviceCenter.phone} />
 					<InfoField label="Email" value={serviceCenter.email} />
 					<InfoField
-						label="Repair Store"
+						label="Repair Partner"
 						value={serviceCenter.repair_store?.name || "N/A"}
 					/>
 					<InfoField

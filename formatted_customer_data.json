@@ -1,33 +1,33 @@
 {
-  "customers": [
-    {
-      "accountStatus": "PENDING",
-      "bvn": null,
-      "bvnPhoneNumber": null,
-      "channel": "Sentiflex",
-      "createdAt": "2025-05-20T14:41:32.520Z",
-      "dob": null,
-      "email": null,
-      "firstname": "Shekinah Glory",
-      "imagePublicId": null,
-      "imageUrl": null,
-      "isActive": false,
-      "lastname": "Bankole",
-      "mbeId": "cmawmgxgo006npl14eziap8ty",
-      "mbe_old_id": "1596",
-      "otp": null,
-      "otpExpiry": null,
-      "password": null,
-      "phone": "09044942877",
-      "resetOtp": null,
-      "resetOtpExpiry": null,
-      "role": "AGENT",
-      "state": null,
-      "stores": [{}],
-      "title": "MBE",
-      "tokenVersion": 0,
-      "updatedAt": "2025-07-01T13:13:37.122Z",
-      "username": "bankoleshekinahglory@gmail.com"
-    }
-  ]
-} 
+	"customers": [
+		{
+			"accountStatus": "PENDING",
+			"bvn": null,
+			"bvnPhoneNumber": null,
+			"channel": "Sentiflex",
+			"createdAt": "2025-05-20T14:41:32.520Z",
+			"dob": null,
+			"email": null,
+			"firstname": "Shekinah Glory",
+			"imagePublicId": null,
+			"imageUrl": null,
+			"isActive": false,
+			"lastname": "Bankole",
+			"mbeId": "cmawmgxgo006npl14eziap8ty",
+			"mbe_old_id": "1596",
+			"otp": null,
+			"otpExpiry": null,
+			"password": null,
+			"phone": "09044942877",
+			"resetOtp": null,
+			"resetOtpExpiry": null,
+			"role": "AGENT",
+			"state": null,
+			"partners": [{}],
+			"title": "MBE",
+			"tokenVersion": 0,
+			"updatedAt": "2025-07-01T13:13:37.122Z",
+			"username": "bankoleshekinahglory@gmail.com"
+		}
+	]
+}

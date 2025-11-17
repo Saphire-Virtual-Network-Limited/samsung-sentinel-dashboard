@@ -109,7 +109,7 @@ export async function getAllEngineers(
 
 /**
  * Get my engineer profile
- * @summary Get logged-in engineer profile with service center and repair store details
+ * @summary Get logged-in engineer profile with service center and repair partner details
  * @tag Engineers
  */
 export async function getMyEngineerProfile(): Promise<

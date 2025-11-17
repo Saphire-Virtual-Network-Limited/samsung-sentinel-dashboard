@@ -45,6 +45,7 @@ import {
 } from "@/lib";
 import { createEngineer } from "@/lib/api/engineers";
 import { getAllServiceCenters } from "@/lib/api/service-centers";
+import { createRepairStore } from "@/lib/api/repair-stores";
 import useSWR from "swr";
 
 // Role options for filter
@@ -73,6 +74,17 @@ const STATUS_OPTIONS = [
 	{ value: "ACTIVE", label: "Active" },
 	{ value: "INACTIVE", label: "Inactive" },
 ];
+
+// Generate random password
+const generateRandomPassword = () => {
+	const chars =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+	let password = "";
+	for (let i = 0; i < 12; i++) {
+		password += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return password;
+};
 
 export default function SamsungSentinelUsersView() {
 	const {
@@ -107,9 +119,10 @@ export default function SamsungSentinelUsersView() {
 		name: "",
 		phone: "",
 		role: "",
-		password: "Password123!", // Default password
+		password: generateRandomPassword(), // Random password for admin/finance/auditor
 		service_center_id: "",
 		description: "",
+		location: "",
 	});
 	const [isSaving, setIsSaving] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
@@ -387,15 +400,74 @@ export default function SamsungSentinelUsersView() {
 			return;
 		}
 
+		// Validate role-specific fields
+		if (
+			createFormData.role === "engineer" &&
+			!createFormData.service_center_id
+		) {
+			showToast({
+				type: "error",
+				message: "Please select a service center for engineer",
+			});
+			return;
+		}
+
+		if (
+			createFormData.role === "repair_store_admin" &&
+			!createFormData.location
+		) {
+			showToast({
+				type: "error",
+				message: "Please enter a location for repair store",
+			});
+			return;
+		}
+
 		try {
 			setIsCreating(true);
-			await register({
-				email: createFormData.email,
-				name: createFormData.name,
-				phone: createFormData.phone,
-				role: createFormData.role,
-				password: createFormData.password,
-			});
+
+			// Handle different role types
+			if (createFormData.role === "repair_store_admin") {
+				// Use createRepairStore for repair store admin
+				await createRepairStore({
+					name: createFormData.name,
+					email: createFormData.email,
+					phone: createFormData.phone,
+					location: createFormData.location,
+					...(createFormData.description && {
+						description: createFormData.description,
+					}),
+				});
+			} else if (createFormData.role === "engineer") {
+				// Use createEngineer for engineers
+				await createEngineer({
+					name: createFormData.name,
+					email: createFormData.email,
+					phone: createFormData.phone,
+					service_center_id: createFormData.service_center_id,
+					...(createFormData.description && {
+						description: createFormData.description,
+					}),
+				});
+			} else if (createFormData.role === "samsung_partner") {
+				// Samsung partner - use random generated password
+				await register({
+					email: createFormData.email,
+					name: createFormData.name,
+					phone: createFormData.phone,
+					role: createFormData.role,
+					password: generateRandomPassword(),
+				});
+			} else {
+				// Admin, finance, auditor - with password
+				await register({
+					email: createFormData.email,
+					name: createFormData.name,
+					phone: createFormData.phone,
+					role: createFormData.role,
+					password: createFormData.password,
+				});
+			}
 
 			showToast({
 				type: "success",
@@ -408,9 +480,10 @@ export default function SamsungSentinelUsersView() {
 				name: "",
 				phone: "",
 				role: "",
-				password: "Password123!",
+				password: generateRandomPassword(),
 				service_center_id: "",
 				description: "",
+				location: "",
 			});
 			setServiceCenterSearch("");
 			// Refresh the users list
@@ -749,9 +822,10 @@ export default function SamsungSentinelUsersView() {
 						name: "",
 						phone: "",
 						role: "",
-						password: "Password123!",
+						password: generateRandomPassword(),
 						service_center_id: "",
 						description: "",
+						location: "",
 					});
 					setServiceCenterSearch("");
 				}}
@@ -814,6 +888,13 @@ export default function SamsungSentinelUsersView() {
 										role: e.target.value,
 										service_center_id: "", // Reset service center when role changes
 										description: "",
+										location: "", // Reset location when role changes
+										password:
+											e.target.value === "admin" ||
+											e.target.value === "finance" ||
+											e.target.value === "auditor"
+												? generateRandomPassword()
+												: prev.password,
 									}))
 								}
 								variant="bordered"
@@ -825,6 +906,22 @@ export default function SamsungSentinelUsersView() {
 									</SelectItem>
 								))}
 							</Select>
+							{/* Location for Repair Store Admin */}
+							{createFormData.role === "repair_store_admin" && (
+								<Input
+									label="Location"
+									placeholder="e.g., Lagos, Nigeria"
+									value={createFormData.location}
+									onChange={(e) =>
+										setCreateFormData((prev) => ({
+											...prev,
+											location: e.target.value,
+										}))
+									}
+									variant="bordered"
+									isRequired
+								/>
+							)}
 							{/* Service Center Selection for Engineers */}
 							{createFormData.role === "engineer" && (
 								<>
@@ -865,11 +962,36 @@ export default function SamsungSentinelUsersView() {
 									/>
 								</>
 							)}
+							{/* Password for Admin, Finance, Auditor */}
+							{(createFormData.role === "admin" ||
+								createFormData.role === "finance" ||
+								createFormData.role === "auditor") && (
+								<Input
+									label="Password"
+									type="text"
+									placeholder="Auto-generated password"
+									value={createFormData.password}
+									onChange={(e) =>
+										setCreateFormData((prev) => ({
+											...prev,
+											password: e.target.value,
+										}))
+									}
+									variant="bordered"
+									description="Default password for the user. They can change it later."
+									isRequired
+								/>
+							)}
 							<div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
 								<p className="text-sm text-blue-800">
-									<strong>Note:</strong> A temporary password will be assigned.
-									The user will receive an invitation email to set their own
-									password.
+									<strong>Note:</strong>{" "}
+									{createFormData.role === "samsung_partner"
+										? "Samsung partners will set their password via invitation email."
+										: createFormData.role === "admin" ||
+										  createFormData.role === "finance" ||
+										  createFormData.role === "auditor"
+										? "The specified password will be set for this user."
+										: "An invitation email will be sent to complete registration."}
 								</p>
 							</div>
 						</div>
@@ -885,9 +1007,10 @@ export default function SamsungSentinelUsersView() {
 									name: "",
 									phone: "",
 									role: "",
-									password: "Password123!",
+									password: generateRandomPassword(),
 									service_center_id: "",
 									description: "",
+									location: "",
 								});
 								setServiceCenterSearch("");
 							}}
@@ -905,7 +1028,9 @@ export default function SamsungSentinelUsersView() {
 								!createFormData.phone ||
 								!createFormData.role ||
 								(createFormData.role === "engineer" &&
-									!createFormData.service_center_id)
+									!createFormData.service_center_id) ||
+								(createFormData.role === "repair_store_admin" &&
+									!createFormData.location)
 							}
 						>
 							{isCreating ? "Creating..." : "Create User"}

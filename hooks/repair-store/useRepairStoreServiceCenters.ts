@@ -32,14 +32,14 @@ export function useRepairStoreServiceCenters(
 	const [isChangingStatus, setIsChangingStatus] = useState(false);
 	const [repairStoreId, setRepairStoreId] = useState<string | null>(null);
 
-	// Fetch the repair store ID on mount
+	// Fetch the repair partner ID on mount
 	useEffect(() => {
 		const fetchRepairStoreId = async () => {
 			try {
 				const repairStore = await getMyRepairStore();
 				setRepairStoreId(repairStore.id);
 			} catch (error) {
-				console.error("Failed to fetch repair store:", error);
+				console.error("Failed to fetch repair partner:", error);
 			}
 		};
 		fetchRepairStoreId();
@@ -95,7 +95,7 @@ export function useRepairStoreServiceCenters(
 	const handleCreate = async (data: CreateServiceCenterDto) => {
 		setIsCreating(true);
 		try {
-			// Ensure we have the repair store ID
+			// Ensure we have the repair partner ID
 			let storeId = repairStoreId;
 			if (!storeId) {
 				// Fetch it if not already loaded

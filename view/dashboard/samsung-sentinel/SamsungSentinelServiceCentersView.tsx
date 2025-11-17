@@ -46,7 +46,7 @@ import {
 	updateServiceCenter,
 	activateServiceCenter,
 	deactivateServiceCenter,
-	getAllRepairStores,
+	getAllRepairPartners,
 	type ServiceCenter as APIServiceCenter,
 	type PaginatedServiceCentersResponse,
 } from "@/lib";
@@ -121,16 +121,15 @@ export default function SamsungSentinelServiceCentersView() {
 	// Track if we're actively searching (debouncing)
 	const isSearching = repairStoreSearch !== debouncedSearch;
 
-	// Fetch repair stores for dropdown
-	const { data: repairStoresData, isLoading: isLoadingRepairStores } = useSWR(
-		["repair-stores-list", debouncedSearch],
-		() =>
-			getAllRepairStores({
+	// Fetch repair partners for dropdown
+	const { data: repairPartnersData, isLoading: isLoadingRepairPartners } =
+		useSWR(["repair-partners-list", debouncedSearch], () =>
+			getAllRepairPartners({
 				search: debouncedSearch,
 				limit: 50,
 				status: "ACTIVE" as any,
 			})
-	);
+		);
 
 	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
@@ -193,7 +192,7 @@ export default function SamsungSentinelServiceCentersView() {
 
 		if (!repair_store_id) {
 			showToast({
-				message: "Please select a repair store",
+				message: "Please select a repair partner",
 				type: "error",
 			});
 			return;
@@ -533,8 +532,8 @@ export default function SamsungSentinelServiceCentersView() {
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<Autocomplete
 										label="Repair Store"
-										placeholder="Search and select repair store"
-										defaultItems={repairStoresData?.data || []}
+										placeholder="Search and select repair partner"
+										defaultItems={repairPartnersData?.data || []}
 										selectedKey={formData.repair_store_id || null}
 										onSelectionChange={(key) => {
 											setFormData((prev) => ({
@@ -544,16 +543,16 @@ export default function SamsungSentinelServiceCentersView() {
 										}}
 										onInputChange={(value) => setRepairStoreSearch(value)}
 										isRequired
-										isLoading={isLoadingRepairStores || isSearching}
+										isLoading={isLoadingRepairPartners || isSearching}
 										allowsCustomValue={false}
 										className="col-span-2"
 										description={
-											isLoadingRepairStores || isSearching
-												? "Loading repair stores..."
+											isLoadingRepairPartners || isSearching
+												? "Loading repair partners..."
 												: !repairStoreSearch &&
-												  (!repairStoresData?.data ||
-														repairStoresData.data.length === 0)
-												? "Type to search repair stores"
+												  (!repairPartnersData?.data ||
+														repairPartnersData.data.length === 0)
+												? "Type to search repair partners"
 												: undefined
 										}
 									>

@@ -177,7 +177,7 @@ export async function revokeAllTokens(): Promise<BaseApiResponse> {
 
 /**
  * Set password using invitation token
- * @summary Used by repair store admins, engineers, and partners to set their password after receiving invitation
+ * @summary Used by repair partner admins, engineers, and partners to set their password after receiving invitation
  * @tag Authentication
  */
 export async function setPassword(

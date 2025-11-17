@@ -10,8 +10,8 @@ export * from "./users";
 // Export products APIs
 export * from "./products";
 
-// Export repair stores APIs
-export * from "./repair-stores";
+// Export repair partners APIs
+export * from "./repair-partners";
 
 // Export service centers APIs
 export * from "./service-centers";

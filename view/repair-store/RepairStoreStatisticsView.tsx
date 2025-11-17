@@ -62,7 +62,7 @@ export default function RepairStoreStatisticsView() {
 		error: comparisonsError,
 	} = useServiceCenterComparison({ filter });
 
-	// Fetch repair store details (includes monthly revenue trend & performance by state)
+	// Fetch repair partner details (includes monthly revenue trend & performance by state)
 	const {
 		details,
 		isLoading: isLoadingDetails,

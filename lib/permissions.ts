@@ -76,7 +76,7 @@ export interface PermissionConfig {
 	//   canManageDevices: boolean;
 	//   canViewReports: boolean;
 	//   canManageStaff: boolean;
-	//   canManageStores: boolean;
+	//   canManagePartners: boolean;
 }
 
 // Define which roles have access to which features
@@ -394,7 +394,6 @@ const userOverrides: Record<string, Partial<PermissionConfig>> = {
 	"tosin@sapphirevirtual.com": {
 		canUnlockDevice: true,
 	},
-	
 };
 
 /**
@@ -598,7 +597,7 @@ export function getAvailablePermissions(): (keyof PermissionConfig)[] {
 		// 'canManageDevices',
 		// 'canViewReports',
 		// 'canManageStaff',
-		// 'canManageStores',
+		// 'canManagePartners',
 	];
 }
 

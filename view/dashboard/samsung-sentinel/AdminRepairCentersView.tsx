@@ -41,7 +41,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import {
 	showToast,
-	getAllRepairStores,
+	getAllRepairPartners,
 	createRepairStore,
 	updateRepairStore,
 	activateRepairStore,
@@ -131,14 +131,14 @@ export default function AdminRepairCentersView() {
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(25);
 
-	// Fetch repair stores
+	// Fetch repair partners
 	const {
-		data: repairStoresData,
+		data: repairPartnersData,
 		mutate,
 		isLoading,
 	} = useSWR(
 		[
-			"repair-stores",
+			"repair-partners",
 			page,
 			limit,
 			filterValue,
@@ -146,7 +146,7 @@ export default function AdminRepairCentersView() {
 			Array.from(statusFilter)[0],
 		],
 		() =>
-			getAllRepairStores({
+			getAllRepairPartners({
 				page,
 				limit,
 				...(filterValue && { search: filterValue }),
@@ -156,25 +156,25 @@ export default function AdminRepairCentersView() {
 				}),
 			})
 	);
-	const repairStores = useMemo(
-		() => repairStoresData?.data || [],
-		[repairStoresData]
+	const repairPartners = useMemo(
+		() => repairPartnersData?.data || [],
+		[repairPartnersData]
 	);
-	const total = repairStoresData?.total || 0;
-	const totalPages = repairStoresData?.totalPages || 1;
+	const total = repairPartnersData?.total || 0;
+	const totalPages = repairPartnersData?.totalPages || 1;
 
 	// Statistics
 	const stats = useMemo(
 		() => ({
 			totalCenters: total,
-			activeCenters: repairStores.filter((s) => s.status === "ACTIVE").length,
-			totalServiceCenters: repairStores.reduce(
+			activeCenters: repairPartners.filter((s) => s.status === "ACTIVE").length,
+			totalServiceCenters: repairPartners.reduce(
 				(sum, s) => sum + (s.service_centers_count || 0),
 				0
 			),
 			totalRevenue: 0, // TODO: Calculate from actual revenue data when available
 		}),
-		[repairStores, total]
+		[repairPartners, total]
 	);
 
 	// Handlers
@@ -210,7 +210,7 @@ export default function AdminRepairCentersView() {
 			mutate();
 		} catch (error: any) {
 			showToast({
-				message: error?.message || "Failed to create repair store",
+				message: error?.message || "Failed to create repair partner",
 				type: "error",
 			});
 		} finally {
@@ -253,7 +253,7 @@ export default function AdminRepairCentersView() {
 			mutate();
 		} catch (error: any) {
 			showToast({
-				message: error?.message || "Failed to update repair store",
+				message: error?.message || "Failed to update repair partner",
 				type: "error",
 			});
 		} finally {
@@ -279,7 +279,7 @@ export default function AdminRepairCentersView() {
 			mutate();
 		} catch (error: any) {
 			showToast({
-				message: error?.message || "Failed to toggle repair store status",
+				message: error?.message || "Failed to toggle repair partner status",
 				type: "error",
 			});
 		}
@@ -395,7 +395,7 @@ export default function AdminRepairCentersView() {
 									startContent={<Eye size={16} />}
 									onPress={() =>
 										router.push(
-											`/access/admin/samsung-sentinel/repair-stores/${item.id}`
+											`/access/admin/samsung-sentinel/repair-partners/${item.id}`
 										)
 									}
 								>
@@ -510,9 +510,9 @@ export default function AdminRepairCentersView() {
 			{/* Repair Centers Table */}
 			<GenericTable<RepairStore>
 				columns={columns}
-				data={repairStores}
-				allCount={repairStores.length}
-				exportData={repairStores}
+				data={repairPartners}
+				allCount={repairPartners.length}
+				exportData={repairPartners}
 				isLoading={isLoading}
 				filterValue={filterValue}
 				onFilterChange={setFilterValue}
@@ -528,7 +528,7 @@ export default function AdminRepairCentersView() {
 				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
-				hasNoRecords={repairStores.length === 0}
+				hasNoRecords={repairPartners.length === 0}
 				searchPlaceholder="Search repair centers by name, location, or email..."
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}
