@@ -45,7 +45,7 @@ import {
 } from "@/lib";
 import { createEngineer } from "@/lib/api/engineers";
 import { getAllServiceCenters } from "@/lib/api/service-centers";
-import { createRepairStore } from "@/lib/api/repair-stores";
+import { createRepairStore } from "@/lib/api/repair-partners";
 import useSWR from "swr";
 
 // Role options for filter
