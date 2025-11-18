@@ -69,7 +69,7 @@ export const useDummyClaimDetail = (
 					"Abuja Service Center",
 					"Port Harcourt Center",
 					"Kano Service Hub",
-					"Ibadan Repair Center",
+					"Ibadan Repair Partner",
 				];
 
 				const engineers = [

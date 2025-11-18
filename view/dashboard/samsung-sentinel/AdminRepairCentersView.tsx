@@ -314,12 +314,93 @@ export default function AdminRepairCentersView() {
 	};
 
 	// Export function
-	const exportFn = () => {
-		// Export logic
-		showToast({
-			message: "Repair centers data exported successfully",
-			type: "success",
-		});
+	const exportFn = async () => {
+		try {
+			// Fetch all data using total as limit
+			const allData = await getAllRepairPartners({
+				page: 1,
+				limit: total || 1000, // Use total or fallback to 1000
+			});
+
+			const dataToExport = allData?.data || [];
+
+			if (dataToExport.length === 0) {
+				showToast({
+					message: "No data to export",
+					type: "warning",
+				});
+				return;
+			}
+
+			const ExcelJS = await import("exceljs");
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Repair Partners");
+
+			// Define columns
+			worksheet.columns = [
+				{ header: "ID", key: "id", width: 40 },
+				{ header: "Name", key: "name", width: 30 },
+				{ header: "Email", key: "email", width: 30 },
+				{ header: "Phone", key: "phone", width: 20 },
+				{ header: "Location", key: "location", width: 25 },
+				{ header: "Service Centers", key: "service_centers_count", width: 18 },
+				{ header: "Account Name", key: "account_name", width: 30 },
+				{ header: "Account Number", key: "account_number", width: 20 },
+				{ header: "Bank Name", key: "bank_name", width: 30 },
+				{ header: "Status", key: "status", width: 15 },
+				{ header: "Created At", key: "created_at", width: 20 },
+			];
+
+			// Style header row
+			worksheet.getRow(1).font = { bold: true };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+
+			// Add data
+			dataToExport.forEach((partner: RepairStore) => {
+				worksheet.addRow({
+					id: partner.id,
+					name: partner.name,
+					email: partner.email,
+					phone: partner.phone,
+					location: partner.location,
+					service_centers_count: partner.service_centers_count || 0,
+					account_name: partner.account_name || "N/A",
+					account_number: partner.account_number || "N/A",
+					bank_name: partner.bank_name || "N/A",
+					status: partner.status,
+					created_at: new Date(partner.created_at).toLocaleDateString(),
+				});
+			});
+
+			// Generate buffer and download
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `repair_partners_export_${
+				new Date().toISOString().split("T")[0]
+			}.xlsx`;
+			link.click();
+			window.URL.revokeObjectURL(url);
+
+			showToast({
+				message: `Successfully exported ${dataToExport.length} repair partners`,
+				type: "success",
+			});
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to export repair partners",
+				type: "error",
+			});
+		}
 	};
 
 	// Render cell content
@@ -446,9 +527,9 @@ export default function AdminRepairCentersView() {
 			{/* Header */}
 			<div className="flex justify-between items-center">
 				<div>
-					<h1 className="text-2xl font-bold">Repair Centers Management</h1>
+					<h1 className="text-2xl font-bold">Repair Partners Management</h1>
 					<p className="text-default-500">
-						Manage all repair centers and their service locations
+						Manage all repair partners and their service locations
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
@@ -478,7 +559,7 @@ export default function AdminRepairCentersView() {
 						startContent={<Plus size={16} />}
 						onPress={onCreateModalOpen}
 					>
-						Create Repair Center
+						Create Repair Partner
 					</Button>
 				</div>
 			</div>
@@ -507,7 +588,7 @@ export default function AdminRepairCentersView() {
 				/>
 			</div>
 
-			{/* Repair Centers Table */}
+			{/* Repair Partners Table */}
 			<GenericTable<RepairStore>
 				columns={columns}
 				data={repairPartners}
@@ -528,25 +609,26 @@ export default function AdminRepairCentersView() {
 				onPageChange={setPage}
 				exportFn={exportFn}
 				renderCell={renderCell}
+				statusFilterMode="single"
 				hasNoRecords={repairPartners.length === 0}
-				searchPlaceholder="Search repair centers by name, location, or email..."
+				searchPlaceholder="Search repair partners by name"
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}
 				selectionMode="multiple"
 				showRowsPerPageSelector={true}
 			/>
 
-			{/* Create Repair Center Modal */}
+			{/* Create Repair Partner Modal */}
 			<Modal isOpen={isCreateModalOpen} onClose={onCreateModalClose} size="2xl">
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Create New Repair Center</ModalHeader>
+							<ModalHeader>Create New Repair Partner</ModalHeader>
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<Input
-										label="Repair Center Name"
-										placeholder="e.g., Sapphire Repair Center Lagos"
+										label="Repair Partner Name"
+										placeholder="e.g., Sapphire Repair Partner Lagos"
 										value={formData.name}
 										onValueChange={(value) =>
 											setFormData({ ...formData, name: value })
@@ -607,7 +689,7 @@ export default function AdminRepairCentersView() {
 								</div>
 								<Textarea
 									label="Description"
-									placeholder="Enter repair center description..."
+									placeholder="Enter repair partner description..."
 									value={formData.description}
 									onValueChange={(value) =>
 										setFormData({ ...formData, description: value })
@@ -624,7 +706,7 @@ export default function AdminRepairCentersView() {
 									onPress={handleCreateRepairStore}
 									isLoading={isSubmitting}
 								>
-									Create Repair Center
+									Create Repair Partner
 								</Button>
 							</ModalFooter>
 						</>
@@ -632,17 +714,17 @@ export default function AdminRepairCentersView() {
 				</ModalContent>
 			</Modal>
 
-			{/* Edit Repair Center Modal */}
+			{/* Edit Repair Partner Modal */}
 			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="2xl">
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Edit Repair Center</ModalHeader>
+							<ModalHeader>Edit Repair Partner</ModalHeader>
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<Input
-										label="Repair Center Name"
-										placeholder="e.g., Sapphire Repair Center Lagos"
+										label="Repair Partner Name"
+										placeholder="e.g., Sapphire Repair Partner Lagos"
 										value={formData.name}
 										onValueChange={(value) =>
 											setFormData({ ...formData, name: value })
@@ -703,7 +785,7 @@ export default function AdminRepairCentersView() {
 								</div>
 								<Textarea
 									label="Description"
-									placeholder="Enter repair center description..."
+									placeholder="Enter repair partner description..."
 									value={formData.description}
 									onValueChange={(value) =>
 										setFormData({ ...formData, description: value })
@@ -720,7 +802,7 @@ export default function AdminRepairCentersView() {
 									onPress={handleEditRepairStore}
 									isLoading={isSubmitting}
 								>
-									Update Repair Center
+									Update Repair Partner
 								</Button>
 							</ModalFooter>
 						</>

@@ -5,6 +5,7 @@ import {
 	PaymentStatus,
 	PaginatedResponse,
 } from "../shared";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // CLAIMS APIs
@@ -203,7 +204,10 @@ export interface ClaimStatistics {
 export async function createClaim(
 	data: CreateClaimDto
 ): Promise<BaseApiResponse<Claim>> {
-	return apiCall("/claims", "POST", data);
+	return apiCall("/claims", "POST", {
+		...data,
+		customer_phone: normalizePhoneNumber(data.customer_phone),
+	});
 }
 
 /**

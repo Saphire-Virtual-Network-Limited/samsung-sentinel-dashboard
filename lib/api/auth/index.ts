@@ -124,7 +124,10 @@ export async function login(
  * @tag Authentication
  */
 export async function register(data: RegisterDto): Promise<BaseApiResponse> {
-	return apiCall("/auth/register", "POST", data);
+	return apiCall("/auth/register", "POST", {
+		...data,
+		phone: normalizePhoneNumber(data.phone),
+	});
 }
 
 /**

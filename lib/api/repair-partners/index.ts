@@ -1,5 +1,6 @@
 import { apiCall, BaseApiResponse, UserStatus } from "../shared";
 import type { ServiceCenter } from "../service-centers";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // REPAIR STORES APIs
@@ -76,7 +77,10 @@ export interface PaginatedRepairPartnersResponse {
 export async function createRepairStore(
 	data: CreateRepairStoreDto
 ): Promise<RepairStore> {
-	return apiCall("/repair-partners", "POST", data);
+	return apiCall("/repair-stores", "POST", {
+		...data,
+		phone: normalizePhoneNumber(data.phone),
+	});
 }
 
 /**
@@ -90,7 +94,7 @@ export async function getAllRepairPartners(
 	const queryParams = new URLSearchParams(
 		params as Record<string, string>
 	).toString();
-	return apiCall(`/repair-partners?${queryParams}`, "GET");
+	return apiCall(`/repair-stores?${queryParams}`, "GET");
 }
 
 /**
@@ -99,7 +103,7 @@ export async function getAllRepairPartners(
  * @tag Repair Partners
  */
 export async function getMyRepairStore(): Promise<RepairStore> {
-	return apiCall("/repair-partners/me", "GET");
+	return apiCall("/repair-stores/me", "GET");
 }
 
 /**
@@ -107,7 +111,7 @@ export async function getMyRepairStore(): Promise<RepairStore> {
  * @tag Repair Partners
  */
 export async function getRepairStoreById(id: string): Promise<RepairStore> {
-	return apiCall(`/repair-partners/${id}`, "GET");
+	return apiCall(`/repair-stores/${id}`, "GET");
 }
 
 /**
@@ -118,7 +122,10 @@ export async function updateRepairStore(
 	id: string,
 	data: UpdateRepairStoreDto
 ): Promise<RepairStore> {
-	return apiCall(`/repair-partners/${id}`, "PATCH", data);
+	return apiCall(`/repair-stores/${id}`, "PATCH", {
+		...data,
+		...(data.phone && { phone: normalizePhoneNumber(data.phone) }),
+	});
 }
 
 /**
@@ -128,7 +135,7 @@ export async function updateRepairStore(
 export async function activateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/repair-partners/${id}/activate`, "POST");
+	return apiCall(`/repair-stores/${id}/activate`, "POST");
 }
 
 /**
@@ -138,7 +145,7 @@ export async function activateRepairStore(
 export async function deactivateRepairStore(
 	id: string
 ): Promise<BaseApiResponse> {
-	return apiCall(`/repair-partners/${id}/deactivate`, "POST");
+	return apiCall(`/repair-stores/${id}/deactivate`, "POST");
 }
 
 /**
@@ -147,5 +154,5 @@ export async function deactivateRepairStore(
  * @tag Repair Partners
  */
 export async function resendRepairStoreInvitation(): Promise<BaseApiResponse> {
-	return apiCall("/repair-partners/resend-invitation", "POST");
+	return apiCall("/repair-stores/resend-invitation", "POST");
 }

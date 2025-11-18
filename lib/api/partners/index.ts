@@ -1,4 +1,5 @@
 import { apiCall, BaseApiResponse } from "../shared";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // SAMSUNG PARTNERS APIs
@@ -72,7 +73,10 @@ export interface PartnersStatistics {
 export async function createPartner(
 	data: CreatePartnerDto
 ): Promise<BaseApiResponse<Partner>> {
-	return apiCall("/partners", "POST", data);
+	return apiCall("/partners", "POST", {
+		...data,
+		phone: normalizePhoneNumber(data.phone),
+	});
 }
 
 /**

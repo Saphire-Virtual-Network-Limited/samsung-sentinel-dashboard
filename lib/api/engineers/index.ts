@@ -1,4 +1,5 @@
 import { apiCall, BaseApiResponse } from "../shared";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // ENGINEERS APIs
@@ -92,7 +93,10 @@ export interface GetEngineersParams {
 export async function createEngineer(
 	data: CreateEngineerDto
 ): Promise<BaseApiResponse<Engineer>> {
-	return apiCall("/engineers", "POST", data);
+	return apiCall("/engineers", "POST", {
+		...data,
+		phone: normalizePhoneNumber(data.phone),
+	});
 }
 
 /**
@@ -137,7 +141,10 @@ export async function updateEngineer(
 	id: string,
 	data: UpdateEngineerDto
 ): Promise<BaseApiResponse<Engineer>> {
-	return apiCall(`/engineers/${id}`, "PATCH", data);
+	return apiCall(`/engineers/${id}`, "PATCH", {
+		...data,
+		...(data.phone && { phone: normalizePhoneNumber(data.phone) }),
+	});
 }
 
 /**

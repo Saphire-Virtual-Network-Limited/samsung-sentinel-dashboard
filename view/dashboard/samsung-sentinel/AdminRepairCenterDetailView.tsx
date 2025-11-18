@@ -176,7 +176,7 @@ export default function AdminRepairCenterDetailView() {
 		}).format(amount);
 	};
 
-	// Handle edit repair center
+	// Handle edit repair partner
 	const handleEditRepairCenter = async () => {
 		const { name, email, phone, location } = centerFormData;
 
@@ -196,7 +196,7 @@ export default function AdminRepairCenterDetailView() {
 			mutate();
 		} catch (error: any) {
 			showToast({
-				message: error?.message || "Failed to update repair center",
+				message: error?.message || "Failed to update repair partner",
 				type: "error",
 			});
 		} finally {
@@ -247,7 +247,7 @@ export default function AdminRepairCenterDetailView() {
 		}
 	};
 
-	// Handle toggle repair center status
+	// Handle toggle repair partner status
 	const handleToggleRepairCenterStatus = async () => {
 		if (!repairStore) return;
 
@@ -269,7 +269,7 @@ export default function AdminRepairCenterDetailView() {
 			mutate();
 		} catch (error: any) {
 			showToast({
-				message: error?.message || "Failed to update repair center status",
+				message: error?.message || "Failed to update repair partner status",
 				type: "error",
 			});
 		} finally {
@@ -605,7 +605,7 @@ export default function AdminRepairCenterDetailView() {
 							<div>
 								<h3 className="text-lg font-semibold">Service Centers</h3>
 								<p className="text-default-500">
-									Manage service centers under this repair center
+									Manage service centers under this repair partner
 								</p>
 							</div>
 							<Button
@@ -650,12 +650,12 @@ export default function AdminRepairCenterDetailView() {
 				</Tab>
 			</Tabs>
 
-			{/* Edit Repair Center Modal */}
+			{/* Edit Repair Partner Modal */}
 			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="2xl">
 				<ModalContent>
 					{() => (
 						<>
-							<ModalHeader>Edit Repair Center</ModalHeader>
+							<ModalHeader>Edit Repair Partner</ModalHeader>
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<Input
@@ -739,7 +739,7 @@ export default function AdminRepairCenterDetailView() {
 									onPress={handleEditRepairCenter}
 									isLoading={isSubmitting}
 								>
-									Update Repair Center
+									Update Repair Partner
 								</Button>
 							</ModalFooter>
 						</>

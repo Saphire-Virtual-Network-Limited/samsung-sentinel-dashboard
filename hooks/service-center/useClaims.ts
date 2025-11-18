@@ -110,7 +110,7 @@ const generateDummyData = (status?: string): ServiceCenterClaim[] => {
 				"Battery drains very quickly, phone shuts down unexpectedly.",
 			repairCost: 35000,
 			commission: 3500,
-			serviceCenterName: "Mobile Repair Center",
+			serviceCenterName: "Mobile Repair Partner",
 			status: "pending",
 			createdAt: "2024-09-28T14:15:00Z",
 			paymentStatus: "unpaid",

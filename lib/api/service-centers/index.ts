@@ -1,4 +1,5 @@
 import { apiCall, BaseApiResponse, UserStatus } from "../shared";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // SERVICE CENTERS APIs
@@ -104,7 +105,10 @@ export interface PaginatedServiceCentersResponse {
 export async function createServiceCenter(
 	data: CreateServiceCenterDto
 ): Promise<ServiceCenter> {
-	return apiCall("/service-centers", "POST", data);
+	return apiCall("/service-centers", "POST", {
+		...data,
+		phone: normalizePhoneNumber(data.phone),
+	});
 }
 
 /**
@@ -136,7 +140,10 @@ export async function updateServiceCenter(
 	id: string,
 	data: UpdateServiceCenterDto
 ): Promise<ServiceCenter> {
-	return apiCall(`/service-centers/${id}`, "PATCH", data);
+	return apiCall(`/service-centers/${id}`, "PATCH", {
+		...data,
+		...(data.phone && { phone: normalizePhoneNumber(data.phone) }),
+	});
 }
 
 /**

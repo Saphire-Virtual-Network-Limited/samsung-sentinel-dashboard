@@ -52,6 +52,7 @@ import {
 } from "@/lib";
 import useSWR from "swr";
 import { useDebounce } from "@/hooks/useDebounce";
+import ExcelJS from "exceljs";
 
 interface ServiceCenter {
 	id: string;
@@ -320,8 +321,85 @@ export default function SamsungSentinelServiceCentersView() {
 
 	// Export function
 	const exportFn = async (data: ServiceCenter[]) => {
-		// Implementation for export functionality
-		console.log("Exporting service centers:", data);
+		// Fetch all data for export
+		const total = serviceCentersData?.total || 0;
+		const allDataResponse = await getAllServiceCenters({
+			limit: total,
+		});
+
+		const allData = allDataResponse.data || [];
+
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Service Centers");
+
+		// Define columns
+		worksheet.columns = [
+			{ header: "ID", key: "id", width: 20 },
+			{ header: "Name", key: "name", width: 30 },
+			{ header: "Email", key: "email", width: 30 },
+			{ header: "Phone", key: "phone", width: 20 },
+			{ header: "Address", key: "address", width: 40 },
+			{ header: "City", key: "city", width: 20 },
+			{ header: "State", key: "state", width: 20 },
+			{ header: "Engineers", key: "engineers_count", width: 15 },
+			{ header: "Repair Store", key: "repair_store", width: 30 },
+			{ header: "Account Name", key: "account_name", width: 25 },
+			{ header: "Account Number", key: "account_number", width: 20 },
+			{ header: "Bank Name", key: "bank_name", width: 25 },
+			{ header: "Status", key: "status", width: 15 },
+			{ header: "Created Date", key: "created_at", width: 20 },
+		];
+
+		// Style header row
+		worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+		worksheet.getRow(1).fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "FF4472C4" },
+		};
+		worksheet.getRow(1).alignment = {
+			vertical: "middle",
+			horizontal: "center",
+		};
+
+		// Add data rows
+		allData.forEach((center: any) => {
+			worksheet.addRow({
+				id: center.id,
+				name: center.name,
+				email: center.email,
+				phone: center.phone,
+				address: center.address,
+				city: center.city,
+				state: center.state,
+				engineers_count: center.engineers_count || 0,
+				repair_store: center.repair_store?.name || "N/A",
+				account_name: center.account_name || "N/A",
+				account_number: center.account_number || "N/A",
+				bank_name: center.bank_name || "N/A",
+				status: center.status,
+				created_at: new Date(center.created_at).toLocaleDateString(),
+			});
+		});
+
+		// Generate and download file
+		const buffer = await workbook.xlsx.writeBuffer();
+		const blob = new Blob([buffer], {
+			type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `service-centers-${
+			new Date().toISOString().split("T")[0]
+		}.xlsx`;
+		link.click();
+		URL.revokeObjectURL(url);
+
+		showToast({
+			message: `Exported ${allData.length} service centers to Excel`,
+			type: "success",
+		});
 	};
 
 	// Render cell content
@@ -507,6 +585,7 @@ export default function SamsungSentinelServiceCentersView() {
 				statusFilter={statusFilter}
 				onStatusChange={setStatusFilter}
 				statusColorMap={statusColorMap}
+				statusFilterMode="single"
 				showStatus={true}
 				sortDescriptor={{ column: "created_at", direction: "descending" }}
 				onSortChange={() => {}}

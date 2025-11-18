@@ -17,6 +17,7 @@ import { StatCard } from "@/components/atoms/StatCard";
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
+import ExcelJS from "exceljs";
 import {
 	Smartphone,
 	Wrench,
@@ -65,6 +66,9 @@ export default function SamsungSentinelStatisticsView() {
 	const [customStartDate, setCustomStartDate] =
 		useState<string>(defaultStartDate);
 	const [customEndDate, setCustomEndDate] = useState<string>(defaultEndDate);
+	const [deviceSearchFilter, setDeviceSearchFilter] = useState("");
+	const [serviceCenterSearchFilter, setServiceCenterSearchFilter] =
+		useState("");
 
 	// Build filter params based on selection
 	const filterParams = useMemo(() => {
@@ -86,6 +90,31 @@ export default function SamsungSentinelStatisticsView() {
 		useDeviceModelStats(filterParams);
 	const { serviceCenterStats, isLoading: isLoadingServiceCenters } =
 		useServiceCenterStatsForAdmin(filterParams);
+
+	// Filtered data based on search
+	const filteredDeviceStats = useMemo(() => {
+		const data = deviceStats?.device_statistics || [];
+		if (!deviceSearchFilter) return data;
+		return data.filter((item: any) =>
+			item.product_name
+				?.toLowerCase()
+				.includes(deviceSearchFilter.toLowerCase())
+		);
+	}, [deviceStats, deviceSearchFilter]);
+
+	const filteredServiceCenterStats = useMemo(() => {
+		const data = serviceCenterStats?.service_center_statistics || [];
+		if (!serviceCenterSearchFilter) return data;
+		return data.filter(
+			(item: any) =>
+				item.service_center_name
+					?.toLowerCase()
+					.includes(serviceCenterSearchFilter.toLowerCase()) ||
+				item.location
+					?.toLowerCase()
+					.includes(serviceCenterSearchFilter.toLowerCase())
+		);
+	}, [serviceCenterStats, serviceCenterSearchFilter]);
 
 	// Handle filter selection change
 	const handleFilterChange = (selected: DashboardFilter) => {
@@ -438,24 +467,78 @@ export default function SamsungSentinelStatisticsView() {
 				</CardHeader>
 				<CardBody>
 					<GenericTable
-						data={deviceStats?.device_statistics || []}
+						data={filteredDeviceStats}
 						columns={deviceColumns}
 						renderCell={renderDeviceCell}
-						allCount={(deviceStats?.device_statistics || []).length}
-						exportData={deviceStats?.device_statistics || []}
+						allCount={filteredDeviceStats.length}
+						exportData={filteredDeviceStats}
 						isLoading={isLoadingDeviceStats}
-						filterValue=""
-						onFilterChange={() => {}}
+						filterValue={deviceSearchFilter}
+						onFilterChange={setDeviceSearchFilter}
 						showStatus={false}
 						sortDescriptor={{ column: "product_name", direction: "ascending" }}
 						onSortChange={() => {}}
 						page={1}
 						pages={1}
 						onPageChange={() => {}}
-						hasNoRecords={(deviceStats?.device_statistics || []).length === 0}
+						hasNoRecords={filteredDeviceStats.length === 0}
 						searchPlaceholder="Search by device model..."
-						exportFn={(data) => {
-							console.log("Exporting device stats:", data);
+						exportFn={async (data) => {
+							const workbook = new ExcelJS.Workbook();
+							const worksheet = workbook.addWorksheet(
+								"Device Model Statistics"
+							);
+
+							worksheet.columns = [
+								{ header: "Product Name", key: "product_name", width: 30 },
+								{ header: "Total Claims", key: "total_claims", width: 15 },
+								{ header: "Total Cost", key: "total_cost", width: 20 },
+								{
+									header: "Total Unpaid Cost",
+									key: "total_unpaid_cost",
+									width: 20,
+								},
+								{ header: "Claim Rate", key: "claim_rate", width: 15 },
+							];
+
+							worksheet.getRow(1).font = {
+								bold: true,
+								color: { argb: "FFFFFFFF" },
+							};
+							worksheet.getRow(1).fill = {
+								type: "pattern",
+								pattern: "solid",
+								fgColor: { argb: "FF4472C4" },
+							};
+							worksheet.getRow(1).alignment = {
+								vertical: "middle",
+								horizontal: "center",
+							};
+
+							filteredDeviceStats.forEach((item: any) => {
+								const row = worksheet.addRow({
+									product_name: item.product_name,
+									total_claims: item.total_claims || 0,
+									total_cost: item.total_cost || 0,
+									total_unpaid_cost: item.total_unpaid_cost || 0,
+									claim_rate: item.claim_rate || "0%",
+								});
+								row.getCell("total_cost").numFmt = "₦#,##0.00";
+								row.getCell("total_unpaid_cost").numFmt = "₦#,##0.00";
+							});
+
+							const buffer = await workbook.xlsx.writeBuffer();
+							const blob = new Blob([buffer], {
+								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+							});
+							const url = URL.createObjectURL(blob);
+							const link = document.createElement("a");
+							link.href = url;
+							link.download = `device-model-statistics-${
+								new Date().toISOString().split("T")[0]
+							}.xlsx`;
+							link.click();
+							URL.revokeObjectURL(url);
 						}}
 					/>
 				</CardBody>
@@ -468,16 +551,14 @@ export default function SamsungSentinelStatisticsView() {
 				</CardHeader>
 				<CardBody>
 					<GenericTable
-						data={serviceCenterStats?.service_center_statistics || []}
+						data={filteredServiceCenterStats}
 						columns={serviceCenterColumns}
 						renderCell={renderServiceCenterCell}
-						allCount={
-							(serviceCenterStats?.service_center_statistics || []).length
-						}
-						exportData={serviceCenterStats?.service_center_statistics || []}
+						allCount={filteredServiceCenterStats.length}
+						exportData={filteredServiceCenterStats}
 						isLoading={isLoadingServiceCenters}
-						filterValue=""
-						onFilterChange={() => {}}
+						filterValue={serviceCenterSearchFilter}
+						onFilterChange={setServiceCenterSearchFilter}
 						showStatus={false}
 						sortDescriptor={{
 							column: "service_center_name",
@@ -487,12 +568,86 @@ export default function SamsungSentinelStatisticsView() {
 						page={1}
 						pages={1}
 						onPageChange={() => {}}
-						hasNoRecords={
-							(serviceCenterStats?.service_center_statistics || []).length === 0
-						}
+						hasNoRecords={filteredServiceCenterStats.length === 0}
 						searchPlaceholder="Search by service center or location..."
-						exportFn={(data) => {
-							console.log("Exporting service center stats:", data);
+						exportFn={async (data) => {
+							const workbook = new ExcelJS.Workbook();
+							const worksheet = workbook.addWorksheet(
+								"Service Center Performance"
+							);
+
+							worksheet.columns = [
+								{
+									header: "Service Center",
+									key: "service_center_name",
+									width: 30,
+								},
+								{ header: "Location", key: "location", width: 25 },
+								{
+									header: "Approved Repairs",
+									key: "approved_repairs",
+									width: 18,
+								},
+								{
+									header: "Completed Repairs",
+									key: "completed_repairs",
+									width: 18,
+								},
+								{
+									header: "Rejected Repairs",
+									key: "rejected_repairs",
+									width: 18,
+								},
+								{
+									header: "Pending Repairs",
+									key: "pending_repairs",
+									width: 18,
+								},
+								{
+									header: "Authorized Repairs",
+									key: "authorized_repairs",
+									width: 18,
+								},
+							];
+
+							worksheet.getRow(1).font = {
+								bold: true,
+								color: { argb: "FFFFFFFF" },
+							};
+							worksheet.getRow(1).fill = {
+								type: "pattern",
+								pattern: "solid",
+								fgColor: { argb: "FF4472C4" },
+							};
+							worksheet.getRow(1).alignment = {
+								vertical: "middle",
+								horizontal: "center",
+							};
+
+							filteredServiceCenterStats.forEach((item: any) => {
+								worksheet.addRow({
+									service_center_name: item.service_center_name,
+									location: item.location,
+									approved_repairs: item.approved_repairs || 0,
+									completed_repairs: item.completed_repairs || 0,
+									rejected_repairs: item.rejected_repairs || 0,
+									pending_repairs: item.pending_repairs || 0,
+									authorized_repairs: item.authorized_repairs || 0,
+								});
+							});
+
+							const buffer = await workbook.xlsx.writeBuffer();
+							const blob = new Blob([buffer], {
+								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+							});
+							const url = URL.createObjectURL(blob);
+							const link = document.createElement("a");
+							link.href = url;
+							link.download = `service-center-performance-${
+								new Date().toISOString().split("T")[0]
+							}.xlsx`;
+							link.click();
+							URL.revokeObjectURL(url);
 						}}
 					/>
 				</CardBody>

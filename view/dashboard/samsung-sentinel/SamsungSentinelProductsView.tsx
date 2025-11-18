@@ -81,49 +81,92 @@ export default function SamsungSentinelProductsView() {
 	const [repairCost, setRepairCost] = useState("");
 	const [isCreating, setIsCreating] = useState(false);
 
-	// Filter and selection states (pagination/sorting handled by GenericTable)
+	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(25);
+	const [dataLimit, setDataLimit] = useState(100);
 
-	// Fetch products with SWR
+	// Fetch all products once
 	const {
-		data: productsResponse,
+		data: allProductsResponse,
 		error,
 		isLoading,
 		mutate,
 	} = useSWR(
-		`/products?page=${page}&limit=${limit}`,
-		() => getAllProducts({ page, limit }),
-		{ revalidateOnFocus: false }
+		["/products/all", dataLimit],
+		() =>
+			getAllProducts({
+				page: 1,
+				limit: dataLimit,
+			}),
+		{
+			revalidateOnFocus: false,
+			onSuccess: (data) => {
+				// If actual total is more than current limit, update limit and refetch
+				if (data?.total && data.total > dataLimit) {
+					setDataLimit(data.total);
+				}
+			},
+		}
 	);
 
-	const products = useMemo(
-		() => productsResponse?.data || [],
-		[productsResponse?.data]
+	// All products from API
+	const allProducts = useMemo(
+		() => allProductsResponse?.data || [],
+		[allProductsResponse?.data]
 	);
-	const totalProducts = productsResponse?.total || 0;
-	const pages = productsResponse?.totalPages || 1;
 
-	// Statistics
+	// Client-side filtering
+	const filteredProducts = useMemo(() => {
+		let filtered = [...allProducts];
+
+		// Apply search filter
+		if (filterValue) {
+			const searchLower = filterValue.toLowerCase();
+			filtered = filtered.filter((p) =>
+				p.name.toLowerCase().includes(searchLower)
+			);
+		}
+
+		// Apply status filter
+		if (statusFilter.size > 0) {
+			const selectedStatus = Array.from(statusFilter)[0];
+			filtered = filtered.filter((p) => p.status === selectedStatus);
+		}
+
+		return filtered;
+	}, [allProducts, filterValue, statusFilter]);
+
+	// Paginated products for table display
+	const products = useMemo(() => {
+		const start = (page - 1) * limit;
+		const end = start + limit;
+		return filteredProducts.slice(start, end);
+	}, [filteredProducts, page, limit]);
+
+	const totalProducts = filteredProducts.length;
+	const pages = Math.ceil(totalProducts / limit) || 1;
+
+	// Statistics (calculated from all products, not filtered)
 	const stats = useMemo(
 		() => ({
-			totalProducts: totalProducts,
-			activeProducts: products.filter((p) => p.status === "ACTIVE").length,
+			totalProducts: allProductsResponse?.total || 0,
+			activeProducts: allProducts.filter((p) => p.status === "ACTIVE").length,
 			averageSapphireCost:
-				products.length > 0
-					? products.reduce((sum, p) => sum + Number(p.sapphire_cost), 0) /
-					  products.length
+				allProducts.length > 0
+					? allProducts.reduce((sum, p) => sum + Number(p.sapphire_cost), 0) /
+					  allProducts.length
 					: 0,
 			averageRepairCost:
-				products.length > 0
-					? products.reduce((sum, p) => sum + Number(p.repair_cost), 0) /
-					  products.length
+				allProducts.length > 0
+					? allProducts.reduce((sum, p) => sum + Number(p.repair_cost), 0) /
+					  allProducts.length
 					: 0,
 		}),
-		[products, totalProducts]
+		[allProducts, allProductsResponse?.total]
 	);
 
 	// Sort handling managed by GenericTable
@@ -209,13 +252,28 @@ export default function SamsungSentinelProductsView() {
 	const handleBulkEnable = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} products enabled successfully`,
-				type: "success",
-			});
+			const productIds = Array.from(selectedKeys);
+			const results = await Promise.allSettled(
+				productIds.map((id) => activateProduct(id as string))
+			);
+
+			const successful = results.filter((r) => r.status === "fulfilled").length;
+			const failed = results.filter((r) => r.status === "rejected").length;
+
+			if (failed > 0) {
+				showToast({
+					message: `${successful} products enabled, ${failed} failed`,
+					type: "warning",
+				});
+			} else {
+				showToast({
+					message: `${successful} products enabled successfully`,
+					type: "success",
+				});
+			}
+
 			setSelectedKeys(new Set());
+			mutate();
 		} catch (error) {
 			showToast({ message: "Failed to enable products", type: "error" });
 		}
@@ -224,13 +282,28 @@ export default function SamsungSentinelProductsView() {
 	const handleBulkDisable = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} products disabled successfully`,
-				type: "success",
-			});
+			const productIds = Array.from(selectedKeys);
+			const results = await Promise.allSettled(
+				productIds.map((id) => deactivateProduct(id as string))
+			);
+
+			const successful = results.filter((r) => r.status === "fulfilled").length;
+			const failed = results.filter((r) => r.status === "rejected").length;
+
+			if (failed > 0) {
+				showToast({
+					message: `${successful} products disabled, ${failed} failed`,
+					type: "warning",
+				});
+			} else {
+				showToast({
+					message: `${successful} products disabled successfully`,
+					type: "success",
+				});
+			}
+
 			setSelectedKeys(new Set());
+			mutate();
 		} catch (error) {
 			showToast({ message: "Failed to disable products", type: "error" });
 		}
@@ -251,8 +324,72 @@ export default function SamsungSentinelProductsView() {
 
 	// Export function
 	const exportFn = async (data: Product[]) => {
-		// Implementation for export functionality
-		console.log("Exporting products:", data);
+		try {
+			const ExcelJS = await import("exceljs");
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Products");
+
+			// Define columns
+			worksheet.columns = [
+				{ header: "Product ID", key: "id", width: 40 },
+				{ header: "Product Name", key: "name", width: 30 },
+				{ header: "Sapphire Cost (₦)", key: "sapphire_cost", width: 20 },
+				{ header: "Repair Cost (₦)", key: "repair_cost", width: 20 },
+				{ header: "Status", key: "status", width: 15 },
+				{ header: "Created At", key: "created_at", width: 20 },
+				{ header: "Updated At", key: "updated_at", width: 20 },
+			];
+
+			// Style header row
+			worksheet.getRow(1).font = { bold: true };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+
+			// Add data
+			data.forEach((product) => {
+				worksheet.addRow({
+					id: product.id,
+					name: product.name,
+					sapphire_cost: Number(product.sapphire_cost),
+					repair_cost: Number(product.repair_cost),
+					status: product.status,
+					created_at: new Date(product.created_at).toLocaleDateString(),
+					updated_at: new Date(product.updated_at).toLocaleDateString(),
+				});
+			});
+
+			// Format currency columns
+			worksheet.getColumn("sapphire_cost").numFmt = "#,##0.00";
+			worksheet.getColumn("repair_cost").numFmt = "#,##0.00";
+
+			// Generate buffer and download
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `products_export_${
+				new Date().toISOString().split("T")[0]
+			}.xlsx`;
+			link.click();
+			window.URL.revokeObjectURL(url);
+
+			showToast({
+				message: `Successfully exported ${data.length} products`,
+				type: "success",
+			});
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to export products",
+				type: "error",
+			});
+		}
 	};
 
 	// Render cell content
@@ -435,7 +572,7 @@ export default function SamsungSentinelProductsView() {
 					columns={columns}
 					data={products}
 					allCount={totalProducts}
-					exportData={products}
+					exportData={filteredProducts}
 					isLoading={isLoading}
 					filterValue={filterValue}
 					onFilterChange={setFilterValue}
@@ -444,6 +581,7 @@ export default function SamsungSentinelProductsView() {
 					onStatusChange={setStatusFilter}
 					statusColorMap={statusColorMap}
 					showStatus={true}
+					statusFilterMode="single"
 					sortDescriptor={{ column: "created_at", direction: "descending" }}
 					onSortChange={() => {}}
 					page={page}

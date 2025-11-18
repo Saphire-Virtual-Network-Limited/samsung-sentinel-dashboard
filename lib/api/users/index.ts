@@ -1,4 +1,5 @@
 import { apiCall, BaseApiResponse, UserRole, UserStatus } from "../shared";
+import { normalizePhoneNumber } from "@/utils/helpers";
 
 // ============================================================================
 // USERS APIs
@@ -71,7 +72,10 @@ export async function getMyProfile(): Promise<User> {
  * @tag Users
  */
 export async function updateMyProfile(data: UpdateUserDto): Promise<User> {
-	return apiCall("/users/me", "PATCH", data);
+	return apiCall("/users/me", "PATCH", {
+		...data,
+		...(data.phone && { phone: normalizePhoneNumber(data.phone) }),
+	});
 }
 
 /**
@@ -102,7 +106,10 @@ export async function updateUser(
 	id: string,
 	data: UpdateUserDto
 ): Promise<BaseApiResponse<User>> {
-	return apiCall(`/users/${id}`, "PATCH", data);
+	return apiCall(`/users/${id}`, "PATCH", {
+		...data,
+		...(data.phone && { phone: normalizePhoneNumber(data.phone) }),
+	});
 }
 
 /**
