@@ -587,10 +587,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "faultType":
 				return (
 					<Chip variant="bordered" size="sm" className={cellClassName}>
-						{item.faultType?.replace("-", " ").toUpperCase()}
+						{item.faultType && item.faultType !== "Screen Damage"
+							? item.faultType.replace("-", " ").toUpperCase()
+							: "Screen Damage"}
 					</Chip>
 				);
-
 			case "repairCost":
 				return (
 					<span className="font-medium">

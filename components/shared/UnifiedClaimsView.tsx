@@ -65,6 +65,40 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
+	// Sync state with URL params when they change (e.g., browser back/forward)
+	useEffect(() => {
+		const statusParam = searchParams.get("status");
+		const paymentParam = searchParams.get("payment");
+		const searchParam = searchParams.get("search");
+		const startDateParam = searchParams.get("startDate");
+		const endDateParam = searchParams.get("endDate");
+
+		if (statusParam && statusParam !== activeTab) {
+			setActiveTab(statusParam);
+		} else if (!statusParam && activeTab !== "all") {
+			setActiveTab("all");
+		}
+
+		if (paymentParam && paymentParam !== paymentFilter) {
+			setPaymentFilter(paymentParam);
+		} else if (!paymentParam && paymentFilter !== "all") {
+			setPaymentFilter("all");
+		}
+
+		if (searchParam !== searchQuery) {
+			setSearchQuery(searchParam || "");
+		}
+
+		if (startDateParam !== startDate) {
+			setStartDate(startDateParam || undefined);
+		}
+
+		if (endDateParam !== endDate) {
+			setEndDate(endDateParam || undefined);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams]);
+
 	// Payment results modal state
 	const {
 		isOpen: isPaymentResultsOpen,
