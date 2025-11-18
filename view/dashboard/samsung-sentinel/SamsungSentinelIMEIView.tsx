@@ -28,13 +28,7 @@ import GenericTable, {
 } from "@/components/reususables/custom-ui/tableUi";
 import DateFilter from "@/components/reususables/custom-ui/dateFilter";
 import { TableSkeleton } from "@/components/reususables/custom-ui";
-import {
-	getImeiUploads,
-	uploadImeiCsv,
-	searchImei as searchImeiApi,
-	validateImei,
-} from "@/lib/api/imeis";
-import { getAllClaims } from "@/lib/api/claims";
+import { getImeiUploads, uploadImeiCsv, validateImei } from "@/lib/api/imeis";
 import { getAllProducts } from "@/lib/api/products";
 import { showToast, capitalize } from "@/lib";
 import {
@@ -45,11 +39,11 @@ import {
 	EllipsisVertical,
 	FileText,
 	AlertTriangle,
-	Search,
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import SearchImeiButton from "@/components/modals/SearchImeiModal";
 
 // Upload columns
 const uploadColumns: ColumnDef[] = [
@@ -116,16 +110,6 @@ export default function SamsungSentinelIMEIView() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [selectedProductId, setSelectedProductId] = useState<string>("");
 	const [isUploading, setIsUploading] = useState(false);
-
-	// Search IMEI modal state
-	const {
-		isOpen: isSearchModalOpen,
-		onOpen: onSearchModalOpen,
-		onClose: onSearchModalClose,
-	} = useDisclosure();
-	const [searchImei, setSearchImei] = useState("");
-	const [isSearching, setIsSearching] = useState(false);
-	const [searchResult, setSearchResult] = useState<any>(null);
 
 	// --- date filter state managed by GenericTable ---
 	const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -355,70 +339,6 @@ export default function SamsungSentinelIMEIView() {
 		}
 	};
 
-	// Handle IMEI search
-	const handleSearchImei = async () => {
-		if (!searchImei.trim()) {
-			showToast({ message: "Please enter an IMEI number", type: "error" });
-			return;
-		}
-
-		setIsSearching(true);
-		try {
-			// Search for IMEI - API returns Imei object directly
-			const imeiData = await searchImeiApi(searchImei);
-
-			// Check if IMEI is used
-			if (!imeiData.is_used) {
-				// Unused IMEI
-				setSearchResult({
-					type: "unused",
-					imei: imeiData.imei,
-					status: "Available",
-					claimsCount: 0,
-					supplier: imeiData.supplier,
-					expiryDate: imeiData.expiry_date,
-					product: imeiData.product,
-				});
-			} else {
-				// Used IMEI - fetch claims
-				const claimsResponse = await getAllClaims({
-					imei: searchImei,
-					page: 1,
-					limit: 100,
-				});
-
-				setSearchResult({
-					type: "used",
-					imei: imeiData.imei,
-					claims: claimsResponse.data || [],
-					supplier: imeiData.supplier,
-					expiryDate: imeiData.expiry_date,
-					usedAt: imeiData.used_at,
-					product: imeiData.product,
-				});
-			}
-		} catch (error: any) {
-			if (error?.response?.status === 404) {
-				showToast({ message: "IMEI not found in database", type: "error" });
-				setSearchResult({
-					type: "not-found",
-					imei: searchImei,
-				});
-			} else {
-				showToast({ message: "Failed to search IMEI", type: "error" });
-			}
-		} finally {
-			setIsSearching(false);
-		}
-	};
-
-	// Reset search when modal closes
-	const handleSearchModalClose = () => {
-		setSearchResult(null);
-		setSearchImei("");
-		onSearchModalClose();
-	};
-
 	// Render cell content for uploads (following customerView pattern)
 	const renderUploadCell = (row: UploadRecord, key: string) => {
 		if (key === "actions") {
@@ -512,13 +432,7 @@ export default function SamsungSentinelIMEIView() {
 			<div className="flex items-center justify-between">
 				<div></div>
 				<div className="flex items-center gap-3">
-					<Button
-						variant="flat"
-						startContent={<Search size={16} />}
-						onPress={onSearchModalOpen}
-					>
-						Search IMEI
-					</Button>
+					<SearchImeiButton buttonVariant="flat" />
 					<Button
 						variant="flat"
 						startContent={<Download size={16} />}
@@ -642,250 +556,6 @@ export default function SamsungSentinelIMEIView() {
 									isDisabled={!selectedFile || !selectedProductId}
 								>
 									{isUploading ? "Uploading..." : "Upload File"}
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-
-			{/* Search IMEI Modal */}
-			<Modal
-				isOpen={isSearchModalOpen}
-				onClose={handleSearchModalClose}
-				size="3xl"
-			>
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Search IMEI</ModalHeader>
-							<ModalBody>
-								<div className="space-y-4">
-									<div className="flex gap-2">
-										<Input
-											label="IMEI Number"
-											placeholder="Enter IMEI to search"
-											value={searchImei}
-											onValueChange={setSearchImei}
-											className="flex-1"
-											maxLength={15}
-										/>
-										<Button
-											color="primary"
-											onPress={handleSearchImei}
-											isLoading={isSearching}
-											isDisabled={!searchImei.trim()}
-										>
-											Search
-										</Button>
-									</div>
-
-									{/* Search Results */}
-									{searchResult && (
-										<div className="mt-6">
-											{searchResult.type === "not-found" ? (
-												/* IMEI Not Found */
-												<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-													<h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
-														<AlertTriangle size={18} />
-														IMEI Not Found
-													</h3>
-													<p className="text-sm text-red-800">
-														The IMEI{" "}
-														<span className="font-mono font-bold">
-															{searchResult.imei}
-														</span>{" "}
-														was not found in the database.
-													</p>
-												</div>
-											) : searchResult.type === "unused" ? (
-												/* Unused IMEI Result */
-												<div className="space-y-4">
-													<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-														<h3 className="font-semibold text-blue-900 mb-2">
-															IMEI: {searchResult.imei}
-														</h3>
-														<div className="grid grid-cols-2 gap-4 text-sm">
-															<div>
-																<span className="text-gray-600">Status:</span>{" "}
-																<Chip color="success" size="sm">
-																	{searchResult.status}
-																</Chip>
-															</div>
-															<div>
-																<span className="text-gray-600">Claims:</span>{" "}
-																<span className="font-medium">
-																	{searchResult.claimsCount}
-																</span>
-															</div>
-															{searchResult.product && (
-																<div>
-																	<span className="text-gray-600">
-																		Product:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{searchResult.product.name}
-																	</span>
-																</div>
-															)}
-															{searchResult.supplier && (
-																<div>
-																	<span className="text-gray-600">
-																		Supplier:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{searchResult.supplier}
-																	</span>
-																</div>
-															)}
-															{searchResult.expiryDate && (
-																<div>
-																	<span className="text-gray-600">
-																		Expiry Date:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{new Date(
-																			searchResult.expiryDate
-																		).toLocaleDateString()}
-																	</span>
-																</div>
-															)}
-														</div>
-													</div>
-												</div>
-											) : (
-												/* Used IMEI Result - Show Claims Table */
-												<div className="space-y-4">
-													<div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-														<h3 className="font-semibold text-amber-900 mb-2">
-															IMEI: {searchResult.imei} (In Use)
-														</h3>
-														<div className="grid grid-cols-2 gap-4 text-sm mb-2">
-															{searchResult.product && (
-																<div>
-																	<span className="text-gray-600">
-																		Product:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{searchResult.product.name}
-																	</span>
-																</div>
-															)}
-															{searchResult.supplier && (
-																<div>
-																	<span className="text-gray-600">
-																		Supplier:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{searchResult.supplier}
-																	</span>
-																</div>
-															)}
-															{searchResult.usedAt && (
-																<div>
-																	<span className="text-gray-600">
-																		Used On:
-																	</span>{" "}
-																	<span className="font-medium">
-																		{new Date(
-																			searchResult.usedAt
-																		).toLocaleDateString()}
-																	</span>
-																</div>
-															)}
-														</div>
-														<p className="text-sm text-amber-800">
-															This IMEI has {searchResult.claims.length}{" "}
-															associated claim(s):
-														</p>
-													</div>
-
-													{/* Claims Table */}
-													<div className="overflow-x-auto">
-														<table className="w-full border border-gray-200 rounded-lg">
-															<thead className="bg-gray-50">
-																<tr>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Customer Name
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Issue Description
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Status
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Date Created
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Actions
-																	</th>
-																</tr>
-															</thead>
-															<tbody className="bg-white divide-y divide-gray-200">
-																{searchResult.claims.map((claim: any) => (
-																	<tr
-																		key={claim.id}
-																		className="hover:bg-gray-50"
-																	>
-																		<td className="px-4 py-3 text-sm font-medium text-gray-900">
-																			{claim.customer_name}
-																		</td>
-																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{claim.issue_description}
-																		</td>
-																		<td className="px-4 py-3 text-sm">
-																			<Chip
-																				color={
-																					claim.status === "approved"
-																						? "success"
-																						: claim.status === "pending"
-																						? "warning"
-																						: claim.status === "completed"
-																						? "primary"
-																						: "danger"
-																				}
-																				size="sm"
-																				className="capitalize"
-																			>
-																				{claim.status}
-																			</Chip>
-																		</td>
-																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{new Date(
-																				claim.createdAt
-																			).toLocaleDateString()}
-																		</td>
-																		<td className="px-4 py-3 text-sm">
-																			<Button
-																				size="sm"
-																				color="primary"
-																				variant="flat"
-																				startContent={<Eye size={14} />}
-																				onPress={() => {
-																					router.push(
-																						`/access/${role}/samsung-sentinel/claims/${claim.id}`
-																					);
-																					handleSearchModalClose();
-																				}}
-																			>
-																				View Details
-																			</Button>
-																		</td>
-																	</tr>
-																))}
-															</tbody>
-														</table>
-													</div>
-												</div>
-											)}
-										</div>
-									)}
-								</div>
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={handleSearchModalClose}>
-									Close
 								</Button>
 							</ModalFooter>
 						</>

@@ -410,7 +410,6 @@ export default function SamsungSentinelUploadDetailsView() {
 				)}
 
 			{/* IMEI Records Table */}
-			<Card>
 				<GenericTable<ImeiTableRecord>
 					columns={columns}
 					data={filteredRecords}
@@ -432,7 +431,6 @@ export default function SamsungSentinelUploadDetailsView() {
 					hasNoRecords={filteredRecords.length === 0}
 					searchPlaceholder="Search by IMEI, supplier, or ID..."
 				/>
-			</Card>
 		</div>
 	);
 }
