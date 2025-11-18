@@ -157,6 +157,22 @@ export async function deleteEngineer(id: string): Promise<BaseApiResponse> {
 }
 
 /**
+ * Transfer engineer to a different service center
+ * @summary Transfer an engineer to a new service center
+ * @tag Engineers
+ */
+export async function transferEngineer(
+	engineerId: string,
+	newServiceCenterId: string,
+	reason: string
+): Promise<BaseApiResponse<Engineer>> {
+	return apiCall(`/engineers/${engineerId}/transfer`, "PATCH", {
+		new_service_center_id: newServiceCenterId,
+		reason,
+	});
+}
+
+/**
  * Resend engineer invitation
  * @summary Resend invitation email to an engineer
  * @tag Engineers

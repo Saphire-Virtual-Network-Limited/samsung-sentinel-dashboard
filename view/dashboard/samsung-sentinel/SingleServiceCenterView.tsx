@@ -65,6 +65,8 @@ import {
 	deactivateServiceCenter,
 	createEngineer,
 	type ServiceCenter as APIServiceCenter,
+	getAllServiceCenters,
+	transferEngineer,
 } from "@/lib";
 import useSWR from "swr";
 
@@ -131,6 +133,8 @@ const engineerColumns: ColumnDef[] = [
 	{ name: "Actions", uid: "actions" },
 ];
 
+// ...inside SingleServiceCenterView component:
+
 const transactionColumns: ColumnDef[] = [
 	{ name: "Claim ID", uid: "claimId", sortable: true },
 	{ name: "Customer", uid: "customerName", sortable: true },
@@ -172,6 +176,62 @@ const nigerianStates = [
 ];
 
 export default function SingleServiceCenterView() {
+	// ...existing code...
+
+	// Transfer modal state
+	const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+	const [transferServiceCenterId, setTransferServiceCenterId] = useState("");
+	const [transferReason, setTransferReason] = useState("");
+	const [serviceCenters, setServiceCenters] = useState<
+		{ id: string; name: string }[]
+	>([]);
+	const [isTransferLoading, setIsTransferLoading] = useState(false);
+	const openTransferModal = async () => {
+		setIsTransferModalOpen(true);
+		setTransferServiceCenterId("");
+		setTransferReason("");
+		// Fetch all service centers (exclude current)
+		try {
+			const res = await getAllServiceCenters();
+			if (res && Array.isArray(res.data)) {
+				setServiceCenters(
+					res.data
+						.filter((sc: any) => sc.id !== selectedEngineer?.service_center_id)
+						.map((sc: any) => ({ id: sc.id, name: sc.name }))
+				);
+			}
+		} catch (e) {
+			setServiceCenters([]);
+		}
+	};
+	const closeTransferModal = () => {
+		setIsTransferModalOpen(false);
+	};
+	const handleTransferEngineer = async () => {
+		if (!selectedEngineer || !transferServiceCenterId || !transferReason)
+			return;
+		setIsTransferLoading(true);
+		try {
+			await transferEngineer(
+				selectedEngineer.id,
+				transferServiceCenterId,
+				transferReason
+			);
+			showToast({
+				message: "Engineer transferred successfully",
+				type: "success",
+			});
+			setIsTransferModalOpen(false);
+			setIsViewEngineerModalOpen(false);
+			setSelectedEngineer(null);
+			// Optionally refresh data here
+			if (typeof mutate === "function") mutate();
+		} catch (e) {
+			showToast({ message: "Failed to transfer engineer", type: "error" });
+		} finally {
+			setIsTransferLoading(false);
+		}
+	};
 	const params = useParams();
 	const serviceCenterId = params?.id as string;
 	const router = useRouter();
@@ -217,6 +277,21 @@ export default function SingleServiceCenterView() {
 		description: "",
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// Engineer view modal state
+	const [isViewEngineerModalOpen, setIsViewEngineerModalOpen] = useState(false);
+	const [selectedEngineer, setSelectedEngineer] = useState<Engineer | null>(
+		null
+	);
+
+	const handleViewEngineer = (engineer: Engineer) => {
+		setSelectedEngineer(engineer);
+		setIsViewEngineerModalOpen(true);
+	};
+	const handleCloseViewEngineerModal = () => {
+		setIsViewEngineerModalOpen(false);
+		setSelectedEngineer(null);
+	};
 
 	// Mock transactions data (since API doesn't provide this yet)
 	const transactions: Transaction[] = [];
@@ -462,6 +537,13 @@ export default function SingleServiceCenterView() {
 							</DropdownTrigger>
 							<DropdownMenu>
 								<DropdownItem
+									key="view"
+									startContent={<Users size={16} />}
+									onPress={() => handleViewEngineer(row)}
+								>
+									View
+								</DropdownItem>
+								<DropdownItem
 									key="toggle"
 									startContent={
 										row.user?.status === "ACTIVE" ? (
@@ -491,6 +573,116 @@ export default function SingleServiceCenterView() {
 						</Dropdown>
 					</div>
 				);
+				{
+					/* View Engineer Modal */
+				}
+				<Modal
+					isOpen={isViewEngineerModalOpen}
+					onClose={handleCloseViewEngineerModal}
+					size="md"
+				>
+					<ModalContent>
+						{() => (
+							<>
+								<ModalHeader>Engineer Details</ModalHeader>
+								<ModalBody>
+									{selectedEngineer && (
+										<div className="space-y-2">
+											<div>
+												<b>Name:</b> {selectedEngineer.user?.name || "N/A"}
+											</div>
+											<div>
+												<b>Email:</b> {selectedEngineer.user?.email || "N/A"}
+											</div>
+											<div>
+												<b>Phone:</b> {selectedEngineer.user?.phone || "N/A"}
+											</div>
+											<div>
+												<b>Status:</b> {selectedEngineer.user?.status || "N/A"}
+											</div>
+											<div>
+												<b>Description:</b>{" "}
+												{selectedEngineer.description || "N/A"}
+											</div>
+										</div>
+									)}
+								</ModalBody>
+								<ModalFooter>
+									<Button
+										variant="light"
+										onPress={handleCloseViewEngineerModal}
+									>
+										Close
+									</Button>
+									<Button color="primary" onPress={openTransferModal}>
+										Transfer
+									</Button>
+								</ModalFooter>
+								{/* Transfer Engineer Modal */}
+								<Modal
+									isOpen={isTransferModalOpen}
+									onClose={closeTransferModal}
+									size="md"
+								>
+									<ModalContent>
+										{() => (
+											<>
+												<ModalHeader>Transfer Engineer</ModalHeader>
+												<ModalBody>
+													<div className="space-y-4">
+														<Select
+															label="Select New Service Center"
+															placeholder="Choose service center"
+															selectedKeys={
+																transferServiceCenterId
+																	? [transferServiceCenterId]
+																	: []
+															}
+															onSelectionChange={(keys) => {
+																const key = Array.from(keys)[0] as string;
+																setTransferServiceCenterId(key);
+															}}
+															isRequired
+														>
+															{serviceCenters.map((sc) => (
+																<SelectItem key={sc.id} value={sc.id}>
+																	{sc.name}
+																</SelectItem>
+															))}
+														</Select>
+														<Textarea
+															label="Reason for Transfer"
+															placeholder="Enter reason"
+															value={transferReason}
+															onValueChange={setTransferReason}
+															rows={3}
+															isRequired
+														/>
+													</div>
+												</ModalBody>
+												<ModalFooter>
+													<Button variant="light" onPress={closeTransferModal}>
+														Cancel
+													</Button>
+													<Button
+														color="primary"
+														onPress={handleTransferEngineer}
+														isLoading={isTransferLoading}
+														isDisabled={
+															!transferServiceCenterId || !transferReason
+														}
+													>
+														Transfer
+													</Button>
+												</ModalFooter>
+											</>
+										)}
+									</ModalContent>
+								</Modal>
+							</>
+						)}
+					</ModalContent>
+				</Modal>;
 			default:
 				const value = row[key as keyof Engineer];
 				return (
