@@ -576,113 +576,7 @@ export default function SingleServiceCenterView() {
 				{
 					/* View Engineer Modal */
 				}
-				<Modal
-					isOpen={isViewEngineerModalOpen}
-					onClose={handleCloseViewEngineerModal}
-					size="md"
-				>
-					<ModalContent>
-						{() => (
-							<>
-								<ModalHeader>Engineer Details</ModalHeader>
-								<ModalBody>
-									{selectedEngineer && (
-										<div className="space-y-2">
-											<div>
-												<b>Name:</b> {selectedEngineer.user?.name || "N/A"}
-											</div>
-											<div>
-												<b>Email:</b> {selectedEngineer.user?.email || "N/A"}
-											</div>
-											<div>
-												<b>Phone:</b> {selectedEngineer.user?.phone || "N/A"}
-											</div>
-											<div>
-												<b>Status:</b> {selectedEngineer.user?.status || "N/A"}
-											</div>
-											<div>
-												<b>Description:</b>{" "}
-												{selectedEngineer.description || "N/A"}
-											</div>
-										</div>
-									)}
-								</ModalBody>
-								<ModalFooter>
-									<Button
-										variant="light"
-										onPress={handleCloseViewEngineerModal}
-									>
-										Close
-									</Button>
-									<Button color="primary" onPress={openTransferModal}>
-										Transfer
-									</Button>
-								</ModalFooter>
-								{/* Transfer Engineer Modal */}
-								<Modal
-									isOpen={isTransferModalOpen}
-									onClose={closeTransferModal}
-									size="md"
-								>
-									<ModalContent>
-										{() => (
-											<>
-												<ModalHeader>Transfer Engineer</ModalHeader>
-												<ModalBody>
-													<div className="space-y-4">
-														<Select
-															label="Select New Service Center"
-															placeholder="Choose service center"
-															selectedKeys={
-																transferServiceCenterId
-																	? [transferServiceCenterId]
-																	: []
-															}
-															onSelectionChange={(keys) => {
-																const key = Array.from(keys)[0] as string;
-																setTransferServiceCenterId(key);
-															}}
-															isRequired
-														>
-															{serviceCenters.map((sc) => (
-																<SelectItem key={sc.id} value={sc.id}>
-																	{sc.name}
-																</SelectItem>
-															))}
-														</Select>
-														<Textarea
-															label="Reason for Transfer"
-															placeholder="Enter reason"
-															value={transferReason}
-															onValueChange={setTransferReason}
-															rows={3}
-															isRequired
-														/>
-													</div>
-												</ModalBody>
-												<ModalFooter>
-													<Button variant="light" onPress={closeTransferModal}>
-														Cancel
-													</Button>
-													<Button
-														color="primary"
-														onPress={handleTransferEngineer}
-														isLoading={isTransferLoading}
-														isDisabled={
-															!transferServiceCenterId || !transferReason
-														}
-													>
-														Transfer
-													</Button>
-												</ModalFooter>
-											</>
-										)}
-									</ModalContent>
-								</Modal>
-							</>
-						)}
-					</ModalContent>
-				</Modal>;
+
 			default:
 				const value = row[key as keyof Engineer];
 				return (
@@ -813,7 +707,6 @@ export default function SingleServiceCenterView() {
 					</Button>
 				</div>
 			</div>
-
 			{/* Statistics */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatCard
@@ -837,7 +730,6 @@ export default function SingleServiceCenterView() {
 					icon={<PowerOff className="w-5 h-5" />}
 				/>
 			</div>
-
 			{/* Service Center Info Card */}
 			<InfoCard title="Service Center Information">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -862,7 +754,6 @@ export default function SingleServiceCenterView() {
 					/>
 				</div>
 			</InfoCard>
-
 			{/* Bank Details Card */}
 			<InfoCard
 				title="Bank Details"
@@ -893,7 +784,6 @@ export default function SingleServiceCenterView() {
 					/>
 				</div>
 			</InfoCard>
-
 			{/* Tabs */}
 			<Tabs aria-label="Service center details" className="w-full">
 				<Tab key="engineers" title="Engineers">
@@ -964,7 +854,6 @@ export default function SingleServiceCenterView() {
 					</div>
 				</Tab>
 			</Tabs>
-
 			{/* Edit Service Center Modal */}
 			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="2xl">
 				<ModalContent>
@@ -1063,7 +952,6 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
-
 			{/* Edit Bank Details Modal */}
 			<Modal
 				isOpen={isEditBankModalOpen}
@@ -1127,7 +1015,6 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
-
 			{/* Add Engineer Modal */}
 			<Modal
 				isOpen={isAddEngineerModalOpen}
@@ -1201,6 +1088,111 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
+			<Modal
+				isOpen={isViewEngineerModalOpen}
+				onClose={handleCloseViewEngineerModal}
+				size="md"
+			>
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Engineer Details</ModalHeader>
+							<ModalBody>
+								{selectedEngineer && (
+									<div className="space-y-2">
+										<div>
+											<b>Name:</b> {selectedEngineer.user?.name || "N/A"}
+										</div>
+										<div>
+											<b>Email:</b> {selectedEngineer.user?.email || "N/A"}
+										</div>
+										<div>
+											<b>Phone:</b> {selectedEngineer.user?.phone || "N/A"}
+										</div>
+										<div>
+											<b>Status:</b> {selectedEngineer.user?.status || "N/A"}
+										</div>
+										<div>
+											<b>Description:</b>{" "}
+											{selectedEngineer.description || "N/A"}
+										</div>
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={handleCloseViewEngineerModal}>
+									Close
+								</Button>
+								<Button color="primary" onPress={openTransferModal}>
+									Transfer
+								</Button>
+							</ModalFooter>
+							{/* Transfer Engineer Modal */}
+							<Modal
+								isOpen={isTransferModalOpen}
+								onClose={closeTransferModal}
+								size="md"
+							>
+								<ModalContent>
+									{() => (
+										<>
+											<ModalHeader>Transfer Engineer</ModalHeader>
+											<ModalBody>
+												<div className="space-y-4">
+													<Select
+														label="Select New Service Center"
+														placeholder="Choose service center"
+														selectedKeys={
+															transferServiceCenterId
+																? [transferServiceCenterId]
+																: []
+														}
+														onSelectionChange={(keys) => {
+															const key = Array.from(keys)[0] as string;
+															setTransferServiceCenterId(key);
+														}}
+														isRequired
+													>
+														{serviceCenters.map((sc) => (
+															<SelectItem key={sc.id} value={sc.id}>
+																{sc.name}
+															</SelectItem>
+														))}
+													</Select>
+													<Textarea
+														label="Reason for Transfer"
+														placeholder="Enter reason"
+														value={transferReason}
+														onValueChange={setTransferReason}
+														rows={3}
+														isRequired
+													/>
+												</div>
+											</ModalBody>
+											<ModalFooter>
+												<Button variant="light" onPress={closeTransferModal}>
+													Cancel
+												</Button>
+												<Button
+													color="primary"
+													onPress={handleTransferEngineer}
+													isLoading={isTransferLoading}
+													isDisabled={
+														!transferServiceCenterId || !transferReason
+													}
+												>
+													Transfer
+												</Button>
+											</ModalFooter>
+										</>
+									)}
+								</ModalContent>
+							</Modal>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+			;
 		</div>
 	);
 }
