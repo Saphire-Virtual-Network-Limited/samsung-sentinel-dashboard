@@ -434,13 +434,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		];
 
 		// Service Center Actions
-		if (role === "service-center" && item.status === "PENDING") {
+		if (role === "service-center" && item.status === "APPROVED") {
 			items.push(
 				<DropdownItem
 					key="edit"
 					startContent={<FileText className="h-4 w-4" />}
 					onPress={() =>
-						router.push(`/access/service-center/claims/${item.claimId}`)
+						router.push(`/access/service-center/claims/${item.id}`)
 					}
 				>
 					Edit Claim

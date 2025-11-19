@@ -286,30 +286,30 @@ export default function ServiceCenterSearchImeiModal({
 																				className="hover:bg-gray-50"
 																			>
 																				<td className="px-4 py-3 text-sm font-medium text-gray-900">
-																					{claim.customerName}
+																					{claim.customer_first_name}{" "}
+																					{claim.customer_last_name}
 																				</td>
 																				<td className="px-4 py-3 text-sm text-gray-600">
-																					{claim.issueDescription}
+																					{claim.description}
 																				</td>
 																				<td className="px-4 py-3 text-sm">
 																					<Chip
 																						color={
-																							claim.claimStatus === "approved"
+																							claim.status === "COMPLETED"
 																								? "success"
-																								: claim.claimStatus ===
-																								  "pending"
+																								: claim.status === "PENDING"
 																								? "warning"
 																								: "danger"
 																						}
 																						size="sm"
 																						className="capitalize"
 																					>
-																						{claim.claimStatus}
+																						{claim.status}
 																					</Chip>
 																				</td>
 																				<td className="px-4 py-3 text-sm text-gray-600">
 																					{new Date(
-																						claim.dateCreated
+																						claim.created_at
 																					).toLocaleDateString()}
 																				</td>
 																				<td className="px-4 py-3 text-sm">
