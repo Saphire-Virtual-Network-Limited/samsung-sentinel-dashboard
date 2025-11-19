@@ -111,7 +111,7 @@ const CreateClaimView = () => {
 
 		setIsValidating(true);
 		try {
-			const result = await validateImei({ imei: imeiInput });
+			const result = (await validateImei({ imei: imeiInput })) as any;
 
 			if (result.is_eligible && result.exists) {
 				setValidationData(result);
@@ -123,7 +123,7 @@ const CreateClaimView = () => {
 				if (!result.repair_cost && result.product_id) {
 					try {
 						const productResponse = await getProductById(result.product_id);
-						const product = productResponse?.data || productResponse;
+						const product: any = productResponse?.data || productResponse;
 						if (product?.repair_cost) {
 							repairCost = product.repair_cost;
 						}
@@ -197,7 +197,7 @@ const CreateClaimView = () => {
 		// Note: deviceRepairPrice will be 0 if not provided by API - backend should handle default value
 		setIsCreating(true);
 		try {
-			const response = await createClaim({
+			const response: any = await createClaim({
 				imei: claimData.imei,
 				customer_first_name: claimData.firstName,
 				customer_last_name: claimData.lastName,
@@ -209,11 +209,11 @@ const CreateClaimView = () => {
 
 			showToast({
 				type: "success",
-				message: `Claim ${response.data.claim_number} created successfully`,
+				message: `Claim ${response?.claim_number} created successfully`,
 			});
 
 			// Navigate to the claim detail view
-			router.push(`/access/service-center/claims/${response.data.id}`);
+			router.push(`/access/service-center/claims/${response?.id}`);
 		} catch (error: any) {
 			showToast({
 				type: "error",
