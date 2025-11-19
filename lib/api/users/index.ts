@@ -118,7 +118,7 @@ export async function updateUser(
  * @tag Users
  */
 export async function deleteUser(id: string): Promise<BaseApiResponse> {
-	return apiCall(`/users/${id}`, "DELETE");
+	return apiCall(`/users/${id}/hard-delete`, "DELETE");
 }
 
 /**
