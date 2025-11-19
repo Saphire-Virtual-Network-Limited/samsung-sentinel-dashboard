@@ -300,7 +300,7 @@ const ViewClaimDetailView = ({
 						{(userRole === "engineer" ||
 							userRole === "repair_store_admin" ||
 							window?.location?.pathname?.includes("access/service-center")) &&
-							claim?.status === ClaimStatus.PENDING && (
+							claim?.status === ClaimStatus.APPROVED && (
 								<>
 									{console.log("Engineer/Admin Action Button Rendered", {
 										userRole,

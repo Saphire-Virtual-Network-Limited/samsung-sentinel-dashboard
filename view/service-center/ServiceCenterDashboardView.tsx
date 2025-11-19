@@ -90,7 +90,7 @@ const ServiceCenterDashboardView = () => {
 			bgGradient: "from-warning-50 to-warning-100",
 			iconBg: "bg-warning-100",
 			iconColor: "text-warning-600",
-			link: "/access/service-center/pending-claims",
+			link: "/access/service-center/claims?status=pending",
 			description: "Awaiting approval",
 		},
 		{
@@ -101,7 +101,7 @@ const ServiceCenterDashboardView = () => {
 			bgGradient: "from-success-50 to-success-100",
 			iconBg: "bg-success-100",
 			iconColor: "text-success-600",
-			link: "/access/service-center/approved-claims",
+			link: "/access/service-center/claims?status=approved",
 			description: "Ready to proceed",
 		},
 		{
@@ -123,7 +123,7 @@ const ServiceCenterDashboardView = () => {
 			bgGradient: "from-green-50 to-green-100",
 			iconBg: "bg-green-100",
 			iconColor: "text-green-600",
-			link: "/access/service-center/completed-repairs",
+			link: "/access/service-center/claims?status=completed",
 			description: "Repairs finished",
 		},
 		{
@@ -145,7 +145,7 @@ const ServiceCenterDashboardView = () => {
 			bgGradient: "from-danger-50 to-danger-100",
 			iconBg: "bg-danger-100",
 			iconColor: "text-danger-600",
-			link: "/access/service-center/rejected-claims",
+			link: "/access/service-center/claims?status=rejected",
 			description: "Not approved",
 		},
 		{
