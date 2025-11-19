@@ -99,6 +99,7 @@ export interface ClaimsRepairsTableProps {
 	onBulkReject?: (claimIds: string[], reason: string) => void;
 	onBulkAuthorizePayment?: (claimIds: string[]) => void;
 	onViewDetails?: (claim: ClaimRepairItem) => void;
+	onSearchParamsChange?: (searchParams: string) => void;
 	onUpdateRepairStatus?: (
 		claimId: string,
 		newRepairStatus:
@@ -138,6 +139,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	showPaymentColumns = false,
 	enableMultiSelect = false,
 	onDateFilterChange,
+	onSearchParamsChange,
 	initialStartDate,
 	initialEndDate,
 	defaultDateRange,
@@ -1259,7 +1261,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				}
 				isLoading={isLoading || false}
 				filterValue={filterValue}
-				onFilterChange={setFilterValue}
+				onFilterChange={(value) => {
+					setFilterValue(value);
+					setPage(1);
+					onSearchParamsChange!(value);
+				}}
 				sortDescriptor={sortDescriptor}
 				onSortChange={setSortDescriptor as any}
 				page={page}

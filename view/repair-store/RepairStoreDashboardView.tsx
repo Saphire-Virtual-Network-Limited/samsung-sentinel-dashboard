@@ -173,7 +173,7 @@ export default function RepairStoreDashboardView() {
 					<CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
 						<div className="flex items-center gap-2">
 							<Package className="w-5 h-5 text-blue-600" />
-							<h3 className="text-lg font-semibold">Authorized</h3>
+							<h3 className="text-lg font-semibold">In Progress</h3>
 						</div>
 					</CardHeader>
 					<CardBody className="p-4">

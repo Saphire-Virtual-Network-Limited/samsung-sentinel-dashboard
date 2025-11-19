@@ -299,37 +299,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 
 	return (
 		<div className="space-y-6">
-			{/* Search Section 
-			<Card>
-				<CardBody className="flex flex-row items-center justify-between p-4">
-					<div className="flex items-center gap-3">
-						<Search className="w-5 h-5 text-primary" />
-						<span className="font-medium">Search Claims by IMEI</span>
-					</div>
-					<div className="flex items-center space-x-2">
-						<Input
-							placeholder="Enter IMEI..."
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-64"
-							maxLength={15}
-						/>
-						<Button
-							onClick={() => {
-								// Update the filters to include search
-								handleTabChange(activeTab);
-							}}
-							variant="ghost"
-							size="sm"
-							className="flex items-center space-x-1"
-						>
-							<Search className="w-4 h-4" />
-							<span>Search</span>
-						</Button>
-					</div>
-				</CardBody>
-			</Card>
-*/}
 			<Tabs
 				selectedKey={activeTab}
 				onSelectionChange={(key) => handleTabChange(key as string)}
@@ -410,6 +379,10 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 								onApprove={approveHandler}
 								onReject={rejectHandler}
 								onAuthorizePayment={authorizePaymentHandler}
+								onSearchParamsChange={(searchParams) => {
+									setSearchQuery(searchParams);
+									setPage(1);
+								}}
 								onExecutePayment={(claimIds) => {
 									if (claimIds.length === 1) {
 										// For single selection, we'll need transaction ref

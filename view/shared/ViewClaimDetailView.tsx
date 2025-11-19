@@ -297,11 +297,29 @@ const ViewClaimDetailView = ({
 
 					<div className="flex gap-2 flex-wrap">
 						{/* Engineer can mark as completed */}
-						{(userRole === "engineer" || userRole === "repair_store_admin") &&
+						{(userRole === "engineer" ||
+							userRole === "repair_store_admin" ||
+							window?.location?.pathname?.includes("access/service-center")) &&
 							claim?.status === ClaimStatus.PENDING && (
-								<Button color="success" onPress={onCompleteModalOpen}>
-									Mark as Completed
-								</Button>
+								<>
+									{console.log("Engineer/Admin Action Button Rendered", {
+										userRole,
+										claimStatus: claim?.status,
+										claimId: claim?.claim_number,
+									})}
+									<Button
+										color="success"
+										onPress={() => {
+											console.log("Mark as Completed button clicked", {
+												claimId: claim?.claim_number,
+												userRole,
+											});
+											onCompleteModalOpen();
+										}}
+									>
+										Mark as Completed
+									</Button>
+								</>
 							)}
 
 						{/* Samsung Partner actions */}
