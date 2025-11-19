@@ -23,6 +23,7 @@ import { usePartnersDashboard } from "@/hooks/samsung-partners/usePartnersDashbo
 import { DashboardFilter } from "@/lib/api/partners";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import DeviceModelStatisticsTable from "@/components/shared/DeviceModelStatitics";
 
 // Dynamically import the SamsungPartnersSearchImeiModal to avoid SSR issues
 const SamsungPartnersSearchImeiModal = dynamic(
@@ -188,10 +189,10 @@ export default function SamsungPartnersHomeView() {
 					<h3 className="text-lg font-semibold">Quick Actions</h3>
 				</CardHeader>
 				<CardBody>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 						<Link
 							href="/access/samsung-partners/claims"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<FileText className="h-6 w-6 text-blue-500" />
 							<div>
@@ -203,7 +204,7 @@ export default function SamsungPartnersHomeView() {
 						</Link>
 						<Link
 							href="/access/samsung-partners/claims?status=pending"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<Clock className="h-6 w-6 text-orange-500" />
 							<div>
@@ -215,7 +216,7 @@ export default function SamsungPartnersHomeView() {
 						</Link>
 						<Link
 							href="/access/samsung-partners/claims?status=completed"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<Wrench className="h-6 w-6 text-purple-500" />
 							<div>
@@ -226,24 +227,34 @@ export default function SamsungPartnersHomeView() {
 							</div>
 						</Link>
 						{/* Samsung Partners IMEI Search Quick Action */}
-						<div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-							<SamsungPartnersSearchImeiModal
-								buttonText="Search IMEI"
-								buttonColor="primary"
-								buttonVariant="flat"
-								buttonSize="md"
-								showIcon={true}
-							/>
-							<div>
-								<div className="font-medium">Search IMEI</div>
-								<div className="text-sm text-gray-500">
-									Lookup IMEI and view claims
+						<div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+							<div className="flex items-center space-x-3 flex-1">
+								<SamsungPartnersSearchImeiModal
+									buttonText=""
+									buttonColor="primary"
+									buttonVariant="light"
+									buttonSize="sm"
+									showIcon={true}
+								/>
+								<div>
+									<div className="font-medium">Search IMEI</div>
+									<div className="text-sm text-gray-500">
+										Lookup IMEI and view claims
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</CardBody>
 			</Card>
+			<DeviceModelStatisticsTable
+				externalFilter={{
+					filter,
+					...(filter === "custom" && { start_date: "", end_date: "" }),
+				}}
+				showFilterSelector={false}
+				title="Device Model Statistics"
+			/>
 		</div>
 	);
 }
