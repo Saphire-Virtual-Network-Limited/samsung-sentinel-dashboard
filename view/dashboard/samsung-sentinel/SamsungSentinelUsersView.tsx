@@ -51,7 +51,7 @@ import useSWR from "swr";
 // Role options for filter
 const ROLE_OPTIONS: { value: string; label: string }[] = [
 	{ value: UserRole.ADMIN, label: "Admin" },
-	{ value: UserRole.REPAIR_STORE_ADMIN, label: "Repair Store Admin" },
+	{ value: UserRole.REPAIR_STORE_ADMIN, label: "Repair Partner Admin" },
 	{ value: UserRole.SERVICE_CENTER_ADMIN, label: "Service Center Admin" },
 	{ value: UserRole.ENGINEER, label: "Engineer" },
 	{ value: UserRole.SAMSUNG_PARTNER, label: "Samsung Partner" },

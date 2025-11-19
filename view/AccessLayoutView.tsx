@@ -195,9 +195,14 @@ export default function AccessLayoutView({
 						<div className="hidden lg:flex flex-col text-start">
 							<span className="text-black font-bold text-base">{userName}</span>
 							<span className="text-xs text-zinc-400 text-right">
-								{userResponse?.role
-									?.replace(/_/g, " ")
-									.replace(/\b\w/g, (char: string) => char.toUpperCase())}
+								{(() => {
+									const raw = userResponse?.role ?? "";
+									const normalized =
+										raw === "repair_store_admin" ? "repair_partner_admin" : raw;
+									return normalized
+										.replace(/_/g, " ")
+										.replace(/\b\w/g, (char: string) => char.toUpperCase());
+								})()}
 							</span>
 						</div>
 					</div>
