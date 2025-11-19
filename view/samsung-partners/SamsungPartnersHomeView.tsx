@@ -22,6 +22,13 @@ import {
 import { usePartnersDashboard } from "@/hooks/samsung-partners/usePartnersDashboard";
 import { DashboardFilter } from "@/lib/api/partners";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+// Dynamically import the SamsungPartnersSearchImeiModal to avoid SSR issues
+const SamsungPartnersSearchImeiModal = dynamic(
+	() => import("@/components/modals/SamsungPartnersSearchImeiModal"),
+	{ ssr: false }
+);
 
 const FILTER_OPTIONS = [
 	{ label: "Daily", value: "daily" },
@@ -194,7 +201,6 @@ export default function SamsungPartnersHomeView() {
 								</div>
 							</div>
 						</Link>
-
 						<Link
 							href="/access/samsung-partners/claims?status=pending"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
@@ -207,7 +213,6 @@ export default function SamsungPartnersHomeView() {
 								</div>
 							</div>
 						</Link>
-
 						<Link
 							href="/access/samsung-partners/claims?status=completed"
 							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
@@ -220,6 +225,22 @@ export default function SamsungPartnersHomeView() {
 								</div>
 							</div>
 						</Link>
+						{/* Samsung Partners IMEI Search Quick Action */}
+						<div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors">
+							<SamsungPartnersSearchImeiModal
+								buttonText="Search IMEI"
+								buttonColor="primary"
+								buttonVariant="flat"
+								buttonSize="md"
+								showIcon={true}
+							/>
+							<div>
+								<div className="font-medium">Search IMEI</div>
+								<div className="text-sm text-gray-500">
+									Lookup IMEI and view claims
+								</div>
+							</div>
+						</div>
 					</div>
 				</CardBody>
 			</Card>
