@@ -136,8 +136,8 @@ const CreateClaimView = () => {
 				setClaimData((prev) => ({
 					...prev,
 					imei: imeiInput,
-					deviceModel: result.product_name,
-					deviceRepairPrice: repairCost,
+					deviceModel: result?.product?.name,
+					deviceRepairPrice: result?.product?.price,
 				}));
 				showToast({
 					type: "success",
