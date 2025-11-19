@@ -68,6 +68,7 @@ export interface ValidateImeiResponse {
 	exists: boolean;
 	product_id: string;
 	product_name: string;
+	product?: any;
 	supplier: string;
 	expiry_date: string;
 	is_used: boolean;

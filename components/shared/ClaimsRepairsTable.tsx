@@ -1267,7 +1267,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				onPageChange={setPage}
 				exportFn={handleExport}
 				hasNoRecords={tableData.length === 0}
-				searchPlaceholder="Search by claim ID, customer name, IMEI, device, or fault type..."
+				searchPlaceholder="Search by claim ID or IMEI"
 				selectionMode={enableMultiSelect ? "multiple" : "none"}
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Card,
@@ -61,9 +62,21 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [searchQuery, setSearchQuery] = useState(
 		searchParams.get("search") || ""
 	);
+	const debouncedSearchQuery = useDebounce(searchQuery, 400);
 	const [page, setPage] = useState(1);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const { isOpen, onOpen, onClose } = useDisclosure();
+
+	// Derived search params for API (debounced)
+	let imeiParam = undefined;
+	let claimNumberParam = undefined;
+	if (debouncedSearchQuery) {
+		if (/^\d+/.test(debouncedSearchQuery)) {
+			imeiParam = debouncedSearchQuery;
+		} else if (/^CLM-/i.test(debouncedSearchQuery)) {
+			claimNumberParam = debouncedSearchQuery;
+		}
+	}
 
 	// Sync state with URL params when they change (e.g., browser back/forward)
 	useEffect(() => {
@@ -129,13 +142,13 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		// Optional: refetch here if needed, though it already happens in the handler
 	};
 
-	// Update URL when filters change
+	// Update URL when filters change (debounced search)
 	useEffect(() => {
 		const params = new URLSearchParams();
 
 		if (activeTab !== "all") params.set("status", activeTab);
 		if (paymentFilter !== "all") params.set("payment", paymentFilter);
-		if (searchQuery) params.set("search", searchQuery);
+		if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
 		if (startDate) params.set("startDate", startDate);
 		if (endDate) params.set("endDate", endDate);
 
@@ -146,7 +159,14 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		if (window.location.search !== (queryString ? `?${queryString}` : "")) {
 			router.replace(newUrl, { scroll: false });
 		}
-	}, [activeTab, paymentFilter, searchQuery, startDate, endDate, router]);
+	}, [
+		activeTab,
+		paymentFilter,
+		debouncedSearchQuery,
+		startDate,
+		endDate,
+		router,
+	]);
 
 	// Fetch data based on role, status, payment filter, and date range
 	const {
@@ -168,7 +188,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		role,
 		status: activeTab,
 		payment: paymentFilter,
-		search: searchQuery,
+		search: debouncedSearchQuery,
 		startDate,
 		endDate,
 		page,

@@ -9,13 +9,6 @@ import {
 	Chip,
 	Button,
 	Skeleton,
-	Modal,
-	ModalContent,
-	ModalHeader,
-	ModalBody,
-	ModalFooter,
-	Input,
-	useDisclosure,
 	Select,
 	SelectItem,
 	DatePicker,
@@ -38,8 +31,8 @@ import {
 	Calendar,
 } from "lucide-react";
 import { useServiceCenterDashboardStats } from "@/hooks/service-center";
-import { showToast } from "@/lib";
 import { DashboardFilter } from "@/lib/api/dashboard";
+import ServiceCenterSearchImeiModal from "@/components/modals/ServiceCenterSearchImeiModal";
 
 const FILTER_OPTIONS = [
 	{ label: "Daily", value: "daily" },
@@ -86,77 +79,6 @@ const ServiceCenterDashboardView = () => {
 			setCustomStartDate(defaultStartDate);
 			setCustomEndDate(defaultEndDate);
 		}
-	};
-
-	// Search IMEI modal state
-	const {
-		isOpen: isSearchModalOpen,
-		onOpen: onSearchModalOpen,
-		onClose: onSearchModalClose,
-	} = useDisclosure();
-	const [searchImei, setSearchImei] = useState("");
-	const [isSearching, setIsSearching] = useState(false);
-	const [searchResult, setSearchResult] = useState<any>(null);
-
-	// Handle IMEI search
-	const handleSearchImei = async () => {
-		if (!searchImei.trim()) {
-			showToast({ message: "Please enter an IMEI number", type: "error" });
-			return;
-		}
-
-		setIsSearching(true);
-		try {
-			// Mock API call - replace with actual API
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			// Mock search results based on IMEI
-			const isUsedImei =
-				searchImei.includes("111") || searchImei.includes("222");
-
-			if (!isUsedImei) {
-				// Unused IMEI - show unverified status
-				setSearchResult({
-					type: "unused",
-					imei: searchImei,
-					status: "unverified",
-					claimsCount: 0,
-				});
-			} else {
-				// Used IMEI - show claims table
-				setSearchResult({
-					type: "used",
-					imei: searchImei,
-					claims: [
-						{
-							id: "claim_001",
-							customerName: "John Doe",
-							claimStatus: "approved",
-							dateCreated: "2024-10-15T10:30:00Z",
-							issueDescription: "Screen replacement",
-						},
-						{
-							id: "claim_002",
-							customerName: "Jane Smith",
-							claimStatus: "pending",
-							dateCreated: "2024-10-20T14:22:00Z",
-							issueDescription: "Battery issue",
-						},
-					],
-				});
-			}
-		} catch (error) {
-			showToast({ message: "Failed to search IMEI", type: "error" });
-		} finally {
-			setIsSearching(false);
-		}
-	};
-
-	// Reset search when modal closes
-	const handleSearchModalClose = () => {
-		setSearchResult(null);
-		setSearchImei("");
-		onSearchModalClose();
 	};
 
 	const statCards = [
@@ -521,15 +443,14 @@ const ServiceCenterDashboardView = () => {
 						>
 							View Pending
 						</Button>
-						<Button
-							fullWidth
-							color="secondary"
-							variant="flat"
-							onPress={onSearchModalOpen}
-							startContent={<Search className="w-4 h-4" />}
-						>
-							Search IMEI
-						</Button>
+						<ServiceCenterSearchImeiModal
+							buttonText="Search IMEI"
+							buttonColor="secondary"
+							buttonVariant="flat"
+							buttonSize="md"
+							showIcon={true}
+							className="w-full"
+						/>
 					</div>
 				</CardBody>
 			</Card>
@@ -625,166 +546,7 @@ const ServiceCenterDashboardView = () => {
 				</Card>
 			)}
 
-			{/* Search IMEI Modal */}
-			<Modal
-				isOpen={isSearchModalOpen}
-				onClose={handleSearchModalClose}
-				size="3xl"
-			>
-				<ModalContent>
-					{() => (
-						<>
-							<ModalHeader>Search IMEI</ModalHeader>
-							<ModalBody>
-								<div className="space-y-4">
-									<div className="flex gap-2">
-										<Input
-											label="IMEI Number"
-											placeholder="Enter IMEI to search"
-											value={searchImei}
-											onValueChange={setSearchImei}
-											className="flex-1"
-											maxLength={15}
-										/>
-										<Button
-											color="primary"
-											onPress={handleSearchImei}
-											isLoading={isSearching}
-											isDisabled={!searchImei.trim()}
-										>
-											Search
-										</Button>
-									</div>
-
-									{/* Search Results */}
-									{searchResult && (
-										<div className="mt-6">
-											{searchResult.type === "unused" ? (
-												/* Unused IMEI Result */
-												<div className="space-y-4">
-													<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-														<h3 className="font-semibold text-blue-900 mb-2">
-															IMEI: {searchResult.imei}
-														</h3>
-														<div className="grid grid-cols-2 gap-4 text-sm">
-															<div>
-																<span className="text-gray-600">Status:</span>{" "}
-																<Chip color="default" size="sm">
-																	{searchResult.status}
-																</Chip>
-															</div>
-															<div>
-																<span className="text-gray-600">Claims:</span>{" "}
-																<span className="font-medium">
-																	{searchResult.claimsCount}
-																</span>
-															</div>
-														</div>
-													</div>
-												</div>
-											) : (
-												/* Used IMEI Result - Show Claims Table */
-												<div className="space-y-4">
-													<div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-														<h3 className="font-semibold text-amber-900 mb-2">
-															IMEI: {searchResult.imei} (In Use)
-														</h3>
-														<p className="text-sm text-amber-800">
-															This IMEI has {searchResult.claims.length}{" "}
-															associated claim(s):
-														</p>
-													</div>
-
-													{/* Claims Table */}
-													<div className="overflow-x-auto">
-														<table className="w-full border border-gray-200 rounded-lg">
-															<thead className="bg-gray-50">
-																<tr>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Customer Name
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Issue Description
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Status
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Date Created
-																	</th>
-																	<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-																		Actions
-																	</th>
-																</tr>
-															</thead>
-															<tbody className="bg-white divide-y divide-gray-200">
-																{searchResult.claims.map((claim: any) => (
-																	<tr
-																		key={claim.id}
-																		className="hover:bg-gray-50"
-																	>
-																		<td className="px-4 py-3 text-sm font-medium text-gray-900">
-																			{claim.customerName}
-																		</td>
-																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{claim.issueDescription}
-																		</td>
-																		<td className="px-4 py-3 text-sm">
-																			<Chip
-																				color={
-																					claim.claimStatus === "approved"
-																						? "success"
-																						: claim.claimStatus === "pending"
-																						? "warning"
-																						: "danger"
-																				}
-																				size="sm"
-																				className="capitalize"
-																			>
-																				{claim.claimStatus}
-																			</Chip>
-																		</td>
-																		<td className="px-4 py-3 text-sm text-gray-600">
-																			{new Date(
-																				claim.dateCreated
-																			).toLocaleDateString()}
-																		</td>
-																		<td className="px-4 py-3 text-sm">
-																			<Button
-																				size="sm"
-																				color="primary"
-																				variant="flat"
-																				startContent={<Eye size={14} />}
-																				onPress={() => {
-																					router.push(
-																						`/access/service-center/claims/${claim.id}`
-																					);
-																					handleSearchModalClose();
-																				}}
-																			>
-																				View Details
-																			</Button>
-																		</td>
-																	</tr>
-																))}
-															</tbody>
-														</table>
-													</div>
-												</div>
-											)}
-										</div>
-									)}
-								</div>
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={handleSearchModalClose}>
-									Close
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+			{/* Search IMEI Modal handled by ServiceCenterSearchImeiModal */}
 		</div>
 	);
 };

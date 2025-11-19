@@ -332,9 +332,9 @@ const CreateClaimView = () => {
 										IMEI Validation Details
 									</h4>
 									<div className="text-sm text-blue-700 mt-2 space-y-1">
-										<p>IMEI: {validationData.imei}</p>
-										<p>Product: {validationData.product_name}</p>
-										<p>Supplier: {validationData.supplier}</p>
+										<p>IMEI: {imeiInput}</p>
+										<p>Product: {validationData?.product?.name}</p>
+
 										<p>
 											Expiry Date:{" "}
 											{new Date(
@@ -343,7 +343,7 @@ const CreateClaimView = () => {
 										</p>
 										<p>
 											Status:{" "}
-											{validationData.is_used
+											{!validationData.is_eligible
 												? "Already Used"
 												: validationData.is_expired
 												? "Expired"

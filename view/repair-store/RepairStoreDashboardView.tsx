@@ -105,7 +105,7 @@ export default function RepairStoreDashboardView() {
 			{/* Header */}
 			<div className="flex flex-col gap-2">
 				<h1 className="text-2xl font-bold text-gray-900">
-					Repair Store Dashboard
+					Repair Partner Dashboard
 				</h1>
 				<p className="text-gray-600">
 					Manage your network of service centers and monitor repair operations
