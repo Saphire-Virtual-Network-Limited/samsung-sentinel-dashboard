@@ -34,7 +34,10 @@ function formatTitle(pathname: string): string {
 	if (pathname === "/dashboard" || pathSegments.length === 1) {
 		return "";
 	}
-	const lastSegment = pathSegments[pathSegments.length - 1];
+	let lastSegment = pathSegments[pathSegments.length - 1];
+	if (lastSegment === "repair-store") {
+		lastSegment = "repair-partner";
+	}
 	return lastSegment
 		.replace(/[-_]/g, " ")
 		.replace(/\b\w/g, (char) => char.toUpperCase());
