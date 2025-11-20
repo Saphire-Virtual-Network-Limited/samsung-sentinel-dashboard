@@ -4,12 +4,12 @@ import { apiCall, BaseApiResponse } from "../shared";
 // INVITATIONS APIs
 // ============================================================================
 
-export interface SetPasswordDto {
+export interface SetINPasswordDto {
 	token: string;
 	password: string;
 }
 
-export interface ResendInvitationDto {
+export interface ResendINInvitationDto {
 	email: string;
 }
 
@@ -18,7 +18,7 @@ export interface ResendInvitationDto {
  * Used by repair store admins, engineers, and partners to set their password after receiving invitation
  */
 export async function setINPassword(
-	data: SetPasswordDto
+	data: SetINPasswordDto
 ): Promise<BaseApiResponse> {
 	return apiCall("/invitations/set-password", "POST", data);
 }
@@ -39,9 +39,9 @@ export async function verifyINInvitation(
  * Resend invitation email to user. Admin only.
  */
 export async function resendINInvitation(
-	data: ResendInvitationDto
+	data: ResendINInvitationDto
 ): Promise<BaseApiResponse> {
 	return apiCall("/invitations/resend-invitation", "POST", data);
 }
 
-export type { ResendInvitationDto as InvitationResendDto };
+export type { ResendINInvitationDto as InvitationResendDto };
