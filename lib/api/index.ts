@@ -47,6 +47,9 @@ export * from "./partners";
 // Export audit APIs
 export * from "./audit";
 
+// Export invitations APIs
+export * from "./invitations";
+
 // Export dashboard APIs - explicitly export to avoid duplicates with partners
 export {
 	getAdminStatistics,

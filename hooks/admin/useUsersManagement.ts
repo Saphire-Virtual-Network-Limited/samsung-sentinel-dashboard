@@ -17,12 +17,7 @@ import {
 	type UserStatus,
 	type ResendInvitationDto,
 } from "@/lib";
-import {
-	resendEngineerInvitation,
-	resendPartnerInvitation,
-	resendRepairStoreInvitation,
-	resendInvitation,
-} from "@/lib";
+import { resendINInvitation } from "@/lib";
 
 export function useUsersManagement() {
 	const [filters, setFilters] = useState<GetUsersParams>({
@@ -181,24 +176,7 @@ export function useUsersManagement() {
 			try {
 				const payload: ResendInvitationDto = { email: userEmail };
 
-				// Choose resend function based on role string (use switch for clarity)
-				switch (userRole) {
-					case "engineer":
-						await resendEngineerInvitation(payload);
-						break;
-
-					default:
-						// Default/fallback: use partner resend which doesn't require args
-						await resendInvitation(payload);
-						break;
-
-					/**		case "samsung_partner":
-						await resendPartnerInvitation();
-						break;
-					case "repair_store_admin":
-						await resendRepairStoreInvitation();
-						break; */
-				}
+				await resendINInvitation(payload);
 
 				showToast({
 					type: "success",

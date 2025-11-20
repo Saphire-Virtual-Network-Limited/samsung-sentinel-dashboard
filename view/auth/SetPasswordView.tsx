@@ -19,11 +19,9 @@ import {
 	AlertCircle,
 } from "lucide-react";
 import { showToast } from "@/lib";
-import {
-	verifyInvitation,
-	setPassword as setPasswordApi,
-	VerifyInvitationResponse,
-} from "@/lib/api/auth";
+import { VerifyInvitationResponse } from "@/lib/api/auth";
+import { verifyINInvitation as verifyInvitation } from "@/lib";
+import { setINPassword as setPasswordApi } from "@/lib";
 
 export default function SetPasswordView() {
 	const router = useRouter();
@@ -32,8 +30,9 @@ export default function SetPasswordView() {
 
 	const [isVerifying, setIsVerifying] = useState(true);
 	const [isSettingPassword, setIsSettingPassword] = useState(false);
-	const [invitationStatus, setInvitationStatus] =
-		useState<VerifyInvitationResponse | null>(null);
+	const [invitationStatus, setInvitationStatus] = useState<
+		VerifyInvitationResponse | any
+	>(null);
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);

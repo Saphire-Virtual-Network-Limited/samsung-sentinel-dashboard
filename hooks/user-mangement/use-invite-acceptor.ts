@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { setPassword } from "@/lib";
+import { setINPassword as setPassword } from "@/lib";
 import { showToast } from "@/lib";
 import {
 	AcceptInviteResponse,
