@@ -967,7 +967,7 @@ export default function SamsungSentinelUsersView() {
 									/>
 								</>
 							)}
-			
+
 							{/* Organization & Description for Samsung Partner */}
 							{createFormData.role === "samsung_partner" && (
 								<>
