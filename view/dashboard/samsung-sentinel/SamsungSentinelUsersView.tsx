@@ -44,6 +44,7 @@ import {
 	register,
 } from "@/lib";
 import { createEngineer } from "@/lib/api/engineers";
+import { createPartner } from "@/lib";
 import { getAllServiceCenters } from "@/lib/api/service-centers";
 import { createRepairStore } from "@/lib/api/repair-partners";
 import useSWR from "swr";
@@ -122,6 +123,7 @@ export default function SamsungSentinelUsersView() {
 		password: generateRandomPassword(), // Random password for admin/finance/auditor
 		service_center_id: "",
 		description: "",
+		organization: "",
 		location: "",
 	});
 	const [isSaving, setIsSaving] = useState(false);
@@ -451,12 +453,12 @@ export default function SamsungSentinelUsersView() {
 				});
 			} else if (createFormData.role === "samsung_partner") {
 				// Samsung partner - use random generated password
-				await register({
+				await createPartner({
 					email: createFormData.email,
 					name: createFormData.name,
 					phone: createFormData.phone,
-					role: createFormData.role,
-					password: generateRandomPassword(),
+					organization: createFormData.organization || "",
+					description: createFormData.description || "",
 				});
 			} else {
 				// Admin, finance, auditor - with password
@@ -483,6 +485,7 @@ export default function SamsungSentinelUsersView() {
 				password: generateRandomPassword(),
 				service_center_id: "",
 				description: "",
+				organization: "",
 				location: "",
 			});
 			setServiceCenterSearch("");
@@ -825,6 +828,7 @@ export default function SamsungSentinelUsersView() {
 						password: generateRandomPassword(),
 						service_center_id: "",
 						description: "",
+						organization: "",
 						location: "",
 					});
 					setServiceCenterSearch("");
@@ -888,6 +892,7 @@ export default function SamsungSentinelUsersView() {
 										role: e.target.value,
 										service_center_id: "", // Reset service center when role changes
 										description: "",
+										organization: "",
 										location: "", // Reset location when role changes
 										password:
 											e.target.value === "admin" ||
@@ -962,6 +967,36 @@ export default function SamsungSentinelUsersView() {
 									/>
 								</>
 							)}
+			
+							{/* Organization & Description for Samsung Partner */}
+							{createFormData.role === "samsung_partner" && (
+								<>
+									<Input
+										label="Organization (optional)"
+										placeholder="Organization name"
+										value={createFormData.organization}
+										onChange={(e) =>
+											setCreateFormData((prev) => ({
+												...prev,
+												organization: e.target.value,
+											}))
+										}
+										variant="bordered"
+									/>
+									<Input
+										label="Description (optional)"
+										placeholder="Short description or notes"
+										value={createFormData.description}
+										onChange={(e) =>
+											setCreateFormData((prev) => ({
+												...prev,
+												description: e.target.value,
+											}))
+										}
+										variant="bordered"
+									/>
+								</>
+							)}
 							{/* Password for Admin, Finance, Auditor */}
 							{(createFormData.role === "admin" ||
 								createFormData.role === "finance" ||
@@ -1010,6 +1045,7 @@ export default function SamsungSentinelUsersView() {
 									password: generateRandomPassword(),
 									service_center_id: "",
 									description: "",
+									organization: "",
 									location: "",
 								});
 								setServiceCenterSearch("");
