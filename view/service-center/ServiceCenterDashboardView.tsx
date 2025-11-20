@@ -437,7 +437,7 @@ const ServiceCenterDashboardView = () => {
 							color="warning"
 							variant="flat"
 							onPress={() =>
-								router.push("/access/service-center/pending-claims")
+								router.push("/access/service-center/claims?status=pending")
 							}
 							startContent={<Clock className="w-4 h-4" />}
 						>

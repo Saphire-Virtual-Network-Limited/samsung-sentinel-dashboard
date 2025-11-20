@@ -260,7 +260,7 @@ export default function SamsungSentinelUsersView() {
 				await handleRestoreUser(user.id);
 				break;
 			case "resend":
-				await handleResendInvitation(user.email);
+				await handleResendInvitation(user.email, user.role);
 				break;
 		}
 	};

@@ -17,7 +17,12 @@ import {
 	type UserStatus,
 	type ResendInvitationDto,
 } from "@/lib";
-import { resendInvitation } from "@/lib/api/auth";
+import {
+	resendEngineerInvitation,
+	resendPartnerInvitation,
+	resendRepairStoreInvitation,
+	resendInvitation,
+} from "@/lib";
 
 export function useUsersManagement() {
 	const [filters, setFilters] = useState<GetUsersParams>({
@@ -171,22 +176,45 @@ export function useUsersManagement() {
 		[mutate]
 	);
 
-	const handleResendInvitation = useCallback(async (userEmail: string) => {
-		try {
-			await resendInvitation({ email: userEmail });
-			showToast({
-				type: "success",
-				message: "Invitation resent successfully",
-			});
-			return true;
-		} catch (error: any) {
-			showToast({
-				type: "error",
-				message: error?.message || "Failed to resend invitation",
-			});
-			return false;
-		}
-	}, []);
+	const handleResendInvitation = useCallback(
+		async (userEmail: string, userRole: string) => {
+			try {
+				const payload: ResendInvitationDto = { email: userEmail };
+
+				// Choose resend function based on role string (use switch for clarity)
+				switch (userRole) {
+					case "engineer":
+						await resendEngineerInvitation(payload);
+						break;
+
+					default:
+						// Default/fallback: use partner resend which doesn't require args
+						await resendInvitation(payload);
+						break;
+
+					/**		case "samsung_partner":
+						await resendPartnerInvitation();
+						break;
+					case "repair_store_admin":
+						await resendRepairStoreInvitation();
+						break; */
+				}
+
+				showToast({
+					type: "success",
+					message: "Invitation resent successfully",
+				});
+				return true;
+			} catch (error: any) {
+				showToast({
+					type: "error",
+					message: error?.message || "Failed to resend invitation",
+				});
+				return false;
+			}
+		},
+		[]
+	);
 
 	return {
 		users,
