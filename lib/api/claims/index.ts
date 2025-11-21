@@ -317,18 +317,16 @@ export async function bulkAuthorizeClaims(data: BulkAuthorizeDto): Promise<
  * @summary Mark multiple authorized claims as paid. Admin only.
  * @tag Claims
  */
-export async function bulkMarkClaimsPaid(data: BulkMarkPaidDto): Promise<
-	BaseApiResponse<{
-		total_processed: number;
-		successful: number;
-		failed: number;
-		results: Array<{
-			claim_id: string;
-			claim_number: string;
-			success: boolean;
-		}>;
-	}>
-> {
+export async function bulkMarkClaimsPaid(data: BulkMarkPaidDto): Promise<{
+	total_processed: number;
+	successful: number;
+	failed: number;
+	results: {
+		claim_id: string;
+		claim_number: string;
+		success: boolean;
+	};
+}> {
 	return apiCall("/claims/bulk-mark-paid", "POST", data);
 }
 
