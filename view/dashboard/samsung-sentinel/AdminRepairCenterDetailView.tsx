@@ -629,7 +629,7 @@ export default function AdminRepairCenterDetailView() {
 							statusOptions={[
 								{ name: "Active", uid: "ACTIVE" },
 								{ name: "Disabled", uid: "DISABLED" },
-								{ name: "Suspended", uid: "SUSPENDED" },
+								//	{ name: "Suspended", uid: "SUSPENDED" },
 							]}
 							statusFilter={new Set()}
 							onStatusChange={() => {}}
@@ -640,7 +640,51 @@ export default function AdminRepairCenterDetailView() {
 							page={1}
 							pages={1}
 							onPageChange={() => {}}
-							exportFn={() => {}}
+							exportFn={async () => {
+								// Export all service centers
+								const ExcelJS = (await import("exceljs")).default;
+								const workbook = new ExcelJS.Workbook();
+								const worksheet = workbook.addWorksheet("Service Centers");
+								worksheet.columns = [
+									{ header: "Name", key: "name", width: 25 },
+									{ header: "Location", key: "address", width: 30 },
+									{ header: "Contact", key: "contact", width: 25 },
+									{ header: "Status", key: "status", width: 12 },
+								];
+								worksheet.getRow(1).font = {
+									bold: true,
+									color: { argb: "FFFFFFFF" },
+								};
+								worksheet.getRow(1).fill = {
+									type: "pattern",
+									pattern: "solid",
+									fgColor: { argb: "FF4472C4" },
+								};
+								worksheet.getRow(1).alignment = {
+									vertical: "middle",
+									horizontal: "center",
+								};
+								(serviceCenters || []).forEach((item: any) => {
+									worksheet.addRow({
+										name: item.name,
+										address: item.address,
+										contact: item.phone || item.email || "",
+										status: item.status,
+									});
+								});
+								const buffer = await workbook.xlsx.writeBuffer();
+								const blob = new Blob([buffer], {
+									type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+								});
+								const url = URL.createObjectURL(blob);
+								const link = document.createElement("a");
+								link.href = url;
+								link.download = `service-centers-${
+									new Date().toISOString().split("T")[0]
+								}.xlsx`;
+								link.click();
+								URL.revokeObjectURL(url);
+							}}
 							renderCell={renderServiceCenterCell}
 							hasNoRecords={serviceCenters.length === 0}
 							searchPlaceholder="Search service centers..."

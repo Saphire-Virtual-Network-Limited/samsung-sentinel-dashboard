@@ -99,7 +99,48 @@ export default function RepairStoreEngineersView() {
 
 	// Export function
 	const exportFn = async (data: Engineer[]) => {
-		console.log("Exporting engineers:", data);
+		// Export all engineers
+		const ExcelJS = (await import("exceljs")).default;
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Engineers");
+		worksheet.columns = [
+			{ header: "Name", key: "name", width: 25 },
+			{ header: "Service Center", key: "service_center", width: 25 },
+			{ header: "Phone", key: "phone", width: 18 },
+			{ header: "Email", key: "email", width: 30 },
+			{ header: "Description", key: "description", width: 30 },
+			{ header: "Status", key: "status", width: 12 },
+		];
+		worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+		worksheet.getRow(1).fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "FF4472C4" },
+		};
+		worksheet.getRow(1).alignment = {
+			vertical: "middle",
+			horizontal: "center",
+		};
+		(data || []).forEach((item: any) => {
+			worksheet.addRow({
+				name: item.user?.name || item.name || "N/A",
+				service_center: item.service_center?.name || "N/A",
+				phone: item.user?.phone || item.phone || "N/A",
+				email: item.user?.email || item.email || "N/A",
+				description: item.description || "",
+				status: item.status,
+			});
+		});
+		const buffer = await workbook.xlsx.writeBuffer();
+		const blob = new Blob([buffer], {
+			type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `engineers-${new Date().toISOString().split("T")[0]}.xlsx`;
+		link.click();
+		URL.revokeObjectURL(url);
 	};
 
 	// Render cell content

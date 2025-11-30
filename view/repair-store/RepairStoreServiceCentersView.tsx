@@ -205,8 +205,48 @@ export default function RepairStoreServiceCentersView() {
 
 	// Export function
 	const exportFn = async (data: ServiceCenter[]) => {
-		// Implementation for export functionality
-		console.log("Exporting service centers:", data);
+		// Export all service centers
+		const ExcelJS = (await import("exceljs")).default;
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Service Centers");
+		worksheet.columns = [
+			{ header: "Name", key: "name", width: 25 },
+			{ header: "Location", key: "location", width: 30 },
+			{ header: "Contact", key: "contact", width: 25 },
+			{ header: "Engineers", key: "engineers_count", width: 12 },
+			{ header: "Status", key: "status", width: 12 },
+		];
+		worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+		worksheet.getRow(1).fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "FF4472C4" },
+		};
+		worksheet.getRow(1).alignment = {
+			vertical: "middle",
+			horizontal: "center",
+		};
+		(data || []).forEach((item: any) => {
+			worksheet.addRow({
+				name: item.name,
+				location: `${item.state}, ${item.city} (${item.address})`,
+				contact: item.phone || item.email || "",
+				engineers_count: item.engineers_count || 0,
+				status: item.status,
+			});
+		});
+		const buffer = await workbook.xlsx.writeBuffer();
+		const blob = new Blob([buffer], {
+			type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `service-centers-${
+			new Date().toISOString().split("T")[0]
+		}.xlsx`;
+		link.click();
+		URL.revokeObjectURL(url);
 	};
 
 	// Format currency

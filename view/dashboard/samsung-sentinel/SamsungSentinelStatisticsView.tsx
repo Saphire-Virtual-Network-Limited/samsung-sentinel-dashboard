@@ -1,6 +1,39 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+// Utility to aggregate claims by month
+interface ClaimOverTime {
+	date: string;
+	count: number;
+}
+interface MonthClaims {
+	month: string;
+	claims: number;
+}
+function aggregateClaimsByMonth(
+	data: ClaimOverTime[]
+): { date: string; claims: number }[] {
+	const monthMap: Record<string, MonthClaims> = {};
+	data.forEach((item: ClaimOverTime) => {
+		const dateObj = new Date(item.date);
+		const key = `${dateObj.getFullYear()}-${String(
+			dateObj.getMonth() + 1
+		).padStart(2, "0")}`;
+		if (!monthMap[key]) {
+			monthMap[key] = { month: key, claims: 0 };
+		}
+		monthMap[key].claims += item.count;
+	});
+	// Format for chart: { date: 'Jan 2024', claims: ... }
+	return Object.values(monthMap).map((item: MonthClaims) => {
+		const [year, month] = item.month.split("-");
+		const dateLabel = `${new Date(
+			Number(year),
+			Number(month) - 1
+		).toLocaleString("en-US", { month: "short" })} ${year}`;
+		return { date: dateLabel, claims: item.claims };
+	});
+}
 import {
 	Card,
 	CardBody,
@@ -56,6 +89,8 @@ const FILTER_OPTIONS = [
 ];
 
 export default function SamsungSentinelStatisticsView() {
+	// Chart view state: "daily" or "monthly"
+	const [claimsView, setClaimsView] = useState("daily");
 	// Get MTD default values
 	const today = new Date();
 	const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -144,11 +179,14 @@ export default function SamsungSentinelStatisticsView() {
 	// Transform trends data for charts
 	const claimsChartData = useMemo(() => {
 		if (!trends?.trends?.claims_over_time) return [];
+		if (claimsView === "monthly") {
+			return aggregateClaimsByMonth(trends.trends.claims_over_time);
+		}
 		return trends.trends.claims_over_time.map((item) => ({
 			date: formatDate(item.date),
 			claims: item.count,
 		}));
-	}, [trends]);
+	}, [trends, claimsView]);
 
 	const costChartData = useMemo(() => {
 		if (!trends?.trends?.repair_cost_over_time) return [];
@@ -382,8 +420,32 @@ export default function SamsungSentinelStatisticsView() {
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Claims Over Time */}
 				<Card>
-					<CardHeader>
+					<CardHeader className="flex flex-row items-center justify-between">
 						<h3 className="text-lg font-semibold">Claims Over Time</h3>
+						<div>
+							<button
+								className={`px-2 py-1 rounded text-xs mr-2 ${
+									claimsView === "daily"
+										? "bg-primary text-white"
+										: "bg-gray-200"
+								}`}
+								onClick={() => setClaimsView("daily")}
+								disabled={claimsView === "daily"}
+							>
+								Daily
+							</button>
+							<button
+								className={`px-2 py-1 rounded text-xs ${
+									claimsView === "monthly"
+										? "bg-primary text-white"
+										: "bg-gray-200"
+								}`}
+								onClick={() => setClaimsView("monthly")}
+								disabled={claimsView === "monthly"}
+							>
+								Monthly
+							</button>
+						</div>
 					</CardHeader>
 					<CardBody>
 						{isLoadingTrends ? (
@@ -484,11 +546,12 @@ export default function SamsungSentinelStatisticsView() {
 						hasNoRecords={filteredDeviceStats.length === 0}
 						searchPlaceholder="Search by device model..."
 						exportFn={async (data) => {
+							// Export all currently filtered device stats
+							const allDeviceStats = filteredDeviceStats;
 							const workbook = new ExcelJS.Workbook();
 							const worksheet = workbook.addWorksheet(
 								"Device Model Statistics"
 							);
-
 							worksheet.columns = [
 								{ header: "Product Name", key: "product_name", width: 30 },
 								{ header: "Total Claims", key: "total_claims", width: 15 },
@@ -500,7 +563,6 @@ export default function SamsungSentinelStatisticsView() {
 								},
 								{ header: "Claim Rate", key: "claim_rate", width: 15 },
 							];
-
 							worksheet.getRow(1).font = {
 								bold: true,
 								color: { argb: "FFFFFFFF" },
@@ -514,8 +576,7 @@ export default function SamsungSentinelStatisticsView() {
 								vertical: "middle",
 								horizontal: "center",
 							};
-
-							filteredDeviceStats.forEach((item: any) => {
+							allDeviceStats.forEach((item: any) => {
 								const row = worksheet.addRow({
 									product_name: item.product_name,
 									total_claims: item.total_claims || 0,
@@ -526,7 +587,6 @@ export default function SamsungSentinelStatisticsView() {
 								row.getCell("total_cost").numFmt = "₦#,##0.00";
 								row.getCell("total_unpaid_cost").numFmt = "₦#,##0.00";
 							});
-
 							const buffer = await workbook.xlsx.writeBuffer();
 							const blob = new Blob([buffer], {
 								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -571,11 +631,12 @@ export default function SamsungSentinelStatisticsView() {
 						hasNoRecords={filteredServiceCenterStats.length === 0}
 						searchPlaceholder="Search by service center or location..."
 						exportFn={async (data) => {
+							// Export all currently filtered service center stats
+							const allServiceCenterStats = filteredServiceCenterStats;
 							const workbook = new ExcelJS.Workbook();
 							const worksheet = workbook.addWorksheet(
 								"Service Center Performance"
 							);
-
 							worksheet.columns = [
 								{
 									header: "Service Center",
@@ -609,7 +670,6 @@ export default function SamsungSentinelStatisticsView() {
 									width: 18,
 								},
 							];
-
 							worksheet.getRow(1).font = {
 								bold: true,
 								color: { argb: "FFFFFFFF" },
@@ -623,8 +683,7 @@ export default function SamsungSentinelStatisticsView() {
 								vertical: "middle",
 								horizontal: "center",
 							};
-
-							filteredServiceCenterStats.forEach((item: any) => {
+							allServiceCenterStats.forEach((item: any) => {
 								worksheet.addRow({
 									service_center_name: item.service_center_name,
 									location: item.location,
@@ -635,7 +694,6 @@ export default function SamsungSentinelStatisticsView() {
 									authorized_repairs: item.authorized_repairs || 0,
 								});
 							});
-
 							const buffer = await workbook.xlsx.writeBuffer();
 							const blob = new Blob([buffer], {
 								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -501,7 +501,7 @@ export default function SamsungSentinelServiceCentersView() {
 
 	const statusOptions = [
 		{ name: "Active", uid: "ACTIVE" },
-		{ name: "Suspended", uid: "SUSPENDED" },
+		//{ name: "Suspended", uid: "SUSPENDED" },
 		{ name: "Disabled", uid: "DISABLED" },
 	];
 

@@ -370,7 +370,48 @@ export default function SamsungSentinelUsersView() {
 
 	// Export function (placeholder)
 	const handleExport = (data: User[]) => {
-		console.log("Exporting users:", data);
+		// Export all users
+		(async () => {
+			const ExcelJS = (await import("exceljs")).default;
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Users");
+			worksheet.columns = [
+				{ header: "Name", key: "name", width: 25 },
+				{ header: "Email", key: "email", width: 30 },
+				{ header: "Phone", key: "phone", width: 18 },
+				{ header: "Role", key: "role", width: 15 },
+				{ header: "Status", key: "status", width: 12 },
+			];
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).alignment = {
+				vertical: "middle",
+				horizontal: "center",
+			};
+			(data || []).forEach((item: any) => {
+				worksheet.addRow({
+					name: item.name,
+					email: item.email,
+					phone: item.phone || "N/A",
+					role: item.role,
+					status: item.status,
+				});
+			});
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `users-${new Date().toISOString().split("T")[0]}.xlsx`;
+			link.click();
+			URL.revokeObjectURL(url);
+		})();
 	};
 
 	// Handle save user edit

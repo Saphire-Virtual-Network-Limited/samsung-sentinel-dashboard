@@ -18,6 +18,8 @@ import {
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { StatCard } from "@/components/atoms/StatCard";
 import {
 	Eye,
@@ -391,7 +393,62 @@ export default function RepairStoreClaimsView() {
 				page={page}
 				pages={pagination?.totalPages || 1}
 				onPageChange={setPage}
-				exportFn={(data) => console.log("Export:", data)}
+				exportFn={async (data) => {
+					const allClaims = data;
+					try {
+						if (pagination?.total) {
+							// If you have an API to fetch all, use it here. Example:
+							// const allClaimsResponse = await useClaimsApi({ ...filters, page: 1, limit: pagination.total + 20 });
+							// allClaims = allClaimsResponse?.data || data;
+						}
+					} catch (e) {
+						// fallback to data
+					}
+					const workbook = new ExcelJS.Workbook();
+					const worksheet = workbook.addWorksheet("Claims");
+					worksheet.columns = [
+						{ header: "Claim ID", key: "claimId", width: 20 },
+						{ header: "Customer", key: "customer", width: 20 },
+						{ header: "IMEI", key: "imei", width: 20 },
+						{ header: "Device", key: "device", width: 20 },
+						{ header: "Device Fault", key: "deviceFault", width: 20 },
+						{ header: "Service Center", key: "serviceCenter", width: 20 },
+						{ header: "Engineer", key: "engineer", width: 20 },
+						{ header: "Amount", key: "amount", width: 15 },
+						{ header: "Status", key: "status", width: 15 },
+						{ header: "Payment", key: "payment", width: 15 },
+						{ header: "Txn Ref ID", key: "transactionRef", width: 20 },
+						{ header: "Submitted", key: "submitted", width: 20 },
+						{ header: "Completed", key: "completed", width: 20 },
+					];
+					worksheet.getRow(1).font = { bold: true };
+					worksheet.getRow(1).alignment = {
+						vertical: "middle",
+						horizontal: "center",
+					};
+					allClaims.forEach((claim: any) => {
+						worksheet.addRow({
+							claimId: claim.claimId,
+							customer: claim.customer,
+							imei: claim.imei,
+							device: claim.device,
+							deviceFault: claim.deviceFault,
+							serviceCenter: claim.serviceCenter,
+							engineer: claim.engineer,
+							amount: claim.amount,
+							status: claim.status,
+							payment: claim.payment,
+							transactionRef: claim.transactionRef,
+							submitted: claim.submitted,
+							completed: claim.completed,
+						});
+					});
+					const buffer = await workbook.xlsx.writeBuffer();
+					const blob = new Blob([buffer], {
+						type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+					});
+					saveAs(blob, `claims-${new Date().toISOString().split("T")[0]}.xlsx`);
+				}}
 				renderCell={renderCell}
 				hasNoRecords={claims.length === 0}
 				searchPlaceholder="Search by claim ID, IMEI, or customer name..."

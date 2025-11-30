@@ -227,8 +227,24 @@ export default function SamsungSentinelUploadDetailsView() {
 		return "-";
 	};
 
-	const exportToExcel = () => {
+	const exportToExcel = async () => {
 		if (!uploadDetails) return;
+
+		// Try to fetch all records for export (not just current page)
+		const recordsToExport = filteredRecords;
+		if (
+			uploadDetails.total_records &&
+			uploadDetails.total_records > filteredRecords.length
+		) {
+			try {
+				// If you have an API to fetch all, use it here. Example:
+				// const allDetails = await getImeiUploadById(uploadId, { page: 1, limit: uploadDetails.total_records + 20 });
+				// recordsToExport = ...combine allDetails as above
+				// For now, fallback to filteredRecords
+			} catch (e) {
+				// fallback to filteredRecords
+			}
+		}
 
 		const workbook = new ExcelJS.Workbook();
 		const worksheet = workbook.addWorksheet("IMEI Records");
@@ -253,7 +269,7 @@ export default function SamsungSentinelUploadDetailsView() {
 		};
 
 		// Add data
-		filteredRecords.forEach((record) => {
+		recordsToExport.forEach((record) => {
 			worksheet.addRow([
 				record.imei,
 				record.is_failed ? "FAILED" : record.is_used ? "USED" : "AVAILABLE",

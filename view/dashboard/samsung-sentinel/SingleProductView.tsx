@@ -252,8 +252,48 @@ export default function SingleProductView({
 
 	// Export function for audit logs (optional)
 	const exportAuditLogs = (data: AuditTableRow[]) => {
-		console.log("Exporting audit logs:", data);
-		// Implement export logic if needed
+		// Export all audit logs
+		(async () => {
+			const ExcelJS = (await import("exceljs")).default;
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Audit Logs");
+			worksheet.columns = [
+				{ header: "Date", key: "date", width: 20 },
+				{ header: "User", key: "user", width: 25 },
+				{ header: "Action", key: "action", width: 30 },
+				{ header: "Details", key: "details", width: 40 },
+			];
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).alignment = {
+				vertical: "middle",
+				horizontal: "center",
+			};
+			(data || []).forEach((item: any) => {
+				worksheet.addRow({
+					date: item.date,
+					user: item.user,
+					action: item.action,
+					details: item.details,
+				});
+			});
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-${
+				new Date().toISOString().split("T")[0]
+			}.xlsx`;
+			link.click();
+			URL.revokeObjectURL(url);
+		})();
 	};
 
 	// Modal states
@@ -594,7 +634,6 @@ export default function SingleProductView({
 					value={`₦${stats.repairCost.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
-			
 			</div>
 
 			{/* Audit Logs Section */}

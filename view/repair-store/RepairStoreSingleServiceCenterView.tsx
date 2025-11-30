@@ -522,7 +522,56 @@ export default function RepairStoreSingleServiceCenterView({
 							page={1}
 							pages={1}
 							onPageChange={() => {}}
-							exportFn={async () => {}}
+							exportFn={async () => {
+								// Export all engineers
+								const allEngineers = engineers || [];
+								const ExcelJS = (await import("exceljs")).default;
+								const workbook = new ExcelJS.Workbook();
+								const worksheet = workbook.addWorksheet("Engineers");
+								worksheet.columns = [
+									{ header: "Name", key: "name", width: 25 },
+									{ header: "Email", key: "email", width: 30 },
+									{ header: "Phone", key: "phone", width: 18 },
+									{ header: "Description", key: "description", width: 30 },
+									{ header: "Status", key: "status", width: 12 },
+									{ header: "Created", key: "created", width: 20 },
+								];
+								worksheet.getRow(1).font = {
+									bold: true,
+									color: { argb: "FFFFFFFF" },
+								};
+								worksheet.getRow(1).fill = {
+									type: "pattern",
+									pattern: "solid",
+									fgColor: { argb: "FF4472C4" },
+								};
+								worksheet.getRow(1).alignment = {
+									vertical: "middle",
+									horizontal: "center",
+								};
+								allEngineers.forEach((item: any) => {
+									worksheet.addRow({
+										name: item.name,
+										email: item.email,
+										phone: item.phone,
+										description: item.description || "",
+										status: item.status,
+										created: item.created,
+									});
+								});
+								const buffer = await workbook.xlsx.writeBuffer();
+								const blob = new Blob([buffer], {
+									type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+								});
+								const url = URL.createObjectURL(blob);
+								const link = document.createElement("a");
+								link.href = url;
+								link.download = `engineers-${
+									new Date().toISOString().split("T")[0]
+								}.xlsx`;
+								link.click();
+								URL.revokeObjectURL(url);
+							}}
 						/>
 					</div>
 				</>
