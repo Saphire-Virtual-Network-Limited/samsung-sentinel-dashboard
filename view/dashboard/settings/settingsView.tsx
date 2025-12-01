@@ -15,10 +15,9 @@ import useSWR from "swr";
 import ProfileTab from "./ProfileTab";
 import SecurityTab from "./SecurityTab";
 import {
-	getAdminProfile,
-	updateUserProfile,
-	updateAdminPassword,
-	validateOldPassword,
+	getMyProfile,
+	updateMyProfile,
+	changePassword,
 	showToast,
 	cn,
 	GeneralSans_SemiBold,
@@ -26,23 +25,12 @@ import {
 } from "@/lib";
 
 interface ProfileData {
-	userId: string;
-	firstName: string;
-	lastName: string;
+	id: string;
 	email: string;
-	dob: string | null;
-	gender: string | null;
+	name: string;
+	phone: string;
 	role: string;
-	telephoneNumber: string;
-	profile_picture: string | null;
-	accountStatus: string;
-	isActive: boolean;
-	accountType: string;
-	companyName: string | null;
-	companyAddress: string | null;
-	companyState: string | null;
-	companyCity: string | null;
-	companyLGA: string | null;
+	status: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -68,9 +56,9 @@ export default function SettingsView() {
 		data: profileResponse,
 		isLoading: isLoadingProfile,
 		mutate: mutateProfile,
-	} = useSWR("admin-profile", () => getAdminProfile());
+	} = useSWR("my-profile", () => getMyProfile());
 
-	const profileData: ProfileData | null = profileResponse?.data || null;
+	const profileData: ProfileData | null = profileResponse || null;
 
 	// Profile form state
 	const [profileForm, setProfileForm] = useState<Partial<ProfileData>>({});
@@ -85,16 +73,11 @@ export default function SettingsView() {
 	// Update profile form when data loads
 	useEffect(() => {
 		if (profileData) {
+			const [firstName = "", lastName = ""] = profileData.name.split(" ");
 			setProfileForm({
-				firstName: profileData.firstName || "",
-				lastName: profileData.lastName || "",
+				name: profileData.name || "",
 				email: profileData.email || "",
-				telephoneNumber: profileData.telephoneNumber || "",
-				companyName: profileData.companyName || "",
-				companyAddress: profileData.companyAddress || "",
-				companyState: profileData.companyState || "",
-				companyCity: profileData.companyCity || "",
-				companyLGA: profileData.companyLGA || "",
+				phone: profileData.phone || "",
 			});
 		}
 	}, [profileData]);
@@ -104,16 +87,6 @@ export default function SettingsView() {
 		value: string
 	) => {
 		setProfileForm((prev) => ({ ...prev, [field]: value }));
-
-		// Clear city and LGA when state changes
-		if (field === "companyState") {
-			setProfileForm((prev) => ({
-				...prev,
-				[field]: value,
-				companyCity: "",
-				companyLGA: "",
-			}));
-		}
 	};
 
 	const handlePasswordFieldChange = (
@@ -134,20 +107,13 @@ export default function SettingsView() {
 		try {
 			setIsUpdatingProfile(true);
 
-			// Transform the data to match UpdateUserDto interface
+			// Transform the data to match UpdateUserDto interface (name, phone only)
 			const updateData = {
-				firstName: profileForm.firstName || "",
-				lastName: profileForm.lastName || "",
-				email: profileForm.email || "",
-				telephoneNumber: profileForm.telephoneNumber || "",
-				companyName: profileForm.companyName || undefined,
-				companyAddress: profileForm.companyAddress || undefined,
-				companyState: profileForm.companyState || undefined,
-				companyCity: profileForm.companyCity || undefined,
-				companyLGA: profileForm.companyLGA || undefined,
+				name: profileForm.name || "",
+				phone: profileForm.phone || "",
 			};
 
-			await updateUserProfile(profileData.userId, updateData);
+			await updateMyProfile(updateData);
 			await mutateProfile();
 			setIsEditingProfile(false);
 			showToast({ type: "success", message: "Profile updated successfully" });
@@ -199,24 +165,10 @@ export default function SettingsView() {
 			setIsUpdatingPassword(true);
 			setOldPasswordError("");
 
-			const validation = await validateOldPassword(
-				profileData.email,
-				passwordForm.oldPassword
-			);
-
-			if (!validation.isValid) {
-				setOldPasswordError(validation.message || "Invalid current password");
-				showToast({
-					type: "error",
-					message: "Current password is incorrect",
-				});
-				return;
-			}
-
-			await updateAdminPassword({
-				password: passwordForm.password,
-				oldPassword: passwordForm.oldPassword,
-				confirmPassword: passwordForm.confirmPassword,
+			// Use changePassword API
+			await changePassword({
+				current_password: passwordForm.oldPassword,
+				new_password: passwordForm.password,
 			});
 
 			// Update password security status
@@ -237,15 +189,9 @@ export default function SettingsView() {
 	const handleCancelEdit = () => {
 		if (profileData) {
 			setProfileForm({
-				firstName: profileData.firstName || "",
-				lastName: profileData.lastName || "",
+				name: profileData.name || "",
 				email: profileData.email || "",
-				telephoneNumber: profileData.telephoneNumber || "",
-				companyName: profileData.companyName || "",
-				companyAddress: profileData.companyAddress || "",
-				companyState: profileData.companyState || "",
-				companyCity: profileData.companyCity || "",
-				companyLGA: profileData.companyLGA || "",
+				phone: profileData.phone || "",
 			});
 		}
 		setIsEditingProfile(false);
@@ -283,11 +229,8 @@ export default function SettingsView() {
 							<div className="flex flex-col items-center">
 								<div className="relative inline-block mb-4">
 									<Avatar
-										src={profileData?.profile_picture || ""}
 										className="w-16 h-16 sm:w-20 sm:h-20 text-large"
-										name={`${profileData?.firstName?.[0] || ""}${
-											profileData?.lastName?.[0] || ""
-										}`}
+										name={profileData?.name?.[0] || "U"}
 									/>
 									<button className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1.5 text-white hover:bg-primary/80 transition-colors">
 										<Camera className="w-3 h-3" />
@@ -300,7 +243,7 @@ export default function SettingsView() {
 										GeneralSans_SemiBold.className
 									)}
 								>
-									{profileData?.firstName} {profileData?.lastName}
+									{profileData?.name}
 								</h3>
 
 								<p className="text-gray-600 text-sm mb-2 text-center">
@@ -309,21 +252,17 @@ export default function SettingsView() {
 
 								<Chip
 									size="sm"
-									color={getStatusColor(profileData?.accountStatus || "")}
+									color={getStatusColor(profileData?.status || "")}
 									variant="flat"
 									className="mb-3"
 								>
-									{profileData?.accountStatus}
+									{profileData?.status}
 								</Chip>
 
 								<div className="space-y-2 text-xs sm:text-sm text-gray-600 w-full">
 									<div className="flex items-center justify-center gap-2">
 										<User className="w-4 h-4 flex-shrink-0" />
 										<span className="truncate">{profileData?.role}</span>
-									</div>
-									<div className="flex items-center justify-center gap-2">
-										<Building2 className="w-4 h-4 flex-shrink-0" />
-										<span className="truncate">{profileData?.accountType}</span>
 									</div>
 									<div className="flex items-center justify-center gap-2">
 										<Calendar className="w-4 h-4 flex-shrink-0" />

@@ -9,10 +9,18 @@ import {
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	Textarea,
+	useDisclosure,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
+import { nanoid } from "nanoid";
 import DocumentsCell from "@/components/reususables/DocumentsCell";
 import {
 	MoreHorizontal,
@@ -29,6 +37,7 @@ import testData from "@/lib/testData/claimsRepairsTestData.json";
 
 export type ClaimRepairRole =
 	| "service-center"
+	| "repair_store"
 	| "samsung-partners"
 	| "samsung-sentinel";
 
@@ -42,9 +51,9 @@ export interface ClaimRepairItem {
 	model: string;
 	faultType: string;
 	repairCost: number;
-	status: "pending" | "approved" | "rejected";
-	repairStatus: "pending" | "awaiting-parts" | "received-device" | "completed";
-	paymentStatus?: "paid" | "unpaid";
+	status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "AUTHORIZED";
+	repairStatus?: "PENDING" | "AWAITING_PARTS" | "RECEIVED_DEVICE" | "COMPLETED";
+	paymentStatus?: "PAID" | "UNPAID";
 	transactionRef?: string;
 	sessionId?: string;
 	createdAt: string;
@@ -52,10 +61,18 @@ export interface ClaimRepairItem {
 	serviceCenterId?: string;
 	engineerName?: string;
 	completedAt?: string;
+	completedById?: string;
 	approvedAt?: string;
+	approvedById?: string;
 	rejectedAt?: string;
+	rejectedById?: string;
 	rejectionReason?: string;
-	authorizedForPayment?: boolean;
+	authorizedAt?: string;
+	authorizedById?: string;
+	paidAt?: string;
+	paidById?: string;
+	transactionId?: string;
+	referenceId?: string;
 }
 
 export interface ClaimsRepairsTableProps {
@@ -63,6 +80,16 @@ export interface ClaimsRepairsTableProps {
 	isLoading?: boolean;
 	error?: any;
 	role: ClaimRepairRole;
+	pagination?: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+	page?: number;
+	onPageChange?: (page: number) => void;
+	rowsPerPage?: number;
+	onRowsPerPageChange?: (rowsPerPage: number) => void;
 	onApprove?: (claimId: string) => void;
 	onReject?: (claimId: string, reason: string) => void;
 	onAuthorizePayment?: (claimId: string) => void;
@@ -72,7 +99,15 @@ export interface ClaimsRepairsTableProps {
 	onBulkReject?: (claimIds: string[], reason: string) => void;
 	onBulkAuthorizePayment?: (claimIds: string[]) => void;
 	onViewDetails?: (claim: ClaimRepairItem) => void;
-	onUpdateRepairStatus?: (claimId: string, newRepairStatus: "pending" | "awaiting-parts" | "received-device" | "completed") => void;
+	onSearchParamsChange?: (searchParams: string) => void;
+	onUpdateRepairStatus?: (
+		claimId: string,
+		newRepairStatus:
+			| "pending"
+			| "awaiting-parts"
+			| "received-device"
+			| "completed"
+	) => void;
 	showPaymentColumns?: boolean;
 	enableMultiSelect?: boolean;
 	onDateFilterChange?: (start: string, end: string) => void;
@@ -86,6 +121,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	isLoading,
 	error,
 	role,
+	pagination: externalPagination,
+	page: externalPage,
+	onPageChange: externalOnPageChange,
+	rowsPerPage: externalRowsPerPage,
+	onRowsPerPageChange: externalOnRowsPerPageChange,
 	onApprove,
 	onReject,
 	onAuthorizePayment,
@@ -99,11 +139,21 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	showPaymentColumns = false,
 	enableMultiSelect = false,
 	onDateFilterChange,
+	onSearchParamsChange,
 	initialStartDate,
 	initialEndDate,
 	defaultDateRange,
 }) => {
 	const router = useRouter();
+
+	// Use external pagination if provided, otherwise use internal state
+	const [internalPage, setInternalPage] = useState(1);
+	const [internalRowsPerPage, setInternalRowsPerPage] = useState(10);
+
+	const page = externalPage ?? internalPage;
+	const setPage = externalOnPageChange ?? setInternalPage;
+	const rowsPerPage = externalRowsPerPage ?? internalRowsPerPage;
+	const setRowsPerPage = externalOnRowsPerPageChange ?? setInternalRowsPerPage;
 	const searchParams = useSearchParams();
 	const status = searchParams.get("status") || "all";
 	const paymentFilter = searchParams.get("payment") || "all";
@@ -113,24 +163,52 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		column: "createdAt",
 		direction: "descending" as "ascending" | "descending",
 	});
-	const [page, setPage] = useState(1);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
+	// Rejection modal state
+	const {
+		isOpen: isRejectModalOpen,
+		onOpen: onRejectModalOpen,
+		onClose: onRejectModalClose,
+	} = useDisclosure();
+	const [rejectingClaimId, setRejectingClaimId] = useState<string | null>(null);
+	const [rejectionReason, setRejectionReason] = useState("");
+
+	// Bulk rejection modal state
+	const {
+		isOpen: isBulkRejectModalOpen,
+		onOpen: onBulkRejectModalOpen,
+		onClose: onBulkRejectModalClose,
+	} = useDisclosure();
+	const [bulkRejectionReason, setBulkRejectionReason] = useState("");
+
+	// Bulk payment results modal state
+	const {
+		isOpen: isPaymentResultsModalOpen,
+		onOpen: onPaymentResultsModalOpen,
+		onClose: onPaymentResultsModalClose,
+	} = useDisclosure();
+	const [paymentResults, setPaymentResults] = useState<{
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	} | null>(null);
 
 	// Filter data based on search params
 	const filteredData = useMemo(() => {
 		let filtered = [...data];
 
-		// Filter by status
+		// Filter by status (case-insensitive comparison)
 		if (status !== "all") {
-			filtered = filtered.filter((item) => item.status === status);
+			const statusUpper = status.toUpperCase();
+			filtered = filtered.filter((item) => item.status === statusUpper);
 		}
 
-		// Filter by payment status
+		// Filter by payment status (case-insensitive comparison)
 		if (paymentFilter !== "all" && showPaymentColumns) {
-			filtered = filtered.filter(
-				(item) => item.paymentStatus === paymentFilter
-			);
+			const paymentUpper = paymentFilter.toUpperCase();
+			filtered = filtered.filter((item) => item.paymentStatus === paymentUpper);
 		}
 
 		return filtered;
@@ -175,11 +253,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				sortable: true,
 			},
 			{
-				name: "Repair Status",
-				uid: "repairStatus",
-				sortable: true,
-			},
-			{
 				name: "Date",
 				uid: "createdAt",
 				sortable: true,
@@ -203,17 +276,31 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			});
 		}
 
+		// Add rejection details for rejected claims (all roles)
+		if (role === "service-center" || role === "repair_store") {
+			baseColumns.push({
+				name: "Rejection Reason",
+				uid: "rejectionReason",
+				sortable: false,
+			});
+			baseColumns.push({
+				name: "Transaction Ref",
+				uid: "transactionRef",
+				sortable: false,
+			});
+			baseColumns.push({
+				name: "Completion Info",
+				uid: "completionInfo",
+				sortable: false,
+			});
+		}
+
 		// Add payment columns if needed
 		if (showPaymentColumns) {
 			const paymentColumns: ColumnDef[] = [
 				{
 					name: "Payment Status",
 					uid: "paymentStatus",
-					sortable: true,
-				},
-				{
-					name: "Authorization",
-					uid: "authorizedForPayment",
 					sortable: true,
 				},
 			];
@@ -227,20 +314,102 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				});
 			}
 
-			paymentColumns.push(
+			paymentColumns.push({
+				name: "Completed Date",
+				uid: "completedAt",
+				sortable: true,
+			});
+
+			// Add payment details for paid claims
+			paymentColumns.push({
+				name: "Payment Details",
+				uid: "paymentDetails",
+				sortable: false,
+			});
+
+			baseColumns.push(...paymentColumns);
+		}
+
+		// Add all audit fields for Samsung admin
+		if (role === "samsung-sentinel") {
+			baseColumns.push(
+				{
+					name: "Rejection Reason",
+					uid: "rejectionReason",
+					sortable: false,
+				},
 				{
 					name: "Transaction Ref",
 					uid: "transactionRef",
-					sortable: true,
+					sortable: false,
 				},
 				{
-					name: "Completed Date",
-					uid: "completedAt",
-					sortable: true,
+					name: "Approved Info",
+					uid: "approvedInfo",
+					sortable: false,
+				},
+				{
+					name: "Authorized Info",
+					uid: "authorizedInfo",
+					sortable: false,
+				},
+				{
+					name: "Rejected Info",
+					uid: "rejectedInfo",
+					sortable: false,
+				},
+				{
+					name: "Completed Info",
+					uid: "completedInfo",
+					sortable: false,
+				},
+				{
+					name: "Paid Info",
+					uid: "paidInfo",
+					sortable: false,
 				}
 			);
+		}
 
-			baseColumns.push(...paymentColumns);
+		// Samsung partners need to see ALL details
+		if (role === "samsung-partners") {
+			baseColumns.push(
+				{
+					name: "Rejection Reason",
+					uid: "rejectionReason",
+					sortable: false,
+				},
+				{
+					name: "Transaction Ref",
+					uid: "transactionRef",
+					sortable: false,
+				},
+				{
+					name: "Approved Info",
+					uid: "approvedInfo",
+					sortable: false,
+				},
+				{
+					name: "Authorized Info",
+					uid: "authorizedInfo",
+					sortable: false,
+				},
+				{
+					name: "Rejected Info",
+					uid: "rejectedInfo",
+					sortable: false,
+				},
+				{
+					name: "Completed Info",
+					uid: "completedInfo",
+					sortable: false,
+				},
+				{
+					name: "Paid Info",
+					uid: "paidInfo",
+					sortable: false,
+				}
+			);
 		}
 
 		// Always add actions column
@@ -260,18 +429,18 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				startContent={<Eye className="h-4 w-4" />}
 				onPress={() => handleViewDetailsClick(item)}
 			>
-				View Details
+				Expand
 			</DropdownItem>,
 		];
 
 		// Service Center Actions
-		if (role === "service-center" && item.status === "pending") {
+		if (role === "service-center" && item.status === "APPROVED") {
 			items.push(
 				<DropdownItem
 					key="edit"
 					startContent={<FileText className="h-4 w-4" />}
 					onPress={() =>
-						router.push(`/access/service-center/claims/${item.claimId}`)
+						router.push(`/access/service-center/claims/${item.id}`)
 					}
 				>
 					Edit Claim
@@ -280,7 +449,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		}
 
 		// Samsung Partners Actions
-		if (role === "samsung-partners" && item.status === "pending") {
+		if (role === "samsung-partners" && item.status === "PENDING") {
 			items.push(
 				<DropdownItem
 					key="approve"
@@ -301,13 +470,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Partners: Authorize payment for approved claims with completed repairs
+		// Samsung Partners: Authorize payment for approved claims
 		if (
 			role === "samsung-partners" &&
-			item.status === "approved" &&
-			item.repairStatus === "completed" &&
-			item.paymentStatus === "unpaid" &&
-			!item.authorizedForPayment
+			item.status === "COMPLETED" &&
+			item.paymentStatus === "UNPAID"
 		) {
 			items.push(
 				<DropdownItem
@@ -321,40 +488,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			);
 		}
 
-		// Samsung Sentinel Actions: Execute payment for authorized claims
+		// Samsung Sentinel Actions: Disburse payment for authorized unpaid claims
 		if (
 			role === "samsung-sentinel" &&
-			item.status === "approved" &&
-			item.repairStatus === "completed" &&
-			item.paymentStatus === "unpaid" &&
-			item.authorizedForPayment
+			item.status === "AUTHORIZED" &&
+			item.paymentStatus === "UNPAID"
 		) {
 			items.push(
 				<DropdownItem
-					key="execute"
+					key="disburse"
 					startContent={<DollarSign className="h-4 w-4" />}
-					onPress={() => onExecutePayment?.([item.id])}
+					onPress={() => {
+						// Generate unique transaction reference for single payment
+						const today = new Date();
+						const dateStr = today.toISOString().split("T")[0].replace(/-/g, "");
+						const uniqueId = nanoid(8);
+						const transactionRef = `TXN-${dateStr}-1-${uniqueId}`;
+						onBulkPayment?.([item.id], transactionRef);
+					}}
 					color="success"
 				>
-					Execute Payment
-				</DropdownItem>
-			);
-		}
-
-		// Service Center: Update repair status for approved claims (except completed)
-		if (
-			role === "service-center" &&
-			item.status === "approved" &&
-			item.repairStatus !== "completed"
-		) {
-			items.push(
-				<DropdownItem
-					key="update-repair"
-					startContent={<Wrench className="h-4 w-4" />}
-					onPress={() => onUpdateRepairStatus?.(item.id, item.repairStatus)}
-					color="warning"
-				>
-					Update Repair Status
+					Disburse Payment
 				</DropdownItem>
 			);
 		}
@@ -370,17 +524,36 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			// Fall back to navigation (for dedicated pages)
 			const basePath =
 				role === "service-center"
-					? "/access/service-center/claims/view"
+					? "/access/service-center/claims"
 					: role === "samsung-partners"
-					? "/access/samsung-partners/repair-claims/view"
-					: "/access/samsung-sentinel/repairs/view";
+					? "/access/samsung-partners/repair-claims"
+					: "/access/repair-store/repairs";
 			router.push(`${basePath}/${item.claimId}`);
 		}
 	};
 
 	const handleReject = (id: string) => {
-		// Open rejection modal
-		onReject?.(id, "");
+		// Open rejection modal to collect reason
+		setRejectingClaimId(id);
+		setRejectionReason("");
+		onRejectModalOpen();
+	};
+
+	const handleConfirmReject = () => {
+		if (!rejectionReason.trim()) {
+			showToast({
+				type: "error",
+				message: "Please provide a rejection reason",
+			});
+			return;
+		}
+
+		if (rejectingClaimId) {
+			onReject?.(rejectingClaimId, rejectionReason);
+			onRejectModalClose();
+			setRejectingClaimId(null);
+			setRejectionReason("");
+		}
 	};
 
 	// Check if item is disabled for selection
@@ -399,6 +572,13 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					<span className={`font-medium ${cellClassName}`}>{item.claimId}</span>
 				);
 
+			case "imei":
+				return (
+					<span className={`font-mono text-sm ${cellClassName}`}>
+						{item.imei}
+					</span>
+				);
+
 			case "device":
 				return (
 					<div className={cellClassName}>
@@ -409,47 +589,37 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "faultType":
 				return (
 					<Chip variant="bordered" size="sm" className={cellClassName}>
-						{item.faultType?.replace("-", " ").toUpperCase()}
+						{item.faultType && item.faultType !== "Screen Damage"
+							? item.faultType.replace("-", " ").toUpperCase()
+							: "Screen Damage"}
 					</Chip>
 				);
-
 			case "repairCost":
 				return (
-					<div className="flex items-center gap-2">
-						<span className="font-medium">
-							₦{Number(item.repairCost).toLocaleString()}
-						</span>
-						{item.authorizedForPayment && (
-							<Chip
-								color="success"
-								size="sm"
-								variant="flat"
-								className="text-xs px-1"
-							>
-								✓ Authorized
-							</Chip>
-						)}
-					</div>
+					<span className="font-medium">
+						₦{Number(item.repairCost).toLocaleString()}
+					</span>
 				);
 
 			case "status":
 				const statusColors: Record<string, any> = {
-					pending: "warning",
-					approved: "success",
-					rejected: "danger",
-					"in-progress": "primary",
+					PENDING: "warning",
+					APPROVED: "success",
+					REJECTED: "danger",
+					COMPLETED: "primary",
+					AUTHORIZED: "success",
 				};
 				return (
 					<div className="flex items-center gap-2">
 						<Chip
-							color={statusColors[item.status || "pending"] || "default"}
+							color={statusColors[item.status || "PENDING"] || "default"}
 							variant="flat"
 							size="sm"
 							className={cellClassName}
 						>
-							{(item.status || "pending").toUpperCase().replace("-", " ")}
+							{(item.status || "PENDING").toUpperCase().replace("_", " ")}
 						</Chip>
-						{disabled && item.status !== "approved" && (
+						{disabled && item.status !== "COMPLETED" && (
 							<span
 								className="text-xs text-gray-400"
 								title="Not eligible for selection"
@@ -460,53 +630,24 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					</div>
 				);
 
-			case "repairStatus":
-				const repairStatusColors: Record<string, any> = {
-					pending: "warning",
-					"awaiting-parts": "secondary",
-					"received-device": "primary",
-					completed: "success",
-				};
-				return (
-					<div className="flex items-center gap-2">
-						<Chip
-							color={repairStatusColors[item.repairStatus || "pending"] || "default"}
-							variant="flat"
-							size="sm"
-							startContent={<Wrench size={12} />}
-							className={cellClassName}
-						>
-							{(item.repairStatus || "pending").toUpperCase().replace("-", " ")}
-						</Chip>
-					</div>
-				);
-
 			case "paymentStatus":
 				return item.paymentStatus ? (
-					<div className="flex items-center gap-2">
-						<Chip
-							color={item.paymentStatus === "paid" ? "success" : "warning"}
-							variant="flat"
-							size="sm"
-						>
-							{item.paymentStatus.toUpperCase()}
-						</Chip>
-						{item.paymentStatus === "unpaid" && item.authorizedForPayment && (
-							<span
-								className="text-xs text-success-600 dark:text-success-400"
-								title="Authorized for payment"
-							>
-								🔓
-							</span>
-						)}
-					</div>
+					<Chip
+						color={item.paymentStatus === "PAID" ? "success" : "warning"}
+						variant="flat"
+						size="sm"
+					>
+						{item.paymentStatus.toUpperCase()}
+					</Chip>
 				) : (
 					<span className="text-gray-400">N/A</span>
 				);
 
 			case "transactionRef":
 				return item.transactionRef ? (
-					<span className="font-mono text-xs">{item.transactionRef}</span>
+					<span className="text-sm font-mono text-gray-600">
+						{item.transactionRef}
+					</span>
 				) : (
 					<span className="text-gray-400">-</span>
 				);
@@ -521,7 +662,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "bankDetails":
 				// Bank details are loaded from test data via serviceCenterId
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "approved" && item.repairStatus === "completed") {
+				if (item.serviceCenterId && item.status === "COMPLETED") {
 					const serviceCenter = testData.serviceCenters.find(
 						(sc: any) => sc.id === item.serviceCenterId
 					);
@@ -554,8 +695,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "createdAt":
 				return <span className="text-sm">{formatDate(item.createdAt)}</span>;
 
-
-
 			case "serviceCenterName":
 				return (
 					<span className="text-sm">{item.serviceCenterName || "N/A"}</span>
@@ -563,6 +702,147 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			case "engineerName":
 				return <span className="text-sm">{item.engineerName || "N/A"}</span>;
+
+			case "rejectionReason":
+				return item.rejectionReason ? (
+					<div className="text-sm text-danger-600 max-w-xs">
+						{item.rejectionReason}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "rejectionInfo":
+				return item.status === "REJECTED" ? (
+					<div className="text-xs space-y-1">
+						{item.rejectedAt && (
+							<div className="text-gray-600">{formatDate(item.rejectedAt)}</div>
+						)}
+						{item.rejectionReason && (
+							<div className="text-danger-600 line-clamp-2">
+								{item.rejectionReason}
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "completionInfo":
+				return item.completedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.completedAt)}</div>
+						{item.completedById && (
+							<div className="text-gray-500 font-mono">
+								{item.completedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "paymentDetails":
+				return item.paymentStatus === "PAID" ? (
+					<div className="text-xs space-y-1">
+						{item.paidAt && (
+							<div className="text-gray-600">{formatDate(item.paidAt)}</div>
+						)}
+						{item.transactionId && (
+							<div className="text-gray-500 font-mono truncate max-w-[120px]">
+								Txn: {item.transactionId}
+							</div>
+						)}
+						{item.referenceId && (
+							<div className="text-gray-500">Ref: {item.referenceId}</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "approvedInfo":
+				return item.approvedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.approvedAt)}</div>
+						{item.approvedById && (
+							<div className="text-gray-500 font-mono">
+								{item.approvedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "authorizedInfo":
+				return item.authorizedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.authorizedAt)}</div>
+						{item.authorizedById && (
+							<div className="text-gray-500 font-mono">
+								{item.authorizedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "rejectedInfo":
+				return item.rejectedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.rejectedAt)}</div>
+						{item.rejectedById && (
+							<div className="text-gray-500 font-mono">
+								{item.rejectedById.slice(0, 8)}...
+							</div>
+						)}
+						{item.rejectionReason && (
+							<div className="text-danger-600 line-clamp-2">
+								{item.rejectionReason}
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "completedInfo":
+				return item.completedAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.completedAt)}</div>
+						{item.completedById && (
+							<div className="text-gray-500 font-mono">
+								{item.completedById.slice(0, 8)}...
+							</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
+
+			case "paidInfo":
+				return item.paidAt ? (
+					<div className="text-xs space-y-1">
+						<div className="text-gray-600">{formatDate(item.paidAt)}</div>
+						{item.paidById && (
+							<div className="text-gray-500 font-mono">
+								{item.paidById.slice(0, 8)}...
+							</div>
+						)}
+						{item.transactionId && (
+							<div className="text-gray-500 font-mono truncate max-w-[120px]">
+								{item.transactionId}
+							</div>
+						)}
+						{item.referenceId && (
+							<div className="text-gray-500">Ref: {item.referenceId}</div>
+						)}
+					</div>
+				) : (
+					<span className="text-gray-400">-</span>
+				);
 
 			case "actions":
 				return (
@@ -592,25 +872,86 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	}));
 
 	// Pagination
-	const pages = Math.ceil(tableData.length / rowsPerPage);
+	const pages =
+		externalPagination?.totalPages || Math.ceil(tableData.length / rowsPerPage);
 	const paginatedData = useMemo(() => {
+		// If external pagination is provided, data is already paginated
+		if (externalPagination) {
+			return tableData;
+		}
+		// Otherwise, paginate locally
 		const start = (page - 1) * rowsPerPage;
 		const end = start + rowsPerPage;
 		return tableData.slice(start, end);
-	}, [tableData, page, rowsPerPage]);
+	}, [tableData, page, rowsPerPage, externalPagination]);
 
-	// Determine disabled keys (non-completed or already paid claims)
+	// Determine disabled keys based on role and current status/payment filter
 	const disabledKeys = useMemo(() => {
 		if (!enableMultiSelect) return new Set<string>();
 
-		return new Set(
-			data
-				.filter(
-					(item) => !(item.status === "approved" && item.repairStatus === "completed") || item.paymentStatus === "paid"
-				)
-				.map((item) => item.id)
-		);
-	}, [data, enableMultiSelect]);
+		// For partners viewing pending: only PENDING claims are selectable
+		// Disable: APPROVED, REJECTED, COMPLETED claims
+		if (role === "samsung-partners" && status === "pending") {
+			return new Set(
+				data
+					.filter(
+						(item) => item.status !== "PENDING" // Only pending claims are selectable
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// For partners/admin viewing authorized: only AUTHORIZED claims are selectable
+		// Disable: non-AUTHORIZED claims or already paid
+		if (status === "authorized") {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							item.status !== "AUTHORIZED" || // Only authorized claims
+							item.paymentStatus === "PAID" // Already paid
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// For partners authorizing payment: only completed+unpaid+not-authorized claims are selectable
+		// Disable: APPROVED, REJECTED, PAID claims, and already authorized claims
+		if (
+			role === "samsung-partners" &&
+			status === "completed" &&
+			paymentFilter === "unpaid"
+		) {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							item.status === "APPROVED" || // Still in approval stage, not completed
+							item.status === "REJECTED" || // Rejected claims
+							item.paymentStatus === "PAID" || // Already paid
+							(item.authorizedAt !== null && item.authorizedAt !== undefined) // Already authorized
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// For admin marking as paid: only authorized+unpaid claims are selectable
+		// Disable: not authorized or already paid (based on paidAt field)
+		if (role === "samsung-sentinel" && status === "authorized") {
+			return new Set(
+				data
+					.filter(
+						(item) =>
+							item.status !== "AUTHORIZED" || // Only authorized claims are selectable
+							item.paidAt !== null // Already paid (has paidAt timestamp)
+					)
+					.map((item) => item.id)
+			);
+		}
+
+		// Default: no disabled keys for other scenarios
+		return new Set<string>();
+	}, [data, enableMultiSelect, role, status, paymentFilter]);
 
 	// Calculate total amount for selected claims
 	const selectedTotalAmount = useMemo(() => {
@@ -647,12 +988,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 			// Add payment columns if visible
 			if (showPaymentColumns) {
-				exportHeaders.push(
-					"Payment Status",
-					"Transaction Ref",
-					"Completed Date",
-					"Authorized"
-				);
+				exportHeaders.push("Payment Status", "Completed Date");
 				if (role === "samsung-sentinel") {
 					exportHeaders.push("Bank Name", "Account Number", "Account Name");
 				}
@@ -685,9 +1021,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				if (showPaymentColumns) {
 					row.push(
 						item.paymentStatus || "N/A",
-						item.transactionRef || "N/A",
-						item.completedAt ? formatDate(item.completedAt) : "N/A",
-						item.authorizedForPayment ? "Yes" : "No"
+						item.completedAt ? formatDate(item.completedAt) : "N/A"
 					);
 
 					// Add bank details for samsung-sentinel
@@ -770,8 +1104,12 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	const handleBulkPaymentClick = () => {
 		if (selectedKeys.size > 0 && onBulkPayment) {
 			const selectedIds = Array.from(selectedKeys) as string[];
-			// Generate a transaction reference (in real implementation, this would come from a modal)
-			const transactionRef = `TXN-${Date.now()}`;
+			// Generate unique transaction reference using date, count, and unique ID
+			const today = new Date();
+			const dateStr = today.toISOString().split("T")[0].replace(/-/g, ""); // YYYYMMDD
+			const count = selectedIds.length;
+			const uniqueId = nanoid(8); // 8 character unique ID
+			const transactionRef = `TXN-${dateStr}-${count}-${uniqueId}`;
 			onBulkPayment(selectedIds, transactionRef);
 			setSelectedKeys(new Set()); // Clear selection
 		}
@@ -787,11 +1125,27 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 	const handleBulkRejectClick = () => {
 		if (selectedKeys.size > 0 && onBulkReject) {
+			// Open bulk rejection modal to collect reason
+			setBulkRejectionReason("");
+			onBulkRejectModalOpen();
+		}
+	};
+
+	const handleConfirmBulkReject = () => {
+		if (!bulkRejectionReason.trim()) {
+			showToast({
+				type: "error",
+				message: "Please provide a rejection reason",
+			});
+			return;
+		}
+
+		if (selectedKeys.size > 0 && onBulkReject) {
 			const selectedIds = Array.from(selectedKeys) as string[];
-			// In real implementation, show modal for rejection reason
-			const reason = "Bulk rejection";
-			onBulkReject(selectedIds, reason);
+			onBulkReject(selectedIds, bulkRejectionReason);
+			onBulkRejectModalClose();
 			setSelectedKeys(new Set());
+			setBulkRejectionReason("");
 		}
 	};
 
@@ -805,12 +1159,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 
 	// Determine what bulk actions to show
 	const getBulkActions = () => {
-		// Samsung Sentinel: Execute bulk payment for completed/unpaid
-		if (
-			role === "samsung-sentinel" &&
-			status === "completed" &&
-			paymentFilter === "unpaid"
-		) {
+		// Samsung Sentinel: Execute bulk payment for authorized claims
+		if (role === "samsung-sentinel" && status === "authorized") {
 			return (
 				<Button
 					size="sm"
@@ -818,7 +1168,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					startContent={<DollarSign className="h-4 w-4" />}
 					onPress={handleBulkPaymentClick}
 				>
-					Execute Bulk Payment
+					Disburse Bulk Payment
 				</Button>
 			);
 		}
@@ -911,7 +1261,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				}
 				isLoading={isLoading || false}
 				filterValue={filterValue}
-				onFilterChange={setFilterValue}
+				onFilterChange={(value) => {
+					setFilterValue(value);
+					setPage(1);
+					onSearchParamsChange!(value);
+				}}
 				sortDescriptor={sortDescriptor}
 				onSortChange={setSortDescriptor as any}
 				page={page}
@@ -919,7 +1273,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				onPageChange={setPage}
 				exportFn={handleExport}
 				hasNoRecords={tableData.length === 0}
-				searchPlaceholder="Search by claim ID, customer name, IMEI, device, or fault type..."
+				searchPlaceholder="Search by claim ID or IMEI"
 				selectionMode={enableMultiSelect ? "multiple" : "none"}
 				selectedKeys={selectedKeys}
 				onSelectionChange={handleSelectionChange}
@@ -934,6 +1288,115 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					setPage(1);
 				}}
 			/>
+
+			{/* Rejection Confirmation Modal */}
+			<Modal isOpen={isRejectModalOpen} onClose={onRejectModalClose} size="md">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Reject Claim</h3>
+					</ModalHeader>
+					<ModalBody>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+							Please provide a reason for rejecting this claim. This information
+							will be shared with the service center.
+						</p>
+						<Textarea
+							label="Rejection Reason *"
+							placeholder="Enter detailed reason for rejection..."
+							value={rejectionReason}
+							onValueChange={setRejectionReason}
+							rows={4}
+							isRequired
+							variant="bordered"
+							classNames={{
+								input: "min-h-[100px]",
+							}}
+						/>
+						<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+							* Rejection reason is required
+						</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								onRejectModalClose();
+								setRejectionReason("");
+								setRejectingClaimId(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="danger"
+							onPress={handleConfirmReject}
+							isDisabled={!rejectionReason.trim()}
+						>
+							Confirm Rejection
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Bulk Rejection Confirmation Modal */}
+			<Modal
+				isOpen={isBulkRejectModalOpen}
+				onClose={onBulkRejectModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Reject Multiple Claims</h3>
+					</ModalHeader>
+					<ModalBody>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+							You are about to reject{" "}
+							<span className="font-bold text-danger">{selectedKeys.size}</span>{" "}
+							claim{selectedKeys.size !== 1 ? "s" : ""}.
+						</p>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+							Please provide a reason for rejecting these claims. This
+							information will be shared with the service centers.
+						</p>
+						<Textarea
+							label="Rejection Reason *"
+							placeholder="Enter detailed reason for bulk rejection..."
+							value={bulkRejectionReason}
+							onValueChange={setBulkRejectionReason}
+							rows={4}
+							isRequired
+							variant="bordered"
+							classNames={{
+								input: "min-h-[100px]",
+							}}
+						/>
+						<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+							* Rejection reason is required
+						</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="default"
+							variant="light"
+							onPress={() => {
+								onBulkRejectModalClose();
+								setBulkRejectionReason("");
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							color="danger"
+							onPress={handleConfirmBulkReject}
+							isDisabled={!bulkRejectionReason.trim()}
+						>
+							Reject {selectedKeys.size} Claim
+							{selectedKeys.size !== 1 ? "s" : ""}
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 };

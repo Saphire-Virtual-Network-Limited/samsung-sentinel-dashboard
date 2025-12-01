@@ -8,7 +8,7 @@ export default function SamsungSentinelPage() {
 
 	useEffect(() => {
 		// Redirect to IMEI management for backward compatibility
-		router.replace("/access/admin/samsung-sentinel/imei");
+		router.replace("/access/sub-admin/samsung-sentinel/imei");
 	}, [router]);
 
 	return (

@@ -21,22 +21,18 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/atoms/StatCard";
 import { useRouter } from "next/navigation";
+import { useRepairStoreDashboard } from "@/hooks/repair-store/useRepairStoreDashboard";
 
 export default function RepairStoreDashboardView() {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = React.useState(false);
 
-	// Mock data - replace with actual API calls
-	const dashboardStats = {
-		totalServiceCenters: 12,
-		activeServiceCenters: 10,
-		totalEngineers: 45,
-		totalRepairs: 1284,
-		monthlyRevenue: 8750000,
-		pendingClaims: 23,
-		inProgressClaims: 67,
-		completedClaims: 194,
-	};
+	// Fetch dashboard statistics with inception filter
+	const { stats, isLoading, error } = useRepairStoreDashboard({
+		filter: "inception",
+	});
+
+	// Extract dashboard data
+	const overview = stats?.overview;
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("en-NG", {
@@ -49,25 +45,25 @@ export default function RepairStoreDashboardView() {
 	const statCards = [
 		{
 			title: "Total Service Centers",
-			value: dashboardStats.totalServiceCenters.toString(),
+			value: overview?.total_service_centers?.toString() || "0",
 			icon: <MapPin className="w-5 h-5" />,
 			link: "/access/repair-store/service-centers",
 		},
 		{
 			title: "Total Engineers",
-			value: dashboardStats.totalEngineers.toString(),
+			value: overview?.total_engineers?.toString() || "0",
 			icon: <Users className="w-5 h-5" />,
 			link: "/access/repair-store/engineers",
 		},
 		{
 			title: "Monthly Revenue",
-			value: formatCurrency(dashboardStats.monthlyRevenue),
+			value: formatCurrency(overview?.monthly_revenue || 0),
 			icon: <CreditCard className="w-5 h-5" />,
 			link: "/access/repair-store/statistics",
 		},
 		{
 			title: "Total Repairs",
-			value: dashboardStats.totalRepairs.toString(),
+			value: overview?.total_repairs?.toString() || "0",
 			icon: <Wrench className="w-5 h-5" />,
 			link: "/access/repair-store/claims",
 		},
@@ -104,36 +100,12 @@ export default function RepairStoreDashboardView() {
 		},
 	];
 
-	const recentActivity = [
-		{
-			id: 1,
-			title: "New Service Center Added",
-			description: "Sapphire Tech Hub Kano has been created",
-			time: "2 hours ago",
-			status: "success",
-		},
-		{
-			id: 2,
-			title: "Engineer Assigned",
-			description: "John Doe assigned to Lagos service center",
-			time: "4 hours ago",
-			status: "info",
-		},
-		{
-			id: 3,
-			title: "Repair Completed",
-			description: "Galaxy S23 repair completed at Abuja center",
-			time: "6 hours ago",
-			status: "success",
-		},
-	];
-
 	return (
 		<div className="p-6 space-y-6 min-h-screen">
 			{/* Header */}
 			<div className="flex flex-col gap-2">
 				<h1 className="text-2xl font-bold text-gray-900">
-					Repair Store Dashboard
+					Repair Partner Dashboard
 				</h1>
 				<p className="text-gray-600">
 					Manage your network of service centers and monitor repair operations
@@ -185,10 +157,14 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-orange-600 mb-2">
-								{dashboardStats.pendingClaims}
-							</p>
-							<p className="text-sm text-gray-500">Awaiting review</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-orange-600 mb-2">
+									{overview?.pending_claims || 0}
+								</p>
+							)}
+							<p className="text-sm text-gray-500">Awaiting approval</p>
 						</div>
 					</CardBody>
 				</Card>
@@ -202,9 +178,13 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-blue-600 mb-2">
-								{dashboardStats.inProgressClaims}
-							</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-blue-600 mb-2">
+									{overview?.in_progress_claims || 0}
+								</p>
+							)}
 							<p className="text-sm text-gray-500">Being repaired</p>
 						</div>
 					</CardBody>
@@ -219,10 +199,14 @@ export default function RepairStoreDashboardView() {
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="text-center">
-							<p className="text-3xl font-bold text-green-600 mb-2">
-								{dashboardStats.completedClaims}
-							</p>
-							<p className="text-sm text-gray-500">This month</p>
+							{isLoading ? (
+								<Skeleton className="h-10 w-16 mx-auto mb-2 rounded" />
+							) : (
+								<p className="text-3xl font-bold text-green-600 mb-2">
+									{overview?.completed_claims || 0}
+								</p>
+							)}
+							<p className="text-sm text-gray-500">All time</p>
 						</div>
 					</CardBody>
 				</Card>
@@ -261,40 +245,37 @@ export default function RepairStoreDashboardView() {
 					</CardBody>
 				</Card>
 
-				{/* Recent Activity */}
+				{/* Revenue Summary */}
 				<Card className="border border-default-200 shadow-md">
-					<CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
+					<CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
 						<div className="flex items-center gap-2">
-							<AlertCircle className="w-5 h-5 text-emerald-600" />
-							<h3 className="text-lg font-semibold">Recent Activity</h3>
+							<CreditCard className="w-5 h-5 text-green-600" />
+							<h3 className="text-lg font-semibold">Revenue Summary</h3>
 						</div>
 					</CardHeader>
 					<CardBody className="p-4">
 						<div className="space-y-4">
-							{recentActivity.map((activity) => (
-								<div key={activity.id} className="flex items-start gap-3">
-									<Chip
-										size="sm"
-										color={
-											activity.status === "success" ? "success" : "primary"
-										}
-										variant="flat"
-									>
-										{activity.status}
-									</Chip>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium text-gray-900">
-											{activity.title}
-										</p>
-										<p className="text-xs text-gray-500">
-											{activity.description}
-										</p>
-										<p className="text-xs text-gray-400 mt-1">
-											{activity.time}
-										</p>
-									</div>
-								</div>
-							))}
+							<div>
+								<p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+								{isLoading ? (
+									<Skeleton className="h-8 w-32 rounded" />
+								) : (
+									<p className="text-2xl font-bold text-green-600">
+										{formatCurrency(overview?.total_revenue || 0)}
+									</p>
+								)}
+							</div>
+							<div className="h-px bg-gray-200" />
+							<div>
+								<p className="text-sm text-gray-600 mb-1">Monthly Revenue</p>
+								{isLoading ? (
+									<Skeleton className="h-6 w-24 rounded" />
+								) : (
+									<p className="text-xl font-semibold text-gray-900">
+										{formatCurrency(overview?.monthly_revenue || 0)}
+									</p>
+								)}
+							</div>
 						</div>
 					</CardBody>
 				</Card>

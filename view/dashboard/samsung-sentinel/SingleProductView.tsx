@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import useSWR from "swr";
 import {
 	Button,
 	Modal,
@@ -15,17 +16,14 @@ import {
 	CardBody,
 	CardHeader,
 	Divider,
-	Dropdown,
-	DropdownTrigger,
-	DropdownMenu,
-	DropdownItem,
+	Tabs,
+	Tab,
+	SortDescriptor,
 } from "@heroui/react";
 import {
 	InfoCard,
 	InfoField,
-	StatusChip,
-	LoadingSpinner,
-	NotFound,
+	TableSkeleton,
 } from "@/components/reususables/custom-ui";
 import GenericTable, {
 	ColumnDef,
@@ -33,38 +31,28 @@ import GenericTable, {
 import { StatCard } from "@/components/atoms/StatCard";
 import {
 	ArrowLeft,
-	Plus,
 	Edit,
-	Trash2,
 	Power,
 	PowerOff,
-	EllipsisVertical,
-	Wrench,
 	DollarSign,
-	History,
 	Calendar,
 	TrendingUp,
+	Eye,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
 import {
-	useSamsungSentinelProduct,
-	type Product,
-	type AuditHistory,
-} from "@/hooks/shared/useSamsungSentinelProduct";
-
-const auditColumns: ColumnDef[] = [
-	{ name: "Action", uid: "action", sortable: true },
-	{ name: "Field", uid: "field", sortable: true },
-	{ name: "Old Value", uid: "oldValue", sortable: true },
-	{ name: "New Value", uid: "newValue", sortable: true },
-	{ name: "Modified By", uid: "modifiedBy", sortable: true },
-	{ name: "Modified At", uid: "modifiedAt", sortable: true },
-];
+	getProductById,
+	Product,
+	updateProduct,
+	activateProduct,
+	deactivateProduct,
+} from "@/lib/api/products";
+import { getAuditLogsByResource, AuditLog } from "@/lib/api/audit";
 
 const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
+	ACTIVE: "success" as const,
+	INACTIVE: "danger" as const,
 };
 
 interface SingleProductViewProps {
@@ -78,14 +66,235 @@ export default function SingleProductView({
 	const pathname = usePathname();
 	const role = pathname.split("/")[2];
 
-	// Fetch product data using the hook
+	// Fetch product data with SWR
 	const {
-		product,
-		auditHistory,
+		data: productResponse,
+		error,
 		isLoading: isLoadingData,
-		isError,
 		mutate,
-	} = useSamsungSentinelProduct(productId);
+	} = useSWR(
+		productId ? `/products/${productId}` : null,
+		() => getProductById(productId),
+		{ revalidateOnFocus: false }
+	);
+
+	// Handle both response formats: direct object or wrapped in data property
+	const product =
+		productResponse?.data || (productResponse as Product | undefined);
+
+	// Fetch audit logs
+	const { data: auditLogsResponse, isLoading: isLoadingAuditLogs } = useSWR(
+		productId ? `/audit/product/${productId}` : null,
+		() => getAuditLogsByResource("product", productId),
+		{ revalidateOnFocus: false }
+	);
+
+	const auditLogs =
+		auditLogsResponse?.data || (auditLogsResponse as AuditLog[] | undefined);
+
+	// Transform audit logs into table rows
+	interface AuditTableRow {
+		id: string;
+		action: string;
+		field: string;
+		oldValue: string;
+		newValue: string;
+		modifiedBy: string;
+		modifiedAt: string;
+		auditLog: AuditLog; // Full audit log for detail view
+	}
+
+	const auditTableData = useMemo(() => {
+		if (!auditLogs) return [];
+
+		const rows: AuditTableRow[] = [];
+
+		auditLogs.forEach((log) => {
+			const modifiedBy = log.performed_by
+				? `${log.performed_by.name} (${log.performed_by.email})`
+				: "Unknown";
+			const modifiedAt = new Date(log.performed_at).toLocaleString();
+			const action = log.action.replace(/_/g, " ").toUpperCase();
+
+			// Extract field changes
+			if (log.new_values) {
+				const fields = ["name", "sapphire_cost", "repair_cost", "status"];
+
+				fields.forEach((field) => {
+					if (log.new_values[field] !== undefined) {
+						const oldValue = log.old_values?.[field]
+							? field.includes("cost")
+								? `₦${log.old_values[field]}`
+								: log.old_values[field]
+							: "-";
+						const newValue = field.includes("cost")
+							? `₦${log.new_values[field]}`
+							: log.new_values[field];
+
+						rows.push({
+							id: `${log.id}-${field}`,
+							action,
+							field: field.replace(/_/g, " ").toUpperCase(),
+							oldValue,
+							newValue,
+							modifiedBy,
+							modifiedAt,
+							auditLog: log,
+						});
+					}
+				});
+			} else {
+				// For actions without field changes
+				rows.push({
+					id: log.id,
+					action,
+					field: "-",
+					oldValue: "-",
+					newValue: "-",
+					modifiedBy,
+					modifiedAt,
+					auditLog: log,
+				});
+			}
+		});
+
+		return rows;
+	}, [auditLogs]);
+
+	// Pagination and filter state for audit logs
+	const [auditPage, setAuditPage] = useState(1);
+	const [auditFilterValue, setAuditFilterValue] = useState("");
+	const [auditSortDescriptor, setAuditSortDescriptor] =
+		useState<SortDescriptor>({
+			column: "modifiedAt",
+			direction: "descending",
+		});
+
+	const rowsPerPage = 10;
+	const auditPages = Math.ceil(auditTableData.length / rowsPerPage);
+	const paginatedAuditData = auditTableData.slice(
+		(auditPage - 1) * rowsPerPage,
+		auditPage * rowsPerPage
+	);
+
+	// Define audit table columns
+	const auditColumns: ColumnDef[] = [
+		{
+			name: "Action",
+			uid: "action",
+			sortable: true,
+		},
+		{
+			name: "Field",
+			uid: "field",
+			sortable: true,
+		},
+		{
+			name: "Old Value",
+			uid: "oldValue",
+			sortable: false,
+		},
+		{
+			name: "New Value",
+			uid: "newValue",
+			sortable: false,
+		},
+		{
+			name: "Modified By",
+			uid: "modifiedBy",
+			sortable: true,
+		},
+		{
+			name: "Modified At",
+			uid: "modifiedAt",
+			sortable: true,
+		},
+		{
+			name: "Actions",
+			uid: "actions",
+			sortable: false,
+		},
+	];
+
+	// Render cell function for audit table
+	const renderAuditCell = (row: AuditTableRow, columnKey: string) => {
+		switch (columnKey) {
+			case "action":
+				return row.action;
+			case "field":
+				return row.field;
+			case "oldValue":
+				return row.oldValue;
+			case "newValue":
+				return row.newValue;
+			case "modifiedBy":
+				return row.modifiedBy;
+			case "modifiedAt":
+				return row.modifiedAt;
+			case "actions":
+				return (
+					<Button
+						isIconOnly
+						size="sm"
+						variant="light"
+						onPress={() => {
+							setSelectedAuditLog(row.auditLog);
+							onAuditDetailModalOpen();
+						}}
+					>
+						<Eye size={16} />
+					</Button>
+				);
+			default:
+				return null;
+		}
+	};
+
+	// Export function for audit logs (optional)
+	const exportAuditLogs = (data: AuditTableRow[]) => {
+		// Export all audit logs
+		(async () => {
+			const ExcelJS = (await import("exceljs")).default;
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Audit Logs");
+			worksheet.columns = [
+				{ header: "Date", key: "date", width: 20 },
+				{ header: "User", key: "user", width: 25 },
+				{ header: "Action", key: "action", width: 30 },
+				{ header: "Details", key: "details", width: 40 },
+			];
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).alignment = {
+				vertical: "middle",
+				horizontal: "center",
+			};
+			(data || []).forEach((item: any) => {
+				worksheet.addRow({
+					date: item.date,
+					user: item.user,
+					action: item.action,
+					details: item.details,
+				});
+			});
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-${
+				new Date().toISOString().split("T")[0]
+			}.xlsx`;
+			link.click();
+			URL.revokeObjectURL(url);
+		})();
+	};
 
 	// Modal states
 	const {
@@ -103,12 +312,20 @@ export default function SingleProductView({
 		onOpen: onEditRepairCostModalOpen,
 		onClose: onEditRepairCostModalClose,
 	} = useDisclosure();
+	const {
+		isOpen: isAuditDetailModalOpen,
+		onOpen: onAuditDetailModalOpen,
+		onClose: onAuditDetailModalClose,
+	} = useDisclosure();
 
 	// Form states
 	const [productName, setProductName] = useState("");
 	const [sapphireCost, setSapphireCost] = useState("");
 	const [repairCost, setRepairCost] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [selectedAuditLog, setSelectedAuditLog] = useState<AuditLog | null>(
+		null
+	);
 
 	// Statistics
 	const stats = useMemo(() => {
@@ -120,19 +337,15 @@ export default function SingleProductView({
 				profitMargin: 0,
 			};
 
-		const totalValue = product.sapphireCost + product.repairCost;
+		const sapphire = Number(product.sapphire_cost);
+		const repair = Number(product.repair_cost);
+		const totalValue = sapphire + repair;
 		const profitMargin =
-			product.sapphireCost > 0
-				? Math.round(
-						((product.sapphireCost - product.repairCost) /
-							product.sapphireCost) *
-							100
-				  )
-				: 0;
+			sapphire > 0 ? Math.round(((sapphire - repair) / sapphire) * 100) : 0;
 
 		return {
-			sapphireCost: product.sapphireCost,
-			repairCost: product.repairCost,
+			sapphireCost: sapphire,
+			repairCost: repair,
 			totalValue,
 			profitMargin,
 		};
@@ -147,7 +360,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update product name
+			await updateProduct(productId, { name: productName.trim() });
 			showToast({
 				message: "Product name updated successfully",
 				type: "success",
@@ -155,8 +368,11 @@ export default function SingleProductView({
 			onEditNameModalClose();
 			setProductName("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update product name", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update product name",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -172,7 +388,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update sapphire cost
+			await updateProduct(productId, { sapphire_cost: cost });
 			showToast({
 				message: "Sapphire cost updated successfully",
 				type: "success",
@@ -180,8 +396,11 @@ export default function SingleProductView({
 			onEditSapphireCostModalClose();
 			setSapphireCost("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update sapphire cost", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update sapphire cost",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -197,7 +416,7 @@ export default function SingleProductView({
 
 		setIsLoading(true);
 		try {
-			// API call to update repair cost
+			await updateProduct(productId, { repair_cost: cost });
 			showToast({
 				message: "Repair cost updated successfully",
 				type: "success",
@@ -205,8 +424,11 @@ export default function SingleProductView({
 			onEditRepairCostModalClose();
 			setRepairCost("");
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update repair cost", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update repair cost",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -214,66 +436,69 @@ export default function SingleProductView({
 
 	// Handle toggle product status
 	const handleToggleProductStatus = async () => {
+		if (!product) return;
+
 		setIsLoading(true);
 		try {
-			// API call to toggle product status
+			if (product.status === "ACTIVE") {
+				await deactivateProduct(productId);
+			} else {
+				await activateProduct(productId);
+			}
 			showToast({
 				message: `Product ${
-					product!.status === "active" ? "disabled" : "enabled"
+					product.status === "ACTIVE" ? "disabled" : "enabled"
 				} successfully`,
 				type: "success",
 			});
 			mutate(); // Refresh product data
-		} catch (error) {
-			showToast({ message: "Failed to update product status", type: "error" });
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update product status",
+				type: "error",
+			});
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// Render audit history cell
-	const renderAuditCell = (row: AuditHistory, key: string) => {
-		switch (key) {
-			case "action":
-				const actionColor =
-					row.action === "CREATE"
-						? "success"
-						: row.action === "UPDATE"
-						? "warning"
-						: row.action === "DELETE"
-						? "danger"
-						: "default";
-				return (
-					<Chip color={actionColor} variant="flat" size="sm">
-						{row.action}
-					</Chip>
-				);
-			case "modifiedAt":
-				return (
-					<p className="text-sm">{new Date(row.modifiedAt).toLocaleString()}</p>
-				);
-			default:
-				return (
-					<span className="text-sm">{row[key as keyof AuditHistory]}</span>
-				);
-		}
-	};
-
 	// Loading state
 	if (isLoadingData) {
-		return <LoadingSpinner />;
+		return <TableSkeleton columns={4} />;
 	}
 
 	// Error state
-	if (isError) {
+	if (error) {
 		return (
-			<NotFound title="Error Loading Product" onGoBack={() => router.back()} />
+			<div className="flex flex-col items-center justify-center h-96">
+				<p className="text-lg text-gray-500">Failed to load product</p>
+				<Button
+					color="primary"
+					variant="flat"
+					onPress={() => router.back()}
+					className="mt-4"
+				>
+					Go Back
+				</Button>
+			</div>
 		);
 	}
 
 	// Product not found
 	if (!product) {
-		return <NotFound onGoBack={() => router.back()} />;
+		return (
+			<div className="flex flex-col items-center justify-center h-96">
+				<p className="text-lg text-gray-500">Product not found</p>
+				<Button
+					color="primary"
+					variant="flat"
+					onPress={() => router.back()}
+					className="mt-4"
+				>
+					Go Back
+				</Button>
+			</div>
+		);
 	}
 
 	return (
@@ -302,10 +527,10 @@ export default function SingleProductView({
 						Edit Name
 					</Button>
 					<Button
-						color={product.status === "active" ? "danger" : "success"}
+						color={product.status === "ACTIVE" ? "danger" : "success"}
 						variant="flat"
 						startContent={
-							product.status === "active" ? (
+							product.status === "ACTIVE" ? (
 								<PowerOff size={16} />
 							) : (
 								<Power size={16} />
@@ -314,7 +539,7 @@ export default function SingleProductView({
 						onPress={handleToggleProductStatus}
 						isLoading={isLoading}
 					>
-						{product.status === "active" ? "Disable" : "Enable"}
+						{product.status === "ACTIVE" ? "Disable" : "Enable"}
 					</Button>
 				</div>
 			</div>
@@ -342,28 +567,34 @@ export default function SingleProductView({
 					<InfoField
 						label="Status"
 						value={product.status}
-						endComponent={<StatusChip status={product.status} />}
+						endComponent={
+							<Chip
+								color={statusColorMap[product.status]}
+								size="sm"
+								variant="flat"
+							>
+								{product.status}
+							</Chip>
+						}
 					/>
-					<InfoField label="Created By" value={product.createdBy} />
 					<InfoField
 						label="Created At"
-						value={new Date(product.createdAt).toLocaleDateString()}
+						value={new Date(product.created_at).toLocaleDateString()}
 					/>
-					<InfoField label="Last Updated By" value={product.lastUpdatedBy} />
 					<InfoField
 						label="Last Updated At"
-						value={new Date(product.lastUpdatedAt).toLocaleDateString()}
+						value={new Date(product.updated_at).toLocaleDateString()}
 					/>
 					<InfoField
 						label="Sapphire Cost"
-						value={`₦${product.sapphireCost.toLocaleString()}`}
+						value={`₦${Number(product.sapphire_cost).toLocaleString()}`}
 						endComponent={
 							<Button
 								size="sm"
 								variant="light"
 								isIconOnly
 								onPress={() => {
-									setSapphireCost(product.sapphireCost.toString());
+									setSapphireCost(product.sapphire_cost.toString());
 									onEditSapphireCostModalOpen();
 								}}
 							>
@@ -373,14 +604,14 @@ export default function SingleProductView({
 					/>
 					<InfoField
 						label="Repair Cost"
-						value={`₦${product.repairCost.toLocaleString()}`}
+						value={`₦${Number(product.repair_cost).toLocaleString()}`}
 						endComponent={
 							<Button
 								size="sm"
 								variant="light"
 								isIconOnly
 								onPress={() => {
-									setRepairCost(product.repairCost.toString());
+									setRepairCost(product.repair_cost.toString());
 									onEditRepairCostModalOpen();
 								}}
 							>
@@ -392,7 +623,7 @@ export default function SingleProductView({
 			</InfoCard>
 
 			{/* Statistics */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				<StatCard
 					title="Sapphire Cost"
 					value={`₦${stats.sapphireCost.toLocaleString()}`}
@@ -403,42 +634,28 @@ export default function SingleProductView({
 					value={`₦${stats.repairCost.toLocaleString()}`}
 					icon={<DollarSign className="w-5 h-5" />}
 				/>
-				<StatCard
-					title="Total Value"
-					value={`₦${stats.totalValue.toLocaleString()}`}
-					icon={<DollarSign className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Profit Margin"
-					value={`${stats.profitMargin}%`}
-					icon={<TrendingUp className="w-5 h-5" />}
-				/>
 			</div>
 
-			{/* Audit History */}
-			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Audit History</h3>
-
-				<GenericTable<AuditHistory>
+			{/* Audit Logs Section */}
+			<div>
+				<h3 className="text-lg font-semibold mb-4">Audit History</h3>
+				<GenericTable<AuditTableRow>
+					data={paginatedAuditData}
 					columns={auditColumns}
-					data={auditHistory}
-					allCount={auditHistory.length}
-					exportData={auditHistory}
-					isLoading={false}
+					allCount={auditTableData.length}
+					exportData={auditTableData}
+					isLoading={isLoadingAuditLogs}
+					filterValue={auditFilterValue}
+					onFilterChange={setAuditFilterValue}
+					sortDescriptor={auditSortDescriptor}
+					onSortChange={setAuditSortDescriptor}
+					page={auditPage}
+					pages={auditPages}
+					onPageChange={setAuditPage}
+					exportFn={exportAuditLogs}
 					renderCell={renderAuditCell}
-					hasNoRecords={auditHistory.length === 0}
-					sortDescriptor={{ column: "modifiedAt", direction: "descending" }}
-					onSortChange={() => {}}
-					page={1}
-					pages={1}
-					onPageChange={() => {}}
-					filterValue=""
-					onFilterChange={() => {}}
-					searchPlaceholder="Search audit history..."
-					showRowsPerPageSelector={true}
-					exportFn={(data) => {
-						console.log("Exporting audit history:", data);
-					}}
+					hasNoRecords={auditTableData.length === 0}
+					searchPlaceholder="Search audit logs..."
 				/>
 			</div>
 
@@ -551,6 +768,173 @@ export default function SingleProductView({
 									isLoading={isLoading}
 								>
 									Save Changes
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Audit Detail Modal */}
+			<Modal
+				isOpen={isAuditDetailModalOpen}
+				onClose={onAuditDetailModalClose}
+				size="2xl"
+			>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<ModalHeader>Audit Log Details</ModalHeader>
+							<ModalBody>
+								{selectedAuditLog && (
+									<div className="space-y-4">
+										{/* Action & Timestamp */}
+										<div className="grid grid-cols-2 gap-4">
+											<div>
+												<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+													Action
+												</p>
+												<p className="text-base font-medium">
+													{selectedAuditLog.action
+														.replace(/_/g, " ")
+														.toUpperCase()}
+												</p>
+											</div>
+											<div>
+												<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+													Performed At
+												</p>
+												<p className="text-base font-medium">
+													{new Date(
+														selectedAuditLog.performed_at
+													).toLocaleString()}
+												</p>
+											</div>
+										</div>
+
+										<Divider />
+
+										{/* User Information */}
+										<div>
+											<h4 className="text-md font-semibold mb-3">
+												Performed By
+											</h4>
+											<div className="grid grid-cols-2 gap-4">
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Name
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.name || "Unknown"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Email
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.email || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														User ID
+													</p>
+													<p className="text-xs font-mono">
+														{selectedAuditLog.performed_by_id}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Role
+													</p>
+													<p className="text-base">
+														{selectedAuditLog.performed_by?.role || "N/A"}
+													</p>
+												</div>
+											</div>
+										</div>
+
+										<Divider />
+
+										{/* Technical Information */}
+										<div>
+											<h4 className="text-md font-semibold mb-3">
+												Technical Details
+											</h4>
+											<div className="space-y-3">
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														IP Address
+													</p>
+													<p className="text-sm font-mono">
+														{selectedAuditLog.ip_address || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														User Agent
+													</p>
+													<p className="text-sm break-all">
+														{selectedAuditLog.user_agent || "N/A"}
+													</p>
+												</div>
+												<div>
+													<p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+														Resource ID
+													</p>
+													<p className="text-xs font-mono">
+														{selectedAuditLog.resource_id}
+													</p>
+												</div>
+											</div>
+										</div>
+
+										{/* Changes */}
+										{selectedAuditLog.new_values && (
+											<>
+												<Divider />
+												<div>
+													<h4 className="text-md font-semibold mb-3">
+														Changes Made
+													</h4>
+													<div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
+														{selectedAuditLog.old_values && (
+															<div>
+																<p className="text-sm font-semibold text-red-600 dark:text-red-400">
+																	Old Values:
+																</p>
+																<pre className="text-xs mt-1 p-2 bg-white dark:bg-gray-900 rounded overflow-auto">
+																	{JSON.stringify(
+																		selectedAuditLog.old_values,
+																		null,
+																		2
+																	)}
+																</pre>
+															</div>
+														)}
+														<div>
+															<p className="text-sm font-semibold text-green-600 dark:text-green-400">
+																New Values:
+															</p>
+															<pre className="text-xs mt-1 p-2 bg-white dark:bg-gray-900 rounded overflow-auto">
+																{JSON.stringify(
+																	selectedAuditLog.new_values,
+																	null,
+																	2
+																)}
+															</pre>
+														</div>
+													</div>
+												</div>
+											</>
+										)}
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button color="primary" onPress={onClose}>
+									Close
 								</Button>
 							</ModalFooter>
 						</>

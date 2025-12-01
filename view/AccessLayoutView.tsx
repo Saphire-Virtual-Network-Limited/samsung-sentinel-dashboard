@@ -1,29 +1,25 @@
 "use client";
 
+import { AppSidebar } from "@/components/reususables";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-	AppSidebar,
-	GlobalSearch,
-	SelectField,
-} from "@/components/reususables";
-import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/lib";
+import { getAllProducts } from "@/lib/api/products";
 import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import {
+	ReactNode,
+	isValidElement,
+	useCallback,
+	useEffect,
 	useMemo,
 	useState,
-	useEffect,
-	useCallback,
-	ReactNode,
-	cloneElement,
-	isValidElement,
 } from "react";
-import { useAuth } from "@/lib";
 import { mutate } from "swr";
 
 function getGreeting() {
@@ -38,7 +34,10 @@ function formatTitle(pathname: string): string {
 	if (pathname === "/dashboard" || pathSegments.length === 1) {
 		return "";
 	}
-	const lastSegment = pathSegments[pathSegments.length - 1];
+	let lastSegment = pathSegments[pathSegments.length - 1];
+	if (lastSegment === "repair-store") {
+		lastSegment = "repair-partner";
+	}
 	return lastSegment
 		.replace(/[-_]/g, " ")
 		.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -88,8 +87,8 @@ export default function AccessLayoutView({
 		pathname === "/access/inventory" ||
 		pathname === "/access/sales";
 
-	const { userResponse, getAllProducts } = useAuth();
-	const userName = userResponse?.data?.firstName || "";
+	const { userResponse } = useAuth();
+	const userName = userResponse?.name || "";
 
 	// Update headers and trigger revalidation when product is selected
 	const handleProductSelect = useCallback(
@@ -125,42 +124,50 @@ export default function AccessLayoutView({
 		[products, pathname]
 	);
 
-	const isDisabled = false; // userResponse?.data?.role === "SALES";
-	useEffect(() => {
-		const fetchProducts = async () => {
-			try {
-				const productsList = await getAllProducts();
-				setProducts(productsList || []);
+	const isDisabled = false; // userResponse?.role === "SALES";
 
-				const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
-				const lastSelectedName = localStorage.getItem(
-					"Sapphire-Credit-Product-Name"
-				);
+	// Removed fetchProducts - no longer needed
+	// useEffect(() => {
+	// 	const fetchProducts = async () => {
+	// 		try {
+	// 			const response = await getAllProducts({ page: 1, limit: 1000 });
+	// 			const productsList = response.data.map((product) => ({
+	// 				label: product.name,
+	// 				value: product.id,
+	// 			}));
+	// 			setProducts(productsList || []);
 
-				if (
-					lastSelectedId &&
-					lastSelectedName &&
-					productsList?.some((p) => p.value === lastSelectedId)
-				) {
-					setSelectedProduct([lastSelectedId]);
-					await handleProductSelect(lastSelectedId, lastSelectedName);
-				} else if (productsList && productsList.length > 0) {
-					setSelectedProduct([productsList[0].value]);
-					await handleProductSelect(
-						productsList[0].value,
-						productsList[0].label
-					);
-				}
-			} catch (error) {
-				console.error("Error fetching products:", error);
-				setProducts([]);
-			} finally {
-				setLoading(false);
-			}
-		};
+	// 			const lastSelectedId = localStorage.getItem("Sapphire-Credit-Product");
+	// 			const lastSelectedName = localStorage.getItem(
+	// 				"Sapphire-Credit-Product-Name"
+	// 			);
 
-		fetchProducts();
-	}, [getAllProducts, handleProductSelect]);
+	// 			if (
+	// 				lastSelectedId &&
+	// 				lastSelectedName &&
+	// 				productsList?.some(
+	// 					(p: { label: string; value: string }) => p.value === lastSelectedId
+	// 				)
+	// 			) {
+	// 				setSelectedProduct([lastSelectedId]);
+	// 				await handleProductSelect(lastSelectedId, lastSelectedName);
+	// 			} else if (productsList && productsList.length > 0) {
+	// 				setSelectedProduct([productsList[0].value]);
+	// 				await handleProductSelect(
+	// 					productsList[0].value,
+	// 					productsList[0].label
+	// 				);
+	// 			}
+	// 		} catch (error) {
+	// 			console.error("Error fetching products:", error);
+	// 			setProducts([]);
+	// 		} finally {
+	// 			setLoading(false);
+	// 		}
+	// 	};
+
+	// 	fetchProducts();
+	// }, [handleProductSelect]);
 
 	return (
 		<SidebarProvider>
@@ -171,35 +178,12 @@ export default function AccessLayoutView({
 					<div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
 						<SidebarTrigger className="-ml-1 text-primary hover:bg-gray-100 rounded-md p-1 transition-all duration-200 ease-in-out" />
 						<Separator orientation="vertical" className="h-4 hidden sm:block" />
-						{!isDisabled && (
-							<div className="pb-3 w-full max-w-xs sm:max-w-sm lg:max-w-md">
-								<SelectField
-									key={products.length}
-									htmlFor="product-search"
-									id="product-search"
-									placeholder={
-										loading
-											? "Loading products..."
-											: products.length > 0
-											? "Choose Products"
-											: "No products available"
-									}
-									defaultSelectedKeys={selectedProduct}
-									onChange={(value) => {
-										const product = products.find((p) => p.value === value);
-										handleProductSelect(value as string, product?.label);
-									}}
-									options={[...products, ...legacyServices]}
-									size="md"
-								/>
-							</div>
-						)}
 					</div>
 					<div></div>
 
 					{/* Right side */}
 					<div className="flex items-center gap-2 sm:gap-3">
-						<GlobalSearch />
+						{/* GlobalSearch removed - non-Samsung Sentinel feature */}
 						<Button
 							variant="secondary"
 							size="icon"
@@ -211,9 +195,14 @@ export default function AccessLayoutView({
 						<div className="hidden lg:flex flex-col text-start">
 							<span className="text-black font-bold text-base">{userName}</span>
 							<span className="text-xs text-zinc-400 text-right">
-								{userResponse?.data?.role
-									?.replace(/_/g, " ")
-									.replace(/\b\w/g, (char: string) => char.toUpperCase())}
+								{(() => {
+									const raw = userResponse?.role ?? "";
+									const normalized =
+										raw === "repair_store_admin" ? "repair_partner_admin" : raw;
+									return normalized
+										.replace(/_/g, " ")
+										.replace(/\b\w/g, (char: string) => char.toUpperCase());
+								})()}
 							</span>
 						</div>
 					</div>
@@ -240,12 +229,7 @@ export default function AccessLayoutView({
 							// If subtitle is a React component, render it directly (replace the <p> entirely)
 							subtitle
 						) : (
-							// If subtitle is text or null, use the <p> wrapper
-							<p className="text-gray-500 text-xs sm:text-sm transition-all duration-200 ease-in-out">
-								{subtitle !== null
-									? subtitle
-									: `Manage your ${pageTitle.toLowerCase()}`}
-							</p>
+							""
 						)}
 					</div>
 					<div className="min-h-[calc(100vh-12rem)] sm:min-h-[calc(100vh-14rem)] flex-1 rounded-xl md:min-h-min transition-all duration-300 ease-in-out">

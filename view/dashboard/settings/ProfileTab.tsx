@@ -17,23 +17,12 @@ import { useNaijaStates } from "@/hooks/user-mangement/use-naija-states";
 import { cn, GeneralSans_SemiBold, showToast } from "@/lib";
 
 interface ProfileData {
-	userId: string;
-	firstName: string;
-	lastName: string;
+	id: string;
 	email: string;
-	dob: string | null;
-	gender: string | null;
+	name: string;
+	phone: string;
 	role: string;
-	telephoneNumber: string;
-	profile_picture: string | null;
-	accountStatus: string;
-	isActive: boolean;
-	accountType: string;
-	companyName: string | null;
-	companyAddress: string | null;
-	companyState: string | null;
-	companyCity: string | null;
-	companyLGA: string | null;
+	status: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -59,13 +48,6 @@ export default function ProfileTab({
 	onCancelEdit,
 	onUpdateProfile,
 }: ProfileTabProps) {
-	const { states, getLgas } = useNaijaStates();
-
-	// Get LGAs for selected state
-	const lgas = profileForm.companyState
-		? getLgas(profileForm.companyState)
-		: [];
-
 	const copyEmailToClipboard = async () => {
 		if (profileData?.email) {
 			try {
@@ -159,31 +141,23 @@ export default function ProfileTab({
 					Personal Information
 				</h3>
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<Input
-						label="First Name"
-						placeholder="Enter first name"
-						value={profileForm.firstName || ""}
-						onChange={(e) => onProfileFieldChange("firstName", e.target.value)}
-						isReadOnly={!isEditingProfile}
-						startContent={<User className="w-4 h-4 text-default-400" />}
-					/>
-
-					<Input
-						label="Last Name"
-						placeholder="Enter last name"
-						value={profileForm.lastName || ""}
-						onChange={(e) => onProfileFieldChange("lastName", e.target.value)}
-						isReadOnly={!isEditingProfile}
-						startContent={<User className="w-4 h-4 text-default-400" />}
-					/>
+					<div className="sm:col-span-2">
+						<Input
+							label="Full Name"
+							placeholder="Enter full name"
+							value={profileForm.name || ""}
+							onChange={(e) => onProfileFieldChange("name", e.target.value)}
+							isReadOnly={!isEditingProfile}
+							startContent={<User className="w-4 h-4 text-default-400" />}
+						/>
+					</div>
 
 					<div className="sm:col-span-2">
 						<Input
 							label="Email Address"
 							placeholder="Enter email address"
 							value={profileForm.email || ""}
-							onChange={(e) => onProfileFieldChange("email", e.target.value)}
-							isReadOnly={!isEditingProfile}
+							isReadOnly={true}
 							startContent={<Mail className="w-4 h-4 text-default-400" />}
 							endContent={
 								<button
@@ -198,100 +172,16 @@ export default function ProfileTab({
 						/>
 					</div>
 
-					<Input
-						label="Phone Number"
-						placeholder="Enter phone number"
-						value={profileForm.telephoneNumber || ""}
-						onChange={(e) =>
-							onProfileFieldChange("telephoneNumber", e.target.value)
-						}
-						isReadOnly={!isEditingProfile}
-						startContent={<Phone className="w-4 h-4 text-default-400" />}
-					/>
-				</div>
-			</div>
-
-			<Divider />
-
-			{/* Company Information */}
-			<div>
-				<h3 className={cn("font-medium mb-4", GeneralSans_SemiBold.className)}>
-					Company Information
-				</h3>
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<Input
-						label="Company Name"
-						placeholder="Enter company name"
-						value={profileForm.companyName || ""}
-						onChange={(e) =>
-							onProfileFieldChange("companyName", e.target.value)
-						}
-						isReadOnly={!isEditingProfile}
-						startContent={<Building2 className="w-4 h-4 text-default-400" />}
-						className="sm:col-span-2"
-					/>
-
-					<Input
-						label="Company Address"
-						placeholder="Enter company address"
-						value={profileForm.companyAddress || ""}
-						onChange={(e) =>
-							onProfileFieldChange("companyAddress", e.target.value)
-						}
-						isReadOnly={!isEditingProfile}
-						startContent={<MapPin className="w-4 h-4 text-default-400" />}
-						className="sm:col-span-2"
-					/>
-
-					<Select
-						label="State"
-						placeholder="Select state"
-						selectedKeys={
-							profileForm.companyState ? [profileForm.companyState] : []
-						}
-						onSelectionChange={(keys) => {
-							const selectedState = Array.from(keys)[0] as string;
-							onProfileFieldChange("companyState", selectedState);
-						}}
-						isDisabled={!isEditingProfile}
-					>
-						{states.map((state) => (
-							<SelectItem key={state.value} value={state.value}>
-								{state.label}
-							</SelectItem>
-						))}
-					</Select>
-
-					<Select
-						label="LGA"
-						placeholder="Select LGA"
-						selectedKeys={
-							profileForm.companyLGA ? [profileForm.companyLGA] : []
-						}
-						onSelectionChange={(keys) => {
-							const selectedLGA = Array.from(keys)[0] as string;
-							onProfileFieldChange("companyLGA", selectedLGA);
-						}}
-						isDisabled={!isEditingProfile || !profileForm.companyState}
-					>
-						{lgas.map((lga) => (
-							<SelectItem key={lga.value} value={lga.value}>
-								{lga.label}
-							</SelectItem>
-						))}
-					</Select>
-
-					<Input
-						label="City"
-						placeholder="Enter city"
-						value={profileForm.companyCity || ""}
-						onChange={(e) =>
-							onProfileFieldChange("companyCity", e.target.value)
-						}
-						isReadOnly={!isEditingProfile}
-						startContent={<MapPin className="w-4 h-4 text-default-400" />}
-						className="sm:col-span-2"
-					/>
+					<div className="sm:col-span-2">
+						<Input
+							label="Phone Number"
+							placeholder="Enter phone number"
+							value={profileForm.phone || ""}
+							onChange={(e) => onProfileFieldChange("phone", e.target.value)}
+							isReadOnly={!isEditingProfile}
+							startContent={<Phone className="w-4 h-4 text-default-400" />}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

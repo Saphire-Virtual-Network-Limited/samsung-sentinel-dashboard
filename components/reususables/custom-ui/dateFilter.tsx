@@ -14,9 +14,19 @@ interface DateFilterProps {
 	isLoading?: boolean;
 }
 
-const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDate, initialEndDate, defaultDateRange, className, isLoading = false }) => {
+const DateFilter: React.FC<DateFilterProps> = ({
+	onFilterChange,
+	initialStartDate,
+	initialEndDate,
+	defaultDateRange,
+	className,
+	isLoading = false,
+}) => {
 	// Range state for DateRangePicker
-	const [range, setRange] = useState<{ start: DateValue | null; end: DateValue | null }>({
+	const [range, setRange] = useState<{
+		start: DateValue | null;
+		end: DateValue | null;
+	}>({
 		start: null,
 		end: null,
 	});
@@ -26,10 +36,10 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 		const endDate = new Date();
 		const startDate = new Date();
 		startDate.setDate(endDate.getDate() - days);
-		
+
 		return {
-			start: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
-			end: endDate.toISOString().split('T')[0]     // YYYY-MM-DD format
+			start: startDate.toISOString().split("T")[0], // YYYY-MM-DD format
+			end: endDate.toISOString().split("T")[0], // YYYY-MM-DD format
 		};
 	};
 
@@ -50,10 +60,14 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 			// Automatically apply the default filter
 			onFilterChange(defaultRange.start, defaultRange.end);
 		}
-	}, [initialStartDate, initialEndDate, defaultDateRange, onFilterChange]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [initialStartDate, initialEndDate]);
 
 	// Validate that both start and end are set and start <= end
-	const isValidRange = (r: { start: DateValue | null; end: DateValue | null }) => {
+	const isValidRange = (r: {
+		start: DateValue | null;
+		end: DateValue | null;
+	}) => {
 		if (!r.start || !r.end) return false;
 		return r.start.compare(r.end) <= 0;
 	};
@@ -66,9 +80,9 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 		if (!start || !end) return;
 
 		// Format dates to YYYY-MM-DD format
-		const formattedStart = start.split('T')[0];
-		const formattedEnd = end.split('T')[0];
-		
+		const formattedStart = start.split("T")[0];
+		const formattedEnd = end.split("T")[0];
+
 		onFilterChange(formattedStart, formattedEnd);
 	};
 	return (
@@ -76,7 +90,11 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 			<div className="flex gap-2 items-center">
 				<DateRangePicker
 					variant="bordered"
-					value={range.start && range.end ? { start: range.start, end: range.end } : null}
+					value={
+						range.start && range.end
+							? { start: range.start, end: range.end }
+							: null
+					}
 					onChange={(value) =>
 						setRange({
 							start: value?.start || null,
@@ -90,7 +108,8 @@ const DateFilter: React.FC<DateFilterProps> = ({ onFilterChange, initialStartDat
 					variant="flat"
 					className="bg-primary text-white"
 					onPress={handleApply}
-					disabled={!isValidRange(range) || isLoading}>
+					disabled={!isValidRange(range) || isLoading}
+				>
 					{isLoading ? "Loading..." : "Filter"}
 				</Button>
 			</div>

@@ -69,7 +69,7 @@ export const useDummyClaimDetail = (
 					"Abuja Service Center",
 					"Port Harcourt Center",
 					"Kano Service Hub",
-					"Ibadan Repair Center",
+					"Ibadan Repair Partner",
 				];
 
 				const engineers = [
@@ -110,9 +110,22 @@ export const useDummyClaimDetail = (
 					model,
 					faultType: faultTypes[claimNumber % faultTypes.length],
 					repairCost: Math.floor(Math.random() * 50000) + 10000,
-					status: claimStatus,
-					repairStatus,
-					paymentStatus,
+					status: claimStatus.toUpperCase() as
+						| "PENDING"
+						| "APPROVED"
+						| "REJECTED"
+						| "COMPLETED"
+						| "AUTHORIZED",
+					repairStatus: repairStatus?.toUpperCase() as
+						| "PENDING"
+						| "AWAITING_PARTS"
+						| "RECEIVED_DEVICE"
+						| "COMPLETED"
+						| undefined,
+					paymentStatus: paymentStatus?.toUpperCase() as
+						| "PAID"
+						| "UNPAID"
+						| undefined,
 					serviceCenterName:
 						serviceCenters[claimNumber % serviceCenters.length],
 					engineerName: engineers[claimNumber % engineers.length],
@@ -177,7 +190,7 @@ export const useDummyClaimDetail = (
 
 	// Generate bank details for unpaid completed claims
 	const bankDetails =
-		claim?.repairStatus === "completed" && claim?.paymentStatus === "unpaid"
+		claim?.repairStatus === "COMPLETED" && claim?.paymentStatus === "UNPAID"
 			? {
 					bankName: ["GTBank", "Access Bank", "First Bank", "Zenith Bank"][
 						parseInt(claim.id) % 4

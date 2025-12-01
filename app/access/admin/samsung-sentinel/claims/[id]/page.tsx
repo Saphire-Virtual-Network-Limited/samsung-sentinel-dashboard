@@ -1,7 +1,7 @@
 import ViewClaimDetailView from "@/view/shared/ViewClaimDetailView";
 
-const AdminSamsungSentinelClaimDetailPage = () => {
+const SubAdminSamsungSentinelClaimDetailPage = () => {
 	return <ViewClaimDetailView />;
 };
 
-export default AdminSamsungSentinelClaimDetailPage;
+export default SubAdminSamsungSentinelClaimDetailPage;

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import useSWR from "swr";
 import {
 	Button,
 	Modal,
@@ -36,34 +37,30 @@ import {
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { showToast } from "@/lib";
-
-interface Product {
-	id: string;
-	name: string;
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
-	lastUpdatedBy: string;
-	status: "active" | "inactive";
-	sapphireCost: number;
-	repairCost: number;
-}
+import {
+	getAllProducts,
+	Product,
+	createProduct,
+	updateProduct,
+	deleteProduct,
+	activateProduct,
+	deactivateProduct,
+} from "@/lib/api/products";
+import { TableSkeleton } from "@/components/reususables/custom-ui";
 
 const columns: ColumnDef[] = [
 	{ name: "Product Name", uid: "name", sortable: true },
-	{ name: "Sapphire Cost", uid: "sapphireCost", sortable: true },
-	{ name: "Repair Cost", uid: "repairCost", sortable: true },
-	{ name: "Created By", uid: "createdBy", sortable: true },
-	{ name: "Created At", uid: "createdAt", sortable: true },
-	{ name: "Last Updated", uid: "lastUpdatedAt", sortable: true },
-	{ name: "Last Updated By", uid: "lastUpdatedBy", sortable: true },
+	{ name: "Sapphire Cost", uid: "sapphire_cost", sortable: true },
+	{ name: "Repair Cost", uid: "repair_cost", sortable: true },
+	{ name: "Created At", uid: "created_at", sortable: true },
+	{ name: "Last Updated", uid: "updated_at", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
 const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
+	ACTIVE: "success" as const,
+	INACTIVE: "danger" as const,
 };
 
 export default function SamsungSentinelProductsView() {
@@ -80,77 +77,96 @@ export default function SamsungSentinelProductsView() {
 
 	// Form states
 	const [productName, setProductName] = useState("");
+	const [sapphireCost, setSapphireCost] = useState("");
+	const [repairCost, setRepairCost] = useState("");
 	const [isCreating, setIsCreating] = useState(false);
 
-	// Filter and selection states (pagination/sorting handled by GenericTable)
+	// Filter and selection states
 	const [filterValue, setFilterValue] = useState("");
 	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+	const [page, setPage] = useState(1);
+	const [limit, setLimit] = useState(25);
+	const [dataLimit, setDataLimit] = useState(100);
 
-	// Mock data
-	const products: Product[] = useMemo(
-		() => [
-			{
-				id: "prod_001",
-				name: "Samsung Galaxy A05",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-08-15T10:30:00Z",
-				lastUpdatedAt: "2024-10-01T14:20:00Z",
-				lastUpdatedBy: "manager@sapphire.com",
-				status: "active",
-				sapphireCost: 150000,
-				repairCost: 25000,
+	// Fetch all products once
+	const {
+		data: allProductsResponse,
+		error,
+		isLoading,
+		mutate,
+	} = useSWR(
+		["/products/all", dataLimit],
+		() =>
+			getAllProducts({
+				page: 1,
+				limit: dataLimit,
+			}),
+		{
+			revalidateOnFocus: false,
+			onSuccess: (data) => {
+				// If actual total is more than current limit, update limit and refetch
+				if (data?.total && data.total > dataLimit) {
+					setDataLimit(data.total);
+				}
 			},
-			{
-				id: "prod_002",
-				name: "Samsung Galaxy A06",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-08-20T09:15:00Z",
-				lastUpdatedAt: "2024-09-28T11:45:00Z",
-				lastUpdatedBy: "admin@sapphire.com",
-				status: "active",
-				sapphireCost: 180000,
-				repairCost: 30000,
-			},
-			{
-				id: "prod_003",
-				name: "Samsung Galaxy A07",
-				createdBy: "manager@sapphire.com",
-				createdAt: "2024-09-01T16:20:00Z",
-				lastUpdatedAt: "2024-10-05T09:30:00Z",
-				lastUpdatedBy: "operator@sapphire.com",
-				status: "active",
-				sapphireCost: 200000,
-				repairCost: 35000,
-			},
-			{
-				id: "prod_004",
-				name: "Samsung Galaxy A08",
-				createdBy: "admin@sapphire.com",
-				createdAt: "2024-09-15T13:10:00Z",
-				lastUpdatedAt: "2024-09-20T10:15:00Z",
-				lastUpdatedBy: "admin@sapphire.com",
-				status: "inactive",
-				sapphireCost: 160000,
-				repairCost: 22000,
-			},
-		],
-		[]
+		}
 	);
 
-	// Let GenericTable handle filtering internally
+	// All products from API
+	const allProducts = useMemo(
+		() => allProductsResponse?.data || [],
+		[allProductsResponse?.data]
+	);
 
-	// Statistics
+	// Client-side filtering
+	const filteredProducts = useMemo(() => {
+		let filtered = [...allProducts];
+
+		// Apply search filter
+		if (filterValue) {
+			const searchLower = filterValue.toLowerCase();
+			filtered = filtered.filter((p) =>
+				p.name.toLowerCase().includes(searchLower)
+			);
+		}
+
+		// Apply status filter
+		if (statusFilter.size > 0) {
+			const selectedStatus = Array.from(statusFilter)[0];
+			filtered = filtered.filter((p) => p.status === selectedStatus);
+		}
+
+		return filtered;
+	}, [allProducts, filterValue, statusFilter]);
+
+	// Paginated products for table display
+	const products = useMemo(() => {
+		const start = (page - 1) * limit;
+		const end = start + limit;
+		return filteredProducts.slice(start, end);
+	}, [filteredProducts, page, limit]);
+
+	const totalProducts = filteredProducts.length;
+	const pages = Math.ceil(totalProducts / limit) || 1;
+
+	// Statistics (calculated from all products, not filtered)
 	const stats = useMemo(
 		() => ({
-			totalProducts: products.length,
-			activeProducts: products.filter((p) => p.status === "active").length,
+			totalProducts: allProductsResponse?.total || 0,
+			activeProducts: allProducts.filter((p) => p.status === "ACTIVE").length,
 			averageSapphireCost:
-				products.reduce((sum, p) => sum + p.sapphireCost, 0) / products.length,
+				allProducts.length > 0
+					? allProducts.reduce((sum, p) => sum + Number(p.sapphire_cost), 0) /
+					  allProducts.length
+					: 0,
 			averageRepairCost:
-				products.reduce((sum, p) => sum + p.repairCost, 0) / products.length,
+				allProducts.length > 0
+					? allProducts.reduce((sum, p) => sum + Number(p.repair_cost), 0) /
+					  allProducts.length
+					: 0,
 		}),
-		[products]
+		[allProducts, allProductsResponse?.total]
 	);
 
 	// Sort handling managed by GenericTable
@@ -161,15 +177,37 @@ export default function SamsungSentinelProductsView() {
 			return;
 		}
 
+		if (!sapphireCost || Number(sapphireCost) <= 0) {
+			showToast({
+				message: "Please enter a valid sapphire cost",
+				type: "error",
+			});
+			return;
+		}
+
+		if (!repairCost || Number(repairCost) <= 0) {
+			showToast({ message: "Please enter a valid repair cost", type: "error" });
+			return;
+		}
+
 		setIsCreating(true);
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await createProduct({
+				name: productName.trim(),
+				sapphire_cost: Number(sapphireCost),
+				repair_cost: Number(repairCost),
+			});
 			showToast({ message: "Product created successfully", type: "success" });
 			setProductName("");
+			setSapphireCost("");
+			setRepairCost("");
 			onCreateModalClose();
-		} catch (error) {
-			showToast({ message: "Failed to create product", type: "error" });
+			mutate(); // Refresh the products list
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to create product",
+				type: "error",
+			});
 		} finally {
 			setIsCreating(false);
 		}
@@ -179,18 +217,19 @@ export default function SamsungSentinelProductsView() {
 		productId: string,
 		currentStatus: string
 	) => {
-		const newStatus = currentStatus === "active" ? "inactive" : "active";
-		const action = newStatus === "active" ? "enabled" : "disabled";
+		const action = currentStatus === "ACTIVE" ? "disabled" : "enabled";
 
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			if (currentStatus === "ACTIVE") {
+				await deactivateProduct(productId);
+			} else {
+				await activateProduct(productId);
+			}
 			showToast({ message: `Product ${action} successfully`, type: "success" });
-		} catch (error) {
+			mutate(); // Refresh the products list
+		} catch (error: any) {
 			showToast({
-				message: `Failed to ${
-					newStatus === "active" ? "enable" : "disable"
-				} product`,
+				message: error?.message || `Failed to ${action} product`,
 				type: "error",
 			});
 		}
@@ -198,11 +237,14 @@ export default function SamsungSentinelProductsView() {
 
 	const handleDelete = async (productId: string) => {
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await deleteProduct(productId);
 			showToast({ message: "Product deleted successfully", type: "success" });
-		} catch (error) {
-			showToast({ message: "Failed to delete product", type: "error" });
+			mutate(); // Refresh the products list
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to delete product",
+				type: "error",
+			});
 		}
 	};
 
@@ -210,13 +252,28 @@ export default function SamsungSentinelProductsView() {
 	const handleBulkEnable = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} products enabled successfully`,
-				type: "success",
-			});
+			const productIds = Array.from(selectedKeys);
+			const results = await Promise.allSettled(
+				productIds.map((id) => activateProduct(id as string))
+			);
+
+			const successful = results.filter((r) => r.status === "fulfilled").length;
+			const failed = results.filter((r) => r.status === "rejected").length;
+
+			if (failed > 0) {
+				showToast({
+					message: `${successful} products enabled, ${failed} failed`,
+					type: "warning",
+				});
+			} else {
+				showToast({
+					message: `${successful} products enabled successfully`,
+					type: "success",
+				});
+			}
+
 			setSelectedKeys(new Set());
+			mutate();
 		} catch (error) {
 			showToast({ message: "Failed to enable products", type: "error" });
 		}
@@ -225,13 +282,28 @@ export default function SamsungSentinelProductsView() {
 	const handleBulkDisable = async () => {
 		if (selectedKeys.size === 0) return;
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} products disabled successfully`,
-				type: "success",
-			});
+			const productIds = Array.from(selectedKeys);
+			const results = await Promise.allSettled(
+				productIds.map((id) => deactivateProduct(id as string))
+			);
+
+			const successful = results.filter((r) => r.status === "fulfilled").length;
+			const failed = results.filter((r) => r.status === "rejected").length;
+
+			if (failed > 0) {
+				showToast({
+					message: `${successful} products disabled, ${failed} failed`,
+					type: "warning",
+				});
+			} else {
+				showToast({
+					message: `${successful} products disabled successfully`,
+					type: "success",
+				});
+			}
+
 			setSelectedKeys(new Set());
+			mutate();
 		} catch (error) {
 			showToast({ message: "Failed to disable products", type: "error" });
 		}
@@ -252,8 +324,72 @@ export default function SamsungSentinelProductsView() {
 
 	// Export function
 	const exportFn = async (data: Product[]) => {
-		// Implementation for export functionality
-		console.log("Exporting products:", data);
+		try {
+			const ExcelJS = await import("exceljs");
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet("Products");
+
+			// Define columns
+			worksheet.columns = [
+				{ header: "Product ID", key: "id", width: 40 },
+				{ header: "Product Name", key: "name", width: 30 },
+				{ header: "Sapphire Cost (₦)", key: "sapphire_cost", width: 20 },
+				{ header: "Repair Cost (₦)", key: "repair_cost", width: 20 },
+				{ header: "Status", key: "status", width: 15 },
+				{ header: "Created At", key: "created_at", width: 20 },
+				{ header: "Updated At", key: "updated_at", width: 20 },
+			];
+
+			// Style header row
+			worksheet.getRow(1).font = { bold: true };
+			worksheet.getRow(1).fill = {
+				type: "pattern",
+				pattern: "solid",
+				fgColor: { argb: "FF4472C4" },
+			};
+			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+
+			// Add data
+			data.forEach((product) => {
+				worksheet.addRow({
+					id: product.id,
+					name: product.name,
+					sapphire_cost: Number(product.sapphire_cost),
+					repair_cost: Number(product.repair_cost),
+					status: product.status,
+					created_at: new Date(product.created_at).toLocaleDateString(),
+					updated_at: new Date(product.updated_at).toLocaleDateString(),
+				});
+			});
+
+			// Format currency columns
+			worksheet.getColumn("sapphire_cost").numFmt = "#,##0.00";
+			worksheet.getColumn("repair_cost").numFmt = "#,##0.00";
+
+			// Generate buffer and download
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], {
+				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `products_export_${
+				new Date().toISOString().split("T")[0]
+			}.xlsx`;
+			link.click();
+			window.URL.revokeObjectURL(url);
+
+			showToast({
+				message: `Successfully exported ${data.length} products`,
+				type: "success",
+			});
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to export products",
+				type: "error",
+			});
+		}
 	};
 
 	// Render cell content
@@ -268,21 +404,21 @@ export default function SamsungSentinelProductsView() {
 						</p>
 					</div>
 				);
-			case "createdAt":
-			case "lastUpdatedAt":
+			case "created_at":
+			case "updated_at":
 				return (
 					<p className="text-sm">{new Date(row[key]).toLocaleDateString()}</p>
 				);
-			case "sapphireCost":
+			case "sapphire_cost":
 				return (
 					<Chip color="success" variant="flat" size="sm">
-						₦{row.sapphireCost.toLocaleString()}
+						₦{Number(row.sapphire_cost).toLocaleString()}
 					</Chip>
 				);
-			case "repairCost":
+			case "repair_cost":
 				return (
 					<Chip color="warning" variant="flat" size="sm">
-						₦{row.repairCost.toLocaleString()}
+						₦{Number(row.repair_cost).toLocaleString()}
 					</Chip>
 				);
 			case "status":
@@ -329,7 +465,7 @@ export default function SamsungSentinelProductsView() {
 								<DropdownItem
 									key="toggle"
 									startContent={
-										row.status === "active" ? (
+										row.status === "ACTIVE" ? (
 											<PowerOff size={16} />
 										) : (
 											<Power size={16} />
@@ -337,7 +473,7 @@ export default function SamsungSentinelProductsView() {
 									}
 									onPress={() => handleToggleStatus(row.id, row.status)}
 								>
-									{row.status === "active" ? "Disable" : "Enable"}
+									{row.status === "ACTIVE" ? "Disable" : "Enable"}
 								</DropdownItem>
 								<DropdownItem
 									key="delete"
@@ -358,8 +494,8 @@ export default function SamsungSentinelProductsView() {
 	};
 
 	const statusOptions = [
-		{ name: "Active", uid: "active" },
-		{ name: "Inactive", uid: "inactive" },
+		{ name: "Active", uid: "ACTIVE" },
+		{ name: "Inactive", uid: "INACTIVE" },
 	];
 
 	return (
@@ -429,33 +565,37 @@ export default function SamsungSentinelProductsView() {
 				/>
 			</div>
 			{/* Products Table */}
-			<GenericTable<Product>
-				columns={columns}
-				data={products}
-				allCount={products.length}
-				exportData={products}
-				isLoading={false}
-				filterValue={filterValue}
-				onFilterChange={setFilterValue}
-				statusOptions={statusOptions}
-				statusFilter={statusFilter}
-				onStatusChange={setStatusFilter}
-				statusColorMap={statusColorMap}
-				showStatus={true}
-				sortDescriptor={{ column: "createdAt", direction: "descending" }}
-				onSortChange={() => {}}
-				page={1}
-				pages={1}
-				onPageChange={() => {}}
-				exportFn={exportFn}
-				renderCell={renderCell}
-				hasNoRecords={products.length === 0}
-				searchPlaceholder="Search products by name, created by, or updated by..."
-				selectedKeys={selectedKeys}
-				onSelectionChange={handleSelectionChange}
-				selectionMode="multiple"
-			/>{" "}
-			{/* Create Product Modal */}
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} />
+			) : (
+				<GenericTable<Product>
+					columns={columns}
+					data={products}
+					allCount={totalProducts}
+					exportData={filteredProducts}
+					isLoading={isLoading}
+					filterValue={filterValue}
+					onFilterChange={setFilterValue}
+					statusOptions={statusOptions}
+					statusFilter={statusFilter}
+					onStatusChange={setStatusFilter}
+					statusColorMap={statusColorMap}
+					showStatus={true}
+					statusFilterMode="single"
+					sortDescriptor={{ column: "created_at", direction: "descending" }}
+					onSortChange={() => {}}
+					page={page}
+					pages={pages}
+					onPageChange={setPage}
+					exportFn={exportFn}
+					renderCell={renderCell}
+					hasNoRecords={products.length === 0}
+					searchPlaceholder="Search products by name..."
+					selectedKeys={selectedKeys}
+					onSelectionChange={handleSelectionChange}
+					selectionMode="multiple"
+				/>
+			)}
 			<Modal isOpen={isCreateModalOpen} onClose={onCreateModalClose} size="lg">
 				<ModalContent>
 					{() => (
@@ -470,9 +610,35 @@ export default function SamsungSentinelProductsView() {
 										onValueChange={setProductName}
 										isRequired
 									/>
+									<Input
+										label="Sapphire Cost"
+										placeholder="e.g., 5000"
+										type="number"
+										value={sapphireCost}
+										onValueChange={setSapphireCost}
+										isRequired
+										startContent={
+											<div className="pointer-events-none flex items-center">
+												<span className="text-default-400 text-small">₦</span>
+											</div>
+										}
+									/>
+									<Input
+										label="Repair Cost"
+										placeholder="e.g., 12000"
+										type="number"
+										value={repairCost}
+										onValueChange={setRepairCost}
+										isRequired
+										startContent={
+											<div className="pointer-events-none flex items-center">
+												<span className="text-default-400 text-small">₦</span>
+											</div>
+										}
+									/>
 									<p className="text-sm text-gray-600">
-										After creating the product, you can add repair types and
-										configure pricing.
+										Create a new product with pricing information. All fields
+										are required.
 									</p>
 								</div>
 							</ModalBody>
@@ -488,7 +654,9 @@ export default function SamsungSentinelProductsView() {
 									color="primary"
 									onPress={handleCreateProduct}
 									isLoading={isCreating}
-									isDisabled={!productName.trim()}
+									isDisabled={
+										!productName.trim() || !sapphireCost || !repairCost
+									}
 								>
 									{isCreating ? "Creating..." : "Create Product"}
 								</Button>

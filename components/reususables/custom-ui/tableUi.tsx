@@ -56,6 +56,7 @@ export interface GenericTableProps<T> {
 	onStatusChange?: (sel: Set<string>) => void;
 	statusColorMap?: Record<string, ChipProps["color"]>;
 	showStatus?: boolean;
+	statusFilterMode?: "single" | "multiple"; // Control single vs multi-select for status
 	sortDescriptor: SortDescriptor;
 	onSortChange: (sd: SortDescriptor) => void;
 	page: number;
@@ -89,6 +90,7 @@ export interface GenericTableProps<T> {
 	defaultRowsPerPage?: number; // Default number of rows per page
 	showRowsPerPageSelector?: boolean; // Whether to show the rows per page selector
 	onRowsPerPageChange?: (rowsPerPage: number) => void; // Callback for rows per page change
+	showSkeletonWhileLoading?: boolean; // Show skeleton rows while loading (default: true)
 }
 
 export default function GenericTable<T>(props: GenericTableProps<T>) {
@@ -96,7 +98,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	// Get the role from the URL path (e.g., /access/dev/customers -> dev)
 	const role = pathname.split("/")[2];
 	const { userResponse } = useAuth(); // get the user email
-	const userEmail = userResponse?.data?.email || "";
+	const userEmail = userResponse?.email || "";
 
 	const {
 		columns,
@@ -110,6 +112,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		statusFilter,
 		onStatusChange = () => {},
 		showStatus = true,
+		statusFilterMode = "multiple", // Default to multiple selection
 		sortDescriptor,
 		onSortChange,
 		page,
@@ -136,6 +139,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 		defaultRowsPerPage = 10,
 		showRowsPerPageSelector = false,
 		onRowsPerPageChange,
+		showSkeletonWhileLoading = true,
 	} = props;
 
 	// Column visibility state
@@ -179,22 +183,25 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 	}, [initialStartDate, initialEndDate]);
 
 	// --- handle date filter ---
-	const handleDateFilter = (start: string, end: string) => {
-		if (!start || !end) {
-			showToast({ message: "Both dates must be selected.", type: "error" });
-			return;
-		}
-		if (new Date(end) < new Date(start)) {
-			showToast({
-				message: "End date must be after start date.",
-				type: "error",
-			});
-			return;
-		}
-		setStartDate(start);
-		setEndDate(end);
-		onDateFilterChange?.(start, end);
-	};
+	const handleDateFilter = React.useCallback(
+		(start: string, end: string) => {
+			if (!start || !end) {
+				showToast({ message: "Both dates must be selected.", type: "error" });
+				return;
+			}
+			if (new Date(end) < new Date(start)) {
+				showToast({
+					message: "End date must be after start date.",
+					type: "error",
+				});
+				return;
+			}
+			setStartDate(start);
+			setEndDate(end);
+			onDateFilterChange?.(start, end);
+		},
+		[onDateFilterChange]
+	);
 
 	const topContent = (
 		<div className="flex flex-col gap-4">
@@ -268,9 +275,9 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 								</DropdownTrigger>
 								<DropdownMenu
 									disallowEmptySelection
-									closeOnSelect={false}
+									closeOnSelect={statusFilterMode === "single"}
 									selectedKeys={statusFilter}
-									selectionMode="multiple"
+									selectionMode={statusFilterMode}
 									onSelectionChange={onStatusChange as any}
 								>
 									{statusOptions.map((s) => (
@@ -280,8 +287,7 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 									))}
 								</DropdownMenu>
 							</Dropdown>
-						)}
-
+						)}{" "}
 					<Button
 						color="primary"
 						endContent={<DownloadIcon className="w-3" />}
@@ -423,22 +429,34 @@ export default function GenericTable<T>(props: GenericTableProps<T>) {
 				)}
 			</TableHeader>
 			<TableBody
-				emptyContent={hasNoRecords ? "No records" : "No data found"}
+				emptyContent={
+					isLoading && showSkeletonWhileLoading
+						? ""
+						: data.length === 0
+						? "No records"
+						: "No data found"
+				}
 				items={
-					isLoading
-						? Array(rowsPerPage).fill(null)
-						: data.length
-						? data
-						: Array(rowsPerPage).fill(null)
+					(isLoading && showSkeletonWhileLoading
+						? Array(Math.max(rowsPerPage, 5))
+								.fill(null)
+								.map((_, i) => ({ __skeleton: true, __id: i }))
+						: data) as any
 				}
 			>
 				{(item) => {
-					if (isLoading) {
+					// Show skeleton rows while loading
+					if (
+						(isLoading && showSkeletonWhileLoading) ||
+						(item as any)?.__skeleton
+					) {
 						return (
-							<TableRow key={`skeleton-${Math.random()}`}>
+							<TableRow
+								key={`skeleton-${(item as any)?.__id || Math.random()}`}
+							>
 								{displayedColumns.map((c) => (
 									<TableCell key={c.uid}>
-										<div className="skeleton w-full h-6" />
+										<div className="animate-pulse h-4 bg-gray-200 dark:bg-neutral-700 rounded w-3/4" />
 									</TableCell>
 								))}
 							</TableRow>

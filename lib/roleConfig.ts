@@ -18,29 +18,18 @@
 // ============================================================================
 
 export const ROLES = {
-	// Admin hierarchy
-	SUPER_ADMIN: "SUPER_ADMIN",
-	ADMIN: "ADMIN",
+	// Admin
+	ADMIN: "admin",
 
-	// Core roles
-	SALES: "SALES",
-	FINANCE: "FINANCE",
-	INVENTORY: "INVENTORY",
-	COLLECTION_ADMIN: "COLLECTION_ADMIN",
-	COLLECTION_OFFICER: "COLLECTION_OFFICER",
-	HR: "HR",
-	AUDIT: "AUDIT",
-	SUPPORT: "SUPPORT",
-	SERVICE_CENTER: "SERVICE_CENTER",
-	REPAIR_STORE: "REPAIR_STORE",
-	SAMSUNG_PARTNERS: "SAMSUNG_PARTNERS",
-	SCAN_PARTNER: "SCAN_PARTNER",
+	// Samsung Sentinel roles
+	REPAIR_STORE_ADMIN: "repair_store_admin",
+	SERVICE_CENTER_ADMIN: "service_center_admin",
+	ENGINEER: "engineer",
+	SAMSUNG_PARTNER: "samsung_partner",
 
-	// Aliases and variations
-	DEVELOPER: "DEVELOPER",
-	VERIFICATION: "VERIFICATION",
-	VERIFICATION_OFFICER: "VERIFICATION_OFFICER",
-	INVENTORY_MANAGER: "INVENTORY_MANAGER",
+	// Finance & Audit
+	FINANCE: "finance",
+	AUDITOR: "auditor",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -50,29 +39,18 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 // ============================================================================
 
 export const ROLE_BASE_PATHS: Record<Role, string> = {
-	// Admin hierarchy - IMPORTANT: ADMIN maps to sub-admin, SUPER_ADMIN maps to admin
-	[ROLES.SUPER_ADMIN]: "/access/admin",
-	[ROLES.ADMIN]: "/access/sub-admin",
+	// Admin
+	[ROLES.ADMIN]: "/access/admin",
 
-	// Core roles
-	[ROLES.SALES]: "/access/sales",
+	// Samsung Sentinel roles
+	[ROLES.REPAIR_STORE_ADMIN]: "/access/repair-store",
+	[ROLES.SERVICE_CENTER_ADMIN]: "/access/service-center",
+	[ROLES.ENGINEER]: "/access/service-center", // Engineers use service center path
+	[ROLES.SAMSUNG_PARTNER]: "/access/samsung-partners",
+
+	// Finance & Audit
 	[ROLES.FINANCE]: "/access/finance",
-	[ROLES.INVENTORY]: "/access/inventory",
-	[ROLES.COLLECTION_ADMIN]: "/access/collection-admin",
-	[ROLES.COLLECTION_OFFICER]: "/access/collection-officer",
-	[ROLES.HR]: "/access/hr",
-	[ROLES.AUDIT]: "/access/audit",
-	[ROLES.SUPPORT]: "/access/support",
-	[ROLES.SERVICE_CENTER]: "/access/service-center",
-	[ROLES.REPAIR_STORE]: "/access/repair-store",
-	[ROLES.SAMSUNG_PARTNERS]: "/access/samsung-partners",
-	[ROLES.SCAN_PARTNER]: "/access/scan-partner",
-
-	// Aliases and variations
-	[ROLES.DEVELOPER]: "/access/dev",
-	[ROLES.VERIFICATION]: "/access/verify",
-	[ROLES.VERIFICATION_OFFICER]: "/access/verify",
-	[ROLES.INVENTORY_MANAGER]: "/access/inventory",
+	[ROLES.AUDITOR]: "/access/audit",
 };
 
 // ============================================================================
@@ -81,46 +59,25 @@ export const ROLE_BASE_PATHS: Record<Role, string> = {
 
 export type SidebarItemsKey =
 	| "admin"
-	| "subAdmin"
-	| "sales"
-	| "finance"
-	| "inventory"
-	| "collectionAdmin"
-	| "collectionOfficer"
-	| "hr"
-	| "audit"
-	| "support"
 	| "serviceCenter"
 	| "repairStore"
 	| "samsungPartners"
-	| "scanPartner"
-	| "verification"
-	| "dev";
+	| "finance"
+	| "audit";
 
 export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
-	// Admin hierarchy
-	[ROLES.SUPER_ADMIN]: "admin",
-	[ROLES.ADMIN]: "subAdmin",
+	// Admin
+	[ROLES.ADMIN]: "admin",
 
-	// Core roles
-	[ROLES.SALES]: "sales",
+	// Samsung Sentinel roles
+	[ROLES.REPAIR_STORE_ADMIN]: "repairStore",
+	[ROLES.SERVICE_CENTER_ADMIN]: "serviceCenter",
+	[ROLES.ENGINEER]: "serviceCenter", // Engineers use same sidebar as service center admin
+	[ROLES.SAMSUNG_PARTNER]: "samsungPartners",
+
+	// Finance & Audit
 	[ROLES.FINANCE]: "finance",
-	[ROLES.INVENTORY]: "inventory",
-	[ROLES.COLLECTION_ADMIN]: "collectionAdmin",
-	[ROLES.COLLECTION_OFFICER]: "collectionOfficer",
-	[ROLES.HR]: "hr",
-	[ROLES.AUDIT]: "audit",
-	[ROLES.SUPPORT]: "support",
-	[ROLES.SERVICE_CENTER]: "serviceCenter",
-	[ROLES.REPAIR_STORE]: "repairStore",
-	[ROLES.SAMSUNG_PARTNERS]: "samsungPartners",
-	[ROLES.SCAN_PARTNER]: "scanPartner",
-
-	// Aliases and variations
-	[ROLES.DEVELOPER]: "dev",
-	[ROLES.VERIFICATION]: "verification", // Verification uses admin sidebar
-	[ROLES.VERIFICATION_OFFICER]: "verification",
-	[ROLES.INVENTORY_MANAGER]: "inventory",
+	[ROLES.AUDITOR]: "audit",
 };
 
 // ============================================================================
@@ -131,20 +88,19 @@ export const ROLE_SIDEBAR_MAPPING: Record<Role, SidebarItemsKey> = {
  * Get the base path for a given role
  */
 export function getRoleBasePath(role: string | undefined): string {
-	if (!role) return "/access/sub-admin"; // Default fallback
-	const normalizedRole = role.toUpperCase() as Role;
-	return ROLE_BASE_PATHS[normalizedRole] || "/access/sub-admin";
+	if (!role) return "/access/admin"; // Default fallback
+	// API returns lowercase roles, so don't convert to uppercase
+	return ROLE_BASE_PATHS[role as Role] || "/access/admin";
 }
 
 /**
  * Get the sidebar items key for a given role
  */
 export function getRoleSidebarKey(role: string): SidebarItemsKey {
-	console.log("role sidebarkey was called with: ",role)
-	const normalizedRole = role.toUpperCase() as Role;
-	console.log("normalizedrole is: ",normalizedRole);
-	console.log("role sidebar mapping: ",ROLE_SIDEBAR_MAPPING[normalizedRole])
-	return ROLE_SIDEBAR_MAPPING[normalizedRole] || "subAdmin";
+	console.log("role sidebarkey was called with: ", role);
+	// API returns lowercase roles, so don't convert to uppercase
+	console.log("role sidebar mapping: ", ROLE_SIDEBAR_MAPPING[role as Role]);
+	return ROLE_SIDEBAR_MAPPING[role as Role] || "admin";
 }
 
 /**
@@ -166,9 +122,31 @@ export function isValidPathForRole(
 		return true;
 	}
 
-	const basePath = getRoleBasePath(role);
-	// Allow exact match or subpaths
-	return path === basePath || path.startsWith(basePath + "/");
+	// Get the base path for the user's role
+	const userBasePath = getRoleBasePath(role);
+
+	// Check if the current path matches the user's base path
+	const isUserPath =
+		path === userBasePath || path.startsWith(userBasePath + "/");
+
+	if (!isUserPath) {
+		// Path doesn't belong to user's role, reject it
+		return false;
+	}
+
+	// Additional check: ensure the path doesn't belong to a different role
+	// This prevents users from accessing /access/admin/samsung-sentinel if they're repair_store_admin
+	const allBasePaths = Object.values(ROLE_BASE_PATHS).filter(
+		(p) => p !== userBasePath
+	);
+	for (const otherBasePath of allBasePaths) {
+		// If the path starts with another role's base path, reject it
+		if (path === otherBasePath || path.startsWith(otherBasePath + "/")) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**

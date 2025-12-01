@@ -11,11 +11,7 @@ import React, {
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
-	getAdminProfile,
-	loginAdmin,
-	logoutAdmin,
 	showToast,
-	getAllProducts as getProducts,
 	checkDefaultPassword,
 	setPasswordSecurityStatus,
 	PasswordStatus,
@@ -24,25 +20,22 @@ import {
 	isExemptRoute,
 	clearPasswordSecurityStatus,
 } from "@/lib";
+import {
+	getAdminProfile,
+	loginAdmin,
+	logout as apiLogout,
+	UserProfile,
+} from "@/lib/api/auth";
+import { getRefreshToken, clearAuthData } from "@/lib/api/shared";
 import { Loader2 } from "lucide-react";
 import { getRoleBasePath, isValidPathForRole } from "@/lib/roleConfig";
 
 // Types
-interface UserData {
-	[key: string]: any;
-}
-
-interface UserResponse {
-	statusCode: number;
-	data: UserData | null;
-}
-
 interface AuthContextType {
-	userResponse: UserResponse | null;
+	userResponse: UserProfile | null;
 	isLoading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	logout: () => void;
-	getAllProducts: () => Promise<{ label: string; value: string }[] | undefined>;
 	_debugOverrides?: any; // Internal use for debug system
 }
 
@@ -66,14 +59,11 @@ function AuthInitializer({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	const [userResponse, setUserResponse] = useState<UserResponse | null>(null);
+	const [userResponse, setUserResponse] = useState<UserProfile | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [callbackUrl, setCallbackUrl] = useState("/");
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const isNavigatingRef = useRef(false);
-	const [products, setProducts] = useState<
-		{ label: string; value: string }[] | null
-	>(null);
 
 	const router = useRouter();
 	const pathName = usePathname();
@@ -143,7 +133,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	const logout = useCallback(async () => {
 		setIsLoggingOut(true);
 		try {
-			await logoutAdmin();
+			const refreshToken = getRefreshToken();
+			if (refreshToken) {
+				await apiLogout({ refresh_token: refreshToken });
+			} else {
+				// If no refresh token, just clear local data
+				clearAuthData();
+			}
 			setUserResponse(null);
 			clearPasswordSecurityStatus(); // Clear password security cookie on logout
 
@@ -176,8 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	const fetchUserProfile = useCallback(async () => {
 		try {
 			const response = await getAdminProfile();
-			const originalRole = response.data.role;
-			const originalEmail = response.data.email;
+			const originalRole = response.role;
+			const originalEmail = response.email;
 			const currentPath = pathName;
 
 			// Get current debug overrides
@@ -196,13 +192,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 					: originalEmail;
 
 			// Update user response with debug overrides if applicable
-			const modifiedResponse = {
+			const modifiedResponse: UserProfile = {
 				...response,
-				data: {
-					...response.data,
-					role: userRole,
-					email: userEmail,
-				},
+				role: userRole,
+				email: userEmail,
 			};
 
 			setUserResponse(modifiedResponse);
@@ -423,9 +416,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 
 			// Fetch the new user's profile immediately after login
-			await fetchUserProfile();
+			const profile = await getAdminProfile();
+			const userRole = profile.role;
 
-			const redirectTo = callbackUrl === "/" ? "/" : callbackUrl;
+			setUserResponse(profile);
+
+			// Get role-based redirect path
+			const roleBasePath = getRoleBasePath(userRole);
+			const redirectTo = callbackUrl === "/" ? roleBasePath : callbackUrl;
+
 			router.push(redirectTo);
 			showToast({
 				type: "success",
@@ -442,27 +441,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 		}
 	};
 
-	const getAllProducts = useCallback(async () => {
-		if (products) return products;
-
-		try {
-			const response = await getProducts();
-			const mapped = response.data.map((product: any) => ({
-				label: product.name,
-				value: product.productId,
-			}));
-			setProducts(mapped);
-			return mapped;
-		} catch (error: any) {
-			console.error("Error fetching products:", error);
-			showToast({
-				type: "error",
-				message: error.message || "Failed to fetch products",
-				duration: 3000,
-			});
-		}
-	}, [products]);
-
 	return (
 		<AuthContext.Provider
 			value={{
@@ -470,7 +448,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				isLoading,
 				login,
 				logout,
-				getAllProducts,
 				_debugOverrides: debugOverrides,
 			}}
 		>

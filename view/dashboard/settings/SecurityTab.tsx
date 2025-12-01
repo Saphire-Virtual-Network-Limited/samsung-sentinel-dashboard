@@ -11,23 +11,12 @@ import {
 } from "@/lib";
 
 interface ProfileData {
-	userId: string;
-	firstName: string;
-	lastName: string;
+	id: string;
 	email: string;
-	dob: string | null;
-	gender: string | null;
+	name: string;
+	phone: string;
 	role: string;
-	telephoneNumber: string;
-	profile_picture: string | null;
-	accountStatus: string;
-	isActive: boolean;
-	accountType: string;
-	companyName: string | null;
-	companyAddress: string | null;
-	companyState: string | null;
-	companyCity: string | null;
-	companyLGA: string | null;
+	status: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -227,17 +216,24 @@ export default function SecurityTab({
 						<span className="text-sm text-gray-600">Account Status</span>
 						<Chip
 							size="sm"
-							color={getStatusColor(profileData?.accountStatus || "")}
+							color={getStatusColor(profileData?.status || "")}
 							variant="flat"
 						>
-							{profileData?.accountStatus}
+							{profileData?.status}
 						</Chip>
 					</div>
 
 					<div className="flex justify-between items-center py-2 border-b border-gray-100">
-						<span className="text-sm text-gray-600">Account Type</span>
+						<span className="text-sm text-gray-600">Role</span>
 						<span className="text-sm font-medium break-words">
-							{profileData?.accountType}
+							{profileData?.role}
+						</span>
+					</div>
+
+					<div className="flex justify-between items-center py-2 border-b border-gray-100">
+						<span className="text-sm text-gray-600">Email</span>
+						<span className="text-sm font-medium break-words">
+							{profileData?.email}
 						</span>
 					</div>
 

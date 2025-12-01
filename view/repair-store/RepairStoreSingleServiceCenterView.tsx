@@ -16,13 +16,13 @@ import {
 	Input,
 	Select,
 	SelectItem,
+	Textarea,
+	Badge,
+	Avatar,
 	Dropdown,
 	DropdownTrigger,
 	DropdownMenu,
 	DropdownItem,
-	Textarea,
-	Avatar,
-	Badge,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -32,11 +32,9 @@ import {
 	ArrowLeft,
 	Plus,
 	Eye,
-	Edit,
 	Trash2,
 	Power,
 	PowerOff,
-	EllipsisVertical,
 	Users,
 	MapPin,
 	Phone,
@@ -45,69 +43,31 @@ import {
 	CreditCard,
 	Wrench,
 	Star,
-	TrendingUp,
+	Edit,
+	EllipsisVertical,
 	Shield,
+	TrendingUp,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { showToast } from "@/lib";
-
-interface Engineer {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phoneNumber: string;
-	avatar?: string;
-	role: "Engineer" | "Senior Engineer" | "Lead Engineer";
-	specialization: string;
-	totalRepairs: number;
-	monthlyRepairs: number;
-	rating: number;
-	status: "active" | "inactive" | "suspended";
-	joinedDate: string;
-	lastActiveDate: string;
-}
-
-interface ServiceCenter {
-	id: string;
-	name: string;
-	address: string;
-	state: string;
-	lga: string;
-	phoneNumber: string;
-	email: string;
-	engineersCount: number;
-	totalRepairs: number;
-	monthlyRevenue: number;
-	monthlyRepairs: number;
-	averageRating: number;
-	status: "active" | "inactive" | "suspended";
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
-	bankDetails?: {
-		accountName: string;
-		accountNumber: string;
-		bankName: string;
-	};
-}
+import { useRepairStoreSingleServiceCenter } from "@/hooks/repair-store/useRepairStoreSingleServiceCenter";
+import type { Engineer } from "@/lib/api";
+import { UserStatus } from "@/lib/api/shared";
 
 const engineerColumns: ColumnDef[] = [
 	{ name: "Engineer", uid: "engineer", sortable: true },
-	{ name: "Role", uid: "role", sortable: true },
-	{ name: "Contact", uid: "contact", sortable: true },
-	{ name: "Specialization", uid: "specialization", sortable: true },
-	{ name: "Total Repairs", uid: "totalRepairs", sortable: true },
-	{ name: "Monthly Repairs", uid: "monthlyRepairs", sortable: true },
-	{ name: "Rating", uid: "rating", sortable: true },
+	{ name: "Email", uid: "email", sortable: true },
+	{ name: "Phone", uid: "phone", sortable: true },
+	{ name: "Description", uid: "description", sortable: false },
 	{ name: "Status", uid: "status", sortable: true },
+	{ name: "Created", uid: "created", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
 
 const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
-	suspended: "warning" as const,
+	ACTIVE: "success" as const,
+	SUSPENDED: "warning" as const,
+	DISABLED: "danger" as const,
 };
 
 interface RepairStoreSingleServiceCenterViewProps {
@@ -120,6 +80,20 @@ export default function RepairStoreSingleServiceCenterView({
 	const router = useRouter();
 	const params = useParams();
 	const serviceCenterId = centerId || (params.id as string);
+
+	// Use the single service center hook
+	const {
+		serviceCenter,
+		isLoading,
+		engineers,
+		isLoadingEngineers,
+		handleUpdate,
+		handleToggleStatus,
+		handleCreateEngineer,
+		handleDeleteEngineer,
+		isUpdating,
+		isChangingStatus,
+	} = useRepairStoreSingleServiceCenter(serviceCenterId);
 
 	// Modal states
 	const {
@@ -136,150 +110,50 @@ export default function RepairStoreSingleServiceCenterView({
 
 	// Form states
 	const [engineerFormData, setEngineerFormData] = useState({
-		firstName: "",
-		lastName: "",
+		name: "",
 		email: "",
-		phoneNumber: "",
-		role: "Engineer" as "Engineer" | "Senior Engineer" | "Lead Engineer",
-		specialization: "",
+		phone: "",
+		description: "",
 	});
 
 	const [centerFormData, setCenterFormData] = useState({
 		name: "",
 		address: "",
-		phoneNumber: "",
+		phone: "",
 		email: "",
-		accountName: "",
-		accountNumber: "",
-		bankName: "",
+		state: "",
+		city: "",
+		description: "",
+		account_name: "",
+		account_number: "",
+		bank_name: "",
 	});
-
-	const [isCreating, setIsCreating] = useState(false);
-	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Filter states
 	const [filterValue, setFilterValue] = useState("");
-	const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
-	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-
-	// Mock data
-	const serviceCenter: ServiceCenter = useMemo(
-		() => ({
-			id: serviceCenterId,
-			name: "Sapphire Tech Hub Lagos",
-			address: "123 Allen Avenue, Ikeja, Lagos State",
-			state: "Lagos",
-			lga: "Ikeja",
-			phoneNumber: "+234 801 234 5678",
-			email: "lagos@sapphiretech.com",
-			engineersCount: 8,
-			totalRepairs: 1245,
-			monthlyRevenue: 2850000,
-			monthlyRepairs: 156,
-			averageRating: 4.7,
-			status: "active",
-			createdBy: "admin@sapphire.com",
-			createdAt: "2024-01-15T10:30:00Z",
-			lastUpdatedAt: "2024-10-01T14:20:00Z",
-			bankDetails: {
-				accountName: "Sapphire Tech Hub Lagos",
-				accountNumber: "0123456789",
-				bankName: "First Bank of Nigeria",
-			},
-		}),
-		[serviceCenterId]
-	);
-
-	const engineers: Engineer[] = useMemo(
-		() => [
-			{
-				id: "eng_001",
-				firstName: "John",
-				lastName: "Adebayo",
-				email: "john.adebayo@sapphiretech.com",
-				phoneNumber: "+234 801 111 2222",
-				avatar: "",
-				role: "Lead Engineer",
-				specialization: "Mobile Repairs",
-				totalRepairs: 420,
-				monthlyRepairs: 32,
-				rating: 4.8,
-				status: "active",
-				joinedDate: "2024-01-20T09:00:00Z",
-				lastActiveDate: "2024-10-15T16:30:00Z",
-			},
-			{
-				id: "eng_002",
-				firstName: "Sarah",
-				lastName: "Ibrahim",
-				email: "sarah.ibrahim@sapphiretech.com",
-				phoneNumber: "+234 802 333 4444",
-				avatar: "",
-				role: "Senior Engineer",
-				specialization: "Samsung Devices",
-				totalRepairs: 315,
-				monthlyRepairs: 28,
-				rating: 4.6,
-				status: "active",
-				joinedDate: "2024-02-10T10:15:00Z",
-				lastActiveDate: "2024-10-15T15:45:00Z",
-			},
-			{
-				id: "eng_003",
-				firstName: "Michael",
-				lastName: "Okafor",
-				email: "michael.okafor@sapphiretech.com",
-				phoneNumber: "+234 803 555 6666",
-				avatar: "",
-				role: "Engineer",
-				specialization: "Screen Repairs",
-				totalRepairs: 256,
-				monthlyRepairs: 24,
-				rating: 4.4,
-				status: "active",
-				joinedDate: "2024-03-05T11:30:00Z",
-				lastActiveDate: "2024-10-14T17:20:00Z",
-			},
-			{
-				id: "eng_004",
-				firstName: "Fatima",
-				lastName: "Yusuf",
-				email: "fatima.yusuf@sapphiretech.com",
-				phoneNumber: "+234 804 777 8888",
-				avatar: "",
-				role: "Engineer",
-				specialization: "Battery & Charging",
-				totalRepairs: 189,
-				monthlyRepairs: 18,
-				rating: 4.3,
-				status: "suspended",
-				joinedDate: "2024-04-12T14:00:00Z",
-				lastActiveDate: "2024-10-10T12:15:00Z",
-			},
-		],
-		[]
-	);
 
 	// Initialize edit form data when modal opens
 	React.useEffect(() => {
-		if (isEditModalOpen) {
+		if (isEditModalOpen && serviceCenter) {
 			setCenterFormData({
 				name: serviceCenter.name,
 				address: serviceCenter.address,
-				phoneNumber: serviceCenter.phoneNumber,
+				phone: serviceCenter.phone,
 				email: serviceCenter.email,
-				accountName: serviceCenter.bankDetails?.accountName || "",
-				accountNumber: serviceCenter.bankDetails?.accountNumber || "",
-				bankName: serviceCenter.bankDetails?.bankName || "",
+				state: serviceCenter.state,
+				city: serviceCenter.city,
+				description: serviceCenter.description || "",
+				account_name: serviceCenter.account_name || "",
+				account_number: serviceCenter.account_number || "",
+				bank_name: serviceCenter.bank_name || "",
 			});
 		}
 	}, [isEditModalOpen, serviceCenter]);
 
-	const handleCreateEngineer = async () => {
-		const { firstName, lastName, email, phoneNumber, role, specialization } =
-			engineerFormData;
+	const handleCreateEngineerSubmit = async () => {
+		const { name, email, phone, description } = engineerFormData;
 
-		if (!firstName || !lastName || !email || !phoneNumber || !specialization) {
+		if (!name || !email || !phone) {
 			showToast({
 				message: "Please fill in all required fields",
 				type: "error",
@@ -287,33 +161,41 @@ export default function RepairStoreSingleServiceCenterView({
 			return;
 		}
 
-		setIsCreating(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: "Engineer created successfully",
-				type: "success",
+			await handleCreateEngineer({
+				name,
+				email,
+				phone,
+				service_center_id: serviceCenterId,
+				description,
 			});
 			setEngineerFormData({
-				firstName: "",
-				lastName: "",
+				name: "",
 				email: "",
-				phoneNumber: "",
-				role: "Engineer",
-				specialization: "",
+				phone: "",
+				description: "",
 			});
 			onCreateModalClose();
 		} catch (error) {
-			showToast({ message: "Failed to create engineer", type: "error" });
-		} finally {
-			setIsCreating(false);
+			// Error handled by hook
 		}
 	};
 
-	const handleUpdateServiceCenter = async () => {
-		const { name, address, phoneNumber, email } = centerFormData;
+	const handleUpdateServiceCenterSubmit = async () => {
+		const {
+			name,
+			address,
+			phone,
+			email,
+			state,
+			city,
+			description,
+			account_name,
+			account_number,
+			bank_name,
+		} = centerFormData;
 
-		if (!name || !address || !phoneNumber || !email) {
+		if (!name || !address || !phone || !email || !state || !city) {
 			showToast({
 				message: "Please fill in all required fields",
 				type: "error",
@@ -321,103 +203,31 @@ export default function RepairStoreSingleServiceCenterView({
 			return;
 		}
 
-		setIsUpdating(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: "Service center updated successfully",
-				type: "success",
+			await handleUpdate({
+				name,
+				address,
+				phone,
+				email,
+				state,
+				city,
+				description,
+				account_name,
+				account_number,
+				bank_name,
 			});
 			onEditModalClose();
 		} catch (error) {
-			showToast({ message: "Failed to update service center", type: "error" });
-		} finally {
-			setIsUpdating(false);
+			// Error handled by hook
 		}
 	};
 
-	const handleToggleEngineerStatus = async (
-		engineerId: string,
-		currentStatus: string
-	) => {
-		const newStatus = currentStatus === "active" ? "suspended" : "active";
+	const handleDeleteEngineerConfirm = async (engineerId: string) => {
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			showToast({
-				message: `Engineer status updated to ${newStatus}`,
-				type: "success",
-			});
+			await handleDeleteEngineer(engineerId);
 		} catch (error) {
-			showToast({ message: "Failed to update engineer status", type: "error" });
+			// Error handled by hook
 		}
-	};
-
-	const handleDeleteEngineer = async (engineerId: string) => {
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			showToast({
-				message: "Engineer removed successfully",
-				type: "success",
-			});
-		} catch (error) {
-			showToast({ message: "Failed to remove engineer", type: "error" });
-		}
-	};
-
-	// Selection handler
-	const handleSelectionChange = (keys: any) => {
-		if (keys === "all") {
-			if (selectedKeys.size === engineers.length) {
-				setSelectedKeys(new Set());
-			} else {
-				setSelectedKeys(new Set(engineers.map((item) => item.id)));
-			}
-		} else {
-			setSelectedKeys(new Set(Array.from(keys)));
-		}
-	};
-
-	// Bulk actions
-	const handleBulkActivate = async () => {
-		if (selectedKeys.size === 0) return;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} engineers activated successfully`,
-				type: "success",
-			});
-			setSelectedKeys(new Set());
-		} catch (error) {
-			showToast({ message: "Failed to activate engineers", type: "error" });
-		}
-	};
-
-	const handleBulkSuspend = async () => {
-		if (selectedKeys.size === 0) return;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			showToast({
-				message: `${selectedKeys.size} engineers suspended successfully`,
-				type: "success",
-			});
-			setSelectedKeys(new Set());
-		} catch (error) {
-			showToast({ message: "Failed to suspend engineers", type: "error" });
-		}
-	};
-
-	// Export function
-	const exportFn = async (data: Engineer[]) => {
-		console.log("Exporting engineers:", data);
-	};
-
-	// Format currency
-	const formatCurrency = (amount: number) => {
-		return new Intl.NumberFormat("en-NG", {
-			style: "currency",
-			currency: "NGN",
-			minimumFractionDigits: 0,
-		}).format(amount);
 	};
 
 	// Render cell content
@@ -427,66 +237,63 @@ export default function RepairStoreSingleServiceCenterView({
 				return (
 					<div className="flex items-center gap-3">
 						<Avatar
-							name={`${row.firstName} ${row.lastName}`}
+							name={row.user?.name || row.name || "N/A"}
 							size="sm"
-							src={row.avatar}
 							className="flex-shrink-0"
 						/>
 						<div className="flex flex-col">
 							<p className="text-bold text-sm">
-								{row.firstName} {row.lastName}
+								{row.user?.name || row.name || "N/A"}
 							</p>
 							<p className="text-bold text-xs text-default-400">ID: {row.id}</p>
 						</div>
 					</div>
 				);
-			case "role":
+			case "email":
 				return (
-					<Chip
-						color={
-							row.role === "Lead Engineer"
-								? "success"
-								: row.role === "Senior Engineer"
-								? "warning"
-								: "default"
-						}
-						variant="flat"
-						size="sm"
-						className="capitalize"
-					>
-						{row.role}
-					</Chip>
+					<p className="text-sm">{row.user?.email || row.email || "N/A"}</p>
 				);
-			case "contact":
+			case "phone":
 				return (
-					<div className="flex flex-col">
-						<p className="text-sm">{row.phoneNumber}</p>
-						<p className="text-xs text-default-400">{row.email}</p>
-					</div>
+					<p className="text-sm">{row.user?.phone || row.phone || "N/A"}</p>
 				);
-			case "specialization":
-				return <p className="text-sm">{row.specialization}</p>;
-			case "totalRepairs":
-				return <p className="text-sm font-medium">{row.totalRepairs}</p>;
-			case "monthlyRepairs":
-				return <p className="text-sm font-medium">{row.monthlyRepairs}</p>;
-			case "rating":
+			case "description":
 				return (
-					<div className="flex items-center gap-1">
-						<Star className="w-4 h-4 text-yellow-500 fill-current" />
-						<p className="text-sm font-medium">{row.rating}</p>
-					</div>
+					<p className="text-sm text-gray-600">
+						{row.description || "No description"}
+					</p>
 				);
 			case "status":
 				return (
 					<Chip
-						color={statusColorMap[row.status]}
+						color={
+							row.user?.status === "ACTIVE"
+								? "success"
+								: row.user?.status === "SUSPENDED"
+								? "warning"
+								: "danger"
+						}
 						size="sm"
 						variant="flat"
 						className="capitalize"
 					>
-						{row.status}
+						{row.user?.status || "N/A"}
 					</Chip>
+				);
+			case "created":
+				return (
+					<p className="text-sm">
+						{row.created_at || row.createdAt
+							? new Date(row.created_at || row.createdAt!).toLocaleDateString(
+									"en-US",
+									{
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									}
+							  )
+							: "N/A"}
+					</p>
 				);
 			case "actions":
 				return (
@@ -498,31 +305,12 @@ export default function RepairStoreSingleServiceCenterView({
 								</Button>
 							</DropdownTrigger>
 							<DropdownMenu>
-								<DropdownItem key="view" startContent={<Eye size={16} />}>
-									View Profile
-								</DropdownItem>
-								<DropdownItem key="edit" startContent={<Edit size={16} />}>
-									Edit Engineer
-								</DropdownItem>
-								<DropdownItem
-									key="toggle"
-									startContent={
-										row.status === "active" ? (
-											<PowerOff size={16} />
-										) : (
-											<Power size={16} />
-										)
-									}
-									onPress={() => handleToggleEngineerStatus(row.id, row.status)}
-								>
-									Change Status
-								</DropdownItem>
 								<DropdownItem
 									key="delete"
 									className="text-danger"
 									color="danger"
 									startContent={<Trash2 size={16} />}
-									onPress={() => handleDeleteEngineer(row.id)}
+									onPress={() => handleDeleteEngineerConfirm(row.id)}
 								>
 									Remove Engineer
 								</DropdownItem>
@@ -534,43 +322,6 @@ export default function RepairStoreSingleServiceCenterView({
 				return <p className="text-sm">{(row as any)[key]}</p>;
 		}
 	};
-
-	const statusOptions = [
-		{ name: "Active", uid: "active" },
-		{ name: "Suspended", uid: "suspended" },
-		{ name: "Inactive", uid: "inactive" },
-	];
-
-	const engineerRoles = [
-		{ label: "Engineer", value: "Engineer" },
-		{ label: "Senior Engineer", value: "Senior Engineer" },
-		{ label: "Lead Engineer", value: "Lead Engineer" },
-	];
-
-	const specializations = [
-		"Mobile Repairs",
-		"Samsung Devices",
-		"Screen Repairs",
-		"Battery & Charging",
-		"Water Damage",
-		"Software Issues",
-		"Hardware Diagnostics",
-		"Camera Repairs",
-		"Audio Issues",
-	];
-
-	const banks = [
-		"Access Bank",
-		"First Bank of Nigeria",
-		"Guaranty Trust Bank",
-		"United Bank for Africa",
-		"Zenith Bank",
-		"Fidelity Bank",
-		"Sterling Bank",
-		"Union Bank",
-		"Polaris Bank",
-		"Wema Bank",
-	];
 
 	return (
 		<div className="space-y-6">
@@ -587,16 +338,18 @@ export default function RepairStoreSingleServiceCenterView({
 					<div>
 						<div className="flex items-center gap-2">
 							<h1 className="text-2xl font-bold text-gray-900">
-								{serviceCenter.name}
+								{serviceCenter?.name || "Loading..."}
 							</h1>
-							<Chip
-								color={statusColorMap[serviceCenter.status]}
-								size="sm"
-								variant="flat"
-								className="capitalize"
-							>
-								{serviceCenter.status}
-							</Chip>
+							{serviceCenter && (
+								<Chip
+									color={statusColorMap[serviceCenter.status]}
+									size="sm"
+									variant="flat"
+									className="capitalize"
+								>
+									{serviceCenter.status}
+								</Chip>
+							)}
 						</div>
 						<p className="text-gray-600">
 							Manage engineers and monitor service center performance
@@ -608,191 +361,221 @@ export default function RepairStoreSingleServiceCenterView({
 						variant="flat"
 						startContent={<Edit size={16} />}
 						onPress={onEditModalOpen}
+						isDisabled={!serviceCenter}
 					>
 						Edit Center
+					</Button>
+					<Button
+						color={
+							serviceCenter?.status === UserStatus.ACTIVE
+								? "warning"
+								: "success"
+						}
+						variant="flat"
+						startContent={
+							serviceCenter?.status === UserStatus.ACTIVE ? (
+								<PowerOff size={16} />
+							) : (
+								<Power size={16} />
+							)
+						}
+						onPress={() => handleToggleStatus()}
+						isLoading={isChangingStatus}
+						isDisabled={!serviceCenter}
+					>
+						{serviceCenter?.status === UserStatus.ACTIVE
+							? "Deactivate"
+							: "Activate"}
 					</Button>
 				</div>
 			</div>
 
-			{/* Service Center Info Card */}
-			<Card>
-				<CardHeader>
-					<h2 className="text-lg font-semibold">Service Center Information</h2>
-				</CardHeader>
-				<CardBody>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						<div className="flex items-center gap-3">
-							<div className="p-2 bg-blue-100 rounded-lg">
-								<MapPin className="w-5 h-5 text-blue-600" />
-							</div>
-							<div>
-								<p className="text-sm text-gray-600">Location</p>
-								<p className="font-medium">{serviceCenter.address}</p>
-							</div>
-						</div>
-						<div className="flex items-center gap-3">
-							<div className="p-2 bg-green-100 rounded-lg">
-								<Phone className="w-5 h-5 text-green-600" />
-							</div>
-							<div>
-								<p className="text-sm text-gray-600">Phone</p>
-								<p className="font-medium">{serviceCenter.phoneNumber}</p>
-							</div>
-						</div>
-						<div className="flex items-center gap-3">
-							<div className="p-2 bg-purple-100 rounded-lg">
-								<Mail className="w-5 h-5 text-purple-600" />
-							</div>
-							<div>
-								<p className="text-sm text-gray-600">Email</p>
-								<p className="font-medium">{serviceCenter.email}</p>
-							</div>
-						</div>
-						<div className="flex items-center gap-3">
-							<div className="p-2 bg-orange-100 rounded-lg">
-								<Calendar className="w-5 h-5 text-orange-600" />
-							</div>
-							<div>
-								<p className="text-sm text-gray-600">Created</p>
-								<p className="font-medium">
-									{new Date(serviceCenter.createdAt).toLocaleDateString()}
-								</p>
-							</div>
-						</div>
-					</div>
-
-					{serviceCenter.bankDetails && (
-						<div className="mt-6 p-4 bg-gray-50 rounded-lg">
-							<h3 className="font-medium mb-3 flex items-center gap-2">
-								<Shield className="w-4 h-4" />
-								Bank Details
-							</h3>
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-								<div>
-									<p className="text-gray-600">Account Name</p>
-									<p className="font-medium">
-										{serviceCenter.bankDetails.accountName}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-600">Account Number</p>
-									<p className="font-medium">
-										{serviceCenter.bankDetails.accountNumber}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-600">Bank Name</p>
-									<p className="font-medium">
-										{serviceCenter.bankDetails.bankName}
-									</p>
-								</div>
-							</div>
-						</div>
-					)}
-				</CardBody>
-			</Card>
-
-			{/* Statistics Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-				<StatCard
-					title="Total Engineers"
-					value={serviceCenter.engineersCount.toString()}
-					icon={<Users className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Total Repairs"
-					value={serviceCenter.totalRepairs.toString()}
-					icon={<Wrench className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Monthly Repairs"
-					value={serviceCenter.monthlyRepairs.toString()}
-					icon={<TrendingUp className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Average Rating"
-					value={serviceCenter.averageRating.toString()}
-					icon={<Star className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Monthly Revenue"
-					value={formatCurrency(serviceCenter.monthlyRevenue)}
-					icon={<CreditCard className="w-5 h-5" />}
-				/>
-			</div>
-
-			{/* Engineers Section */}
-			<div className="space-y-4">
-				<div className="flex items-center justify-between">
-					<h2 className="text-xl font-semibold">Engineers</h2>
-					<div className="flex items-center gap-2">
-						{selectedKeys.size > 0 && (
-							<>
-								<Button
-									color="success"
-									variant="flat"
-									startContent={<Power size={16} />}
-									onPress={handleBulkActivate}
-									size="sm"
-								>
-									Activate ({selectedKeys.size})
-								</Button>
-								<Button
-									color="warning"
-									variant="flat"
-									startContent={<PowerOff size={16} />}
-									onPress={handleBulkSuspend}
-									size="sm"
-								>
-									Suspend ({selectedKeys.size})
-								</Button>
-								<Button
-									variant="light"
-									onPress={() => setSelectedKeys(new Set())}
-									size="sm"
-								>
-									Clear Selection
-								</Button>
-							</>
-						)}
-						<Button
-							color="primary"
-							startContent={<Plus size={16} />}
-							onPress={onCreateModalOpen}
-						>
-							Add Engineer
-						</Button>
+			{isLoading && !serviceCenter ? (
+				<div className="flex justify-center items-center py-12">
+					<div className="text-center">
+						<p className="text-gray-500">Loading service center details...</p>
 					</div>
 				</div>
+			) : !serviceCenter ? (
+				<div className="flex justify-center items-center py-12">
+					<div className="text-center">
+						<p className="text-gray-500">Service center not found</p>
+					</div>
+				</div>
+			) : (
+				<>
+					{/* Service Center Info Card */}
+					<Card>
+						<CardHeader>
+							<h2 className="text-lg font-semibold">
+								Service Center Information
+							</h2>
+						</CardHeader>
+						<CardBody>
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+								<div className="flex items-center gap-3">
+									<div className="p-2 bg-blue-100 rounded-lg">
+										<MapPin className="w-5 h-5 text-blue-600" />
+									</div>
+									<div>
+										<p className="text-sm text-gray-600">Location</p>
+										<p className="font-medium">
+											{serviceCenter.city}, {serviceCenter.state}
+										</p>
+										<p className="text-xs text-gray-500">
+											{serviceCenter.address}
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-3">
+									<div className="p-2 bg-green-100 rounded-lg">
+										<Phone className="w-5 h-5 text-green-600" />
+									</div>
+									<div>
+										<p className="text-sm text-gray-600">Phone</p>
+										<p className="font-medium">{serviceCenter.phone}</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-3">
+									<div className="p-2 bg-purple-100 rounded-lg">
+										<Mail className="w-5 h-5 text-purple-600" />
+									</div>
+									<div>
+										<p className="text-sm text-gray-600">Email</p>
+										<p className="font-medium">{serviceCenter.email}</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-3">
+									<div className="p-2 bg-orange-100 rounded-lg">
+										<Users className="w-5 h-5 text-orange-600" />
+									</div>
+									<div>
+										<p className="text-sm text-gray-600">Total Engineers</p>
+										<p className="font-medium">{engineers?.length || 0}</p>
+									</div>
+								</div>
+							</div>
 
-				<GenericTable<Engineer>
-					columns={engineerColumns}
-					data={engineers}
-					allCount={engineers.length}
-					exportData={engineers}
-					isLoading={false}
-					filterValue={filterValue}
-					onFilterChange={setFilterValue}
-					statusOptions={statusOptions}
-					statusFilter={statusFilter}
-					onStatusChange={setStatusFilter}
-					statusColorMap={statusColorMap}
-					showStatus={true}
-					sortDescriptor={{ column: "joinedDate", direction: "descending" }}
-					onSortChange={() => {}}
-					page={1}
-					pages={1}
-					onPageChange={() => {}}
-					exportFn={exportFn}
-					renderCell={renderCell}
-					hasNoRecords={engineers.length === 0}
-					searchPlaceholder="Search engineers by name, email, or specialization..."
-					selectedKeys={selectedKeys}
-					onSelectionChange={handleSelectionChange}
-					selectionMode="multiple"
-					showRowsPerPageSelector={true}
-				/>
-			</div>
+							{(serviceCenter.account_name ||
+								serviceCenter.account_number ||
+								serviceCenter.bank_name) && (
+								<div className="mt-6 p-4 bg-gray-50 rounded-lg">
+									<h3 className="font-medium mb-3 flex items-center gap-2">
+										<Shield className="w-4 h-4" />
+										Bank Details
+									</h3>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+										{serviceCenter.account_name && (
+											<div>
+												<p className="text-gray-600">Account Name</p>
+												<p className="font-medium">
+													{serviceCenter.account_name}
+												</p>
+											</div>
+										)}
+										{serviceCenter.account_number && (
+											<div>
+												<p className="text-gray-600">Account Number</p>
+												<p className="font-medium">
+													{serviceCenter.account_number}
+												</p>
+											</div>
+										)}
+										{serviceCenter.bank_name && (
+											<div>
+												<p className="text-gray-600">Bank Name</p>
+												<p className="font-medium">{serviceCenter.bank_name}</p>
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+						</CardBody>
+					</Card>
+
+					{/* Engineers Section */}
+					<div className="space-y-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold">Engineers</h2>
+							<Button
+								color="primary"
+								startContent={<Plus size={16} />}
+								onPress={onCreateModalOpen}
+							>
+								Add Engineer
+							</Button>
+						</div>
+
+						<GenericTable<Engineer>
+							columns={engineerColumns}
+							data={engineers || []}
+							allCount={engineers?.length || 0}
+							exportData={engineers || []}
+							isLoading={isLoadingEngineers}
+							filterValue={filterValue}
+							onFilterChange={setFilterValue}
+							renderCell={renderCell}
+							hasNoRecords={(engineers?.length || 0) === 0}
+							searchPlaceholder="Search engineers by name or email..."
+							sortDescriptor={{ column: "created", direction: "descending" }}
+							onSortChange={() => {}}
+							page={1}
+							pages={1}
+							onPageChange={() => {}}
+							exportFn={async () => {
+								// Export all engineers
+								const allEngineers = engineers || [];
+								const ExcelJS = (await import("exceljs")).default;
+								const workbook = new ExcelJS.Workbook();
+								const worksheet = workbook.addWorksheet("Engineers");
+								worksheet.columns = [
+									{ header: "Name", key: "name", width: 25 },
+									{ header: "Email", key: "email", width: 30 },
+									{ header: "Phone", key: "phone", width: 18 },
+									{ header: "Description", key: "description", width: 30 },
+									{ header: "Status", key: "status", width: 12 },
+									{ header: "Created", key: "created", width: 20 },
+								];
+								worksheet.getRow(1).font = {
+									bold: true,
+									color: { argb: "FFFFFFFF" },
+								};
+								worksheet.getRow(1).fill = {
+									type: "pattern",
+									pattern: "solid",
+									fgColor: { argb: "FF4472C4" },
+								};
+								worksheet.getRow(1).alignment = {
+									vertical: "middle",
+									horizontal: "center",
+								};
+								allEngineers.forEach((item: any) => {
+									worksheet.addRow({
+										name: item.name,
+										email: item.email,
+										phone: item.phone,
+										description: item.description || "",
+										status: item.status,
+										created: item.created,
+									});
+								});
+								const buffer = await workbook.xlsx.writeBuffer();
+								const blob = new Blob([buffer], {
+									type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+								});
+								const url = URL.createObjectURL(blob);
+								const link = document.createElement("a");
+								link.href = url;
+								link.download = `engineers-${
+									new Date().toISOString().split("T")[0]
+								}.xlsx`;
+								link.click();
+								URL.revokeObjectURL(url);
+							}}
+						/>
+					</div>
+				</>
+			)}
 
 			{/* Create Engineer Modal */}
 			<Modal isOpen={isCreateModalOpen} onClose={onCreateModalClose} size="2xl">
@@ -803,25 +586,13 @@ export default function RepairStoreSingleServiceCenterView({
 							<ModalBody>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<Input
-										label="First Name"
-										placeholder="Enter first name"
-										value={engineerFormData.firstName}
+										label="Full Name"
+										placeholder="Enter full name"
+										value={engineerFormData.name}
 										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
 												...prev,
-												firstName: value,
-											}))
-										}
-										isRequired
-									/>
-									<Input
-										label="Last Name"
-										placeholder="Enter last name"
-										value={engineerFormData.lastName}
-										onValueChange={(value) =>
-											setEngineerFormData((prev) => ({
-												...prev,
-												lastName: value,
+												name: value,
 											}))
 										}
 										isRequired
@@ -829,7 +600,7 @@ export default function RepairStoreSingleServiceCenterView({
 									<Input
 										label="Email Address"
 										type="email"
-										placeholder="engineer@sapphiretech.com"
+										placeholder="engineer@example.com"
 										value={engineerFormData.email}
 										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
@@ -842,85 +613,41 @@ export default function RepairStoreSingleServiceCenterView({
 									<Input
 										label="Phone Number"
 										placeholder="+234 801 234 5678"
-										value={engineerFormData.phoneNumber}
+										value={engineerFormData.phone}
 										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
 												...prev,
-												phoneNumber: value,
+												phone: value,
 											}))
 										}
 										isRequired
 									/>
-									<Select
-										label="Role"
-										placeholder="Select engineer role"
-										selectedKeys={
-											engineerFormData.role ? [engineerFormData.role] : []
-										}
-										onSelectionChange={(keys) => {
-											const selectedRole = Array.from(keys)[0] as
-												| "Engineer"
-												| "Senior Engineer"
-												| "Lead Engineer";
-											setEngineerFormData((prev) => ({
-												...prev,
-												role: selectedRole,
-											}));
-										}}
-										isRequired
-									>
-										{engineerRoles.map((role) => (
-											<SelectItem key={role.value} value={role.value}>
-												{role.label}
-											</SelectItem>
-										))}
-									</Select>
-									<Select
-										label="Specialization"
-										placeholder="Select specialization"
-										selectedKeys={
-											engineerFormData.specialization
-												? [engineerFormData.specialization]
-												: []
-										}
-										onSelectionChange={(keys) => {
-											const selectedSpec = Array.from(keys)[0] as string;
-											setEngineerFormData((prev) => ({
-												...prev,
-												specialization: selectedSpec,
-											}));
-										}}
-										isRequired
-									>
-										{specializations.map((spec) => (
-											<SelectItem key={spec} value={spec}>
-												{spec}
-											</SelectItem>
-										))}
-									</Select>
+									<div className="md:col-span-2">
+										<Textarea
+											label="Description (Optional)"
+											placeholder="Enter engineer description or notes"
+											value={engineerFormData.description}
+											onValueChange={(value) =>
+												setEngineerFormData((prev) => ({
+													...prev,
+													description: value,
+												}))
+											}
+											minRows={3}
+										/>
+									</div>
 								</div>
 							</ModalBody>
 							<ModalFooter>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onCreateModalClose}
-								>
+								<Button variant="light" onPress={onCreateModalClose}>
 									Cancel
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleCreateEngineer}
-									isLoading={isCreating}
-									isDisabled={
-										!engineerFormData.firstName ||
-										!engineerFormData.lastName ||
-										!engineerFormData.email ||
-										!engineerFormData.phoneNumber ||
-										!engineerFormData.specialization
-									}
+									onPress={handleCreateEngineerSubmit}
+									isLoading={isUpdating}
 								>
-									{isCreating ? "Creating..." : "Add Engineer"}
+									Add Engineer
 								</Button>
 							</ModalFooter>
 						</>
@@ -957,11 +684,11 @@ export default function RepairStoreSingleServiceCenterView({
 											<Input
 												label="Phone Number"
 												placeholder="+234 801 234 5678"
-												value={centerFormData.phoneNumber}
+												value={centerFormData.phone}
 												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
 														...prev,
-														phoneNumber: value,
+														phone: value,
 													}))
 												}
 												isRequired
@@ -969,7 +696,7 @@ export default function RepairStoreSingleServiceCenterView({
 											<Input
 												label="Email Address"
 												type="email"
-												placeholder="center@sapphiretech.com"
+												placeholder="center@example.com"
 												value={centerFormData.email}
 												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
@@ -979,90 +706,120 @@ export default function RepairStoreSingleServiceCenterView({
 												}
 												isRequired
 											/>
-											<Textarea
-												label="Address"
-												placeholder="Enter full address"
-												value={centerFormData.address}
+											<Input
+												label="State"
+												placeholder="Enter state"
+												value={centerFormData.state}
 												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
 														...prev,
-														address: value,
+														state: value,
 													}))
 												}
 												isRequired
 											/>
+											<Input
+												label="City"
+												placeholder="Enter city"
+												value={centerFormData.city}
+												onValueChange={(value) =>
+													setCenterFormData((prev) => ({
+														...prev,
+														city: value,
+													}))
+												}
+												isRequired
+											/>
+											<div className="md:col-span-2">
+												<Textarea
+													label="Address"
+													placeholder="Enter full address"
+													value={centerFormData.address}
+													onValueChange={(value) =>
+														setCenterFormData((prev) => ({
+															...prev,
+															address: value,
+														}))
+													}
+													isRequired
+													minRows={2}
+												/>
+											</div>
+											<div className="md:col-span-2">
+												<Textarea
+													label="Description (Optional)"
+													placeholder="Enter description"
+													value={centerFormData.description}
+													onValueChange={(value) =>
+														setCenterFormData((prev) => ({
+															...prev,
+															description: value,
+														}))
+													}
+													minRows={2}
+												/>
+											</div>
 										</div>
 									</div>
 
 									{/* Bank Details */}
 									<div>
-										<h3 className="text-lg font-medium mb-4">Bank Details</h3>
+										<h3 className="text-lg font-medium mb-4">
+											Bank Details (Optional)
+										</h3>
 										<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 											<Input
 												label="Account Name"
 												placeholder="Enter account name"
-												value={centerFormData.accountName}
+												value={centerFormData.account_name}
 												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
 														...prev,
-														accountName: value,
+														account_name: value,
 													}))
 												}
 											/>
 											<Input
 												label="Account Number"
 												placeholder="Enter account number"
-												value={centerFormData.accountNumber}
+												value={centerFormData.account_number}
 												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
 														...prev,
-														accountNumber: value,
+														account_number: value,
 													}))
 												}
 											/>
-											<Select
+											<Input
 												label="Bank Name"
-												placeholder="Select bank"
-												selectedKeys={
-													centerFormData.bankName
-														? [centerFormData.bankName]
-														: []
-												}
-												onSelectionChange={(keys) => {
-													const selectedBank = Array.from(keys)[0] as string;
+												placeholder="Enter bank name"
+												value={centerFormData.bank_name}
+												onValueChange={(value) =>
 													setCenterFormData((prev) => ({
 														...prev,
-														bankName: selectedBank,
-													}));
-												}}
-											>
-												{banks.map((bank) => (
-													<SelectItem key={bank} value={bank}>
-														{bank}
-													</SelectItem>
-												))}
-											</Select>
+														bank_name: value,
+													}))
+												}
+											/>
 										</div>
 									</div>
 								</div>
 							</ModalBody>
 							<ModalFooter>
-								<Button
-									color="danger"
-									variant="light"
-									onPress={onEditModalClose}
-								>
+								<Button variant="light" onPress={onEditModalClose}>
 									Cancel
 								</Button>
 								<Button
 									color="primary"
-									onPress={handleUpdateServiceCenter}
+									onPress={handleUpdateServiceCenterSubmit}
 									isLoading={isUpdating}
 									isDisabled={
 										!centerFormData.name ||
 										!centerFormData.address ||
-										!centerFormData.phoneNumber ||
-										!centerFormData.email
+										!centerFormData.phone ||
+										!centerFormData.email ||
+										!centerFormData.state ||
+										!centerFormData.city
 									}
 								>
 									{isUpdating ? "Updating..." : "Update Service Center"}

@@ -1,7 +1,14 @@
 "use client";
 
-import React from "react";
-import { Card, CardBody, CardHeader, Chip } from "@heroui/react";
+import React, { useState, useMemo } from "react";
+import {
+	Card,
+	CardBody,
+	CardHeader,
+	Select,
+	SelectItem,
+	Skeleton,
+} from "@heroui/react";
 import {
 	Home,
 	FileText,
@@ -12,143 +19,168 @@ import {
 	Wrench,
 	TrendingUp,
 } from "lucide-react";
-import { useRepairClaims } from "@/hooks/samsung-partners/useRepairClaims";
-import { useProcessedClaims } from "@/hooks/samsung-partners/useProcessedClaims";
+import { usePartnersDashboard } from "@/hooks/samsung-partners/usePartnersDashboard";
+import { DashboardFilter } from "@/lib/api/partners";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import DeviceModelStatisticsTable from "@/components/shared/DeviceModelStatitics";
 
-interface RepairClaim {
-	id: string;
-	status: "pending" | "approved" | "rejected";
-}
+// Dynamically import the SamsungPartnersSearchImeiModal to avoid SSR issues
+const SamsungPartnersSearchImeiModal = dynamic(
+	() => import("@/components/modals/SamsungPartnersSearchImeiModal"),
+	{ ssr: false }
+);
 
-interface ProcessedClaim {
-	id: string;
-	paymentStatus: "paid" | "unpaid";
-}
+const FILTER_OPTIONS = [
+	{ label: "Daily", value: "daily" },
+	{ label: "Weekly", value: "weekly" },
+	{ label: "Month to Date", value: "mtd" },
+	{ label: "Since Inception", value: "inception" },
+];
 
 export default function SamsungPartnersHomeView() {
-	const { claims: repairClaims, isLoading: repairClaimsLoading } =
-		useRepairClaims();
-	const { claims: processedClaims, isLoading: processedClaimsLoading } =
-		useProcessedClaims();
+	const [filter, setFilter] = useState<DashboardFilter>("mtd");
 
-	const getClaimsStats = () => {
-		if (!repairClaims)
-			return { total: 0, pending: 0, approved: 0, rejected: 0 };
+	// Fetch dashboard statistics
+	const { stats, isLoading } = usePartnersDashboard({ filter });
 
-		return {
-			total: repairClaims.length,
-			pending: repairClaims.filter(
-				(claim: RepairClaim) => claim.status === "pending"
-			).length,
-			approved: repairClaims.filter(
-				(claim: RepairClaim) => claim.status === "approved"
-			).length,
-			rejected: repairClaims.filter(
-				(claim: RepairClaim) => claim.status === "rejected"
-			).length,
-		};
-	};
-
-	const getProcessedStats = () => {
-		if (!processedClaims) return { total: 0, paid: 0, unpaid: 0 };
-
-		return {
-			total: processedClaims.length,
-			paid: processedClaims.filter(
-				(claim: ProcessedClaim) => claim.paymentStatus === "paid"
-			).length,
-			unpaid: processedClaims.filter(
-				(claim: ProcessedClaim) => claim.paymentStatus === "unpaid"
-			).length,
-		};
-	};
-
-	const claimsStats = getClaimsStats();
-	const processedStats = getProcessedStats();
-	const isLoading = repairClaimsLoading || processedClaimsLoading;
-
-	const dashboardCards = [
-		{
-			title: "Total Repair Claims",
-			value: isLoading ? "..." : claimsStats.total,
-			icon: FileText,
-			color: "bg-blue-500",
-			textColor: "text-blue-500",
-			href: "/access/samsung-partners/repair-claims",
-		},
-		{
-			title: "Pending Claims",
-			value: isLoading ? "..." : claimsStats.pending,
-			icon: Clock,
-			color: "bg-orange-500",
-			textColor: "text-orange-500",
-			href: "/access/samsung-partners/repair-claims/pending",
-		},
-		{
-			title: "Approved Claims",
-			value: isLoading ? "..." : claimsStats.approved,
-			icon: CheckCircle,
-			color: "bg-green-500",
-			textColor: "text-green-500",
-			href: "/access/samsung-partners/repair-claims/approved",
-		},
-		{
-			title: "Rejected Claims",
-			value: isLoading ? "..." : claimsStats.rejected,
-			icon: XCircle,
-			color: "bg-red-500",
-			textColor: "text-red-500",
-			href: "/access/samsung-partners/repair-claims/rejected",
-		},
-		{
-			title: "Total Processed",
-			value: isLoading ? "..." : processedStats.total,
-			icon: Wrench,
-			color: "bg-purple-500",
-			textColor: "text-purple-500",
-			href: "/access/samsung-partners/processed-claims",
-		},
-		{
-			title: "Paid Claims",
-			value: isLoading ? "..." : processedStats.paid,
-			icon: DollarSign,
-			color: "bg-green-600",
-			textColor: "text-green-600",
-			href: "/access/samsung-partners/processed-claims/paid",
-		},
-		{
-			title: "Unpaid Claims",
-			value: isLoading ? "..." : processedStats.unpaid,
-			icon: TrendingUp,
-			color: "bg-yellow-500",
-			textColor: "text-yellow-500",
-			href: "/access/samsung-partners/processed-claims/unpaid",
-		},
-	];
+	const dashboardCards = useMemo(
+		() => [
+			{
+				title: "Total Claims",
+				value: stats?.statistics?.total_claims || 0,
+				icon: FileText,
+				color: "bg-blue-500",
+				textColor: "text-blue-500",
+				href: "/access/samsung-partners/claims",
+			},
+			{
+				title: "Pending Claims",
+				value: stats?.statistics?.pending_claims || 0,
+				icon: Clock,
+				color: "bg-orange-500",
+				textColor: "text-orange-500",
+				href: "/access/samsung-partners/claims?status=pending",
+			},
+			{
+				title: "Approved Claims",
+				value: stats?.statistics?.approved_claims || 0,
+				icon: CheckCircle,
+				color: "bg-green-500",
+				textColor: "text-green-500",
+				href: "/access/samsung-partners/claims?status=approved",
+			},
+			{
+				title: "Rejected Claims",
+				value: stats?.statistics?.rejected_claims || 0,
+				icon: XCircle,
+				color: "bg-red-500",
+				textColor: "text-red-500",
+				href: "/access/samsung-partners/claims?status=rejected",
+			},
+			{
+				title: "Completed Claims",
+				value: stats?.statistics?.completed_claims || 0,
+				icon: Wrench,
+				color: "bg-purple-500",
+				textColor: "text-purple-500",
+				href: "/access/samsung-partners/claims?status=completed",
+			},
+			{
+				title: "Authorized Claims",
+				value: stats?.statistics?.authorized_claims || 0,
+				icon: CheckCircle,
+				color: "bg-teal-500",
+				textColor: "text-teal-500",
+				href: "/access/samsung-partners/claims?status=authorized",
+			},
+			{
+				title: "Paid Claims",
+				value: stats?.statistics?.paid_claims || 0,
+				icon: DollarSign,
+				color: "bg-green-600",
+				textColor: "text-green-600",
+				href: "/access/samsung-partners/claims?status=authorized&payment=paid",
+			},
+			{
+				title: "Unpaid Claims",
+				value: stats?.statistics?.unpaid_claims || 0,
+				icon: TrendingUp,
+				color: "bg-yellow-500",
+				textColor: "text-yellow-500",
+				href: "/access/samsung-partners/claims?status=authorized&payment=unpaid",
+			},
+		],
+		[stats]
+	);
 
 	return (
 		<div className="space-y-6 p-6">
+			{/* Header with Filter */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+						Samsung Partners Dashboard
+					</h1>
+					<p className="text-gray-600 dark:text-gray-400">
+						Overview of your repair claims and processing status
+					</p>
+				</div>
+				<div className="w-48">
+					<Select
+						label="Time Period"
+						selectedKeys={[filter]}
+						onSelectionChange={(keys) => {
+							const selected = Array.from(keys)[0] as DashboardFilter;
+							setFilter(selected);
+						}}
+						size="sm"
+					>
+						{FILTER_OPTIONS.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</Select>
+				</div>
+			</div>
+
 			{/* Stats Cards Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-				{dashboardCards.map((card, index) => {
-					const IconComponent = card.icon;
-					return (
-						<Link key={index} href={card.href}>
-							<Card className="hover:shadow-lg transition-shadow cursor-pointer">
+				{isLoading ? (
+					<>
+						{[...Array(8)].map((_, idx) => (
+							<Card key={idx} className="border border-default-200">
 								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-									<div className="text-sm font-medium text-gray-600">
-										{card.title}
-									</div>
-									<IconComponent className={`h-4 w-4 ${card.textColor}`} />
+									<Skeleton className="h-4 w-24 rounded" />
+									<Skeleton className="h-4 w-4 rounded" />
 								</CardHeader>
 								<CardBody>
-									<div className="text-2xl font-bold">{card.value}</div>
+									<Skeleton className="h-8 w-16 rounded" />
 								</CardBody>
 							</Card>
-						</Link>
-					);
-				})}
+						))}
+					</>
+				) : (
+					dashboardCards.map((card, index) => {
+						const IconComponent = card.icon;
+						return (
+							<Link key={index} href={card.href}>
+								<Card className="hover:shadow-lg transition-shadow cursor-pointer border border-default-200">
+									<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+										<div className="text-sm font-medium text-gray-600">
+											{card.title}
+										</div>
+										<IconComponent className={`h-4 w-4 ${card.textColor}`} />
+									</CardHeader>
+									<CardBody>
+										<div className="text-2xl font-bold">{card.value}</div>
+									</CardBody>
+								</Card>
+							</Link>
+						);
+					})
+				)}
 			</div>
 
 			{/* Quick Actions */}
@@ -157,10 +189,10 @@ export default function SamsungPartnersHomeView() {
 					<h3 className="text-lg font-semibold">Quick Actions</h3>
 				</CardHeader>
 				<CardBody>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 						<Link
-							href="/access/samsung-partners/repair-claims"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							href="/access/samsung-partners/claims"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<FileText className="h-6 w-6 text-blue-500" />
 							<div>
@@ -170,10 +202,9 @@ export default function SamsungPartnersHomeView() {
 								</div>
 							</div>
 						</Link>
-
 						<Link
-							href="/access/samsung-partners/repair-claims/pending"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							href="/access/samsung-partners/claims?status=pending"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<Clock className="h-6 w-6 text-orange-500" />
 							<div>
@@ -183,22 +214,47 @@ export default function SamsungPartnersHomeView() {
 								</div>
 							</div>
 						</Link>
-
 						<Link
-							href="/access/samsung-partners/processed-claims"
-							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+							href="/access/samsung-partners/claims?status=completed"
+							className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 						>
 							<Wrench className="h-6 w-6 text-purple-500" />
 							<div>
-								<div className="font-medium">Processed Claims</div>
+								<div className="font-medium">Completed Claims</div>
 								<div className="text-sm text-gray-500">
-									View processed claims
+									View completed claims
 								</div>
 							</div>
 						</Link>
+						{/* Samsung Partners IMEI Search Quick Action */}
+						<div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+							<div className="flex items-center space-x-3 flex-1">
+								<SamsungPartnersSearchImeiModal
+									buttonText=""
+									buttonColor="primary"
+									buttonVariant="light"
+									buttonSize="sm"
+									showIcon={true}
+								/>
+								<div>
+									<div className="font-medium">Search IMEI</div>
+									<div className="text-sm text-gray-500">
+										Lookup IMEI and view claims
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</CardBody>
 			</Card>
+			<DeviceModelStatisticsTable
+				externalFilter={{
+					filter,
+					...(filter === "custom" && { start_date: "", end_date: "" }),
+				}}
+				showFilterSelector={false}
+				title="Device Model Statistics"
+			/>
 		</div>
 	);
 }

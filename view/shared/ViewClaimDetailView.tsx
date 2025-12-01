@@ -36,13 +36,21 @@ import {
 	useServiceCenterClaim,
 	useServiceCenterClaimActions,
 } from "@/hooks/service-center/useServiceCenterClaim";
+import { ClaimStatus, PaymentStatus } from "@/lib/api/shared/types";
+import { useAuth } from "@/lib/globalContext";
 
 import { ConfirmationModal } from "@/components/reususables";
 
-const ViewClaimDetailView = () => {
+interface ViewClaimDetailViewProps {
+	claimId?: string; // Optional prop for modal usage
+}
+
+const ViewClaimDetailView = ({
+	claimId: propClaimId,
+}: ViewClaimDetailViewProps = {}) => {
 	const params = useParams();
 	const router = useRouter();
-	const claimId = params?.id as string;
+	const claimId = propClaimId || (params?.id as string);
 
 	const [newStatus, setNewStatus] = useState("");
 	const [statusNotes, setStatusNotes] = useState("");
@@ -58,128 +66,46 @@ const ViewClaimDetailView = () => {
 		onOpen: onUploadModalOpen,
 		onClose: onUploadModalClose,
 	} = useDisclosure();
+	const {
+		isOpen: isCompleteModalOpen,
+		onOpen: onCompleteModalOpen,
+		onClose: onCompleteModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isApproveModalOpen,
+		onOpen: onApproveModalOpen,
+		onClose: onApproveModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isRejectModalOpen,
+		onOpen: onRejectModalOpen,
+		onClose: onRejectModalClose,
+	} = useDisclosure();
+	const {
+		isOpen: isAuthorizeModalOpen,
+		onOpen: onAuthorizeModalOpen,
+		onClose: onAuthorizeModalClose,
+	} = useDisclosure();
 
-	// DEMO: Using dummy data instead of API call
-	const claim = {
-		id: claimId || "CLM-2024-001",
-		status: "in-progress",
-		deviceStatus: "Under Repair",
-		// Customer fields (flat structure)
-		customerName: "John Doe",
-		customerEmail: "john.doe@example.com",
-		customerPhone: "+234 801 234 5678",
-		customerAddress: "123 Lagos Street, Victoria Island, Lagos, Nigeria",
-		// Device fields (flat structure)
-		imei: "352094561234567",
-		deviceBrand: "Samsung",
-		deviceModel: "Galaxy S23 Ultra",
-		devicePrice: 850000,
-		// Warranty fields
-		warrantyStartDate: "2024-04-15",
-		warrantyEndDate: "2025-10-15",
-		// Repair fields
-		faultType: "Screen Damage",
-		faultDescription:
-			"Cracked screen after accidental drop. Touch functionality partially affected. Customer reports the phone was dropped from approximately 4 feet height.",
-		repairCost: 45000,
-		customerCost: 15000,
-		sapphireCost: 30000,
-		engineer: "Mike Johnson",
-		engineerPhone: "+234 803 456 7890",
-		estimatedCompletionDate: "2024-10-25",
-		// Parts required
-		partsRequired: [
-			{
-				partName: "Screen Assembly",
-				partCode: "SAM-S23U-SCREEN-001",
-				cost: 35000,
-				availability: "In Stock",
-			},
-			{
-				partName: "Digitizer",
-				partCode: "SAM-S23U-DIG-002",
-				cost: 8000,
-				availability: "In Stock",
-			},
-		],
-		// Repair history
-		repairHistory: [
-			{
-				id: "RH-001",
-				date: "2024-10-15 10:30 AM",
-				action: "Claim Submitted",
-				engineer: "System",
-				findings: "Customer submitted claim through online portal",
-				status: "Completed",
-			},
-			{
-				id: "RH-002",
-				date: "2024-10-15 11:45 AM",
-				action: "Initial Assessment",
-				engineer: "Sarah Admin",
-				findings: "Claim approved. Device eligible for warranty repair.",
-				status: "Completed",
-			},
-			{
-				id: "RH-003",
-				date: "2024-10-16 09:00 AM",
-				action: "Device Received",
-				engineer: "Mike Johnson",
-				findings:
-					"Physical inspection completed. Screen cracked, digitizer partially functional.",
-				status: "Completed",
-			},
-			{
-				id: "RH-004",
-				date: "2024-10-16 02:30 PM",
-				action: "Parts Ordered",
-				engineer: "Mike Johnson",
-				findings: "Genuine Samsung parts ordered. ETA: 3-5 business days.",
-				status: "In Progress",
-			},
-		],
+	// Fetch claim data from API
+	const { claim, isLoading, error, mutate } = useServiceCenterClaim(claimId);
+	const { markAsCompleted, approveClaim, rejectClaim, authorizePayment } =
+		useServiceCenterClaimActions();
 
-		// Status history
-		statusHistory: [
-			{
-				id: "SH-001",
-				date: "2024-10-15 10:30 AM",
-				status: "submitted",
-				user: "John Doe",
-				notes: "Claim submitted by customer",
-			},
-			{
-				id: "SH-002",
-				date: "2024-10-15 11:45 AM",
-				status: "approved",
-				user: "Sarah Admin",
-				notes: "Claim approved by warranty team",
-			},
-			{
-				id: "SH-003",
-				date: "2024-10-16 09:00 AM",
-				status: "in-progress",
-				user: "Mike Johnson",
-				notes: "Device received at service center. Diagnostics in progress.",
-			},
-			{
-				id: "SH-004",
-				date: "2024-10-16 02:30 PM",
-				status: "in-progress",
-				user: "Mike Johnson",
-				notes: "Screen replacement parts ordered",
-			},
-		],
-		// Dates
-		dateSubmitted: "2024-10-15",
-		dateUpdated: "2024-10-16",
-	};
+	// Get user role from auth context
+	const { userResponse } = useAuth();
+	const userRole = userResponse?.role;
 
-	const isLoading = false;
-	const error = null;
-	const mutate = (updater?: any, options?: any) => {}; // Dummy mutate function
-
-	const { updateStatus } = useServiceCenterClaimActions();
+	// Debug logging
+	React.useEffect(() => {
+		console.log("ViewClaimDetailView Debug:", {
+			claimId,
+			isLoading,
+			error,
+			hasClaim: !!claim,
+			claim,
+		});
+	}, [claimId, isLoading, error, claim]);
 
 	const statusOptions = [
 		{ key: "in-progress", label: "In Progress" },
@@ -190,6 +116,86 @@ const ViewClaimDetailView = () => {
 		{ key: "cancelled", label: "Cancelled" },
 	];
 
+	// Claim action handlers
+	const handleMarkAsCompleted = async () => {
+		try {
+			await markAsCompleted(claimId, { notes: statusNotes || undefined });
+			showToast({
+				type: "success",
+				message: `Claim ${claim?.claim_number} marked as completed`,
+			});
+			onCompleteModalClose();
+			setStatusNotes("");
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to mark claim as completed",
+			});
+		}
+	};
+
+	const handleApproveClaim = async () => {
+		try {
+			await approveClaim(claimId, { notes: statusNotes || undefined });
+			showToast({
+				type: "success",
+				message: `Claim ${claim?.claim_number} approved`,
+			});
+			onApproveModalClose();
+			setStatusNotes("");
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to approve claim",
+			});
+		}
+	};
+
+	const handleRejectClaim = async () => {
+		if (!statusNotes) {
+			showToast({
+				type: "error",
+				message: "Please provide a rejection reason",
+			});
+			return;
+		}
+
+		try {
+			await rejectClaim(claimId, {
+				reason: statusNotes,
+				notes: statusNotes,
+			});
+			showToast({
+				type: "success",
+				message: `Claim ${claim?.claim_number} rejected`,
+			});
+			onRejectModalClose();
+			setStatusNotes("");
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to reject claim",
+			});
+		}
+	};
+
+	const handleAuthorizePayment = async () => {
+		try {
+			await authorizePayment(claimId, { notes: statusNotes || undefined });
+			showToast({
+				type: "success",
+				message: `Payment authorized for claim ${claim?.claim_number}`,
+			});
+			onAuthorizeModalClose();
+			setStatusNotes("");
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to authorize payment",
+			});
+		}
+	};
+
 	const handleStatusUpdate = async () => {
 		if (!newStatus) {
 			showToast({
@@ -199,22 +205,12 @@ const ViewClaimDetailView = () => {
 			return;
 		}
 
-		try {
-			await updateStatus(claimId, newStatus, statusNotes);
-			showToast({
-				type: "success",
-				message: "Status updated successfully",
-			});
-			onStatusModalClose();
-			setNewStatus("");
-			setStatusNotes("");
-			mutate();
-		} catch (error) {
-			showToast({
-				type: "error",
-				message: "Failed to update status",
-			});
-		}
+		// This is for legacy status updates - can be removed if not needed
+		showToast({
+			type: "info",
+			message: "Please use specific action buttons for claim status changes",
+		});
+		onStatusModalClose();
 	};
 
 	if (isLoading) {
@@ -271,19 +267,18 @@ const ViewClaimDetailView = () => {
 						<ArrowLeft size={20} />
 					</Button>
 					<div>
-						<h1 className="text-2xl font-bold text-gray-900"></h1>
-						<p className="text-gray-600">Claim ID: {claim?.id}</p>
+						<h1 className="text-2xl font-bold text-gray-900">Claim Details</h1>
+						<p className="text-gray-600">Claim ID: {claim?.claim_number}</p>
 					</div>
-				</div>
-
+				</div>{" "}
 				{/* Status and Actions */}
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-4">
 						<Chip
 							color={
-								claim?.status === "completed"
+								claim?.status === ClaimStatus.COMPLETED
 									? "success"
-									: claim?.status === "cancelled"
+									: claim?.status === ClaimStatus.REJECTED
 									? "danger"
 									: "warning"
 							}
@@ -291,29 +286,68 @@ const ViewClaimDetailView = () => {
 							size="lg"
 						>
 							{claim?.status
-								?.split("-")
+								?.split("_")
 								.map(
-									(word: string) => word.charAt(0).toUpperCase() + word.slice(1)
+									(word: string) =>
+										word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 								)
 								.join(" ") || "N/A"}
 						</Chip>
-						<Chip color="primary" variant="flat" size="lg">
-							{claim?.deviceStatus}
-						</Chip>
 					</div>
 
-					<div className="flex gap-2">
-						<Button color="primary" onPress={onStatusModalOpen}>
-							Update Status
-						</Button>
-						<Button
-							color="default"
-							variant="bordered"
-							onPress={onUploadModalOpen}
-							startContent={<Upload size={16} />}
-						>
-							Upload Document
-						</Button>
+					<div className="flex gap-2 flex-wrap">
+						{/* Engineer can mark as completed */}
+						{(userRole === "engineer" ||
+							userRole === "repair_store_admin" ||
+							window?.location?.pathname?.includes("access/service-center")) &&
+							claim?.status === ClaimStatus.APPROVED && (
+								<>
+									{console.log("Engineer/Admin Action Button Rendered", {
+										userRole,
+										claimStatus: claim?.status,
+										claimId: claim?.claim_number,
+									})}
+									<Button
+										color="success"
+										onPress={() => {
+											console.log("Mark as Completed button clicked", {
+												claimId: claim?.claim_number,
+												userRole,
+											});
+											onCompleteModalOpen();
+										}}
+									>
+										Mark as Completed
+									</Button>
+								</>
+							)}
+
+						{/* Samsung Partner actions */}
+						{userRole === "samsung_partner" && (
+							<>
+								{claim?.status === ClaimStatus.COMPLETED &&
+									claim?.payment_status === PaymentStatus.UNPAID && (
+										<>
+											<Button color="success" onPress={onApproveModalOpen}>
+												Approve Claim
+											</Button>
+											<Button
+												color="danger"
+												variant="flat"
+												onPress={onRejectModalOpen}
+											>
+												Reject Claim
+											</Button>
+										</>
+									)}
+								{claim?.status === ClaimStatus.APPROVED &&
+									claim?.payment_status === PaymentStatus.UNPAID && (
+										<Button color="primary" onPress={onAuthorizeModalOpen}>
+											Authorize Payment
+										</Button>
+									)}
+							</>
+						)}
 					</div>
 				</div>
 			</div>
@@ -324,36 +358,36 @@ const ViewClaimDetailView = () => {
 					{/* Customer Information */}
 					<InfoCard title="Customer Information" icon={<User size={20} />}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<InfoField label="Full Name" value={claim?.customerName} />
-							<InfoField label="Phone Number" value={claim?.customerPhone} />
-							<InfoField label="Email Address" value={claim?.customerEmail} />
-							<InfoField label="Address" value={claim?.customerAddress} />
+							<InfoField
+								label="Full Name"
+								value={`${claim?.customer_first_name} ${claim?.customer_last_name}`}
+							/>
+							<InfoField label="Phone Number" value={claim?.customer_phone} />
+							<InfoField label="Email Address" value={claim?.customer_email} />
 						</div>
 					</InfoCard>
 
 					{/* Device Information */}
 					<InfoCard title="Device Information" icon={<Phone size={20} />}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<InfoField label="IMEI Number" value={claim?.imei} />
-							<InfoField label="Device Brand" value={claim?.deviceBrand} />
-							<InfoField label="Device Model" value={claim?.deviceModel} />
+							<InfoField label="IMEI Number" value={claim?.imei?.imei} />
+							<InfoField label="Device Brand" value="Samsung" />
+							<InfoField label="Device Model" value={claim?.product?.name} />
 							<InfoField
-								label="Device Price"
-								value={`₦${claim?.devicePrice?.toLocaleString()}`}
+								label="Repair Cost"
+								value={`₦${parseFloat(
+									claim?.product?.repair_cost || "0"
+								).toLocaleString()}`}
 							/>
 							<InfoField
-								label="Warranty Start"
-								value={
-									claim?.warrantyStartDate
-										? new Date(claim.warrantyStartDate).toLocaleDateString()
-										: "N/A"
-								}
+								label="Supplier"
+								value={claim?.imei?.supplier || "N/A"}
 							/>
 							<InfoField
-								label="Warranty End"
+								label="Warranty Expiry"
 								value={
-									claim?.warrantyEndDate
-										? new Date(claim.warrantyEndDate).toLocaleDateString()
+									claim?.imei?.expiry_date
+										? new Date(claim.imei.expiry_date).toLocaleDateString()
 										: "N/A"
 								}
 							/>
@@ -363,28 +397,28 @@ const ViewClaimDetailView = () => {
 					{/* Repair Information */}
 					<InfoCard title="Repair Information" icon={<Wrench size={20} />}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<InfoField label="Fault Type" value={claim?.faultType} />
 							<InfoField
-								label="Total Repair Cost"
-								value={`₦${claim?.repairCost?.toLocaleString()}`}
+								label="Repair Price"
+								value={`₦${parseFloat(
+									claim?.repair_price?.toString() || "0"
+								).toLocaleString()}`}
 							/>
 							<InfoField
-								label="Customer Cost"
-								value={`₦${claim?.customerCost?.toLocaleString()}`}
+								label="Assigned Engineer"
+								value={claim?.engineer?.user?.name}
 							/>
 							<InfoField
-								label="Sapphire Cost"
-								value={`₦${claim?.sapphireCost?.toLocaleString()}`}
+								label="Engineer Phone"
+								value={claim?.engineer?.user?.phone}
 							/>
-							<InfoField label="Assigned Engineer" value={claim?.engineer} />
-							<InfoField label="Engineer Phone" value={claim?.engineerPhone} />
+							<InfoField
+								label="Service Center"
+								value={claim?.service_center?.name}
+							/>
 						</div>
-						{claim?.faultDescription && (
+						{claim?.description && (
 							<div className="mt-4">
-								<InfoField
-									label="Fault Description"
-									value={claim.faultDescription}
-								/>
+								<InfoField label="Description" value={claim.description} />
 							</div>
 						)}
 					</InfoCard>
@@ -425,37 +459,47 @@ const ViewClaimDetailView = () => {
 						</InfoCard>
 					)*/}
 
-					{/* Repair History */}
+					{/* Repair History 
 					<InfoCard title="Repair History" icon={<FileText size={20} />}>
 						<div className="space-y-4">
-							{claim?.repairHistory?.map((repair: any, index: number) => (
-								<div
-									key={repair.id}
-									className="relative border-l-2 border-blue-200 pl-4"
-								>
-									{index < (claim?.repairHistory?.length || 0) - 1 && (
-										<div className="absolute left-0 top-8 w-0.5 h-12 bg-blue-200"></div>
-									)}
-									<div className="absolute left-0 top-2 w-2 h-2 bg-blue-500 rounded-full -translate-x-1"></div>
-									<div>
-										<p className="font-medium text-gray-900">{repair.action}</p>
-										<p className="text-sm text-gray-600">{repair.engineer}</p>
-										<p className="text-sm text-gray-700 mt-1">
-											{repair.findings}
-										</p>
-										<div className="flex items-center gap-2 mt-2">
-											<p className="text-xs text-gray-500">
-												{new Date(repair.date).toLocaleString()}
+							{claim?.timeline && claim.timeline.length > 0 ? (
+								claim.timeline.map((entry: any, index: number) => (
+									<div
+										key={entry.id}
+										className="relative border-l-2 border-blue-200 pl-4"
+									>
+										{index < (claim?.timeline?.length || 0) - 1 && (
+											<div className="absolute left-0 top-8 w-0.5 h-12 bg-blue-200"></div>
+										)}
+										<div className="absolute left-0 top-2 w-2 h-2 bg-blue-500 rounded-full -translate-x-1"></div>
+										<div>
+											<p className="font-medium text-gray-900">{entry.event}</p>
+											<p className="text-sm text-gray-600">
+												{entry.performed_by?.name || "System"}
 											</p>
-											<Chip size="sm" color="success" variant="flat">
-												{repair.status}
-											</Chip>
+											{entry.details && (
+												<p className="text-sm text-gray-700 mt-1">
+													{typeof entry.details === "string"
+														? entry.details
+														: entry.details.notes ||
+														  JSON.stringify(entry.details)}
+												</p>
+											)}
+											<div className="flex items-center gap-2 mt-2">
+												<p className="text-xs text-gray-500">
+													{new Date(entry.performed_at).toLocaleString()}
+												</p>
+											</div>
 										</div>
 									</div>
-								</div>
-							))}
+								))
+							) : (
+								<p className="text-sm text-gray-500">
+									No repair history available
+								</p>
+							)}
 						</div>
-					</InfoCard>
+					</InfoCard>*/}
 				</div>
 
 				{/* Sidebar */}
@@ -473,16 +517,16 @@ const ViewClaimDetailView = () => {
 								<div className="text-sm">
 									<p className="font-medium text-gray-900">Submitted</p>
 									<p className="text-gray-600">
-										{claim?.dateSubmitted
-											? new Date(claim.dateSubmitted).toLocaleDateString()
+										{claim?.created_at
+											? new Date(claim.created_at).toLocaleDateString()
 											: "N/A"}
 									</p>
 								</div>
-								{claim?.dateUpdated && (
+								{claim?.updated_at && (
 									<div className="text-sm">
 										<p className="font-medium text-gray-900">Last Updated</p>
 										<p className="text-gray-600">
-											{new Date(claim.dateUpdated).toLocaleDateString()}
+											{new Date(claim.updated_at).toLocaleDateString()}
 										</p>
 									</div>
 								)}
@@ -499,26 +543,41 @@ const ViewClaimDetailView = () => {
 						</CardHeader>
 						<CardBody>
 							<div className="space-y-3">
-								{claim?.statusHistory?.map((status: any, index: number) => (
-									<div key={status.id} className="relative">
-										{index < (claim?.statusHistory?.length || 0) - 1 && (
-											<div className="absolute left-2 top-6 w-0.5 h-8 bg-gray-200"></div>
-										)}
-										<div className="flex gap-3">
-											<div className="w-4 h-4 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>
-											<div className="flex-1">
-												<p className="font-medium text-sm capitalize">
-													{status.status.split("-").join(" ")}
-												</p>
-												<p className="text-xs text-gray-600">{status.user}</p>
-												<p className="text-xs text-gray-500">{status.notes}</p>
-												<p className="text-xs text-gray-400 mt-1">
-													{new Date(status.date).toLocaleString()}
-												</p>
+								{claim?.timeline && claim.timeline.length > 0 ? (
+									claim.timeline.map((status: any, index: number) => (
+										<div key={status.id} className="relative">
+											{index < (claim?.timeline?.length || 0) - 1 && (
+												<div className="absolute left-2 top-6 w-0.5 h-8 bg-gray-200"></div>
+											)}
+											<div className="flex gap-3">
+												<div className="w-4 h-4 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>
+												<div className="flex-1">
+													<p className="font-medium text-sm capitalize">
+														{status.event.split("_").join(" ")}
+													</p>
+													<p className="text-xs text-gray-600">
+														{status.performed_by?.name || "System"}
+													</p>
+													{status.details && (
+														<p className="text-xs text-gray-500">
+															{typeof status.details === "string"
+																? status.details
+																: status.details.notes ||
+																  JSON.stringify(status.details)}
+														</p>
+													)}
+													<p className="text-xs text-gray-400 mt-1">
+														{new Date(status.performed_at).toLocaleString()}
+													</p>
+												</div>
 											</div>
 										</div>
-									</div>
-								))}
+									))
+								) : (
+									<p className="text-sm text-gray-500">
+										No status history available
+									</p>
+								)}
 							</div>
 						</CardBody>
 					</Card>
@@ -562,6 +621,135 @@ const ViewClaimDetailView = () => {
 						</Button>
 						<Button color="primary" onPress={handleStatusUpdate}>
 							Update Status
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Mark as Completed Modal */}
+			<Modal
+				isOpen={isCompleteModalOpen}
+				onClose={onCompleteModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Mark Claim as Completed</h3>
+					</ModalHeader>
+					<ModalBody>
+						<Textarea
+							label="Notes (Optional)"
+							placeholder="Add any completion notes..."
+							value={statusNotes}
+							onValueChange={setStatusNotes}
+							rows={3}
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="danger"
+							variant="light"
+							onPress={onCompleteModalClose}
+						>
+							Cancel
+						</Button>
+						<Button color="success" onPress={handleMarkAsCompleted}>
+							Mark as Completed
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Approve Claim Modal */}
+			<Modal
+				isOpen={isApproveModalOpen}
+				onClose={onApproveModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Approve Claim</h3>
+					</ModalHeader>
+					<ModalBody>
+						<Textarea
+							label="Notes (Optional)"
+							placeholder="Add approval notes..."
+							value={statusNotes}
+							onValueChange={setStatusNotes}
+							rows={3}
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="danger"
+							variant="light"
+							onPress={onApproveModalClose}
+						>
+							Cancel
+						</Button>
+						<Button color="success" onPress={handleApproveClaim}>
+							Approve Claim
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Reject Claim Modal */}
+			<Modal isOpen={isRejectModalOpen} onClose={onRejectModalClose} size="md">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Reject Claim</h3>
+					</ModalHeader>
+					<ModalBody>
+						<Textarea
+							label="Rejection Reason *"
+							placeholder="Please provide a reason for rejection..."
+							value={statusNotes}
+							onValueChange={setStatusNotes}
+							rows={3}
+							isRequired
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button color="danger" variant="light" onPress={onRejectModalClose}>
+							Cancel
+						</Button>
+						<Button color="danger" onPress={handleRejectClaim}>
+							Reject Claim
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Authorize Payment Modal */}
+			<Modal
+				isOpen={isAuthorizeModalOpen}
+				onClose={onAuthorizeModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Authorize Payment</h3>
+					</ModalHeader>
+					<ModalBody>
+						<Textarea
+							label="Notes (Optional)"
+							placeholder="Add payment authorization notes..."
+							value={statusNotes}
+							onValueChange={setStatusNotes}
+							rows={3}
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							color="danger"
+							variant="light"
+							onPress={onAuthorizeModalClose}
+						>
+							Cancel
+						</Button>
+						<Button color="primary" onPress={handleAuthorizePayment}>
+							Authorize Payment
 						</Button>
 					</ModalFooter>
 				</ModalContent>

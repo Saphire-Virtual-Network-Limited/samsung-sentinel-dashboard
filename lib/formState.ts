@@ -19,5 +19,5 @@ export const useField = (initialValue: string, validationSchema: ZodType) => {
 		}
 	};
 
-	return { value, error, handleChange };
+	return { value, error, handleChange, setError };
 };

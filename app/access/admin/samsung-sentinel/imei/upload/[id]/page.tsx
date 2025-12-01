@@ -1,5 +1,5 @@
 import { SamsungSentinelUploadDetailsView } from "@/view/dashboard/samsung-sentinel";
 
-export default async function SamsungSentinelUploadDetailsPage() {
+export default function SamsungSentinelUploadDetailsPage() {
 	return <SamsungSentinelUploadDetailsView />;
 }

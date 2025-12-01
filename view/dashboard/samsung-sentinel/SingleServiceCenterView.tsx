@@ -23,6 +23,7 @@ import {
 	DropdownItem,
 	Tabs,
 	Tab,
+	Textarea,
 } from "@heroui/react";
 import {
 	InfoCard,
@@ -56,42 +57,59 @@ import {
 	UserX,
 } from "lucide-react";
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { showToast } from "@/lib";
+import {
+	showToast,
+	getServiceCenterById,
+	updateServiceCenter,
+	activateServiceCenter,
+	deactivateServiceCenter,
+	createEngineer,
+	type ServiceCenter as APIServiceCenter,
+	getAllServiceCenters,
+	transferEngineer,
+} from "@/lib";
+import useSWR from "swr";
 
 interface Engineer {
 	id: string;
-	name: string;
-	email: string;
-	phoneNumber: string;
-	specialization: string;
-	status: "active" | "suspended" | "inactive";
-	createdBy: string;
-	createdAt: string;
-	totalRepairs: number;
-	monthlyRepairs: number;
+	created_at: string;
+	updated_at: string;
+	user_id: string;
+	service_center_id: string;
+	description?: string;
+	user?: {
+		id: string;
+		email: string;
+		name: string;
+		phone: string;
+		role: string;
+		status: "ACTIVE" | "SUSPENDED" | "DISABLED";
+	};
 }
 
 interface ServiceCenter {
 	id: string;
+	created_at: string;
+	updated_at: string;
+	created_by_id: string;
+	updated_by_id?: string;
+	repair_store_id?: string;
 	name: string;
-	address: string;
-	state: string;
-	lga: string;
-	city: string;
-	phoneNumber: string;
 	email: string;
-	bankName: string;
-	accountName: string;
-	accountNumber: string;
-	engineersCount: number;
-	totalRepairs: number;
-	monthlyRevenue: number;
-	totalPaidOut: number;
-	pendingPayouts: number;
-	status: "active" | "inactive" | "suspended";
-	createdBy: string;
-	createdAt: string;
-	lastUpdatedAt: string;
+	phone: string;
+	state: string;
+	city: string;
+	address: string;
+	description?: string;
+	account_name?: string;
+	account_number?: string;
+	bank_name?: string;
+	status: "ACTIVE" | "SUSPENDED" | "DISABLED";
+	repair_store?: {
+		id: string;
+		name: string;
+	};
+	engineers_count: number;
 	engineers: Engineer[];
 }
 
@@ -109,13 +127,13 @@ interface Transaction {
 const engineerColumns: ColumnDef[] = [
 	{ name: "Engineer", uid: "name", sortable: true },
 	{ name: "Contact", uid: "contact", sortable: true },
-	{ name: "Specialization", uid: "specialization", sortable: true },
-	{ name: "Total Repairs", uid: "totalRepairs", sortable: true },
-	{ name: "Monthly Repairs", uid: "monthlyRepairs", sortable: true },
+	{ name: "Description", uid: "specialization", sortable: true },
 	{ name: "Status", uid: "status", sortable: true },
 	{ name: "Created At", uid: "createdAt", sortable: true },
 	{ name: "Actions", uid: "actions" },
 ];
+
+// ...inside SingleServiceCenterView component:
 
 const transactionColumns: ColumnDef[] = [
 	{ name: "Claim ID", uid: "claimId", sortable: true },
@@ -128,8 +146,9 @@ const transactionColumns: ColumnDef[] = [
 ];
 
 const statusColorMap = {
-	active: "success" as const,
-	inactive: "danger" as const,
+	ACTIVE: "success" as const,
+	SUSPENDED: "warning" as const,
+	DISABLED: "danger" as const,
 	suspended: "warning" as const,
 };
 
@@ -157,6 +176,62 @@ const nigerianStates = [
 ];
 
 export default function SingleServiceCenterView() {
+	// ...existing code...
+
+	// Transfer modal state
+	const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+	const [transferServiceCenterId, setTransferServiceCenterId] = useState("");
+	const [transferReason, setTransferReason] = useState("");
+	const [serviceCenters, setServiceCenters] = useState<
+		{ id: string; name: string }[]
+	>([]);
+	const [isTransferLoading, setIsTransferLoading] = useState(false);
+	const openTransferModal = async () => {
+		setIsTransferModalOpen(true);
+		setTransferServiceCenterId("");
+		setTransferReason("");
+		// Fetch all service centers (exclude current)
+		try {
+			const res = await getAllServiceCenters();
+			if (res && Array.isArray(res.data)) {
+				setServiceCenters(
+					res.data
+						.filter((sc: any) => sc.id !== selectedEngineer?.service_center_id)
+						.map((sc: any) => ({ id: sc.id, name: sc.name }))
+				);
+			}
+		} catch (e) {
+			setServiceCenters([]);
+		}
+	};
+	const closeTransferModal = () => {
+		setIsTransferModalOpen(false);
+	};
+	const handleTransferEngineer = async () => {
+		if (!selectedEngineer || !transferServiceCenterId || !transferReason)
+			return;
+		setIsTransferLoading(true);
+		try {
+			await transferEngineer(
+				selectedEngineer.id,
+				transferServiceCenterId,
+				transferReason
+			);
+			showToast({
+				message: "Engineer transferred successfully",
+				type: "success",
+			});
+			setIsTransferModalOpen(false);
+			setIsViewEngineerModalOpen(false);
+			setSelectedEngineer(null);
+			// Optionally refresh data here
+			if (typeof mutate === "function") mutate();
+		} catch (e) {
+			showToast({ message: "Failed to transfer engineer", type: "error" });
+		} finally {
+			setIsTransferLoading(false);
+		}
+	};
 	const params = useParams();
 	const serviceCenterId = params?.id as string;
 	const router = useRouter();
@@ -186,197 +261,137 @@ export default function SingleServiceCenterView() {
 		address: "",
 		state: "",
 		city: "",
-		phoneNumber: "",
+		phone: "",
 		email: "",
+		description: "",
 	});
 	const [bankFormData, setBankFormData] = useState({
-		bankName: "",
-		accountName: "",
-		accountNumber: "",
+		bank_name: "",
+		account_name: "",
+		account_number: "",
 	});
 	const [engineerFormData, setEngineerFormData] = useState({
 		name: "",
 		email: "",
-		phoneNumber: "",
-		specialization: "",
+		phone: "",
+		description: "",
 	});
-	const [isLoading, setIsLoading] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Mock service center data - replace with actual API call
-	const serviceCenter: ServiceCenter = useMemo(
-		() => ({
-			id: serviceCenterId,
-			name: "TechFix Lagos Central",
-			address: "123 Allen Avenue, Ikeja",
-			state: "Lagos",
-			lga: "Ikeja",
-			city: "Lagos",
-			phoneNumber: "+234 802 123 4567",
-			email: "contact@techfixlagos.com",
-			bankName: "First Bank of Nigeria",
-			accountName: "TechFix Lagos Central",
-			accountNumber: "2034567890",
-			engineersCount: 8,
-			totalRepairs: 2450,
-			monthlyRevenue: 1250000,
-			totalPaidOut: 15750000,
-			pendingPayouts: 350000,
-			status: "active",
-			createdBy: "admin@sapphire.com",
-			createdAt: "2024-01-10T08:00:00Z",
-			lastUpdatedAt: "2024-09-28T16:30:00Z",
-			engineers: [
-				{
-					id: "eng_001",
-					name: "John Adebayo",
-					email: "john.adebayo@techfixlagos.com",
-					phoneNumber: "+234 803 123 4567",
-					specialization: "screen",
-					status: "active",
-					createdBy: "admin@sapphire.com",
-					createdAt: "2024-01-15T09:00:00Z",
-					totalRepairs: 456,
-					monthlyRepairs: 38,
-				},
-				{
-					id: "eng_002",
-					name: "Sarah Okafor",
-					email: "sarah.okafor@techfixlagos.com",
-					phoneNumber: "+234 804 123 4567",
-					specialization: "battery",
-					status: "active",
-					createdBy: "admin@sapphire.com",
-					createdAt: "2024-02-01T10:30:00Z",
-					totalRepairs: 312,
-					monthlyRepairs: 26,
-				},
-				{
-					id: "eng_003",
-					name: "Michael Ogundimu",
-					email: "michael.ogundimu@techfixlagos.com",
-					phoneNumber: "+234 805 123 4567",
-					specialization: "camera",
-					status: "suspended",
-					createdBy: "subadmin@sapphire.com",
-					createdAt: "2024-03-15T14:15:00Z",
-					totalRepairs: 187,
-					monthlyRepairs: 0,
-				},
-			],
-		}),
-		[serviceCenterId]
+	// Engineer view modal state
+	const [isViewEngineerModalOpen, setIsViewEngineerModalOpen] = useState(false);
+	const [selectedEngineer, setSelectedEngineer] = useState<Engineer | null>(
+		null
 	);
 
-	// Mock transaction history - replace with actual API call
-	const transactions: Transaction[] = useMemo(
-		() => [
-			{
-				id: "txn_001",
-				claimId: "CLM_2024_001",
-				customerName: "Adewale Johnson",
-				imei: "123456789012345",
-				amountPaidOut: 25000,
-				transactionReference: "TXN_REF_001",
-				processedAt: "2024-10-01T10:30:00Z",
-				status: "completed",
-			},
-			{
-				id: "txn_002",
-				claimId: "CLM_2024_002",
-				customerName: "Fatima Abubakar",
-				imei: "234567890123456",
-				amountPaidOut: 18000,
-				transactionReference: "TXN_REF_002",
-				processedAt: "2024-10-02T14:15:00Z",
-				status: "completed",
-			},
-			{
-				id: "txn_003",
-				claimId: "CLM_2024_003",
-				customerName: "Emeka Okonkwo",
-				imei: "345678901234567",
-				amountPaidOut: 32000,
-				transactionReference: "TXN_REF_003",
-				processedAt: "2024-10-03T09:45:00Z",
-				status: "pending",
-			},
-		],
-		[]
+	const handleViewEngineer = (engineer: Engineer) => {
+		setSelectedEngineer(engineer);
+		setIsViewEngineerModalOpen(true);
+	};
+	const handleCloseViewEngineerModal = () => {
+		setIsViewEngineerModalOpen(false);
+		setSelectedEngineer(null);
+	};
+
+	// Mock transactions data (since API doesn't provide this yet)
+	const transactions: Transaction[] = [];
+
+	// Fetch service center details
+	const {
+		data: serviceCenter,
+		mutate,
+		isLoading,
+		error,
+	} = useSWR(
+		serviceCenterId ? ["service-center-detail", serviceCenterId] : null,
+		() => getServiceCenterById(serviceCenterId)
 	);
 
 	// Statistics
-	const stats = useMemo(
-		() => ({
-			totalEngineers: serviceCenter.engineers.length,
-			activeEngineers: serviceCenter.engineers.filter(
-				(e) => e.status === "active"
+	const stats = useMemo(() => {
+		if (!serviceCenter)
+			return {
+				totalEngineers: 0,
+				activeEngineers: 0,
+				suspendedEngineers: 0,
+				disabledEngineers: 0,
+			};
+
+		const engineers = serviceCenter.engineers || [];
+		return {
+			totalEngineers: engineers.length,
+			activeEngineers: engineers.filter((e: any) => e.user?.status === "ACTIVE")
+				.length,
+			suspendedEngineers: engineers.filter(
+				(e: any) => e.user?.status === "SUSPENDED"
 			).length,
-			monthlyRepairs: serviceCenter.engineers.reduce(
-				(sum, e) => sum + e.monthlyRepairs,
-				0
-			),
-			avgRepairsPerEngineer: Math.round(
-				serviceCenter.totalRepairs / serviceCenter.engineers.length
-			),
-		}),
-		[serviceCenter]
-	);
+			disabledEngineers: engineers.filter(
+				(e: any) => e.user?.status === "DISABLED"
+			).length,
+		};
+	}, [serviceCenter]);
 
 	// Handle edit service center
 	const handleEditServiceCenter = async () => {
-		if (!centerFormData.name.trim() || !centerFormData.address.trim()) {
+		const { name, address, state, city, phone, email } = centerFormData;
+
+		if (!name || !address || !state || !city) {
 			showToast({ message: "Please fill in required fields", type: "error" });
 			return;
 		}
 
-		setIsLoading(true);
+		setIsSubmitting(true);
 		try {
-			// API call to update service center
+			await updateServiceCenter(serviceCenterId, centerFormData);
 			showToast({
 				message: "Service center updated successfully",
 				type: "success",
 			});
 			onEditModalClose();
-		} catch (error) {
-			showToast({ message: "Failed to update service center", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update service center",
+				type: "error",
+			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
 	// Handle edit bank details
 	const handleEditBankDetails = async () => {
-		if (
-			!bankFormData.bankName.trim() ||
-			!bankFormData.accountName.trim() ||
-			!bankFormData.accountNumber.trim()
-		) {
+		const { bank_name, account_name, account_number } = bankFormData;
+
+		if (!bank_name || !account_name || !account_number) {
 			showToast({ message: "Please fill in all bank details", type: "error" });
 			return;
 		}
 
-		setIsLoading(true);
+		setIsSubmitting(true);
 		try {
-			// API call to update bank details
+			await updateServiceCenter(serviceCenterId, bankFormData);
 			showToast({
 				message: "Bank details updated successfully",
 				type: "success",
 			});
 			onEditBankModalClose();
-		} catch (error) {
-			showToast({ message: "Failed to update bank details", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update bank details",
+				type: "error",
+			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
 	// Handle add engineer
 	const handleAddEngineer = async () => {
-		if (
-			!engineerFormData.name.trim() ||
-			!engineerFormData.email.trim() ||
-			!engineerFormData.phoneNumber.trim()
-		) {
+		const { name, email, phone, description } = engineerFormData;
+
+		if (!name || !email || !phone) {
 			showToast({
 				message: "Please fill in all required fields",
 				type: "error",
@@ -384,42 +399,69 @@ export default function SingleServiceCenterView() {
 			return;
 		}
 
-		setIsLoading(true);
+		if (!serviceCenterId) {
+			showToast({
+				message: "Service center ID is required",
+				type: "error",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
 		try {
-			// API call to add engineer
+			await createEngineer({
+				name,
+				email,
+				phone,
+				service_center_id: serviceCenterId,
+				...(description && { description }),
+			});
 			showToast({ message: "Engineer added successfully", type: "success" });
 			onAddEngineerModalClose();
 			setEngineerFormData({
 				name: "",
 				email: "",
-				phoneNumber: "",
-				specialization: "",
+				phone: "",
+				description: "",
 			});
-		} catch (error) {
-			showToast({ message: "Failed to add engineer", type: "error" });
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to add engineer",
+				type: "error",
+			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
 	// Handle toggle service center status
 	const handleToggleServiceCenterStatus = async () => {
-		setIsLoading(true);
+		if (!serviceCenter) return;
+
+		setIsSubmitting(true);
 		try {
-			// API call to toggle service center status
+			if (serviceCenter.status === "ACTIVE") {
+				await deactivateServiceCenter(serviceCenterId);
+				showToast({
+					message: "Service center deactivated successfully",
+					type: "success",
+				});
+			} else {
+				await activateServiceCenter(serviceCenterId);
+				showToast({
+					message: "Service center activated successfully",
+					type: "success",
+				});
+			}
+			mutate();
+		} catch (error: any) {
 			showToast({
-				message: `Service center ${
-					serviceCenter.status === "active" ? "disabled" : "enabled"
-				} successfully`,
-				type: "success",
-			});
-		} catch (error) {
-			showToast({
-				message: "Failed to update service center status",
+				message: error?.message || "Failed to update service center status",
 				type: "error",
 			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -448,49 +490,40 @@ export default function SingleServiceCenterView() {
 			case "name":
 				return (
 					<div className="flex flex-col">
-						<p className="text-bold text-sm">{row.name}</p>
+						<p className="text-bold text-sm">{row.user?.name || "N/A"}</p>
 						<p className="text-xs text-default-400">ID: {row.id}</p>
 					</div>
 				);
 			case "contact":
 				return (
 					<div className="flex flex-col">
-						<p className="text-sm">{row.email}</p>
-						<p className="text-xs text-default-400">{row.phoneNumber}</p>
+						<p className="text-sm">{row.user?.email || "N/A"}</p>
+						<p className="text-xs text-default-400">
+							{row.user?.phone || "N/A"}
+						</p>
 					</div>
 				);
 			case "specialization":
-				const specializationLabel =
-					specializations.find((s) => s.value === row.specialization)?.label ||
-					row.specialization;
 				return (
 					<Chip color="primary" variant="flat" size="sm">
-						{specializationLabel}
+						{row.description || "N/A"}
 					</Chip>
-				);
-			case "totalRepairs":
-			case "monthlyRepairs":
-				return (
-					<div className="flex items-center gap-1">
-						<Wrench size={12} className="text-primary" />
-						<span className="text-sm font-medium">{row[key]}</span>
-					</div>
 				);
 			case "status":
 				return (
 					<Chip
-						color={statusColorMap[row.status]}
+						color={statusColorMap[row.user?.status || "DISABLED"]}
 						size="sm"
 						variant="flat"
 						className="capitalize"
 					>
-						{row.status}
+						{row.user?.status || "N/A"}
 					</Chip>
 				);
 			case "createdAt":
 				return (
 					<p className="text-sm">
-						{new Date(row.createdAt).toLocaleDateString()}
+						{new Date(row.created_at).toLocaleDateString()}
 					</p>
 				);
 			case "actions":
@@ -504,17 +537,29 @@ export default function SingleServiceCenterView() {
 							</DropdownTrigger>
 							<DropdownMenu>
 								<DropdownItem
+									key="view"
+									startContent={<Users size={16} />}
+									onPress={() => handleViewEngineer(row)}
+								>
+									View
+								</DropdownItem>
+								<DropdownItem
 									key="toggle"
 									startContent={
-										row.status === "active" ? (
+										row.user?.status === "ACTIVE" ? (
 											<UserX size={16} />
 										) : (
 											<UserCheck size={16} />
 										)
 									}
-									onPress={() => handleToggleEngineerStatus(row.id, row.status)}
+									onPress={() =>
+										handleToggleEngineerStatus(
+											row.id,
+											row.user?.status || "DISABLED"
+										)
+									}
 								>
-									{row.status === "active" ? "Suspend" : "Activate"}
+									{row.user?.status === "ACTIVE" ? "Suspend" : "Activate"}
 								</DropdownItem>
 								<DropdownItem
 									key="delete"
@@ -528,8 +573,19 @@ export default function SingleServiceCenterView() {
 						</Dropdown>
 					</div>
 				);
+				{
+					/* View Engineer Modal */
+				}
+
 			default:
-				return <span className="text-sm">{row[key as keyof Engineer]}</span>;
+				const value = row[key as keyof Engineer];
+				return (
+					<span className="text-sm">
+						{typeof value === "object"
+							? JSON.stringify(value)
+							: String(value || "N/A")}
+					</span>
+				);
 		}
 	};
 
@@ -574,9 +630,41 @@ export default function SingleServiceCenterView() {
 		}
 	};
 
-	if (!serviceCenter) {
-		return <NotFound onGoBack={() => router.back()} />;
-	}
+	// Initialize form data when modals open
+	React.useEffect(() => {
+		if (isEditModalOpen && serviceCenter) {
+			setCenterFormData({
+				name: serviceCenter.name,
+				address: serviceCenter.address,
+				state: serviceCenter.state,
+				city: serviceCenter.city,
+				phone: serviceCenter.phone,
+				email: serviceCenter.email,
+				description: serviceCenter.description || "",
+			});
+		}
+	}, [isEditModalOpen, serviceCenter]);
+
+	React.useEffect(() => {
+		if (isEditBankModalOpen && serviceCenter) {
+			setBankFormData({
+				bank_name: serviceCenter.bank_name || "",
+				account_name: serviceCenter.account_name || "",
+				account_number: serviceCenter.account_number || "",
+			});
+		}
+	}, [isEditBankModalOpen, serviceCenter]);
+
+	if (isLoading) return <LoadingSpinner />;
+	if (error)
+		return (
+			<NotFound
+				title="Service Center Not Found"
+				description="The requested service center could not be found."
+				onGoBack={() => router.back()}
+			/>
+		);
+	if (!serviceCenter) return null;
 
 	return (
 		<div className="space-y-6">
@@ -598,38 +686,27 @@ export default function SingleServiceCenterView() {
 						color="warning"
 						variant="flat"
 						startContent={<Edit size={16} />}
-						onPress={() => {
-							setCenterFormData({
-								name: serviceCenter.name,
-								address: serviceCenter.address,
-								state: serviceCenter.state,
-								city: serviceCenter.city,
-								phoneNumber: serviceCenter.phoneNumber,
-								email: serviceCenter.email,
-							});
-							onEditModalOpen();
-						}}
+						onPress={onEditModalOpen}
 					>
 						Edit Details
 					</Button>
 					<Button
-						color={serviceCenter.status === "active" ? "danger" : "success"}
+						color={serviceCenter.status === "ACTIVE" ? "danger" : "success"}
 						variant="flat"
 						startContent={
-							serviceCenter.status === "active" ? (
+							serviceCenter.status === "ACTIVE" ? (
 								<PowerOff size={16} />
 							) : (
 								<Power size={16} />
 							)
 						}
 						onPress={handleToggleServiceCenterStatus}
-						isLoading={isLoading}
+						isLoading={isSubmitting}
 					>
-						{serviceCenter.status === "active" ? "Disable" : "Enable"}
+						{serviceCenter.status === "ACTIVE" ? "Deactivate" : "Activate"}
 					</Button>
 				</div>
 			</div>
-
 			{/* Statistics */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatCard
@@ -643,17 +720,16 @@ export default function SingleServiceCenterView() {
 					icon={<UserCheck className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Monthly Repairs"
-					value={stats.monthlyRepairs.toString()}
-					icon={<Wrench className="w-5 h-5" />}
+					title="Suspended Engineers"
+					value={stats.suspendedEngineers.toString()}
+					icon={<UserX className="w-5 h-5" />}
 				/>
 				<StatCard
-					title="Total Paid Out"
-					value={`₦${serviceCenter.totalPaidOut.toLocaleString()}`}
-					icon={<DollarSign className="w-5 h-5" />}
+					title="Disabled Engineers"
+					value={stats.disabledEngineers.toString()}
+					icon={<PowerOff className="w-5 h-5" />}
 				/>
 			</div>
-
 			{/* Service Center Info Card */}
 			<InfoCard title="Service Center Information">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -666,16 +742,18 @@ export default function SingleServiceCenterView() {
 					<InfoField label="Address" value={serviceCenter.address} />
 					<InfoField label="State" value={serviceCenter.state} />
 					<InfoField label="City" value={serviceCenter.city} />
-					<InfoField label="Phone Number" value={serviceCenter.phoneNumber} />
+					<InfoField label="Phone Number" value={serviceCenter.phone} />
 					<InfoField label="Email" value={serviceCenter.email} />
-					<InfoField label="Created By" value={serviceCenter.createdBy} />
+					<InfoField
+						label="Repair Partner"
+						value={serviceCenter.repair_store?.name || "N/A"}
+					/>
 					<InfoField
 						label="Created At"
-						value={new Date(serviceCenter.createdAt).toLocaleDateString()}
+						value={new Date(serviceCenter.created_at).toLocaleDateString()}
 					/>
 				</div>
 			</InfoCard>
-
 			{/* Bank Details Card */}
 			<InfoCard
 				title="Bank Details"
@@ -685,29 +763,27 @@ export default function SingleServiceCenterView() {
 						color="warning"
 						variant="flat"
 						startContent={<Edit size={14} />}
-						onPress={() => {
-							setBankFormData({
-								bankName: serviceCenter.bankName,
-								accountName: serviceCenter.accountName,
-								accountNumber: serviceCenter.accountNumber,
-							});
-							onEditBankModalOpen();
-						}}
+						onPress={onEditBankModalOpen}
 					>
 						Edit Bank Details
 					</Button>
 				}
 			>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<InfoField label="Bank Name" value={serviceCenter.bankName} />
-					<InfoField label="Account Name" value={serviceCenter.accountName} />
+					<InfoField
+						label="Bank Name"
+						value={serviceCenter.bank_name || "N/A"}
+					/>
+					<InfoField
+						label="Account Name"
+						value={serviceCenter.account_name || "N/A"}
+					/>
 					<InfoField
 						label="Account Number"
-						value={serviceCenter.accountNumber}
+						value={serviceCenter.account_number || "N/A"}
 					/>
 				</div>
 			</InfoCard>
-
 			{/* Tabs */}
 			<Tabs aria-label="Service center details" className="w-full">
 				<Tab key="engineers" title="Engineers">
@@ -725,12 +801,12 @@ export default function SingleServiceCenterView() {
 
 						<GenericTable<Engineer>
 							columns={engineerColumns}
-							data={serviceCenter.engineers}
-							allCount={serviceCenter.engineers.length}
-							exportData={serviceCenter.engineers}
+							data={serviceCenter.engineers || []}
+							allCount={(serviceCenter.engineers || []).length}
+							exportData={serviceCenter.engineers || []}
 							isLoading={false}
 							renderCell={renderEngineerCell}
-							hasNoRecords={serviceCenter.engineers.length === 0}
+							hasNoRecords={(serviceCenter.engineers || []).length === 0}
 							sortDescriptor={{ column: "createdAt", direction: "descending" }}
 							onSortChange={() => {}}
 							page={1}
@@ -741,7 +817,52 @@ export default function SingleServiceCenterView() {
 							searchPlaceholder="Search engineers..."
 							showRowsPerPageSelector={true}
 							exportFn={(data) => {
-								console.log("Exporting engineers:", data);
+								(async () => {
+									const ExcelJS = (await import("exceljs")).default;
+									const workbook = new ExcelJS.Workbook();
+									const worksheet = workbook.addWorksheet("Engineers");
+									worksheet.columns = [
+										{ header: "Name", key: "name", width: 25 },
+										{ header: "Email", key: "email", width: 30 },
+										{ header: "Phone", key: "phone", width: 18 },
+										{ header: "Description", key: "description", width: 30 },
+										{ header: "Status", key: "status", width: 12 },
+									];
+									worksheet.getRow(1).font = {
+										bold: true,
+										color: { argb: "FFFFFFFF" },
+									};
+									worksheet.getRow(1).fill = {
+										type: "pattern",
+										pattern: "solid",
+										fgColor: { argb: "FF4472C4" },
+									};
+									worksheet.getRow(1).alignment = {
+										vertical: "middle",
+										horizontal: "center",
+									};
+									(data || []).forEach((item: any) => {
+										worksheet.addRow({
+											name: item.user?.name || item.name || "N/A",
+											email: item.user?.email || item.email || "N/A",
+											phone: item.user?.phone || item.phone || "N/A",
+											description: item.description || "",
+											status: item.status,
+										});
+									});
+									const buffer = await workbook.xlsx.writeBuffer();
+									const blob = new Blob([buffer], {
+										type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+									});
+									const url = URL.createObjectURL(blob);
+									const link = document.createElement("a");
+									link.href = url;
+									link.download = `engineers-${
+										new Date().toISOString().split("T")[0]
+									}.xlsx`;
+									link.click();
+									URL.revokeObjectURL(url);
+								})();
 							}}
 						/>
 					</div>
@@ -772,13 +893,55 @@ export default function SingleServiceCenterView() {
 							searchPlaceholder="Search transactions..."
 							showRowsPerPageSelector={true}
 							exportFn={(data) => {
-								console.log("Exporting transactions:", data);
+								(async () => {
+									const ExcelJS = (await import("exceljs")).default;
+									const workbook = new ExcelJS.Workbook();
+									const worksheet = workbook.addWorksheet("Transactions");
+									worksheet.columns = [
+										{ header: "Date", key: "processedAt", width: 20 },
+										{ header: "Amount", key: "amount", width: 15 },
+										{ header: "Type", key: "type", width: 15 },
+										{ header: "Status", key: "status", width: 12 },
+									];
+									worksheet.getRow(1).font = {
+										bold: true,
+										color: { argb: "FFFFFFFF" },
+									};
+									worksheet.getRow(1).fill = {
+										type: "pattern",
+										pattern: "solid",
+										fgColor: { argb: "FF4472C4" },
+									};
+									worksheet.getRow(1).alignment = {
+										vertical: "middle",
+										horizontal: "center",
+									};
+									(data || []).forEach((item: any) => {
+										worksheet.addRow({
+											processedAt: item.processedAt,
+											amount: item.amount,
+											type: item.type,
+											status: item.status,
+										});
+									});
+									const buffer = await workbook.xlsx.writeBuffer();
+									const blob = new Blob([buffer], {
+										type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+									});
+									const url = URL.createObjectURL(blob);
+									const link = document.createElement("a");
+									link.href = url;
+									link.download = `transactions-${
+										new Date().toISOString().split("T")[0]
+									}.xlsx`;
+									link.click();
+									URL.revokeObjectURL(url);
+								})();
 							}}
 						/>
 					</div>
 				</Tab>
 			</Tabs>
-
 			{/* Edit Service Center Modal */}
 			<Modal isOpen={isEditModalOpen} onClose={onEditModalClose} size="2xl">
 				<ModalContent>
@@ -809,11 +972,11 @@ export default function SingleServiceCenterView() {
 									<Input
 										label="Phone Number"
 										placeholder="+234 802 123 4567"
-										value={centerFormData.phoneNumber}
+										value={centerFormData.phone}
 										onValueChange={(value) =>
 											setCenterFormData((prev) => ({
 												...prev,
-												phoneNumber: value,
+												phone: value,
 											}))
 										}
 										isRequired
@@ -868,7 +1031,7 @@ export default function SingleServiceCenterView() {
 								<Button
 									color="primary"
 									onPress={handleEditServiceCenter}
-									isLoading={isLoading}
+									isLoading={isSubmitting}
 								>
 									Save Changes
 								</Button>
@@ -877,7 +1040,6 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
-
 			{/* Edit Bank Details Modal */}
 			<Modal
 				isOpen={isEditBankModalOpen}
@@ -893,20 +1055,20 @@ export default function SingleServiceCenterView() {
 									<Input
 										label="Bank Name"
 										placeholder="e.g., First Bank of Nigeria"
-										value={bankFormData.bankName}
+										value={bankFormData.bank_name}
 										onValueChange={(value) =>
-											setBankFormData((prev) => ({ ...prev, bankName: value }))
+											setBankFormData((prev) => ({ ...prev, bank_name: value }))
 										}
 										isRequired
 									/>
 									<Input
 										label="Account Name"
 										placeholder="e.g., TechFix Lagos Central"
-										value={bankFormData.accountName}
+										value={bankFormData.account_name}
 										onValueChange={(value) =>
 											setBankFormData((prev) => ({
 												...prev,
-												accountName: value,
+												account_name: value,
 											}))
 										}
 										isRequired
@@ -914,11 +1076,11 @@ export default function SingleServiceCenterView() {
 									<Input
 										label="Account Number"
 										placeholder="e.g., 2034567890"
-										value={bankFormData.accountNumber}
+										value={bankFormData.account_number}
 										onValueChange={(value) =>
 											setBankFormData((prev) => ({
 												...prev,
-												accountNumber: value,
+												account_number: value,
 											}))
 										}
 										isRequired
@@ -932,7 +1094,7 @@ export default function SingleServiceCenterView() {
 								<Button
 									color="primary"
 									onPress={handleEditBankDetails}
-									isLoading={isLoading}
+									isLoading={isSubmitting}
 								>
 									Save Bank Details
 								</Button>
@@ -941,7 +1103,6 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
-
 			{/* Add Engineer Modal */}
 			<Modal
 				isOpen={isAddEngineerModalOpen}
@@ -976,37 +1137,27 @@ export default function SingleServiceCenterView() {
 									<Input
 										label="Phone Number"
 										placeholder="+234 803 123 4567"
-										value={engineerFormData.phoneNumber}
+										value={engineerFormData.phone}
 										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
 												...prev,
-												phoneNumber: value,
+												phone: value,
 											}))
 										}
 										isRequired
 									/>
-									<Select
-										label="Specialization"
-										placeholder="Select specialization"
-										selectedKeys={
-											engineerFormData.specialization
-												? [engineerFormData.specialization]
-												: []
-										}
-										onSelectionChange={(keys) => {
-											const key = Array.from(keys)[0] as string;
+									<Textarea
+										label="Description (Optional)"
+										placeholder="Add any additional information about the engineer..."
+										value={engineerFormData.description}
+										onValueChange={(value) =>
 											setEngineerFormData((prev) => ({
 												...prev,
-												specialization: key,
-											}));
-										}}
-									>
-										{specializations.map((spec) => (
-											<SelectItem key={spec.value} value={spec.value}>
-												{spec.label}
-											</SelectItem>
-										))}
-									</Select>
+												description: value,
+											}))
+										}
+										rows={3}
+									/>
 								</div>
 							</ModalBody>
 							<ModalFooter>
@@ -1016,7 +1167,7 @@ export default function SingleServiceCenterView() {
 								<Button
 									color="primary"
 									onPress={handleAddEngineer}
-									isLoading={isLoading}
+									isLoading={isSubmitting}
 								>
 									Add Engineer
 								</Button>
@@ -1025,6 +1176,111 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
+			<Modal
+				isOpen={isViewEngineerModalOpen}
+				onClose={handleCloseViewEngineerModal}
+				size="md"
+			>
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Engineer Details</ModalHeader>
+							<ModalBody>
+								{selectedEngineer && (
+									<div className="space-y-2">
+										<div>
+											<b>Name:</b> {selectedEngineer.user?.name || "N/A"}
+										</div>
+										<div>
+											<b>Email:</b> {selectedEngineer.user?.email || "N/A"}
+										</div>
+										<div>
+											<b>Phone:</b> {selectedEngineer.user?.phone || "N/A"}
+										</div>
+										<div>
+											<b>Status:</b> {selectedEngineer.user?.status || "N/A"}
+										</div>
+										<div>
+											<b>Description:</b>{" "}
+											{selectedEngineer.description || "N/A"}
+										</div>
+									</div>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={handleCloseViewEngineerModal}>
+									Close
+								</Button>
+								<Button color="primary" onPress={openTransferModal}>
+									Transfer
+								</Button>
+							</ModalFooter>
+							{/* Transfer Engineer Modal */}
+							<Modal
+								isOpen={isTransferModalOpen}
+								onClose={closeTransferModal}
+								size="md"
+							>
+								<ModalContent>
+									{() => (
+										<>
+											<ModalHeader>Transfer Engineer</ModalHeader>
+											<ModalBody>
+												<div className="space-y-4">
+													<Select
+														label="Select New Service Center"
+														placeholder="Choose service center"
+														selectedKeys={
+															transferServiceCenterId
+																? [transferServiceCenterId]
+																: []
+														}
+														onSelectionChange={(keys) => {
+															const key = Array.from(keys)[0] as string;
+															setTransferServiceCenterId(key);
+														}}
+														isRequired
+													>
+														{serviceCenters.map((sc) => (
+															<SelectItem key={sc.id} value={sc.id}>
+																{sc.name}
+															</SelectItem>
+														))}
+													</Select>
+													<Textarea
+														label="Reason for Transfer"
+														placeholder="Enter reason"
+														value={transferReason}
+														onValueChange={setTransferReason}
+														rows={3}
+														isRequired
+													/>
+												</div>
+											</ModalBody>
+											<ModalFooter>
+												<Button variant="light" onPress={closeTransferModal}>
+													Cancel
+												</Button>
+												<Button
+													color="primary"
+													onPress={handleTransferEngineer}
+													isLoading={isTransferLoading}
+													isDisabled={
+														!transferServiceCenterId || !transferReason
+													}
+												>
+													Transfer
+												</Button>
+											</ModalFooter>
+										</>
+									)}
+								</ModalContent>
+							</Modal>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+			;
 		</div>
 	);
 }

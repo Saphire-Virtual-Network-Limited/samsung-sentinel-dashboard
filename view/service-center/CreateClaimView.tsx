@@ -20,11 +20,13 @@ import {
 	ArrowLeft,
 	ArrowRight,
 } from "lucide-react";
-// import {
-//	useValidateIMEI,
-//	useCreateClaim,
-// } from "@/hooks/service-center/useClaims"; // Not implemented
-import { showToast } from "@/lib";
+import {
+	showToast,
+	validateImei,
+	createClaim,
+	getProductById,
+	type ValidateImeiResponse,
+} from "@/lib";
 
 interface ClaimData {
 	imei: string;
@@ -35,7 +37,6 @@ interface ClaimData {
 	state: string;
 	location: string;
 	deviceModel: string;
-	deviceFault: string;
 	deviceRepairPrice: number;
 	description: string;
 }
@@ -44,7 +45,10 @@ const CreateClaimView = () => {
 	const router = useRouter();
 	const [currentStep, setCurrentStep] = useState(1);
 	const [imeiInput, setImeiInput] = useState("");
-	const [validationData, setValidationData] = useState<any>(null);
+	const [validationData, setValidationData] =
+		useState<ValidateImeiResponse | null>(null);
+	const [isValidating, setIsValidating] = useState(false);
+	const [isCreating, setIsCreating] = useState(false);
 	const [claimData, setClaimData] = useState<ClaimData>({
 		imei: "",
 		firstName: "",
@@ -54,17 +58,9 @@ const CreateClaimView = () => {
 		state: "",
 		location: "",
 		deviceModel: "",
-		deviceFault: "screen-repair",
 		deviceRepairPrice: 0,
 		description: "",
 	});
-
-	// Device repair prices based on model
-	const repairPrices = {
-		"Samsung A05": 25000,
-		"Samsung A06": 30000,
-		"Samsung A07": 35000,
-	};
 
 	// Nigerian states
 	const nigerianStates = [
@@ -107,86 +103,74 @@ const CreateClaimView = () => {
 		"Zamfara",
 	];
 
-	// Auto-detect device model and set repair price based on IMEI
-	const detectDeviceModel = (imei: string) => {
-		// Simple logic to determine device model from IMEI
-		// Check for A06 patterns
-		if (imei.includes("06") || imei.includes("111")) {
-			return "Samsung A06";
-		}
-		// Check for A07 patterns
-		else if (imei.includes("07") || imei.includes("222")) {
-			return "Samsung A07";
-		}
-		// Default to A05
-		else {
-			return "Samsung A05";
-		}
-	};
-
-	// Mock functions since hooks don't exist
-	const validateIMEI = async (imei: string) => {
-		const isValid = imei.length === 15;
-		const deviceModel = detectDeviceModel(imei);
-		const response: any = {
-			isValid,
-			device: { model: deviceModel, brand: "Samsung" },
-			claimHistory: {
-				totalClaims: 1,
-				recentClaims: 1,
-				insuranceStatus: "Active",
-				lastClaimDate: "2024-03-20",
-			},
-		};
-
-		// Add different claim history for specific IMEI
-		if (imei === "352924996382946") {
-			response.claimHistory = {
-				totalClaims: 2,
-				recentClaims: 2,
-				insuranceStatus: "Active",
-				lastClaimDate: "2024-08-15",
-			};
-		}
-
-		return response;
-	};
-	const createClaim = async (data: any) => ({ success: true });
-	const isValidating = false;
-	const isCreating = false;
-
 	const handleIMEIValidation = async () => {
 		if (!imeiInput.trim()) {
 			showToast({ type: "error", message: "Please enter an IMEI number" });
 			return;
 		}
 
+		setIsValidating(true);
 		try {
-			const result = await validateIMEI(imeiInput);
-			if (result.isValid) {
-				const deviceModel = result.device.model;
-				const repairPrice =
-					repairPrices[deviceModel as keyof typeof repairPrices] || 25000;
+			const result = (await validateImei({ imei: imeiInput })) as any;
 
+			if (result.is_eligible && result.exists) {
 				setValidationData(result);
+
+				// Get repair cost from validation response or fetch from product API
+				let repairCost = result.repair_cost || 0;
+
+				// If repair cost not returned by validation, fetch from product API
+				if (!result.repair_cost && result.product_id) {
+					try {
+						const productResponse = await getProductById(result.product_id);
+						const product: any = productResponse?.data || productResponse;
+						if (product?.repair_cost) {
+							repairCost = product.repair_cost;
+						}
+					} catch (error) {
+						console.error("Failed to fetch product details:", error);
+						// Continue with repair_cost = 0, backend will handle default
+					}
+				}
+
 				setClaimData((prev) => ({
 					...prev,
 					imei: imeiInput,
-					deviceModel: deviceModel,
-					deviceRepairPrice: repairPrice,
+					deviceModel: result?.product?.name,
+					deviceRepairPrice: result?.product?.price,
 				}));
 				showToast({
 					type: "success",
 					message: "IMEI validated successfully",
 				});
+			} else if (!result.exists) {
+				showToast({
+					type: "error",
+					message: "IMEI not found in the system",
+				});
+			} else if (result.is_used) {
+				showToast({
+					type: "error",
+					message: "IMEI has already been used for a claim",
+				});
+			} else if (result.is_expired) {
+				showToast({
+					type: "error",
+					message: "IMEI has expired",
+				});
 			} else {
 				showToast({
 					type: "error",
-					message: "IMEI is not valid",
+					message: result.eligibility_reason || "IMEI is not eligible",
 				});
 			}
-		} catch (error) {
-			showToast({ type: "error", message: "Failed to validate IMEI" });
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to validate IMEI",
+			});
+		} finally {
+			setIsValidating(false);
 		}
 	};
 
@@ -201,8 +185,7 @@ const CreateClaimView = () => {
 			!claimData.lastName ||
 			!claimData.customerPhone ||
 			!claimData.state ||
-			!claimData.location ||
-			!claimData.deviceFault
+			!claimData.location
 		) {
 			showToast({
 				type: "error",
@@ -211,23 +194,47 @@ const CreateClaimView = () => {
 			return;
 		}
 
+		// Note: deviceRepairPrice will be 0 if not provided by API - backend should handle default value
+		setIsCreating(true);
 		try {
-			await createClaim(claimData);
-			showToast({ type: "success", message: "Claim created successfully" });
-			router.push("/access/service-center/claims/pending");
-		} catch (error) {
-			showToast({ type: "error", message: "Failed to create claim" });
+			const response: any = await createClaim({
+				imei: claimData.imei,
+				customer_first_name: claimData.firstName,
+				customer_last_name: claimData.lastName,
+				customer_phone: claimData.customerPhone,
+				customer_email: claimData.customerEmail,
+				repair_price: claimData.deviceRepairPrice,
+				description: claimData.description,
+			});
+
+			showToast({
+				type: "success",
+				message: `Claim ${response?.claim_number} created successfully`,
+			});
+
+			// Navigate to the claim detail view
+			router.push(`/access/service-center/claims/${response?.id}`);
+		} catch (error: any) {
+			showToast({
+				type: "error",
+				message: error?.message || "Failed to create claim",
+			});
+		} finally {
+			setIsCreating(false);
 		}
 	};
 
-	const canProceedToStep2 = validationData?.isValid;
+	const canProceedToStep2 =
+		validationData?.is_eligible &&
+		validationData?.exists &&
+		!validationData?.is_used;
 	const canSubmit =
 		claimData.firstName &&
 		claimData.lastName &&
 		claimData.customerPhone &&
 		claimData.state &&
-		claimData.location &&
-		claimData.deviceFault;
+		claimData.location;
+	// Note: deviceRepairPrice validation removed - will be auto-populated from product data
 
 	return (
 		<div className="space-y-6 max-w-4xl mx-auto">
@@ -303,52 +310,72 @@ const CreateClaimView = () => {
 						{validationData && (
 							<div className="space-y-4">
 								<div className="flex items-center gap-2">
-									{validationData.isValid ? (
+									{validationData.is_eligible && validationData.exists ? (
 										<Chip
 											color="success"
 											startContent={<CheckCircle className="h-3 w-3" />}
 										>
-											Valid IMEI
+											Valid Imei
 										</Chip>
 									) : (
 										<Chip
 											color="danger"
 											startContent={<AlertTriangle className="h-3 w-3" />}
 										>
-											Invalid IMEI
+											{validationData.eligibility_reason}
 										</Chip>
 									)}
 								</div>
 
-								{validationData.claimHistory && (
-									<div className="bg-blue-50 p-4 rounded-lg">
-										<h4 className="font-medium text-blue-900">
-											Previous Claims History
-										</h4>
-										<div className="text-sm text-blue-700 mt-2 space-y-1">
-											<p>
-												Total Claims: {validationData.claimHistory.totalClaims}
+								<div className="bg-blue-50 p-4 rounded-lg">
+									<h4 className="font-medium text-blue-900">
+										IMEI Validation Details
+									</h4>
+									<div className="text-sm text-blue-700 mt-2 space-y-1">
+										<p>IMEI: {imeiInput}</p>
+										<p>Product: {validationData?.product?.name}</p>
+
+										<p>
+											Expiry Date:{" "}
+											{new Date(
+												validationData.expiry_date
+											).toLocaleDateString()}
+										</p>
+										<p>
+											Status:{" "}
+											{!validationData.is_eligible
+												? "Already Used"
+												: validationData.is_expired
+												? "Expired"
+												: "Available"}
+										</p>
+										{!validationData.is_eligible && (
+											<p className="text-red-600 font-medium mt-2">
+												⚠️ {validationData.eligibility_reason}
 											</p>
-											<p>
-												Claims in last 2 years:{" "}
-												{validationData.claimHistory.recentClaims}
-											</p>
-											<p>
-												Insurance Status:{" "}
-												{validationData.claimHistory.insuranceStatus}
-											</p>
-											<p>
-												Last Claim Date:{" "}
-												{validationData.claimHistory.lastClaimDate}
-											</p>
-											{validationData.claimHistory.recentClaims >= 2 && (
-												<p className="text-red-600 font-medium">
-													⚠️ Maximum claims limit reached (2 claims in 2 years)
-												</p>
-											)}
-										</div>
+										)}
 									</div>
-								)}
+								</div>
+
+								{/* TODO: Claim History - Uncomment when API is available */}
+								{/* {validationData.claimHistory && (
+								<div className="bg-blue-50 p-4 rounded-lg">
+									<h4 className="font-medium text-blue-900">
+										Previous Claims History
+									</h4>
+									<div className="text-sm text-blue-700 mt-2 space-y-1">
+										<p>Total Claims: {validationData.claimHistory.totalClaims}</p>
+										<p>Claims in last 2 years: {validationData.claimHistory.recentClaims}</p>
+										<p>Insurance Status: {validationData.claimHistory.insuranceStatus}</p>
+										<p>Last Claim Date: {validationData.claimHistory.lastClaimDate}</p>
+										{validationData.claimHistory.recentClaims >= 2 && (
+											<p className="text-red-600 font-medium">
+												⚠️ Maximum claims limit reached (2 claims in 2 years)
+											</p>
+										)}
+									</div>
+								</div>
+							)} */}
 							</div>
 						)}
 
@@ -361,13 +388,12 @@ const CreateClaimView = () => {
 								>
 									{isValidating ? "Validating..." : "Validate IMEI"}
 								</Button>
-								{canProceedToStep2 &&
-									validationData.claimHistory.recentClaims < 2 && (
-										<Button onClick={() => setCurrentStep(2)}>
-											Next Step
-											<ArrowRight className="h-4 w-4 ml-2" />
-										</Button>
-									)}
+								{canProceedToStep2 && (
+									<Button onClick={() => setCurrentStep(2)}>
+										Next Step
+										<ArrowRight className="h-4 w-4 ml-2" />
+									</Button>
+								)}
 							</div>
 						</div>
 					</CardBody>
@@ -484,15 +510,20 @@ const CreateClaimView = () => {
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="deviceRepairPrice">
-										Device Repair Price (₦)
-									</Label>
+									<Label htmlFor="deviceRepairPrice">Repair Price (₦)</Label>
 									<Input
 										id="deviceRepairPrice"
-										value={claimData.deviceRepairPrice.toLocaleString()}
+										type="number"
+										value={claimData.deviceRepairPrice || ""}
 										disabled
 										className="bg-gray-100"
 									/>
+									{claimData.deviceRepairPrice === 0 && (
+										<p className="text-xs text-muted-foreground">
+											Note: Repair price will be fetched from product data when
+											available
+										</p>
+									)}
 								</div>
 							</div>
 						</div>

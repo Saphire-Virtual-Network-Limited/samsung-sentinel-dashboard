@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Card,
@@ -27,8 +28,8 @@ import ClaimsRepairsTable, {
 	ClaimRepairRole,
 	ClaimRepairItem,
 } from "@/components/shared/ClaimsRepairsTable";
-import UnifiedClaimRepairDetailView from "@/components/shared/UnifiedClaimRepairDetailView";
-import { useClaimsData } from "@/hooks/shared/useClaimsData";
+import ViewClaimDetailView from "@/view/shared/ViewClaimDetailView";
+import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
 
 export interface UnifiedClaimsViewProps {
 	role: ClaimRepairRole;
@@ -49,9 +50,6 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [paymentFilter, setPaymentFilter] = useState(
 		searchParams.get("payment") || "all"
 	);
-	const [repairStatusFilter, setRepairStatusFilter] = useState(
-		searchParams.get("repairStatus") || "all"
-	);
 	const [startDate, setStartDate] = useState<string | undefined>(
 		searchParams.get("startDate") || undefined
 	);
@@ -64,16 +62,93 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	const [searchQuery, setSearchQuery] = useState(
 		searchParams.get("search") || ""
 	);
+	const debouncedSearchQuery = useDebounce(searchQuery, 400);
+	const [page, setPage] = useState(1);
+	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
-	// Update URL when filters change
+	// Derived search params for API (debounced)
+	let imeiParam = undefined;
+	let claimNumberParam = undefined;
+	if (debouncedSearchQuery) {
+		if (/^\d+/.test(debouncedSearchQuery)) {
+			imeiParam = debouncedSearchQuery;
+		} else if (/^CLM-/i.test(debouncedSearchQuery)) {
+			claimNumberParam = debouncedSearchQuery;
+		}
+	}
+
+	// Sync state with URL params when they change (e.g., browser back/forward)
+	useEffect(() => {
+		const statusParam = searchParams.get("status");
+		const paymentParam = searchParams.get("payment");
+		const searchParam = searchParams.get("search");
+		const startDateParam = searchParams.get("startDate");
+		const endDateParam = searchParams.get("endDate");
+
+		if (statusParam && statusParam !== activeTab) {
+			setActiveTab(statusParam);
+		} else if (!statusParam && activeTab !== "all") {
+			setActiveTab("all");
+		}
+
+		if (paymentParam && paymentParam !== paymentFilter) {
+			setPaymentFilter(paymentParam);
+		} else if (!paymentParam && paymentFilter !== "all") {
+			setPaymentFilter("all");
+		}
+
+		if (searchParam !== searchQuery) {
+			setSearchQuery(searchParam || "");
+		}
+
+		if (startDateParam !== startDate) {
+			setStartDate(startDateParam || undefined);
+		}
+
+		if (endDateParam !== endDate) {
+			setEndDate(endDateParam || undefined);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams]);
+
+	// Payment results modal state
+	const {
+		isOpen: isPaymentResultsOpen,
+		onOpen: onPaymentResultsOpen,
+		onClose: onPaymentResultsClose,
+	} = useDisclosure();
+	const [paymentResults, setPaymentResults] = useState<{
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	} | null>(null);
+
+	// Callback to handle payment results
+	const handlePaymentResults = (results: {
+		totalProcessed: number;
+		successful: number;
+		failed: number;
+		transactionRef: string;
+	}) => {
+		setPaymentResults(results);
+		onPaymentResultsOpen();
+	};
+
+	// Handle payment results modal close - refetch data to ensure fresh state
+	const handlePaymentResultsClose = () => {
+		onPaymentResultsClose();
+		// Optional: refetch here if needed, though it already happens in the handler
+	};
+
+	// Update URL when filters change (debounced search)
 	useEffect(() => {
 		const params = new URLSearchParams();
 
 		if (activeTab !== "all") params.set("status", activeTab);
 		if (paymentFilter !== "all") params.set("payment", paymentFilter);
-		if (repairStatusFilter !== "all") params.set("repairStatus", repairStatusFilter);
-		if (searchQuery) params.set("search", searchQuery);
+		if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
 		if (startDate) params.set("startDate", startDate);
 		if (endDate) params.set("endDate", endDate);
 
@@ -84,13 +159,21 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		if (window.location.search !== (queryString ? `?${queryString}` : "")) {
 			router.replace(newUrl, { scroll: false });
 		}
-	}, [activeTab, paymentFilter, repairStatusFilter, searchQuery, startDate, endDate, router]);
+	}, [
+		activeTab,
+		paymentFilter,
+		debouncedSearchQuery,
+		startDate,
+		endDate,
+		router,
+	]);
 
 	// Fetch data based on role, status, payment filter, and date range
 	const {
 		data,
 		isLoading,
 		error,
+		pagination,
 		approveHandler,
 		rejectHandler,
 		authorizePaymentHandler,
@@ -101,14 +184,16 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		bulkAuthorizePaymentHandler,
 		updateRepairStatusHandler,
 		refetch,
-	} = useClaimsData({
+	} = useClaimsApi({
 		role,
 		status: activeTab,
 		payment: paymentFilter,
-		repairStatus: repairStatusFilter,
-		search: searchQuery,
+		search: debouncedSearchQuery,
 		startDate,
 		endDate,
+		page,
+		limit: rowsPerPage,
+		onPaymentResults: handlePaymentResults,
 	});
 
 	// Handle view details
@@ -117,56 +202,13 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		onOpen();
 	};
 
-	// Get bank details for selected claim
-	const getBankDetails = (claim: ClaimRepairItem | null) => {
-		if (
-			!claim ||
-			!(claim.status === "approved" && claim.repairStatus === "completed") ||
-			claim.paymentStatus !== "unpaid"
-		) {
-			return undefined;
-		}
-
-		return {
-			bankName: ["GTBank", "Access Bank", "First Bank", "Zenith Bank"][
-				parseInt(claim.id) % 4
-			],
-			accountNumber: String(1000000000 + parseInt(claim.id)),
-			accountName: `${claim.serviceCenterName} Account`,
-		};
-	};
-
-	// Wrap action handlers to refetch and close modal
-	const handleApprove = async (claimId: string) => {
-		await approveHandler(claimId);
-		await refetch();
-		onClose();
-	};
-
-	const handleReject = async (claimId: string, reason: string) => {
-		await rejectHandler(claimId, reason);
-		await refetch();
-		onClose();
-	};
-
-	const handleAuthorizePayment = async (claimId: string) => {
-		await authorizePaymentHandler(claimId);
-		await refetch();
-		onClose();
-	};
-
-	const handleExecutePayment = async (
-		claimId: string,
-		transactionRef: string
-	) => {
-		await executePaymentHandler(claimId, transactionRef);
-		await refetch();
-		onClose();
-	};
-
 	// Handle tab change
 	const handleTabChange = (key: string) => {
 		setActiveTab(key);
+		// Reset payment filter when switching to tabs that don't support it
+		if (key !== "authorized" && key !== "all") {
+			setPaymentFilter("all");
+		}
 	};
 
 	// Handle payment filter change
@@ -175,10 +217,14 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 	};
 
 	// Handle date range change
-	const handleDateRangeChange = (start: string, end: string) => {
-		setStartDate(start);
-		setEndDate(end);
-	};
+	const handleDateRangeChange = React.useCallback(
+		(start: string, end: string) => {
+			setStartDate(start);
+			setEndDate(end);
+			setPage(1); // Reset to first page when date range changes
+		},
+		[]
+	);
 
 	// Determine which tabs to show based on role
 	const getTabs = () => {
@@ -198,7 +244,11 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				title: "Approved",
 				icon: <CheckCircle className="w-4 h-4" />,
 			},
-
+			{
+				key: "authorized",
+				title: "Authorized",
+				icon: <CheckCircle className="w-4 h-4" />,
+			},
 			{
 				key: "completed",
 				title: "Completed",
@@ -218,14 +268,12 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				return allTabs;
 
 			case "samsung-partners":
-				// Samsung partners see all tabs (can approve/reject)
+				// Samsung partners see all tabs (can approve/reject and authorize payments)
 				return allTabs;
 
 			case "samsung-sentinel":
-				// Admin/Sub-admin focus on completed and payment-related tabs
-				return allTabs.filter((tab) =>
-					["all", "completed", "approved"].includes(tab.key)
-				);
+				// Admin/Sub-admin see all tabs
+				return allTabs;
 
 			default:
 				return allTabs;
@@ -249,69 +297,8 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		];
 	};
 
-	const getRepairStatusTabs = () => {
-		return [
-			{
-				key: "all",
-				title: "All",
-			},
-			{
-				key: "pending",
-				title: "Pending",
-			},
-			{
-				key: "awaiting-parts",
-				title: "Awaiting Parts",
-			},
-			{
-				key: "received-device",
-				title: "Device Received",
-			},
-			{
-				key: "completed",
-				title: "Completed",
-			},
-		];
-	};
-
-	// Handle repair status filter change
-	const handleRepairStatusFilterChange = (key: string) => {
-		setRepairStatusFilter(key);
-	};
-
 	return (
 		<div className="space-y-6">
-			{/* Search Section 
-			<Card>
-				<CardBody className="flex flex-row items-center justify-between p-4">
-					<div className="flex items-center gap-3">
-						<Search className="w-5 h-5 text-primary" />
-						<span className="font-medium">Search Claims by IMEI</span>
-					</div>
-					<div className="flex items-center space-x-2">
-						<Input
-							placeholder="Enter IMEI..."
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-64"
-							maxLength={15}
-						/>
-						<Button
-							onClick={() => {
-								// Update the filters to include search
-								handleTabChange(activeTab);
-							}}
-							variant="ghost"
-							size="sm"
-							className="flex items-center space-x-1"
-						>
-							<Search className="w-4 h-4" />
-							<span>Search</span>
-						</Button>
-					</div>
-				</CardBody>
-			</Card>
-*/}
 			<Tabs
 				selectedKey={activeTab}
 				onSelectionChange={(key) => handleTabChange(key as string)}
@@ -327,9 +314,9 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 						}
 					>
 						<div className="p-6">
-							{/* Payment Filter for Completed and All Tabs */}
+							{/* Payment Filter for Authorized and All Tabs */}
 							{showPaymentTabs &&
-								(activeTab === "completed" || activeTab === "all") && (
+								(activeTab === "authorized" || activeTab === "all") && (
 									<Card className="mb-4">
 										<CardBody className="flex flex-row items-center gap-3 p-3">
 											<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -370,68 +357,32 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 												))}
 											</div>
 											{role === "samsung-sentinel" &&
+												activeTab === "authorized" &&
 												paymentFilter === "unpaid" && (
 													<span className="ml-auto text-xs text-warning-600 dark:text-warning-400">
-														💳 Payment execution available
+														Payment execution available
 													</span>
 												)}
 										</CardBody>
 									</Card>
-								)}
-
-							{/* Repair Status Filter for Service Center */}
-							{role === "service-center" && (
-								<Card className="mb-4">
-									<CardBody className="flex flex-row items-center gap-3 p-3">
-										<span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-											Repair Status:
-										</span>
-										<div className="flex gap-2">
-											{getRepairStatusTabs().map((repairTab) => (
-												<Button
-													key={repairTab.key}
-													size="sm"
-													variant={
-														repairStatusFilter === repairTab.key
-															? "solid"
-															: "flat"
-													}
-													color={
-														repairStatusFilter === repairTab.key
-															? "secondary"
-															: "default"
-													}
-													onPress={() =>
-														handleRepairStatusFilterChange(repairTab.key)
-													}
-													className={
-														repairStatusFilter === repairTab.key
-															? "font-semibold"
-															: ""
-													}
-												>
-													{repairTab.title}
-													{repairStatusFilter === repairTab.key &&
-														repairTab.key !== "all" && (
-															<span className="ml-2 text-xs">
-																({data?.length || 0})
-															</span>
-														)}
-												</Button>
-											))}
-										</div>
-									</CardBody>
-								</Card>
-							)}
-
+								)}{" "}
 							<ClaimsRepairsTable
 								data={data}
 								isLoading={isLoading}
 								error={error}
 								role={role}
+								pagination={pagination}
+								page={page}
+								onPageChange={setPage}
+								rowsPerPage={rowsPerPage}
+								onRowsPerPageChange={setRowsPerPage}
 								onApprove={approveHandler}
 								onReject={rejectHandler}
 								onAuthorizePayment={authorizePaymentHandler}
+								onSearchParamsChange={(searchParams) => {
+									setSearchQuery(searchParams);
+									setPage(1);
+								}}
 								onExecutePayment={(claimIds) => {
 									if (claimIds.length === 1) {
 										// For single selection, we'll need transaction ref
@@ -451,9 +402,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 									paymentFilter !== "all"
 								}
 								enableMultiSelect={
-									(role === "samsung-sentinel" &&
-										activeTab === "completed" &&
-										paymentFilter === "unpaid") ||
+									(role === "samsung-sentinel" && activeTab === "authorized") ||
 									(role === "samsung-partners" &&
 										(activeTab === "pending" ||
 											(activeTab === "completed" &&
@@ -479,17 +428,107 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 				<ModalContent>
 					<ModalBody className="p-0">
 						{selectedClaim && (
-							<UnifiedClaimRepairDetailView
-								claimData={selectedClaim}
-								role={role}
-								onApprove={handleApprove}
-								onReject={handleReject}
-								onAuthorizePayment={handleAuthorizePayment}
-								onExecutePayment={handleExecutePayment}
-								serviceCenterBankDetails={getBankDetails(selectedClaim)}
-							/>
+							<ViewClaimDetailView claimId={selectedClaim.id} />
 						)}
 					</ModalBody>
+				</ModalContent>
+			</Modal>
+
+			{/* Payment Results Modal */}
+			<Modal
+				isOpen={isPaymentResultsOpen}
+				onClose={handlePaymentResultsClose}
+				size="2xl"
+			>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<div className="p-6">
+								<h2 className="text-2xl font-bold mb-4">
+									Bulk Payment Results
+								</h2>
+								<div className="space-y-4">
+									{/* Summary Cards */}
+									<div className="grid grid-cols-3 gap-4">
+										<div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Total Processed
+											</p>
+											<p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+												{paymentResults?.totalProcessed || 0}
+											</p>
+										</div>
+										<div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Successful
+											</p>
+											<p className="text-3xl font-bold text-green-600 dark:text-green-400">
+												{paymentResults?.successful || 0}
+											</p>
+										</div>
+										<div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+											<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+												Failed
+											</p>
+											<p className="text-3xl font-bold text-red-600 dark:text-red-400">
+												{paymentResults?.failed || 0}
+											</p>
+										</div>
+									</div>
+
+									{/* Transaction Reference */}
+									<div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+										<p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+											Transaction Reference
+										</p>
+										<p className="font-mono text-lg font-semibold">
+											{paymentResults?.transactionRef || "N/A"}
+										</p>
+									</div>
+
+									{/* Success/Error Message */}
+									{paymentResults && (
+										<div
+											className={`p-4 rounded-lg ${
+												paymentResults.successful > 0
+													? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+													: "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+											}`}
+										>
+											<p
+												className={`font-medium ${
+													paymentResults.successful > 0
+														? "text-green-800 dark:text-green-200"
+														: "text-red-800 dark:text-red-200"
+												}`}
+											>
+												{paymentResults.successful > 0
+													? `Successfully disbursed payment for ${
+															paymentResults.successful
+													  } claim${paymentResults.successful > 1 ? "s" : ""}${
+															paymentResults.failed > 0
+																? ` (${paymentResults.failed} failed)`
+																: ""
+													  }`
+													: `Failed to disburse payments: ${
+															paymentResults.failed
+													  } claim${
+															paymentResults.failed > 1 ? "s" : ""
+													  } failed`}
+											</p>
+										</div>
+									)}
+								</div>
+
+								{/* Close Button */}
+								<div className="mt-6 flex justify-end">
+									<Button color="primary" onPress={onClose}>
+										Close
+									</Button>
+								</div>
+							</div>
+						</>
+					)}
 				</ModalContent>
 			</Modal>
 		</div>

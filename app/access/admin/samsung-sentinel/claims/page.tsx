@@ -3,7 +3,7 @@
 import React from "react";
 import UnifiedClaimsView from "@/components/shared/UnifiedClaimsView";
 
-const AdminSamsungSentinelClaimsPage = () => {
+const SubAdminSamsungSentinelClaimsPage = () => {
 	return (
 		<div className="container mx-auto px-4 py-6">
 			<div className="mb-6">
@@ -20,4 +20,4 @@ const AdminSamsungSentinelClaimsPage = () => {
 	);
 };
 
-export default AdminSamsungSentinelClaimsPage;
+export default SubAdminSamsungSentinelClaimsPage;

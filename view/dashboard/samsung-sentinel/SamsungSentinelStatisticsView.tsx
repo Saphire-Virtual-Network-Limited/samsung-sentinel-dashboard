@@ -1,6 +1,39 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+// Utility to aggregate claims by month
+interface ClaimOverTime {
+	date: string;
+	count: number;
+}
+interface MonthClaims {
+	month: string;
+	claims: number;
+}
+function aggregateClaimsByMonth(
+	data: ClaimOverTime[]
+): { date: string; claims: number }[] {
+	const monthMap: Record<string, MonthClaims> = {};
+	data.forEach((item: ClaimOverTime) => {
+		const dateObj = new Date(item.date);
+		const key = `${dateObj.getFullYear()}-${String(
+			dateObj.getMonth() + 1
+		).padStart(2, "0")}`;
+		if (!monthMap[key]) {
+			monthMap[key] = { month: key, claims: 0 };
+		}
+		monthMap[key].claims += item.count;
+	});
+	// Format for chart: { date: 'Jan 2024', claims: ... }
+	return Object.values(monthMap).map((item: MonthClaims) => {
+		const [year, month] = item.month.split("-");
+		const dateLabel = `${new Date(
+			Number(year),
+			Number(month) - 1
+		).toLocaleString("en-US", { month: "short" })} ${year}`;
+		return { date: dateLabel, claims: item.claims };
+	});
+}
 import {
 	Card,
 	CardBody,
@@ -8,34 +41,30 @@ import {
 	Select,
 	SelectItem,
 	Chip,
-	Modal,
-	ModalContent,
-	ModalHeader,
-	ModalBody,
-	ModalFooter,
-	Button,
-	DateRangePicker,
+	Skeleton,
+	Spinner,
+	DatePicker,
 } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 import { StatCard } from "@/components/atoms/StatCard";
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
+import ExcelJS from "exceljs";
 import {
 	Smartphone,
 	Wrench,
 	DollarSign,
 	CreditCard,
 	TrendingUp,
-	Building2,
+	CheckCircle,
 	Calendar,
-	BarChart3,
-	Activity,
 } from "lucide-react";
 import {
-	LineChart,
-	Line,
 	AreaChart,
 	Area,
+	BarChart,
+	Bar,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -43,693 +72,644 @@ import {
 	Legend,
 	ResponsiveContainer,
 } from "recharts";
-import { usePathname } from "next/navigation";
+import {
+	useAdminDashboardStatistics,
+	useAdminTrends,
+	useDeviceModelStats,
+	useServiceCenterStatsForAdmin,
+} from "@/hooks/admin/useAdminDashboard";
+import { DashboardFilter } from "@/lib/api/dashboard";
 
-interface ServiceCenterStats {
-	id: string;
-	name: string;
-	location: string;
-	unverifiedIMEI: number;
-	approvedRepairs: number;
-	totalRepairCost: number;
-	unpaidRepairCost: number;
-	deviceModels: {
-		A05: { approved: number; cost: number };
-		A06: { approved: number; cost: number };
-		A07: { approved: number; cost: number };
-	};
-}
-
-const DEVICE_MODELS = [
-	{ label: "All Models", value: "all" },
-	{ label: "Samsung A05", value: "A05" },
-	{ label: "Samsung A06", value: "A06" },
-	{ label: "Samsung A07", value: "A07" },
-];
-
-const TREND_PERIODS = [
-	{ label: "Daily (Last 30 Days)", value: "daily" },
-	{ label: "Weekly (Last 12 Weeks)", value: "weekly" },
+const FILTER_OPTIONS = [
+	{ label: "Daily", value: "daily" },
+	{ label: "Weekly", value: "weekly" },
 	{ label: "Month to Date", value: "mtd" },
-	{ label: "Yearly (Last 12 Months)", value: "yearly" },
 	{ label: "Since Inception", value: "inception" },
-	{ label: "Custom Date Range", value: "custom" },
-];
-
-const serviceCenterColumns: ColumnDef[] = [
-	{ name: "Service Center", uid: "name", sortable: true },
-	{ name: "Location", uid: "location", sortable: true },
-	{ name: "Unverified IMEI", uid: "unverifiedIMEI", sortable: true },
-	{ name: "Approved Repairs", uid: "approvedRepairs", sortable: true },
-	{ name: "Total Repair Cost", uid: "totalRepairCost", sortable: true },
-	{ name: "Unpaid Amount", uid: "unpaidRepairCost", sortable: true },
-	{ name: "Device Models", uid: "deviceModels" },
+	{ label: "Custom", value: "custom" },
 ];
 
 export default function SamsungSentinelStatisticsView() {
-	const pathname = usePathname();
-	const role = pathname.split("/")[2];
-	const [selectedModel, setSelectedModel] = useState("all");
-	const [trendPeriod, setTrendPeriod] = useState("daily");
-	const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
-	const [customDateRange, setCustomDateRange] = useState<any>(null);
+	// Chart view state: "daily" or "monthly"
+	const [claimsView, setClaimsView] = useState("daily");
+	// Get MTD default values
+	const today = new Date();
+	const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+	const defaultStartDate = firstDayOfMonth.toISOString().split("T")[0];
+	const defaultEndDate = today.toISOString().split("T")[0];
 
-	// Mock statistics data
-	const stats = useMemo(
-		() => ({
-			daily: {
-				unverifiedIMEI: 45,
-				authorizedRepairs: 12,
-				totalRepairCost: 125000,
-				unpaidRepairCost: 85000,
-			},
-			mtd: {
-				unverifiedIMEI: 892,
-				authorizedRepairs: 234,
-				totalRepairCost: 2840000,
-				unpaidRepairCost: 1650000,
-			},
-			inception: {
-				unverifiedIMEI: 15420,
-				authorizedRepairs: 4890,
-				totalRepairCost: 58960000,
-				unpaidRepairCost: 12340000,
-			},
-		}),
-		[]
-	);
+	const [filter, setFilter] = useState<DashboardFilter>("mtd");
+	const [customStartDate, setCustomStartDate] =
+		useState<string>(defaultStartDate);
+	const [customEndDate, setCustomEndDate] = useState<string>(defaultEndDate);
+	const [deviceSearchFilter, setDeviceSearchFilter] = useState("");
+	const [serviceCenterSearchFilter, setServiceCenterSearchFilter] =
+		useState("");
 
-	// Mock device model statistics
-	const deviceStats = useMemo(
-		() => ({
-			A05: { approved: 1250, totalCost: 18500000, unpaidCost: 4200000 },
-			A06: { approved: 1890, totalCost: 22800000, unpaidCost: 5100000 },
-			A07: { approved: 1750, totalCost: 17660000, unpaidCost: 3040000 },
-		}),
-		[]
-	);
-
-	// Mock service center data
-	const serviceCenterData: ServiceCenterStats[] = useMemo(
-		() => [
-			{
-				id: "sc_001",
-				name: "TechFix Lagos",
-				location: "Lagos, Nigeria",
-				unverifiedIMEI: 234,
-				approvedRepairs: 89,
-				totalRepairCost: 1240000,
-				unpaidRepairCost: 450000,
-				deviceModels: {
-					A05: { approved: 25, cost: 350000 },
-					A06: { approved: 38, cost: 570000 },
-					A07: { approved: 26, cost: 320000 },
-				},
-			},
-			{
-				id: "sc_002",
-				name: "Samsung Care Abuja",
-				location: "Abuja, Nigeria",
-				unverifiedIMEI: 189,
-				approvedRepairs: 76,
-				totalRepairCost: 980000,
-				unpaidRepairCost: 320000,
-				deviceModels: {
-					A05: { approved: 22, cost: 308000 },
-					A06: { approved: 31, cost: 465000 },
-					A07: { approved: 23, cost: 207000 },
-				},
-			},
-			{
-				id: "sc_003",
-				name: "Mobile Masters Port Harcourt",
-				location: "Port Harcourt, Nigeria",
-				unverifiedIMEI: 156,
-				approvedRepairs: 65,
-				totalRepairCost: 850000,
-				unpaidRepairCost: 380000,
-				deviceModels: {
-					A05: { approved: 18, cost: 252000 },
-					A06: { approved: 28, cost: 420000 },
-					A07: { approved: 19, cost: 178000 },
-				},
-			},
-			{
-				id: "sc_004",
-				name: "Galaxy Repairs Kano",
-				location: "Kano, Nigeria",
-				unverifiedIMEI: 201,
-				approvedRepairs: 82,
-				totalRepairCost: 1100000,
-				unpaidRepairCost: 290000,
-				deviceModels: {
-					A05: { approved: 24, cost: 336000 },
-					A06: { approved: 35, cost: 525000 },
-					A07: { approved: 23, cost: 239000 },
-				},
-			},
-		],
-		[]
-	);
-
-	// Mock trend data for charts based on selected period
-	const trendData = useMemo(() => {
-		const data = [];
-		const today = new Date();
-		let periods = 30;
-		let dateFormat: Intl.DateTimeFormatOptions = {
-			month: "short",
-			day: "numeric",
-		};
-
-		// Determine periods and format based on selected trend period
-		switch (trendPeriod) {
-			case "daily":
-				periods = 30;
-				dateFormat = { month: "short", day: "numeric" };
-				break;
-			case "weekly":
-				periods = 12;
-				dateFormat = { month: "short", day: "numeric" };
-				break;
-			case "mtd":
-				const dayOfMonth = today.getDate();
-				periods = dayOfMonth;
-				dateFormat = { month: "short", day: "numeric" };
-				break;
-			case "yearly":
-				periods = 12;
-				dateFormat = { month: "short", year: "numeric" };
-				break;
-			case "inception":
-				periods = 24; // Last 24 months for inception view
-				dateFormat = { month: "short", year: "numeric" };
-				break;
-			case "custom":
-				periods = 30; // Default for now, will be replaced with custom logic
-				dateFormat = { month: "short", day: "numeric" };
-				break;
+	// Build filter params based on selection
+	const filterParams = useMemo(() => {
+		if (filter === "custom" && customStartDate && customEndDate) {
+			return {
+				filter,
+				start_date: customStartDate,
+				end_date: customEndDate,
+			};
 		}
+		return { filter };
+	}, [filter, customStartDate, customEndDate]);
 
-		for (let i = periods - 1; i >= 0; i--) {
-			const date = new Date(today);
+	// Fetch all dashboard data
+	const { stats, isLoading: isLoadingStats } =
+		useAdminDashboardStatistics(filterParams);
+	const { trends, isLoading: isLoadingTrends } = useAdminTrends(filterParams);
+	const { deviceStats, isLoading: isLoadingDeviceStats } =
+		useDeviceModelStats(filterParams);
+	const { serviceCenterStats, isLoading: isLoadingServiceCenters } =
+		useServiceCenterStatsForAdmin(filterParams);
 
-			// Calculate date based on period type
-			if (trendPeriod === "weekly") {
-				date.setDate(date.getDate() - i * 7);
-			} else if (trendPeriod === "yearly" || trendPeriod === "inception") {
-				date.setMonth(date.getMonth() - i);
-			} else {
-				date.setDate(date.getDate() - i);
-			}
+	// Filtered data based on search
+	const filteredDeviceStats = useMemo(() => {
+		const data = deviceStats?.device_statistics || [];
+		if (!deviceSearchFilter) return data;
+		return data.filter((item: any) =>
+			item.product_name
+				?.toLowerCase()
+				.includes(deviceSearchFilter.toLowerCase())
+		);
+	}, [deviceStats, deviceSearchFilter]);
 
-			const dateStr = date.toLocaleDateString("en-US", dateFormat);
+	const filteredServiceCenterStats = useMemo(() => {
+		const data = serviceCenterStats?.service_center_statistics || [];
+		if (!serviceCenterSearchFilter) return data;
+		return data.filter(
+			(item: any) =>
+				item.service_center_name
+					?.toLowerCase()
+					.includes(serviceCenterSearchFilter.toLowerCase()) ||
+				item.location
+					?.toLowerCase()
+					.includes(serviceCenterSearchFilter.toLowerCase())
+		);
+	}, [serviceCenterStats, serviceCenterSearchFilter]);
 
-			// Generate realistic trending data with scaling based on period
-			const multiplier =
-				trendPeriod === "weekly"
-					? 7
-					: trendPeriod === "yearly" || trendPeriod === "inception"
-					? 30
-					: 1;
-
-			const totalClaims = (400 + Math.random() * 150) * multiplier;
-			const authorizedRepairs = Math.round(
-				totalClaims * (0.6 + Math.random() * 0.3)
-			); // 60-90% completion rate
-			const totalRepairCost = (2500000 + Math.random() * 800000) * multiplier;
-			const paidAmount = Math.round(
-				totalRepairCost * (0.5 + Math.random() * 0.4)
-			); // 50-90% paid
-
-			data.push({
-				date: dateStr,
-				totalClaims: Math.round(totalClaims),
-				authorizedRepairs: authorizedRepairs,
-				totalRepairCost: Math.round(totalRepairCost),
-				paidAmount: paidAmount,
-			});
+	// Handle filter selection change
+	const handleFilterChange = (selected: DashboardFilter) => {
+		setFilter(selected);
+		if (selected !== "custom") {
+			// Reset to MTD defaults when switching away from custom
+			setCustomStartDate(defaultStartDate);
+			setCustomEndDate(defaultEndDate);
 		}
+	};
 
-		return data;
-	}, [trendPeriod]);
-
-	// Filter data based on selected model
-	const filteredServiceCenterData = useMemo(() => {
-		if (selectedModel === "all") return serviceCenterData;
-
-		return serviceCenterData.map((sc) => ({
-			...sc,
-			approvedRepairs:
-				sc.deviceModels[selectedModel as keyof typeof sc.deviceModels]
-					?.approved || 0,
-			totalRepairCost:
-				sc.deviceModels[selectedModel as keyof typeof sc.deviceModels]?.cost ||
-				0,
-		}));
-	}, [serviceCenterData, selectedModel]);
-
+	// Format currency
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("en-NG", {
 			style: "currency",
 			currency: "NGN",
+			minimumFractionDigits: 0,
 		}).format(amount);
 	};
 
-	const renderServiceCenterCell = (row: ServiceCenterStats, key: string) => {
-		switch (key) {
-			case "name":
+	// Format date for charts
+	const formatDate = (dateString: string) => {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+	};
+
+	// Transform trends data for charts
+	const claimsChartData = useMemo(() => {
+		if (!trends?.trends?.claims_over_time) return [];
+		if (claimsView === "monthly") {
+			return aggregateClaimsByMonth(trends.trends.claims_over_time);
+		}
+		return trends.trends.claims_over_time.map((item) => ({
+			date: formatDate(item.date),
+			claims: item.count,
+		}));
+	}, [trends, claimsView]);
+
+	const costChartData = useMemo(() => {
+		if (!trends?.trends?.repair_cost_over_time) return [];
+		return trends.trends.repair_cost_over_time.map((item) => ({
+			date: formatDate(item.date),
+			total: item.total_amount,
+			paid: item.paid_amount,
+			unpaid: item.total_amount - item.paid_amount,
+		}));
+	}, [trends]);
+
+	// Device Model Table Columns
+	const deviceColumns: ColumnDef[] = [
+		{ name: "Device Model", uid: "product_name", sortable: true },
+		{ name: "Total Claims", uid: "total_claims", sortable: true },
+		{ name: "Completed", uid: "completed_repairs", sortable: true },
+		{ name: "Pending", uid: "pending_repairs", sortable: true },
+		{ name: "Rejected", uid: "rejected_repairs", sortable: true },
+		{ name: "Authorized", uid: "authorized_repairs", sortable: true },
+		{ name: "Total Cost", uid: "total_cost", sortable: true },
+		{ name: "Unpaid Cost", uid: "total_unpaid_cost", sortable: true },
+		{ name: "IMEIs Uploaded", uid: "total_imeis_uploaded", sortable: true },
+		{ name: "Claim Rate", uid: "claim_rate", sortable: true },
+	];
+
+	// Service Center Table Columns
+	const serviceCenterColumns: ColumnDef[] = [
+		{ name: "Service Center", uid: "service_center_name", sortable: true },
+		{ name: "Location", uid: "location", sortable: true },
+		{ name: "Approved", uid: "approved_repairs", sortable: true },
+		{ name: "Completed", uid: "completed_repairs", sortable: true },
+		{ name: "Rejected", uid: "rejected_repairs", sortable: true },
+		{ name: "Pending", uid: "pending_repairs", sortable: true },
+		{ name: "Authorized", uid: "authorized_repairs", sortable: true },
+	];
+
+	// Render cells for device table
+	const renderDeviceCell = (item: any, columnKey: string) => {
+		switch (columnKey) {
+			case "total_cost":
+			case "total_unpaid_cost":
+				return formatCurrency(item[columnKey] || 0);
+			case "claim_rate":
 				return (
-					<div className="flex flex-col">
-						<p className="text-bold text-sm capitalize">{row.name}</p>
-						<p className="text-bold text-xs capitalize text-default-400">
-							ID: {row.id}
-						</p>
-					</div>
-				);
-			case "location":
-				return <p className="text-sm">{row.location}</p>;
-			case "unverifiedIMEI":
-				return (
-					<Chip color="warning" variant="flat" size="sm">
-						{row.unverifiedIMEI.toLocaleString()}
+					<Chip size="sm" color="primary">
+						{item[columnKey]}
 					</Chip>
-				);
-			case "approvedRepairs":
-				return (
-					<Chip color="success" variant="flat" size="sm">
-						{(selectedModel === "all"
-							? row.approvedRepairs
-							: row.deviceModels[selectedModel as keyof typeof row.deviceModels]
-									?.approved || 0
-						).toLocaleString()}
-					</Chip>
-				);
-			case "totalRepairCost":
-				return (
-					<p className="text-sm font-medium">
-						{formatCurrency(
-							selectedModel === "all"
-								? row.totalRepairCost
-								: row.deviceModels[
-										selectedModel as keyof typeof row.deviceModels
-								  ]?.cost || 0
-						)}
-					</p>
-				);
-			case "unpaidRepairCost":
-				return (
-					<p className="text-sm font-medium text-warning">
-						{formatCurrency(row.unpaidRepairCost)}
-					</p>
-				);
-			case "deviceModels":
-				return (
-					<div className="flex flex-wrap gap-1">
-						{Object.entries(row.deviceModels).map(([model, data]) => (
-							<Chip key={model} color="primary" variant="flat" size="sm">
-								{model}: {data.approved}
-							</Chip>
-						))}
-					</div>
 				);
 			default:
-				return <p className="text-sm">{(row as any)[key]}</p>;
+				return item[columnKey] || 0;
+		}
+	};
+
+	// Render cells for service center table
+	const renderServiceCenterCell = (item: any, columnKey: string) => {
+		switch (columnKey) {
+			case "approved_repairs":
+				return (
+					<Chip size="sm" color="success" variant="flat">
+						{item[columnKey] || 0}
+					</Chip>
+				);
+			case "rejected_repairs":
+				return (
+					<Chip size="sm" color="danger" variant="flat">
+						{item[columnKey] || 0}
+					</Chip>
+				);
+			case "pending_repairs":
+				return (
+					<Chip size="sm" color="warning" variant="flat">
+						{item[columnKey] || 0}
+					</Chip>
+				);
+			default:
+				return item[columnKey] || 0;
 		}
 	};
 
 	return (
 		<div className="space-y-6">
-			{/* Daily Statistics */}
-			<div>
-				<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-					<Calendar className="w-5 h-5" />
-					Daily Statistics
-				</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					<StatCard
-						title="Unverified IMEI"
-						value={stats.daily.unverifiedIMEI.toLocaleString()}
-						icon={<Smartphone className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Authorized Repairs"
-						value={stats.daily.authorizedRepairs.toLocaleString()}
-						icon={<Wrench className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Total Repair Cost"
-						value={formatCurrency(stats.daily.totalRepairCost)}
-						icon={<DollarSign className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Unpaid Amount"
-						value={formatCurrency(stats.daily.unpaidRepairCost)}
-						icon={<CreditCard className="w-5 h-5" />}
-					/>
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+						Platform Statistics
+					</h1>
+					<p className="text-gray-600 dark:text-gray-400">
+						Comprehensive analytics across all service centers
+					</p>
+					{/* Display current date range */}
+					{stats?.filter && (
+						<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+							{stats.filter.start_date && stats.filter.end_date
+								? `Showing data from ${new Date(
+										stats.filter.start_date
+								  ).toLocaleDateString()} to ${new Date(
+										stats.filter.end_date
+								  ).toLocaleDateString()}`
+								: `Filter: ${stats.filter.type}`}
+						</p>
+					)}
 				</div>
-			</div>
-
-			{/* Month-to-Date Statistics */}
-			<div>
-				<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-					<TrendingUp className="w-5 h-5" />
-					Month-to-Date Statistics
-				</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					<StatCard
-						title="Unverified IMEI"
-						value={stats.mtd.unverifiedIMEI.toLocaleString()}
-						icon={<Smartphone className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Authorized Repairs"
-						value={stats.mtd.authorizedRepairs.toLocaleString()}
-						icon={<Wrench className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Total Repair Cost"
-						value={formatCurrency(stats.mtd.totalRepairCost)}
-						icon={<DollarSign className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Unpaid Amount"
-						value={formatCurrency(stats.mtd.unpaidRepairCost)}
-						icon={<CreditCard className="w-5 h-5" />}
-					/>
-				</div>
-			</div>
-
-			{/* Since Inception Statistics */}
-			<div>
-				<h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-					<BarChart3 className="w-5 h-5" />
-					Since Inception Statistics
-				</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					<StatCard
-						title="Total Unverified IMEI"
-						value={stats.inception.unverifiedIMEI.toLocaleString()}
-						icon={<Smartphone className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Total Authorized Repairs"
-						value={stats.inception.authorizedRepairs.toLocaleString()}
-						icon={<Wrench className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Total Repair Cost"
-						value={formatCurrency(stats.inception.totalRepairCost)}
-						icon={<DollarSign className="w-5 h-5" />}
-					/>
-					<StatCard
-						title="Total Unpaid Amount"
-						value={formatCurrency(stats.inception.unpaidRepairCost)}
-						icon={<CreditCard className="w-5 h-5" />}
-					/>
-				</div>
-			</div>
-
-			{/* Trend Charts */}
-			<div>
-				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-lg font-semibold flex items-center gap-2">
-						<Activity className="w-5 h-5" />
-						Trend Analysis
-					</h2>
+				<div className="w-48">
 					<Select
-						placeholder="Select time period"
-						selectedKeys={trendPeriod ? [trendPeriod] : []}
+						label="Time Period"
+						selectedKeys={[filter]}
 						onSelectionChange={(keys) => {
-							const selected = Array.from(keys)[0] as string;
-							if (selected === "custom") {
-								setIsCustomDateModalOpen(true);
-							} else {
-								setTrendPeriod(selected || "daily");
-							}
+							const selected = Array.from(keys)[0] as DashboardFilter;
+							handleFilterChange(selected);
 						}}
-						className="w-auto min-w-[200px]"
-						size="sm"
 					>
-						{TREND_PERIODS.map((period) => (
-							<SelectItem key={period.value} value={period.value}>
-								{period.label}
+						{FILTER_OPTIONS.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
 							</SelectItem>
 						))}
 					</Select>
 				</div>
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					{/* Claims Trend Chart */}
-					<Card>
-						<CardHeader className="flex-col items-start gap-1">
-							<div className="flex justify-between items-center w-full">
-								<h3 className="text-base font-semibold">Claims Over Time</h3>
-								<p className="text-xs text-gray-500">
-									Total Claims vs Completed Repairs
-								</p>
-							</div>
-						</CardHeader>
-						<CardBody>
-							<ResponsiveContainer width="100%" height={300}>
-								<AreaChart data={trendData}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tick={{ fontSize: 12 }}
-										angle={-45}
-										textAnchor="end"
-										height={60}
-									/>
-									<YAxis tick={{ fontSize: 12 }} />
-									<Tooltip
-										contentStyle={{
-											backgroundColor: "rgba(255, 255, 255, 0.95)",
-											border: "1px solid #ccc",
-											borderRadius: "8px",
-										}}
-									/>
-									<Legend wrapperStyle={{ paddingTop: "10px" }} />
-									<Area
-										type="monotone"
-										dataKey="totalClaims"
-										stroke="#3b82f6"
-										fill="#3b82f6"
-										fillOpacity={0.6}
-										strokeWidth={2}
-										name="Total Claims"
-									/>
-									<Area
-										type="monotone"
-										dataKey="authorizedRepairs"
-										stroke="#10b981"
-										fill="#10b981"
-										fillOpacity={0.6}
-										strokeWidth={2}
-										name="Authorized Repairs (Completed)"
-									/>
-								</AreaChart>
-							</ResponsiveContainer>
-						</CardBody>
-					</Card>
-
-					{/* Repair Costs Trend Chart */}
-					<Card>
-						<CardHeader className="flex-col items-start gap-1">
-							<div className="flex justify-between items-center w-full">
-								<h3 className="text-base font-semibold">
-									Repair Costs Over Time
-								</h3>
-								<p className="text-xs text-gray-500">
-									Total Cost vs Paid Amount
-								</p>
-							</div>
-						</CardHeader>
-						<CardBody>
-							<ResponsiveContainer width="100%" height={300}>
-								<AreaChart data={trendData}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tick={{ fontSize: 12 }}
-										angle={-45}
-										textAnchor="end"
-										height={60}
-									/>
-									<YAxis
-										tick={{ fontSize: 12 }}
-										tickFormatter={(value) =>
-											`₦${(value / 1000000).toFixed(1)}M`
-										}
-									/>
-									<Tooltip
-										contentStyle={{
-											backgroundColor: "rgba(255, 255, 255, 0.95)",
-											border: "1px solid #ccc",
-											borderRadius: "8px",
-										}}
-										formatter={(value: number) => [
-											formatCurrency(value),
-											undefined,
-										]}
-									/>
-									<Legend wrapperStyle={{ paddingTop: "10px" }} />
-									<Area
-										type="monotone"
-										dataKey="totalRepairCost"
-										stroke="#3b82f6"
-										fill="#3b82f6"
-										fillOpacity={0.6}
-										name="Total Repair Cost"
-									/>
-									<Area
-										type="monotone"
-										dataKey="paidAmount"
-										stroke="#10b981"
-										fill="#10b981"
-										fillOpacity={0.6}
-										name="Paid Amount"
-									/>
-								</AreaChart>
-							</ResponsiveContainer>
-						</CardBody>
-					</Card>
-				</div>
 			</div>
 
-			{/* Device Model Statistics */}
-			<div>
-				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-lg font-semibold flex items-center gap-2">
-						<Smartphone className="w-5 h-5" />
-						Device Model Statistics
-					</h2>
-				</div>
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{Object.entries(deviceStats).map(([model, data]) => (
-						<Card key={model}>
-							<CardHeader className="pb-2">
-								<div className="flex items-center justify-between w-full">
-									<h3 className="text-lg font-semibold">Samsung {model}</h3>
-									<Chip color="primary" variant="flat">
-										{data.approved.toLocaleString()} repairs
-									</Chip>
-								</div>
-							</CardHeader>
-							<CardBody className="pt-0">
-								<div className="space-y-3">
-									<div className="flex justify-between items-center">
-										<span className="text-sm text-gray-600">Total Cost:</span>
-										<span className="font-medium">
-											{formatCurrency(data.totalCost)}
-										</span>
-									</div>
-									<div className="flex justify-between items-center">
-										<span className="text-sm text-gray-600">Unpaid Cost:</span>
-										<span className="font-medium text-warning">
-											{formatCurrency(data.unpaidCost)}
-										</span>
-									</div>
-									<div className="flex justify-between items-center">
-										<span className="text-sm text-gray-600">Paid Cost:</span>
-										<span className="font-medium text-success">
-											{formatCurrency(data.totalCost - data.unpaidCost)}
-										</span>
-									</div>
-								</div>
-							</CardBody>
-						</Card>
-					))}
-				</div>
-			</div>
-
-			{/* Service Center Statistics */}
-			<div>
-				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-lg font-semibold flex items-center gap-2">
-						<Building2 className="w-5 h-5" />
-						Service Center Statistics
-					</h2>
-					<div className="flex items-center gap-4">
-						<Select
-							placeholder="Filter by device model"
-							selectedKeys={selectedModel ? [selectedModel] : []}
-							onSelectionChange={(keys) => {
-								const selected = Array.from(keys)[0] as string;
-								setSelectedModel(selected || "all");
-							}}
-							className="min-w-48"
-							size="sm"
-						>
-							{DEVICE_MODELS.map((model) => (
-								<SelectItem key={model.value} value={model.value}>
-									{model.label}
-								</SelectItem>
-							))}
-						</Select>
+			{/* Custom Date Range Picker - Visible when Custom is selected */}
+			{filter === "custom" && (
+				<div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+					<div className="flex items-center gap-2 mb-3">
+						<Calendar className="w-4 h-4 text-primary" />
+						<h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+							Custom Date Range
+						</h4>
 					</div>
-				</div>
-
-				<GenericTable<ServiceCenterStats>
-					columns={serviceCenterColumns}
-					data={filteredServiceCenterData}
-					allCount={filteredServiceCenterData.length}
-					exportData={filteredServiceCenterData}
-					isLoading={false}
-					filterValue=""
-					onFilterChange={() => {}}
-					showStatus={false}
-					sortDescriptor={{ column: "name", direction: "ascending" }}
-					onSortChange={() => {}}
-					page={1}
-					pages={1}
-					onPageChange={() => {}}
-					exportFn={async () => {}}
-					renderCell={renderServiceCenterCell}
-					hasNoRecords={filteredServiceCenterData.length === 0}
-					searchPlaceholder="Search service centers..."
-				/>
-			</div>
-
-			{/* Custom Date Range Modal */}
-			<Modal
-				isOpen={isCustomDateModalOpen}
-				onClose={() => setIsCustomDateModalOpen(false)}
-				size="md"
-			>
-				<ModalContent>
-					<ModalHeader>
-						<h3 className="text-lg font-semibold">Select Custom Date Range</h3>
-					</ModalHeader>
-					<ModalBody>
-						<DateRangePicker
-							label="Date Range"
-							value={customDateRange}
-							onChange={setCustomDateRange}
-							className="w-full"
-						/>
-					</ModalBody>
-					<ModalFooter>
-						<Button
-							color="danger"
-							variant="light"
-							onPress={() => setIsCustomDateModalOpen(false)}
-						>
-							Cancel
-						</Button>
-						<Button
-							color="primary"
-							onPress={() => {
-								if (customDateRange) {
-									setTrendPeriod("custom");
-									setIsCustomDateModalOpen(false);
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<DatePicker
+							label="Start Date"
+							value={customStartDate ? parseDate(customStartDate) : null}
+							onChange={(date) => {
+								if (date) {
+									setCustomStartDate(date.toString());
 								}
 							}}
-						>
-							Apply
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+							maxValue={customEndDate ? parseDate(customEndDate) : undefined}
+							showMonthAndYearPickers
+						/>
+						<DatePicker
+							label="End Date"
+							value={customEndDate ? parseDate(customEndDate) : null}
+							onChange={(date) => {
+								if (date) {
+									setCustomEndDate(date.toString());
+								}
+							}}
+							minValue={
+								customStartDate ? parseDate(customStartDate) : undefined
+							}
+							showMonthAndYearPickers
+						/>
+					</div>
+					{customStartDate && customEndDate && (
+						<div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+							Showing data from{" "}
+							<strong>{new Date(customStartDate).toLocaleDateString()}</strong>{" "}
+							to <strong>{new Date(customEndDate).toLocaleDateString()}</strong>
+						</div>
+					)}
+				</div>
+			)}
+
+			{/* Overview Statistics */}
+			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+				{isLoadingStats ? (
+					<>
+						{[...Array(8)].map((_, idx) => (
+							<Card key={idx} className="border border-default-200">
+								<CardBody className="p-4">
+									<Skeleton className="h-4 w-24 mb-2 rounded" />
+									<Skeleton className="h-8 w-16 rounded" />
+								</CardBody>
+							</Card>
+						))}
+					</>
+				) : (
+					<>
+						<StatCard
+							title="Total Repairs"
+							value={stats?.statistics?.total_repairs?.toString() || "0"}
+							icon={<Wrench className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Authorized Repairs"
+							value={stats?.statistics?.authorized_repairs?.toString() || "0"}
+							icon={<CheckCircle className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Total Repair Cost"
+							value={formatCurrency(stats?.statistics?.total_repair_cost || 0)}
+							icon={<DollarSign className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Unpaid Cost"
+							value={formatCurrency(stats?.statistics?.unpaid_repair_cost || 0)}
+							icon={<CreditCard className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Total Sapphire Cost"
+							value={formatCurrency(
+								stats?.statistics?.total_sapphire_cost || 0
+							)}
+							icon={<DollarSign className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Unpaid Sapphire Cost"
+							value={formatCurrency(
+								stats?.statistics?.unpaid_sapphire_cost || 0
+							)}
+							icon={<CreditCard className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="IMEIs Uploaded"
+							value={stats?.statistics?.total_imeis_uploaded?.toString() || "0"}
+							icon={<Smartphone className="w-5 h-5" />}
+						/>
+						<StatCard
+							title="Claims Rate"
+							value={stats?.statistics?.claims_rate || "0%"}
+							icon={<TrendingUp className="w-5 h-5" />}
+						/>
+					</>
+				)}
+			</div>
+
+			{/* Charts Row */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Claims Over Time */}
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between">
+						<h3 className="text-lg font-semibold">Claims Over Time</h3>
+						<div>
+							<button
+								className={`px-2 py-1 rounded text-xs mr-2 ${
+									claimsView === "daily"
+										? "bg-primary text-white"
+										: "bg-gray-200"
+								}`}
+								onClick={() => setClaimsView("daily")}
+								disabled={claimsView === "daily"}
+							>
+								Daily
+							</button>
+							<button
+								className={`px-2 py-1 rounded text-xs ${
+									claimsView === "monthly"
+										? "bg-primary text-white"
+										: "bg-gray-200"
+								}`}
+								onClick={() => setClaimsView("monthly")}
+								disabled={claimsView === "monthly"}
+							>
+								Monthly
+							</button>
+						</div>
+					</CardHeader>
+					<CardBody>
+						{isLoadingTrends ? (
+							<div className="h-[300px] flex items-center justify-center">
+								<Spinner size="lg" />
+							</div>
+						) : claimsChartData.length === 0 ? (
+							<div className="h-[300px] flex items-center justify-center text-gray-500">
+								No claims data available
+							</div>
+						) : (
+							<ResponsiveContainer width="100%" height={300}>
+								<AreaChart data={claimsChartData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="date" />
+									<YAxis />
+									<Tooltip />
+									<Area
+										type="monotone"
+										dataKey="claims"
+										stroke="#0088FE"
+										fill="#0088FE"
+										fillOpacity={0.3}
+										name="Claims"
+									/>
+								</AreaChart>
+							</ResponsiveContainer>
+						)}
+					</CardBody>
+				</Card>
+
+				{/* Repair Costs Over Time */}
+				<Card>
+					<CardHeader>
+						<h3 className="text-lg font-semibold">Repair Costs Over Time</h3>
+					</CardHeader>
+					<CardBody>
+						{isLoadingTrends ? (
+							<div className="h-[300px] flex items-center justify-center">
+								<Spinner size="lg" />
+							</div>
+						) : costChartData.length === 0 ? (
+							<div className="h-[300px] flex items-center justify-center text-gray-500">
+								No cost data available
+							</div>
+						) : (
+							<ResponsiveContainer width="100%" height={300}>
+								<BarChart data={costChartData}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="date" />
+									<YAxis
+										tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}K`}
+									/>
+									<Tooltip
+										formatter={(value) => formatCurrency(value as number)}
+									/>
+									<Legend />
+									<Bar
+										dataKey="paid"
+										stackId="cost"
+										fill="#00C49F"
+										name="Paid"
+									/>
+									<Bar
+										dataKey="unpaid"
+										stackId="cost"
+										fill="#FFBB28"
+										name="Unpaid"
+									/>
+								</BarChart>
+							</ResponsiveContainer>
+						)}
+					</CardBody>
+				</Card>
+			</div>
+
+			{/* Device Model Statistics Table */}
+			<Card>
+				<CardHeader>
+					<h3 className="text-lg font-semibold">Device Model Statistics</h3>
+				</CardHeader>
+				<CardBody>
+					<GenericTable
+						data={filteredDeviceStats}
+						columns={deviceColumns}
+						renderCell={renderDeviceCell}
+						allCount={filteredDeviceStats.length}
+						exportData={filteredDeviceStats}
+						isLoading={isLoadingDeviceStats}
+						filterValue={deviceSearchFilter}
+						onFilterChange={setDeviceSearchFilter}
+						showStatus={false}
+						sortDescriptor={{ column: "product_name", direction: "ascending" }}
+						onSortChange={() => {}}
+						page={1}
+						pages={1}
+						onPageChange={() => {}}
+						hasNoRecords={filteredDeviceStats.length === 0}
+						searchPlaceholder="Search by device model..."
+						exportFn={async (data) => {
+							// Export all currently filtered device stats
+							const allDeviceStats = filteredDeviceStats;
+							const workbook = new ExcelJS.Workbook();
+							const worksheet = workbook.addWorksheet(
+								"Device Model Statistics"
+							);
+							worksheet.columns = [
+								{ header: "Product Name", key: "product_name", width: 30 },
+								{ header: "Total Claims", key: "total_claims", width: 15 },
+								{ header: "Total Cost", key: "total_cost", width: 20 },
+								{
+									header: "Total Unpaid Cost",
+									key: "total_unpaid_cost",
+									width: 20,
+								},
+								{ header: "Claim Rate", key: "claim_rate", width: 15 },
+							];
+							worksheet.getRow(1).font = {
+								bold: true,
+								color: { argb: "FFFFFFFF" },
+							};
+							worksheet.getRow(1).fill = {
+								type: "pattern",
+								pattern: "solid",
+								fgColor: { argb: "FF4472C4" },
+							};
+							worksheet.getRow(1).alignment = {
+								vertical: "middle",
+								horizontal: "center",
+							};
+							allDeviceStats.forEach((item: any) => {
+								const row = worksheet.addRow({
+									product_name: item.product_name,
+									total_claims: item.total_claims || 0,
+									total_cost: item.total_cost || 0,
+									total_unpaid_cost: item.total_unpaid_cost || 0,
+									claim_rate: item.claim_rate || "0%",
+								});
+								row.getCell("total_cost").numFmt = "₦#,##0.00";
+								row.getCell("total_unpaid_cost").numFmt = "₦#,##0.00";
+							});
+							const buffer = await workbook.xlsx.writeBuffer();
+							const blob = new Blob([buffer], {
+								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+							});
+							const url = URL.createObjectURL(blob);
+							const link = document.createElement("a");
+							link.href = url;
+							link.download = `device-model-statistics-${
+								new Date().toISOString().split("T")[0]
+							}.xlsx`;
+							link.click();
+							URL.revokeObjectURL(url);
+						}}
+					/>
+				</CardBody>
+			</Card>
+
+			{/* Service Center Statistics Table */}
+			<Card>
+				<CardHeader>
+					<h3 className="text-lg font-semibold">Service Center Performance</h3>
+				</CardHeader>
+				<CardBody>
+					<GenericTable
+						data={filteredServiceCenterStats}
+						columns={serviceCenterColumns}
+						renderCell={renderServiceCenterCell}
+						allCount={filteredServiceCenterStats.length}
+						exportData={filteredServiceCenterStats}
+						isLoading={isLoadingServiceCenters}
+						filterValue={serviceCenterSearchFilter}
+						onFilterChange={setServiceCenterSearchFilter}
+						showStatus={false}
+						sortDescriptor={{
+							column: "service_center_name",
+							direction: "ascending",
+						}}
+						onSortChange={() => {}}
+						page={1}
+						pages={1}
+						onPageChange={() => {}}
+						hasNoRecords={filteredServiceCenterStats.length === 0}
+						searchPlaceholder="Search by service center or location..."
+						exportFn={async (data) => {
+							// Export all currently filtered service center stats
+							const allServiceCenterStats = filteredServiceCenterStats;
+							const workbook = new ExcelJS.Workbook();
+							const worksheet = workbook.addWorksheet(
+								"Service Center Performance"
+							);
+							worksheet.columns = [
+								{
+									header: "Service Center",
+									key: "service_center_name",
+									width: 30,
+								},
+								{ header: "Location", key: "location", width: 25 },
+								{
+									header: "Approved Repairs",
+									key: "approved_repairs",
+									width: 18,
+								},
+								{
+									header: "Completed Repairs",
+									key: "completed_repairs",
+									width: 18,
+								},
+								{
+									header: "Rejected Repairs",
+									key: "rejected_repairs",
+									width: 18,
+								},
+								{
+									header: "Pending Repairs",
+									key: "pending_repairs",
+									width: 18,
+								},
+								{
+									header: "Authorized Repairs",
+									key: "authorized_repairs",
+									width: 18,
+								},
+							];
+							worksheet.getRow(1).font = {
+								bold: true,
+								color: { argb: "FFFFFFFF" },
+							};
+							worksheet.getRow(1).fill = {
+								type: "pattern",
+								pattern: "solid",
+								fgColor: { argb: "FF4472C4" },
+							};
+							worksheet.getRow(1).alignment = {
+								vertical: "middle",
+								horizontal: "center",
+							};
+							allServiceCenterStats.forEach((item: any) => {
+								worksheet.addRow({
+									service_center_name: item.service_center_name,
+									location: item.location,
+									approved_repairs: item.approved_repairs || 0,
+									completed_repairs: item.completed_repairs || 0,
+									rejected_repairs: item.rejected_repairs || 0,
+									pending_repairs: item.pending_repairs || 0,
+									authorized_repairs: item.authorized_repairs || 0,
+								});
+							});
+							const buffer = await workbook.xlsx.writeBuffer();
+							const blob = new Blob([buffer], {
+								type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+							});
+							const url = URL.createObjectURL(blob);
+							const link = document.createElement("a");
+							link.href = url;
+							link.download = `service-center-performance-${
+								new Date().toISOString().split("T")[0]
+							}.xlsx`;
+							link.click();
+							URL.revokeObjectURL(url);
+						}}
+					/>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }

@@ -124,8 +124,8 @@ export function AppSidebar() {
 	};
 
 	const apiDocsUrl = process.env.NEXT_PUBLIC_API_DOCS_URL;
-	const accessRole = getUserRole(userResponse?.data?.role);
-	const userEmail = userResponse?.data?.email;
+	const accessRole = getUserRole(userResponse?.role);
+	const userEmail = userResponse?.email;
 	const canVerifyMobiflex = hasPermission(
 		accessRole,
 		"verifyMobiflex",
@@ -134,7 +134,7 @@ export function AppSidebar() {
 
 	// Get sidebar items dynamically based on current role (including debug overrides)
 	// Don't render items if loading or no user data available
-	const currentRole = userResponse?.data?.role || "";
+	const currentRole = userResponse?.role || "";
 	const shouldShowItems = !isLoading && userResponse && currentRole;
 	const items: MenuItem[] = shouldShowItems
 		? getSidebarItemsForRole(currentRole, {
