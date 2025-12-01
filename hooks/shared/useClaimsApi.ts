@@ -78,7 +78,7 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 		deviceName: claim.product?.name || "",
 		brand: "Samsung", // Default brand
 		model: claim.product?.name || "",
-		faultType: claim.description || "Screen Damange",
+		faultType: "Faulty/Broken Screen",
 		repairCost: Number(claim.repair_price) || 0,
 		status: claim.status as
 			| "PENDING"
