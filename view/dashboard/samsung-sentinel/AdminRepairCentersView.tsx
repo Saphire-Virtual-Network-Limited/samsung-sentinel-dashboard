@@ -49,6 +49,7 @@ import {
 	type RepairStore,
 } from "@/lib";
 import useSWR from "swr";
+import { useEffect } from "react";
 
 interface RepairCenter {
 	id: string;
@@ -163,18 +164,32 @@ export default function AdminRepairCentersView() {
 	const total = repairPartnersData?.total || 0;
 	const totalPages = repairPartnersData?.totalPages || 1;
 
+	// Fetch stats for each status
+	const { data: activeData } = useSWR("repair-partners-active", () =>
+		getAllRepairPartners({ status: "ACTIVE" as any, limit: 1 })
+	);
+	const { data: suspendedData } = useSWR("repair-partners-suspended", () =>
+		getAllRepairPartners({ status: "SUSPENDED" as any, limit: 1 })
+	);
+	const { data: disabledData } = useSWR("repair-partners-disabled", () =>
+		getAllRepairPartners({ status: "DISABLED" as any, limit: 1 })
+	);
+
 	// Statistics
 	const stats = useMemo(
 		() => ({
-			totalCenters: total,
-			activeCenters: repairPartners.filter((s) => s.status === "ACTIVE").length,
+			totalCenters:
+				(activeData?.total || 0) +
+				(suspendedData?.total || 0) +
+				(disabledData?.total || 0),
+			activeCenters: activeData?.total || 0,
+			suspendedCenters: suspendedData?.total || 0,
 			totalServiceCenters: repairPartners.reduce(
 				(sum, s) => sum + (s.service_centers_count || 0),
 				0
 			),
-			totalRevenue: 0, // TODO: Calculate from actual revenue data when available
 		}),
-		[repairPartners, total]
+		[repairPartners, activeData, suspendedData, disabledData]
 	);
 
 	// Handlers
@@ -316,10 +331,14 @@ export default function AdminRepairCentersView() {
 	// Export function
 	const exportFn = async () => {
 		try {
-			// Fetch all data using total as limit
+			// Fetch all data using current filters
 			const allData = await getAllRepairPartners({
 				page: 1,
-				limit: total || 1000, // Use total or fallback to 1000
+				limit: 10000, // Large limit to get all data
+				...(filterValue && { search: filterValue }),
+				...(statusFilter.size > 0 && {
+					status: Array.from(statusFilter)[0] as any,
+				}),
 			});
 
 			const dataToExport = allData?.data || [];
@@ -577,14 +596,14 @@ export default function AdminRepairCentersView() {
 					icon={<Power className="w-5 h-5" />}
 				/>
 				<StatCard
+					title="Suspended Centers"
+					value={stats.suspendedCenters.toString()}
+					icon={<PowerOff className="w-5 h-5" />}
+				/>
+				<StatCard
 					title="Service Locations"
 					value={stats.totalServiceCenters.toString()}
 					icon={<Building2 className="w-5 h-5" />}
-				/>
-				<StatCard
-					title="Monthly Revenue"
-					value={formatCurrency(stats.totalRevenue)}
-					icon={<CreditCard className="w-5 h-5" />}
 				/>
 			</div>
 

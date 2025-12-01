@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib";
 import { showToast } from "@/lib/showNotification";
-import testData from "@/lib/testData/claimsRepairsTestData.json";
 
 export type ClaimRepairRole =
 	| "service-center"
@@ -60,6 +59,13 @@ export interface ClaimRepairItem {
 	serviceCenterName?: string;
 	serviceCenterId?: string;
 	engineerName?: string;
+	service_center?: {
+		id: string;
+		name: string;
+		account_name?: string;
+		account_number?: string;
+		bank_name?: string;
+	};
 	completedAt?: string;
 	completedById?: string;
 	approvedAt?: string;
@@ -589,9 +595,9 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "faultType":
 				return (
 					<Chip variant="bordered" size="sm" className={cellClassName}>
-						{item.faultType && item.faultType !== "Screen Damage"
+						{item.faultType && item.faultType !== "Faulty/Broken Screen"
 							? item.faultType.replace("-", " ").toUpperCase()
-							: "Screen Damage"}
+							: "FAULTY/BROKEN SCREEN"}
 					</Chip>
 				);
 			case "repairCost":
@@ -660,24 +666,21 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				);
 
 			case "bankDetails":
-				// Bank details are loaded from test data via serviceCenterId
+				// Bank details are loaded from API data via service_center object
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "COMPLETED") {
-					const serviceCenter = testData.serviceCenters.find(
-						(sc: any) => sc.id === item.serviceCenterId
-					);
+				if (item.service_center && item.status === "COMPLETED") {
+					const { account_name, account_number, bank_name } =
+						item.service_center;
 
-					if (serviceCenter?.bankDetails) {
+					if (bank_name && account_number && account_name) {
 						return (
 							<div className="text-xs">
-								<div className="font-semibold">
-									{serviceCenter.bankDetails.bankName}
-								</div>
+								<div className="font-semibold">{bank_name}</div>
 								<div className="text-gray-600 dark:text-gray-400">
-									{serviceCenter.bankDetails.accountNumber}
+									{account_number}
 								</div>
 								<div className="text-gray-500 dark:text-gray-500 truncate max-w-[150px]">
-									{serviceCenter.bankDetails.accountName}
+									{account_name}
 								</div>
 							</div>
 						);
@@ -1025,16 +1028,11 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					);
 
 					// Add bank details for samsung-sentinel
-					if (role === "samsung-sentinel" && item.serviceCenterId) {
-						const serviceCenter = testData.serviceCenters.find(
-							(sc: any) => sc.id === item.serviceCenterId
-						);
-						if (serviceCenter?.bankDetails) {
-							row.push(
-								serviceCenter.bankDetails.bankName,
-								serviceCenter.bankDetails.accountNumber,
-								serviceCenter.bankDetails.accountName
-							);
+					if (role === "samsung-sentinel" && item.service_center) {
+						const { account_name, account_number, bank_name } =
+							item.service_center;
+						if (bank_name && account_number && account_name) {
+							row.push(bank_name, account_number, account_name);
 						} else {
 							row.push("N/A", "N/A", "N/A");
 						}

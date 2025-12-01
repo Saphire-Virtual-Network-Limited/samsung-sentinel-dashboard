@@ -41,9 +41,11 @@ export function useUsersManagement() {
 		updatedAt: user.updated_at || user.updatedAt,
 	})) as User[];
 
-	// Calculate total from data length since API doesn't return meta
-	const totalUsers = users.length;
-	const totalPages = Math.ceil(totalUsers / (filters.limit || 10));
+	// Get total and totalPages from API response
+	const totalUsers = (usersResponse as any)?.total || users.length;
+	const totalPages =
+		(usersResponse as any)?.totalPages ||
+		Math.ceil(totalUsers / (filters.limit || 10));
 
 	// Filter handlers
 	const handleRoleChange = useCallback((role: string) => {

@@ -32,9 +32,11 @@ import {
 	UserX,
 	RotateCcw,
 	Mail,
+	Users as UsersIcon,
 } from "lucide-react";
 import { useUsersManagement } from "@/hooks/admin/useUsersManagement";
 import { GenericTable } from "@/components/reususables";
+import { StatCard } from "@/components/atoms/StatCard";
 import {
 	cn,
 	GeneralSans_SemiBold,
@@ -48,6 +50,7 @@ import { createPartner } from "@/lib";
 import { getAllServiceCenters } from "@/lib/api/service-centers";
 import { createRepairStore } from "@/lib/api/repair-partners";
 import useSWR from "swr";
+import { getAllUsers } from "@/lib/api/users";
 
 // Role options for filter
 const ROLE_OPTIONS: { value: string; label: string }[] = [
@@ -137,6 +140,27 @@ export default function SamsungSentinelUsersView() {
 	);
 
 	const serviceCenters = serviceCentersData?.data || [];
+
+	// Fetch stats for each status
+	const { data: activeUsersData } = useSWR("users-active", () =>
+		getAllUsers({ status: "ACTIVE" as any, limit: 1 })
+	);
+	const { data: inactiveUsersData } = useSWR("users-inactive", () =>
+		getAllUsers({ status: "INACTIVE" as any, limit: 1 })
+	);
+
+	// Calculate stats
+	const stats = React.useMemo(
+		() => ({
+			totalUsers:
+				((activeUsersData as any)?.total || 0) +
+				((inactiveUsersData as any)?.total || 0),
+			activeUsers: (activeUsersData as any)?.total || 0,
+			inactiveUsers: (inactiveUsersData as any)?.total || 0,
+		}),
+		[activeUsersData, inactiveUsersData]
+	);
+
 	const [sortDescriptor, setSortDescriptor] = useState<{
 		column: string;
 		direction: "ascending" | "descending";
@@ -370,47 +394,69 @@ export default function SamsungSentinelUsersView() {
 
 	// Export function (placeholder)
 	const handleExport = (data: User[]) => {
-		// Export all users
+		// Export all users with current filters
 		(async () => {
-			const ExcelJS = (await import("exceljs")).default;
-			const workbook = new ExcelJS.Workbook();
-			const worksheet = workbook.addWorksheet("Users");
-			worksheet.columns = [
-				{ header: "Name", key: "name", width: 25 },
-				{ header: "Email", key: "email", width: 30 },
-				{ header: "Phone", key: "phone", width: 18 },
-				{ header: "Role", key: "role", width: 15 },
-				{ header: "Status", key: "status", width: 12 },
-			];
-			worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-			worksheet.getRow(1).fill = {
-				type: "pattern",
-				pattern: "solid",
-				fgColor: { argb: "FF4472C4" },
-			};
-			worksheet.getRow(1).alignment = {
-				vertical: "middle",
-				horizontal: "center",
-			};
-			(data || []).forEach((item: any) => {
-				worksheet.addRow({
-					name: item.name,
-					email: item.email,
-					phone: item.phone || "N/A",
-					role: item.role,
-					status: item.status,
+			try {
+				// Fetch all users with current filters
+				const allUsersResponse = await getAllUsers({
+					limit: 10000,
+					...(filters.role && { role: filters.role }),
+					...(filters.status && { status: filters.status }),
+					...(filters.search && { search: filters.search }),
 				});
-			});
-			const buffer = await workbook.xlsx.writeBuffer();
-			const blob = new Blob([buffer], {
-				type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			});
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `users-${new Date().toISOString().split("T")[0]}.xlsx`;
-			link.click();
-			URL.revokeObjectURL(url);
+
+				const allUsers = allUsersResponse?.data || [];
+
+				const ExcelJS = (await import("exceljs")).default;
+				const workbook = new ExcelJS.Workbook();
+				const worksheet = workbook.addWorksheet("Users");
+				worksheet.columns = [
+					{ header: "Name", key: "name", width: 25 },
+					{ header: "Email", key: "email", width: 30 },
+					{ header: "Phone", key: "phone", width: 18 },
+					{ header: "Role", key: "role", width: 15 },
+					{ header: "Status", key: "status", width: 12 },
+				];
+				worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+				worksheet.getRow(1).fill = {
+					type: "pattern",
+					pattern: "solid",
+					fgColor: { argb: "FF4472C4" },
+				};
+				worksheet.getRow(1).alignment = {
+					vertical: "middle",
+					horizontal: "center",
+				};
+				(allUsers || []).forEach((item: any) => {
+					worksheet.addRow({
+						name: item.name,
+						email: item.email,
+						phone: item.phone || "N/A",
+						role: item.role,
+						status: item.status,
+					});
+				});
+				const buffer = await workbook.xlsx.writeBuffer();
+				const blob = new Blob([buffer], {
+					type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				});
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `users-${new Date().toISOString().split("T")[0]}.xlsx`;
+				link.click();
+				URL.revokeObjectURL(url);
+
+				showToast({
+					message: `Successfully exported ${allUsers.length} users`,
+					type: "success",
+				});
+			} catch (error: any) {
+				showToast({
+					message: error?.message || "Failed to export users",
+					type: "error",
+				});
+			}
 		})();
 	};
 
@@ -568,6 +614,25 @@ export default function SamsungSentinelUsersView() {
 				>
 					Add New User
 				</Button>
+			</div>
+
+			{/* Statistics Cards */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<StatCard
+					title="Total Users"
+					value={stats.totalUsers.toString()}
+					icon={<UsersIcon className="w-5 h-5" />}
+				/>
+				<StatCard
+					title="Active Users"
+					value={stats.activeUsers.toString()}
+					icon={<UserCheck className="w-5 h-5" />}
+				/>
+				<StatCard
+					title="Inactive Users"
+					value={stats.inactiveUsers.toString()}
+					icon={<UserX className="w-5 h-5" />}
+				/>
 			</div>
 
 			{/* Filters */}
