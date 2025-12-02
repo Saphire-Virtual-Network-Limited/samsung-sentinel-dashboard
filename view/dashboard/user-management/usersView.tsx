@@ -171,22 +171,45 @@ export default function UsersPage() {
 	}, [paged, sortDescriptor]);
 
 	const exportFn = async (data: User[]) => {
+		// Fetch all users for export
+		let allUsers = filtered;
+		try {
+			const allUsersResponse = await getAllUsers({
+				page: 1,
+				limit: (raw?.total || 0) + 20,
+			});
+			if (allUsersResponse?.data) {
+				allUsers = allUsersResponse.data.map((user: any) => ({
+					...user,
+					fullName: `${capitalize(user.firstName)} ${capitalize(
+						user.lastName
+					)}`,
+					age: user.dob ? calculateAge(user.dob) : "N/A",
+				}));
+			}
+		} catch (e) {
+			// fallback to filtered
+		}
 		const wb = new ExcelJS.Workbook();
 		const ws = wb.addWorksheet("Users");
-
-		ws.columns = columns
-			.filter((c) => c.uid !== "actions")
-			.map((c) => ({ header: c.name, key: c.uid, width: 20 }));
-
-		data.forEach((user) =>
+		ws.columns = [
+			{ header: "Full Name", key: "fullName", width: 30 },
+			{ header: "Email", key: "email", width: 30 },
+			{ header: "Role", key: "role", width: 15 },
+			{ header: "Status", key: "accountStatus", width: 15 },
+			{ header: "Company", key: "companyName", width: 20 },
+			{ header: "Telephone", key: "telephoneNumber", width: 20 },
+		];
+		allUsers.forEach((user: any) => {
 			ws.addRow({
-				...user,
-				accountStatus: capitalize(user.accountStatus || ""),
-				isActive: user.isActive ? "Yes" : "No",
-				createdAt: new Date(user.createdAt).toLocaleDateString(),
-			})
-		);
-
+				fullName: user.fullName,
+				email: user.email,
+				role: user.role,
+				accountStatus: user.accountStatus,
+				companyName: user.companyName,
+				telephoneNumber: user.telephoneNumber,
+			});
+		});
 		const buf = await wb.xlsx.writeBuffer();
 		saveAs(new Blob([buf]), "Users_Records.xlsx");
 	};

@@ -411,9 +411,9 @@ export default function AdminRepairCenterDetailView() {
 	React.useEffect(() => {
 		if (isEditModalOpen && repairStore) {
 			setCenterFormData({
-				name: repairStore.name,
-				email: repairStore.email,
-				phone: repairStore.phone,
+				name: repairStore.user?.name || repairStore.name || "",
+				email: repairStore.user?.email || repairStore.email || "",
+				phone: repairStore.user?.phone || repairStore.phone || "",
 				description: repairStore.description || "",
 				location: repairStore.location,
 				account_name: repairStore.account_name || "",
@@ -451,7 +451,9 @@ export default function AdminRepairCenterDetailView() {
 						<ArrowLeft size={20} />
 					</Button>
 					<div>
-						<h1 className="text-2xl font-bold">{repairStore.name}</h1>
+						<h1 className="text-2xl font-bold">
+							{repairStore.user?.name || repairStore.name}
+						</h1>
 						<p className="text-default-500">
 							Repair center details and service locations
 						</p>
@@ -521,10 +523,21 @@ export default function AdminRepairCenterDetailView() {
 							</CardHeader>
 							<CardBody className="pt-0">
 								<div className="space-y-4">
-									<InfoField label="Center Name" value={repairStore.name} />
+									<InfoField
+										label="Center Name"
+										value={repairStore.user?.name || repairStore.name}
+									/>
 									<InfoField label="Location" value={repairStore.location} />
-									<InfoField label="Phone" value={repairStore.phone} />
-									<InfoField label="Email" value={repairStore.email} />
+									<InfoField
+										label="Phone"
+										value={
+											repairStore.user?.phone || repairStore.phone || "N/A"
+										}
+									/>
+									<InfoField
+										label="Email"
+										value={repairStore.user?.email || repairStore.email}
+									/>
 									{repairStore.description && (
 										<InfoField
 											label="Description"
@@ -629,7 +642,7 @@ export default function AdminRepairCenterDetailView() {
 							statusOptions={[
 								{ name: "Active", uid: "ACTIVE" },
 								{ name: "Disabled", uid: "DISABLED" },
-								{ name: "Suspended", uid: "SUSPENDED" },
+								//	{ name: "Suspended", uid: "SUSPENDED" },
 							]}
 							statusFilter={new Set()}
 							onStatusChange={() => {}}
@@ -640,7 +653,51 @@ export default function AdminRepairCenterDetailView() {
 							page={1}
 							pages={1}
 							onPageChange={() => {}}
-							exportFn={() => {}}
+							exportFn={async () => {
+								// Export all service centers
+								const ExcelJS = (await import("exceljs")).default;
+								const workbook = new ExcelJS.Workbook();
+								const worksheet = workbook.addWorksheet("Service Centers");
+								worksheet.columns = [
+									{ header: "Name", key: "name", width: 25 },
+									{ header: "Location", key: "address", width: 30 },
+									{ header: "Contact", key: "contact", width: 25 },
+									{ header: "Status", key: "status", width: 12 },
+								];
+								worksheet.getRow(1).font = {
+									bold: true,
+									color: { argb: "FFFFFFFF" },
+								};
+								worksheet.getRow(1).fill = {
+									type: "pattern",
+									pattern: "solid",
+									fgColor: { argb: "FF4472C4" },
+								};
+								worksheet.getRow(1).alignment = {
+									vertical: "middle",
+									horizontal: "center",
+								};
+								(serviceCenters || []).forEach((item: any) => {
+									worksheet.addRow({
+										name: item.name,
+										address: item.address,
+										contact: item.phone || item.email || "",
+										status: item.status,
+									});
+								});
+								const buffer = await workbook.xlsx.writeBuffer();
+								const blob = new Blob([buffer], {
+									type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+								});
+								const url = URL.createObjectURL(blob);
+								const link = document.createElement("a");
+								link.href = url;
+								link.download = `service-centers-${
+									new Date().toISOString().split("T")[0]
+								}.xlsx`;
+								link.click();
+								URL.revokeObjectURL(url);
+							}}
 							renderCell={renderServiceCenterCell}
 							hasNoRecords={serviceCenters.length === 0}
 							searchPlaceholder="Search service centers..."

@@ -9,15 +9,30 @@ import { normalizePhoneNumber } from "@/utils/helpers";
 // Types & Interfaces
 export type { ServiceCenter } from "../service-centers";
 
+export interface RepairStoreUser {
+	id: string;
+	created_at: string;
+	updated_at: string;
+	email: string;
+	password: string;
+	name: string;
+	phone: string | null;
+	role: string;
+	status: string;
+	last_login: string | null;
+	created_by_id: string | null;
+	deleted_at: string | null;
+}
+
 export interface RepairStore {
 	id: string;
 	created_at: string;
 	updated_at: string;
 	created_by_id: string | null;
 	updated_by_id: string | null;
-	name: string;
-	email: string;
-	phone: string;
+	name?: string; // Deprecated - now in user object
+	email?: string; // Deprecated - now in user object
+	phone?: string; // Deprecated - now in user object
 	description?: string;
 	location: string;
 	account_name?: string;
@@ -25,7 +40,7 @@ export interface RepairStore {
 	bank_name?: string;
 	status: UserStatus;
 	user_id: string | null;
-	user: any | null;
+	user?: RepairStoreUser | null; // User data containing name, email, phone
 	service_centers_count?: number; // Available in list view
 	service_centers?: ServiceCenter[]; // Available in detail view
 }

@@ -163,19 +163,33 @@ export default function SamsungSentinelServiceCentersView() {
 		() => serviceCentersData?.totalPages || 1,
 		[serviceCentersData]
 	);
+
+	// Fetch stats for each status
+	const { data: activeData } = useSWR("service-centers-active", () =>
+		getAllServiceCenters({ status: "ACTIVE" as any, limit: 1 })
+	);
+	const { data: suspendedData } = useSWR("service-centers-suspended", () =>
+		getAllServiceCenters({ status: "SUSPENDED" as any, limit: 1 })
+	);
+	const { data: disabledData } = useSWR("service-centers-disabled", () =>
+		getAllServiceCenters({ status: "DISABLED" as any, limit: 1 })
+	);
+
 	// Statistics
 	const stats = useMemo(
 		() => ({
-			totalCenters: serviceCentersData?.total || 0,
-			activeCenters: serviceCenters.filter((c) => c.status === "ACTIVE").length,
+			totalCenters:
+				(activeData?.total || 0) +
+				(suspendedData?.total || 0) +
+				(disabledData?.total || 0),
+			activeCenters: activeData?.total || 0,
 			totalEngineers: serviceCenters.reduce(
 				(sum, c) => sum + (c.engineers_count || 0),
 				0
 			),
-			suspendedCenters: serviceCenters.filter((c) => c.status === "SUSPENDED")
-				.length,
+			suspendedCenters: suspendedData?.total || 0,
 		}),
-		[serviceCenters, serviceCentersData]
+		[serviceCenters, activeData, suspendedData, disabledData]
 	);
 
 	// Handlers
@@ -321,10 +335,13 @@ export default function SamsungSentinelServiceCentersView() {
 
 	// Export function
 	const exportFn = async (data: ServiceCenter[]) => {
-		// Fetch all data for export
-		const total = serviceCentersData?.total || 0;
+		// Fetch all data for export with current filters
 		const allDataResponse = await getAllServiceCenters({
-			limit: total,
+			limit: 10000,
+			...(filterValue && { search: filterValue }),
+			...(statusFilter.size > 0 && {
+				status: Array.from(statusFilter)[0] as any,
+			}),
 		});
 
 		const allData = allDataResponse.data || [];
@@ -501,7 +518,7 @@ export default function SamsungSentinelServiceCentersView() {
 
 	const statusOptions = [
 		{ name: "Active", uid: "ACTIVE" },
-		{ name: "Suspended", uid: "SUSPENDED" },
+		//{ name: "Suspended", uid: "SUSPENDED" },
 		{ name: "Disabled", uid: "DISABLED" },
 	];
 

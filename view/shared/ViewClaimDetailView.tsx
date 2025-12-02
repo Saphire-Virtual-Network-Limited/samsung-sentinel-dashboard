@@ -373,12 +373,36 @@ const ViewClaimDetailView = ({
 							<InfoField label="IMEI Number" value={claim?.imei?.imei} />
 							<InfoField label="Device Brand" value="Samsung" />
 							<InfoField label="Device Model" value={claim?.product?.name} />
-							<InfoField
-								label="Repair Cost"
-								value={`₦${parseFloat(
-									claim?.product?.repair_cost || "0"
-								).toLocaleString()}`}
-							/>
+							{userRole === "engineer" ? (
+								<>
+									<InfoField
+										label="Repair Cost"
+										value={`₦${parseFloat(
+											claim?.product?.repair_cost || "0"
+										).toLocaleString()}`}
+									/>
+									<InfoField
+										label="Sapphire Cost"
+										value={`₦${parseFloat(
+											claim?.product?.sapphire_cost || "0"
+										).toLocaleString()}`}
+									/>
+									<InfoField
+										label="Customer Cost"
+										value={`₦${(
+											parseFloat(claim?.product?.repair_cost || "0") -
+											parseFloat(claim?.product?.sapphire_cost || "0")
+										).toLocaleString()}`}
+									/>
+								</>
+							) : (
+								<InfoField
+									label="Repair Price"
+									value={`₦${parseFloat(
+										claim?.repair_price?.toString() || "0"
+									).toLocaleString()}`}
+								/>
+							)}
 							<InfoField
 								label="Supplier"
 								value={claim?.imei?.supplier || "N/A"}

@@ -60,7 +60,7 @@ export default function SamsungPartnersHomeView() {
 				icon: Clock,
 				color: "bg-orange-500",
 				textColor: "text-orange-500",
-				href: "/access/samsung-partners/claims/pending",
+				href: "/access/samsung-partners/claims?status=pending",
 			},
 			{
 				title: "Approved Claims",
@@ -68,7 +68,7 @@ export default function SamsungPartnersHomeView() {
 				icon: CheckCircle,
 				color: "bg-green-500",
 				textColor: "text-green-500",
-				href: "/access/samsung-partners/claims/approved",
+				href: "/access/samsung-partners/claims?status=approved",
 			},
 			{
 				title: "Rejected Claims",
@@ -76,7 +76,7 @@ export default function SamsungPartnersHomeView() {
 				icon: XCircle,
 				color: "bg-red-500",
 				textColor: "text-red-500",
-				href: "/access/samsung-partners/claims/rejected",
+				href: "/access/samsung-partners/claims?status=rejected",
 			},
 			{
 				title: "Completed Claims",
@@ -100,7 +100,7 @@ export default function SamsungPartnersHomeView() {
 				icon: DollarSign,
 				color: "bg-green-600",
 				textColor: "text-green-600",
-				href: "/access/samsung-partners/claims?status=completed&payment=paid",
+				href: "/access/samsung-partners/claims?status=authorized&payment=paid",
 			},
 			{
 				title: "Unpaid Claims",
@@ -108,7 +108,7 @@ export default function SamsungPartnersHomeView() {
 				icon: TrendingUp,
 				color: "bg-yellow-500",
 				textColor: "text-yellow-500",
-				href: "/access/samsung-partners/claims?status=authorized",
+				href: "/access/samsung-partners/claims?status=authorized&payment=unpaid",
 			},
 		],
 		[stats]

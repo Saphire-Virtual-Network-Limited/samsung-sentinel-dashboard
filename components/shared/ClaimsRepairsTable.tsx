@@ -31,9 +31,8 @@ import {
 	FileText,
 	Wrench,
 } from "lucide-react";
-import { formatDate } from "@/lib";
+import { formatDate, formatDateTimeForExport } from "@/lib";
 import { showToast } from "@/lib/showNotification";
-import testData from "@/lib/testData/claimsRepairsTestData.json";
 
 export type ClaimRepairRole =
 	| "service-center"
@@ -60,6 +59,13 @@ export interface ClaimRepairItem {
 	serviceCenterName?: string;
 	serviceCenterId?: string;
 	engineerName?: string;
+	service_center?: {
+		id: string;
+		name: string;
+		account_name?: string;
+		account_number?: string;
+		bank_name?: string;
+	};
 	completedAt?: string;
 	completedById?: string;
 	approvedAt?: string;
@@ -114,6 +120,7 @@ export interface ClaimsRepairsTableProps {
 	initialStartDate?: string;
 	initialEndDate?: string;
 	defaultDateRange?: { days: number };
+	onFetchAllData?: () => Promise<ClaimRepairItem[]>;
 }
 
 const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
@@ -143,6 +150,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	initialStartDate,
 	initialEndDate,
 	defaultDateRange,
+	onFetchAllData,
 }) => {
 	const router = useRouter();
 
@@ -276,25 +284,6 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			});
 		}
 
-		// Add rejection details for rejected claims (all roles)
-		if (role === "service-center" || role === "repair_store") {
-			baseColumns.push({
-				name: "Rejection Reason",
-				uid: "rejectionReason",
-				sortable: false,
-			});
-			baseColumns.push({
-				name: "Transaction Ref",
-				uid: "transactionRef",
-				sortable: false,
-			});
-			baseColumns.push({
-				name: "Completion Info",
-				uid: "completionInfo",
-				sortable: false,
-			});
-		}
-
 		// Add payment columns if needed
 		if (showPaymentColumns) {
 			const paymentColumns: ColumnDef[] = [
@@ -330,8 +319,28 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			baseColumns.push(...paymentColumns);
 		}
 
-		// Add all audit fields for Samsung admin
-		if (role === "samsung-sentinel") {
+		// Role-specific audit columns
+		if (role === "service-center" || role === "repair_store") {
+			// Service centers and repair stores see basic info
+			baseColumns.push(
+				{
+					name: "Rejection Reason",
+					uid: "rejectionReason",
+					sortable: false,
+				},
+				{
+					name: "Transaction Ref",
+					uid: "transactionRef",
+					sortable: false,
+				},
+				{
+					name: "Completion Info",
+					uid: "completionInfo",
+					sortable: false,
+				}
+			);
+		} else if (role === "samsung-partners") {
+			// Samsung partners see all audit details
 			baseColumns.push(
 				{
 					name: "Rejection Reason",
@@ -369,10 +378,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					sortable: false,
 				}
 			);
-		}
-
-		// Samsung partners need to see ALL details
-		if (role === "samsung-partners") {
+		} else if (role === "samsung-sentinel") {
+			// Samsung sentinel sees all audit details
 			baseColumns.push(
 				{
 					name: "Rejection Reason",
@@ -589,9 +596,9 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			case "faultType":
 				return (
 					<Chip variant="bordered" size="sm" className={cellClassName}>
-						{item.faultType && item.faultType !== "Screen Damage"
+						{item.faultType && item.faultType !== "Faulty/Broken Screen"
 							? item.faultType.replace("-", " ").toUpperCase()
-							: "Screen Damage"}
+							: "FAULTY/BROKEN SCREEN"}
 					</Chip>
 				);
 			case "repairCost":
@@ -660,24 +667,21 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				);
 
 			case "bankDetails":
-				// Bank details are loaded from test data via serviceCenterId
+				// Bank details are loaded from API data via service_center object
 				// This will be displayed in a compact format
-				if (item.serviceCenterId && item.status === "COMPLETED") {
-					const serviceCenter = testData.serviceCenters.find(
-						(sc: any) => sc.id === item.serviceCenterId
-					);
+				if (item.service_center && item.status === "COMPLETED") {
+					const { account_name, account_number, bank_name } =
+						item.service_center;
 
-					if (serviceCenter?.bankDetails) {
+					if (bank_name && account_number && account_name) {
 						return (
 							<div className="text-xs">
-								<div className="font-semibold">
-									{serviceCenter.bankDetails.bankName}
-								</div>
+								<div className="font-semibold">{bank_name}</div>
 								<div className="text-gray-600 dark:text-gray-400">
-									{serviceCenter.bankDetails.accountNumber}
+									{account_number}
 								</div>
 								<div className="text-gray-500 dark:text-gray-500 truncate max-w-[150px]">
-									{serviceCenter.bankDetails.accountName}
+									{account_name}
 								</div>
 							</div>
 						);
@@ -962,8 +966,26 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 	}, [selectedKeys, data]);
 
 	// Export function with proper column mapping
-	const handleExport = (exportData: any[]) => {
+	const handleExport = async (exportData: any[]) => {
 		try {
+			// Fetch all data if function is provided
+			let dataToExport = exportData;
+			if (onFetchAllData) {
+				try {
+					showToast({
+						message: "Fetching all data for export...",
+						type: "info",
+					});
+					dataToExport = await onFetchAllData();
+				} catch (error) {
+					console.error("Failed to fetch all data:", error);
+					showToast({
+						message: "Failed to fetch all data, exporting visible data only",
+						type: "warning",
+					});
+				}
+			}
+
 			// Map data to CSV format with role-specific columns
 			const exportHeaders = [
 				"Claim ID",
@@ -975,6 +997,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				"Fault Type",
 				"Repair Cost",
 				"Status",
+				"Payment Status",
 				"Created Date",
 			];
 
@@ -986,16 +1009,30 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 				exportHeaders.splice(3, 0, "Engineer");
 			}
 
-			// Add payment columns if visible
-			if (showPaymentColumns) {
-				exportHeaders.push("Payment Status", "Completed Date");
-				if (role === "samsung-sentinel") {
-					exportHeaders.push("Bank Name", "Account Number", "Account Name");
-				}
+			// Add payment and audit columns - split dates and user IDs for Excel
+			exportHeaders.push(
+				"Completed Date",
+				"Completed By",
+				"Payment Date",
+				"Paid By",
+				"Authorized Date",
+				"Authorized By",
+				"Approved Date",
+				"Approved By",
+				"Rejected Date",
+				"Rejected By",
+				"Rejection Reason",
+				"Transaction Reference",
+				"Transaction ID"
+			);
+
+			// Add bank details for samsung-sentinel
+			if (role === "samsung-sentinel") {
+				exportHeaders.push("Bank Name", "Account Number", "Account Name");
 			}
 
 			// Map data rows
-			const csvRows = exportData.map((item) => {
+			const csvRows = dataToExport.map((item) => {
 				const row: any[] = [
 					item.claimId,
 					item.customerName,
@@ -1006,7 +1043,8 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					item.faultType,
 					item.repairCost,
 					item.status,
-					formatDate(item.createdAt),
+					item.paymentStatus || "N/A",
+					formatDateTimeForExport(item.createdAt),
 				];
 
 				// Add role-specific data
@@ -1017,28 +1055,36 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 					row.splice(3, 0, item.engineerName || "N/A");
 				}
 
-				// Add payment data
-				if (showPaymentColumns) {
-					row.push(
-						item.paymentStatus || "N/A",
-						item.completedAt ? formatDate(item.completedAt) : "N/A"
-					);
+				// Add payment and audit data - split dates and user IDs
+				row.push(
+					item.completedAt ? formatDateTimeForExport(item.completedAt) : "N/A",
+					item.completedById || "N/A",
+					item.paidAt ? formatDateTimeForExport(item.paidAt) : "N/A",
+					item.paidById || "N/A",
+					item.authorizedAt
+						? formatDateTimeForExport(item.authorizedAt)
+						: "N/A",
+					item.authorizedById || "N/A",
+					item.approvedAt ? formatDateTimeForExport(item.approvedAt) : "N/A",
+					item.approvedById || "N/A",
+					item.rejectedAt ? formatDateTimeForExport(item.rejectedAt) : "N/A",
+					item.rejectedById || "N/A",
+					item.rejectionReason || "N/A",
+					item.transactionRef || "N/A",
+					item.transactionId || "N/A"
+				);
 
-					// Add bank details for samsung-sentinel
-					if (role === "samsung-sentinel" && item.serviceCenterId) {
-						const serviceCenter = testData.serviceCenters.find(
-							(sc: any) => sc.id === item.serviceCenterId
-						);
-						if (serviceCenter?.bankDetails) {
-							row.push(
-								serviceCenter.bankDetails.bankName,
-								serviceCenter.bankDetails.accountNumber,
-								serviceCenter.bankDetails.accountName
-							);
-						} else {
-							row.push("N/A", "N/A", "N/A");
-						}
+				// Add bank details for samsung-sentinel
+				if (role === "samsung-sentinel" && item.service_center) {
+					const { account_name, account_number, bank_name } =
+						item.service_center;
+					if (bank_name && account_number && account_name) {
+						row.push(bank_name, account_number, account_name);
+					} else {
+						row.push("N/A", "N/A", "N/A");
 					}
+				} else if (role === "samsung-sentinel") {
+					row.push("N/A", "N/A", "N/A");
 				}
 
 				return row;
@@ -1067,7 +1113,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 			document.body.removeChild(link);
 
 			showToast({
-				message: `Exported ${exportData.length} claims successfully`,
+				message: `Exported ${dataToExport.length} claims successfully`,
 				type: "success",
 			});
 		} catch (error) {

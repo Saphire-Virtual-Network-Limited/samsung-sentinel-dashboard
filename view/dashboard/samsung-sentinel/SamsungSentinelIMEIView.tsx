@@ -251,7 +251,7 @@ export default function SamsungSentinelIMEIView() {
 			// Fetch all records for export (not just current page)
 			const allRecordsResponse = await getImeiUploads({
 				page: 1,
-				limit: totalRecords || 1000, // Get all records
+				limit: (totalRecords || 0) + 20, // Get all records plus buffer
 			});
 
 			const allRecords = allRecordsResponse?.data || data;

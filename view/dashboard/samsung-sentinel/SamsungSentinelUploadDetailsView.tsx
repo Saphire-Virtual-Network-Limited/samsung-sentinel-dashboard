@@ -16,7 +16,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { ArrowLeft, Upload, AlertCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import useSWR from "swr";
 
 const uploadStatusColorMap: Record<
@@ -54,6 +54,7 @@ export default function SamsungSentinelUploadDetailsView() {
 		direction: "ascending",
 	});
 	const [page, setPage] = useState(1);
+	const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
 	// Handler to properly manage sort descriptor changes
 	const handleSortChange = (sd: SortDescriptor) => {
@@ -118,13 +119,18 @@ export default function SamsungSentinelUploadDetailsView() {
 
 		if (filterValue) {
 			const search = filterValue.toLowerCase();
-			filtered = filtered.filter(
-				(record) =>
-					record.imei?.includes(search) ||
-					record.supplier?.toLowerCase().includes(search) ||
-					record.id?.toLowerCase().includes(search) ||
-					record.failure_reason?.toLowerCase().includes(search)
-			);
+			filtered = filtered.filter((record) => {
+				const imei = (record.imei || "").toString().toLowerCase();
+				const supplier = (record.supplier || "").toString().toLowerCase();
+				const id = (record.id || "").toString().toLowerCase();
+				const reason = (record.failure_reason || "").toString().toLowerCase();
+				return (
+					imei.includes(search) ||
+					supplier.includes(search) ||
+					id.includes(search) ||
+					reason.includes(search)
+				);
+			});
 		}
 
 		if (statusFilter.size > 0) {
@@ -140,6 +146,24 @@ export default function SamsungSentinelUploadDetailsView() {
 		return filtered;
 	}, [allRecords, filterValue, statusFilter]);
 
+	// Local pagination: compute pages based on rowsPerPage and filteredRecords
+	const pages = useMemo(
+		() => Math.max(1, Math.ceil(filteredRecords.length / rowsPerPage)),
+		[filteredRecords.length, rowsPerPage]
+	);
+
+	// Ensure current page is within bounds whenever filteredRecords or rowsPerPage changes
+	useEffect(() => {
+		if (page > pages) setPage(pages);
+		if (page < 1) setPage(1);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pages]);
+
+	const paginatedRecords = useMemo(() => {
+		const start = (page - 1) * rowsPerPage;
+		return filteredRecords.slice(start, start + rowsPerPage);
+	}, [filteredRecords, page, rowsPerPage]);
+
 	// GenericTable columns
 	const columns = [
 		{ name: "IMEI Number", uid: "imei", sortable: true },
@@ -150,8 +174,7 @@ export default function SamsungSentinelUploadDetailsView() {
 		{ name: "Created At", uid: "created_at", sortable: true },
 	];
 
-	// Pagination
-	const pages = Math.ceil(filteredRecords.length / 10) || 1;
+	// NOTE: `pages` is computed above with rowsPerPage, and `paginatedRecords` contains the current page
 
 	// Render cell content
 	const renderCell = (record: ImeiTableRecord, key: string) => {
@@ -204,8 +227,24 @@ export default function SamsungSentinelUploadDetailsView() {
 		return "-";
 	};
 
-	const exportToExcel = () => {
+	const exportToExcel = async () => {
 		if (!uploadDetails) return;
+
+		// Try to fetch all records for export (not just current page)
+		const recordsToExport = filteredRecords;
+		if (
+			uploadDetails.total_records &&
+			uploadDetails.total_records > filteredRecords.length
+		) {
+			try {
+				// If you have an API to fetch all, use it here. Example:
+				// const allDetails = await getImeiUploadById(uploadId, { page: 1, limit: uploadDetails.total_records + 20 });
+				// recordsToExport = ...combine allDetails as above
+				// For now, fallback to filteredRecords
+			} catch (e) {
+				// fallback to filteredRecords
+			}
+		}
 
 		const workbook = new ExcelJS.Workbook();
 		const worksheet = workbook.addWorksheet("IMEI Records");
@@ -230,7 +269,7 @@ export default function SamsungSentinelUploadDetailsView() {
 		};
 
 		// Add data
-		filteredRecords.forEach((record) => {
+		recordsToExport.forEach((record) => {
 			worksheet.addRow([
 				record.imei,
 				record.is_failed ? "FAILED" : record.is_used ? "USED" : "AVAILABLE",
@@ -410,27 +449,34 @@ export default function SamsungSentinelUploadDetailsView() {
 				)}
 
 			{/* IMEI Records Table */}
-				<GenericTable<ImeiTableRecord>
-					columns={columns}
-					data={filteredRecords}
-					allCount={allRecords.length}
-					exportData={filteredRecords}
-					isLoading={isLoading}
-					renderCell={renderCell}
-					filterValue={filterValue}
-					onFilterChange={setFilterValue}
-					statusFilter={statusFilter}
-					onStatusChange={setStatusFilter}
-					statusOptions={statusOptions}
-					sortDescriptor={sortDescriptor}
-					onSortChange={handleSortChange}
-					page={page}
-					pages={pages}
-					onPageChange={setPage}
-					exportFn={exportToExcel}
-					hasNoRecords={filteredRecords.length === 0}
-					searchPlaceholder="Search by IMEI, supplier, or ID..."
-				/>
+			<GenericTable<ImeiTableRecord>
+				columns={columns}
+				data={paginatedRecords}
+				allCount={filteredRecords.length}
+				exportData={filteredRecords}
+				isLoading={isLoading}
+				renderCell={renderCell}
+				filterValue={filterValue}
+				onFilterChange={setFilterValue}
+				statusFilter={statusFilter}
+				onStatusChange={setStatusFilter}
+				statusOptions={statusOptions}
+				sortDescriptor={sortDescriptor}
+				onSortChange={handleSortChange}
+				page={page}
+				pages={pages}
+				onPageChange={setPage}
+				showRowsPerPageSelector={true}
+				rowsPerPageOptions={[10, 25, 50, 100]}
+				defaultRowsPerPage={rowsPerPage}
+				onRowsPerPageChange={(r) => {
+					setRowsPerPage(r);
+					setPage(1);
+				}}
+				exportFn={exportToExcel}
+				hasNoRecords={filteredRecords.length === 0}
+				searchPlaceholder="Search by IMEI, supplier, or ID..."
+			/>
 		</div>
 	);
 }

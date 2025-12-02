@@ -58,10 +58,7 @@ export default function BulkMarkPaidModal({
 				notes: notes || undefined,
 			});
 
-			const { successful, failed } = response.data || {
-				successful: 0,
-				failed: 0,
-			};
+			const { successful, failed } = response;
 
 			if (successful > 0) {
 				showToast({

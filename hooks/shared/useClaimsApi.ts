@@ -78,7 +78,7 @@ function transformClaim(claim: Claim): ClaimRepairItem {
 		deviceName: claim.product?.name || "",
 		brand: "Samsung", // Default brand
 		model: claim.product?.name || "",
-		faultType: claim.description || "Screen Damange",
+		faultType: "Faulty/Broken Screen",
 		repairCost: Number(claim.repair_price) || 0,
 		status: claim.status as
 			| "PENDING"
@@ -307,10 +307,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 					notes: "Single payment processed",
 				});
 
-				const { successful, failed } = response.data || {
-					successful: 0,
-					failed: 0,
-				};
+				const { successful, failed } = response;
 
 				if (successful > 0) {
 					showToast({
@@ -427,7 +424,7 @@ export function useClaimsApi(options: UseClaimsApiOptions): UseClaimsApiReturn {
 				});
 
 				// Response structure: { data: { total_processed, successful, failed, results } }
-				const { successful, failed, total_processed } = response.data;
+				const { successful, failed, total_processed } = response;
 
 				// Refetch data first to update the UI
 				await refetch();

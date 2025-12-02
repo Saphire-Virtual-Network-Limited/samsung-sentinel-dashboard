@@ -64,6 +64,7 @@ import {
 	activateServiceCenter,
 	deactivateServiceCenter,
 	createEngineer,
+	updateEngineer,
 	type ServiceCenter as APIServiceCenter,
 	getAllServiceCenters,
 	transferEngineer,
@@ -254,6 +255,11 @@ export default function SingleServiceCenterView() {
 		onOpen: onAddEngineerModalOpen,
 		onClose: onAddEngineerModalClose,
 	} = useDisclosure();
+	const {
+		isOpen: isEditEngineerModalOpen,
+		onOpen: onEditEngineerModalOpen,
+		onClose: onEditEngineerModalClose,
+	} = useDisclosure();
 
 	// Form states
 	const [centerFormData, setCenterFormData] = useState({
@@ -284,6 +290,12 @@ export default function SingleServiceCenterView() {
 		null
 	);
 
+	const [editEngineerFormData, setEditEngineerFormData] = useState({
+		name: "",
+		phone: "",
+		description: "",
+	});
+
 	const handleViewEngineer = (engineer: Engineer) => {
 		setSelectedEngineer(engineer);
 		setIsViewEngineerModalOpen(true);
@@ -291,6 +303,53 @@ export default function SingleServiceCenterView() {
 	const handleCloseViewEngineerModal = () => {
 		setIsViewEngineerModalOpen(false);
 		setSelectedEngineer(null);
+	};
+
+	const handleOpenEditEngineerModal = (engineer: Engineer) => {
+		setSelectedEngineer(engineer);
+		setEditEngineerFormData({
+			name: engineer.user?.name || "",
+			phone: engineer.user?.phone || "",
+			description: engineer.description || "",
+		});
+		onEditEngineerModalOpen();
+	};
+
+	const handleUpdateEngineer = async () => {
+		if (!selectedEngineer) return;
+
+		const { name, phone, description } = editEngineerFormData;
+
+		if (!name || !phone) {
+			showToast({
+				message: "Please fill in required fields",
+				type: "error",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			await updateEngineer(selectedEngineer.id, {
+				name,
+				phone,
+				...(description && { description }),
+			});
+			showToast({
+				message: "Engineer updated successfully",
+				type: "success",
+			});
+			onEditEngineerModalClose();
+			setSelectedEngineer(null);
+			mutate();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update engineer",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	// Mock transactions data (since API doesn't provide this yet)
@@ -542,6 +601,13 @@ export default function SingleServiceCenterView() {
 									onPress={() => handleViewEngineer(row)}
 								>
 									View
+								</DropdownItem>
+								<DropdownItem
+									key="edit"
+									startContent={<Edit size={16} />}
+									onPress={() => handleOpenEditEngineerModal(row)}
+								>
+									Edit Engineer
 								</DropdownItem>
 								<DropdownItem
 									key="toggle"
@@ -817,7 +883,52 @@ export default function SingleServiceCenterView() {
 							searchPlaceholder="Search engineers..."
 							showRowsPerPageSelector={true}
 							exportFn={(data) => {
-								console.log("Exporting engineers:", data);
+								(async () => {
+									const ExcelJS = (await import("exceljs")).default;
+									const workbook = new ExcelJS.Workbook();
+									const worksheet = workbook.addWorksheet("Engineers");
+									worksheet.columns = [
+										{ header: "Name", key: "name", width: 25 },
+										{ header: "Email", key: "email", width: 30 },
+										{ header: "Phone", key: "phone", width: 18 },
+										{ header: "Description", key: "description", width: 30 },
+										{ header: "Status", key: "status", width: 12 },
+									];
+									worksheet.getRow(1).font = {
+										bold: true,
+										color: { argb: "FFFFFFFF" },
+									};
+									worksheet.getRow(1).fill = {
+										type: "pattern",
+										pattern: "solid",
+										fgColor: { argb: "FF4472C4" },
+									};
+									worksheet.getRow(1).alignment = {
+										vertical: "middle",
+										horizontal: "center",
+									};
+									(data || []).forEach((item: any) => {
+										worksheet.addRow({
+											name: item.user?.name || item.name || "N/A",
+											email: item.user?.email || item.email || "N/A",
+											phone: item.user?.phone || item.phone || "N/A",
+											description: item.description || "",
+											status: item.status,
+										});
+									});
+									const buffer = await workbook.xlsx.writeBuffer();
+									const blob = new Blob([buffer], {
+										type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+									});
+									const url = URL.createObjectURL(blob);
+									const link = document.createElement("a");
+									link.href = url;
+									link.download = `engineers-${
+										new Date().toISOString().split("T")[0]
+									}.xlsx`;
+									link.click();
+									URL.revokeObjectURL(url);
+								})();
 							}}
 						/>
 					</div>
@@ -848,7 +959,50 @@ export default function SingleServiceCenterView() {
 							searchPlaceholder="Search transactions..."
 							showRowsPerPageSelector={true}
 							exportFn={(data) => {
-								console.log("Exporting transactions:", data);
+								(async () => {
+									const ExcelJS = (await import("exceljs")).default;
+									const workbook = new ExcelJS.Workbook();
+									const worksheet = workbook.addWorksheet("Transactions");
+									worksheet.columns = [
+										{ header: "Date", key: "processedAt", width: 20 },
+										{ header: "Amount", key: "amount", width: 15 },
+										{ header: "Type", key: "type", width: 15 },
+										{ header: "Status", key: "status", width: 12 },
+									];
+									worksheet.getRow(1).font = {
+										bold: true,
+										color: { argb: "FFFFFFFF" },
+									};
+									worksheet.getRow(1).fill = {
+										type: "pattern",
+										pattern: "solid",
+										fgColor: { argb: "FF4472C4" },
+									};
+									worksheet.getRow(1).alignment = {
+										vertical: "middle",
+										horizontal: "center",
+									};
+									(data || []).forEach((item: any) => {
+										worksheet.addRow({
+											processedAt: item.processedAt,
+											amount: item.amount,
+											type: item.type,
+											status: item.status,
+										});
+									});
+									const buffer = await workbook.xlsx.writeBuffer();
+									const blob = new Blob([buffer], {
+										type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+									});
+									const url = URL.createObjectURL(blob);
+									const link = document.createElement("a");
+									link.href = url;
+									link.download = `transactions-${
+										new Date().toISOString().split("T")[0]
+									}.xlsx`;
+									link.click();
+									URL.revokeObjectURL(url);
+								})();
 							}}
 						/>
 					</div>
@@ -1192,7 +1346,84 @@ export default function SingleServiceCenterView() {
 					)}
 				</ModalContent>
 			</Modal>
-			;
+			{/* Edit Engineer Modal */}
+			<Modal
+				isOpen={isEditEngineerModalOpen}
+				onClose={onEditEngineerModalClose}
+				size="lg"
+			>
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Edit Engineer</ModalHeader>
+							<ModalBody>
+								<div className="space-y-4">
+									<Input
+										label="Engineer Name"
+										placeholder="e.g., John Adebayo"
+										value={editEngineerFormData.name}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												name: value,
+											}))
+										}
+										isRequired
+									/>
+									<Input
+										label="Phone Number"
+										placeholder="+234 803 123 4567"
+										value={editEngineerFormData.phone}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												phone: value,
+											}))
+										}
+										isRequired
+									/>
+									<Textarea
+										label="Description (Optional)"
+										placeholder="Add any additional information about the engineer..."
+										value={editEngineerFormData.description}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												description: value,
+											}))
+										}
+										rows={3}
+									/>
+									<div className="text-sm text-default-500">
+										<p>
+											<strong>Note:</strong> Email cannot be changed after
+											engineer creation.
+										</p>
+										<p className="mt-1">
+											Current Email: {selectedEngineer?.user?.email || "N/A"}
+										</p>
+									</div>
+								</div>
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={onEditEngineerModalClose}>
+									Cancel
+								</Button>
+								<Button
+									color="primary"
+									onPress={handleUpdateEngineer}
+									isLoading={isSubmitting}
+									isDisabled={
+										!editEngineerFormData.name || !editEngineerFormData.phone
+									}
+								>
+									Update Engineer
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }
