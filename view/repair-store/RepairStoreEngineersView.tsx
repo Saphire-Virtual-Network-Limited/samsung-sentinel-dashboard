@@ -14,6 +14,14 @@ import {
 	DropdownItem,
 	Select,
 	SelectItem,
+	Modal,
+	ModalContent,
+	ModalHeader,
+	ModalBody,
+	ModalFooter,
+	useDisclosure,
+	Input,
+	Textarea,
 } from "@heroui/react";
 import GenericTable, {
 	ColumnDef,
@@ -33,7 +41,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { showToast } from "@/lib";
+import { showToast, updateEngineer } from "@/lib";
 import { useRepairStoreEngineers } from "@/hooks/repair-store/useRepairStoreEngineers";
 import type { Engineer } from "@/lib/api";
 
@@ -56,6 +64,22 @@ export default function RepairStoreEngineersView() {
 	const [serviceCenterFilter, setServiceCenterFilter] = useState("");
 	const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 	const [page, setPage] = useState(1);
+
+	// Edit Engineer modal state
+	const {
+		isOpen: isEditEngineerModalOpen,
+		onOpen: onEditEngineerModalOpen,
+		onClose: onEditEngineerModalClose,
+	} = useDisclosure();
+	const [selectedEngineer, setSelectedEngineer] = useState<Engineer | null>(
+		null
+	);
+	const [editEngineerFormData, setEditEngineerFormData] = useState({
+		name: "",
+		phone: "",
+		description: "",
+	});
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Use API hook
 	const { engineers, isLoading, error, isDeleting, handleDelete } =
@@ -94,6 +118,54 @@ export default function RepairStoreEngineersView() {
 			} catch (error) {
 				// Error already handled in hook
 			}
+		}
+	};
+
+	const handleOpenEditEngineerModal = (engineer: Engineer) => {
+		setSelectedEngineer(engineer);
+		setEditEngineerFormData({
+			name: engineer.user?.name || engineer.name || "",
+			phone: engineer.user?.phone || engineer.phone || "",
+			description: engineer.description || "",
+		});
+		onEditEngineerModalOpen();
+	};
+
+	const handleUpdateEngineer = async () => {
+		if (!selectedEngineer) return;
+
+		const { name, phone, description } = editEngineerFormData;
+
+		if (!name || !phone) {
+			showToast({
+				message: "Please fill in required fields",
+				type: "error",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			await updateEngineer(selectedEngineer.id, {
+				name,
+				phone,
+				...(description && { description }),
+			});
+			showToast({
+				message: "Engineer updated successfully",
+				type: "success",
+			});
+			onEditEngineerModalClose();
+			setSelectedEngineer(null);
+			// Trigger refetch
+			window.location.reload();
+		} catch (error: any) {
+			showToast({
+				message: error?.message || "Failed to update engineer",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -215,6 +287,13 @@ export default function RepairStoreEngineersView() {
 							</DropdownTrigger>
 							<DropdownMenu>
 								<DropdownItem
+									key="edit"
+									startContent={<Edit size={16} />}
+									onPress={() => handleOpenEditEngineerModal(row)}
+								>
+									Edit Engineer
+								</DropdownItem>
+								<DropdownItem
 									key="delete"
 									startContent={<Trash2 size={16} />}
 									className="text-danger"
@@ -299,6 +378,88 @@ export default function RepairStoreEngineersView() {
 					showRowsPerPageSelector={true}
 				/>
 			</div>
+
+			{/* Edit Engineer Modal */}
+			<Modal
+				isOpen={isEditEngineerModalOpen}
+				onClose={onEditEngineerModalClose}
+				size="lg"
+			>
+				<ModalContent>
+					{() => (
+						<>
+							<ModalHeader>Edit Engineer</ModalHeader>
+							<ModalBody>
+								<div className="space-y-4">
+									<Input
+										label="Engineer Name"
+										placeholder="e.g., John Adebayo"
+										value={editEngineerFormData.name}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												name: value,
+											}))
+										}
+										isRequired
+									/>
+									<Input
+										label="Phone Number"
+										placeholder="+234 803 123 4567"
+										value={editEngineerFormData.phone}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												phone: value,
+											}))
+										}
+										isRequired
+									/>
+									<Textarea
+										label="Description (Optional)"
+										placeholder="Add any additional information about the engineer..."
+										value={editEngineerFormData.description}
+										onValueChange={(value) =>
+											setEditEngineerFormData((prev) => ({
+												...prev,
+												description: value,
+											}))
+										}
+										rows={3}
+									/>
+									<div className="text-sm text-default-500">
+										<p>
+											<strong>Note:</strong> Email cannot be changed after
+											engineer creation.
+										</p>
+										<p className="mt-1">
+											Current Email:{" "}
+											{selectedEngineer?.user?.email ||
+												selectedEngineer?.email ||
+												"N/A"}
+										</p>
+									</div>
+								</div>
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={onEditEngineerModalClose}>
+									Cancel
+								</Button>
+								<Button
+									color="primary"
+									onPress={handleUpdateEngineer}
+									isLoading={isSubmitting}
+									isDisabled={
+										!editEngineerFormData.name || !editEngineerFormData.phone
+									}
+								>
+									Update Engineer
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }
