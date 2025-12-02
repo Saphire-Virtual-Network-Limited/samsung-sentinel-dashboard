@@ -157,17 +157,20 @@ export default function ProfileTab({
 							label="Email Address"
 							placeholder="Enter email address"
 							value={profileForm.email || ""}
-							isReadOnly={true}
+							onChange={(e) => onProfileFieldChange("email", e.target.value)}
+							isReadOnly={!isEditingProfile}
 							startContent={<Mail className="w-4 h-4 text-default-400" />}
 							endContent={
-								<button
-									type="button"
-									onClick={copyEmailToClipboard}
-									className="text-default-400 hover:text-default-600 transition-colors"
-									title="Copy email to clipboard"
-								>
-									<Copy className="w-4 h-4" />
-								</button>
+								!isEditingProfile ? (
+									<button
+										type="button"
+										onClick={copyEmailToClipboard}
+										className="text-default-400 hover:text-default-600 transition-colors"
+										title="Copy email to clipboard"
+									>
+										<Copy className="w-4 h-4" />
+									</button>
+								) : null
 							}
 						/>
 					</div>

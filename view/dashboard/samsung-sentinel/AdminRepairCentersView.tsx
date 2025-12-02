@@ -303,9 +303,9 @@ export default function AdminRepairCentersView() {
 	const handleEditClick = (store: RepairStore) => {
 		setEditingId(store.id);
 		setFormData({
-			name: store.name,
-			email: store.email,
-			phone: store.phone,
+			name: store.user?.name || store.name || "",
+			email: store.user?.email || store.email || "",
+			phone: store.user?.phone || store.phone || "",
 			description: store.description || "",
 			location: store.location,
 			account_name: store.account_name || "",
@@ -383,9 +383,9 @@ export default function AdminRepairCentersView() {
 			dataToExport.forEach((partner: RepairStore) => {
 				worksheet.addRow({
 					id: partner.id,
-					name: partner.name,
-					email: partner.email,
-					phone: partner.phone,
+					name: partner.user?.name || partner.name,
+					email: partner.user?.email || partner.email,
+					phone: partner.user?.phone || partner.phone || "N/A",
 					location: partner.location,
 					service_centers_count: partner.service_centers_count || 0,
 					account_name: partner.account_name || "N/A",
@@ -428,9 +428,11 @@ export default function AdminRepairCentersView() {
 			case "name":
 				return (
 					<div className="flex flex-col">
-						<p className="text-bold text-sm capitalize">{item.name}</p>
+						<p className="text-bold text-sm capitalize">
+							{item.user?.name || item.name}
+						</p>
 						<p className="text-bold text-sm capitalize text-default-400">
-							{item.email}
+							{item.user?.email || item.email}
 						</p>
 					</div>
 				);
@@ -443,8 +445,12 @@ export default function AdminRepairCentersView() {
 			case "contact":
 				return (
 					<div className="flex flex-col">
-						<p className="text-bold text-sm">{item.phone}</p>
-						<p className="text-sm text-default-400">{item.email}</p>
+						<p className="text-bold text-sm">
+							{item.user?.phone || item.phone || "N/A"}
+						</p>
+						<p className="text-sm text-default-400">
+							{item.user?.email || item.email}
+						</p>
 					</div>
 				);
 			case "service_centers_count":
