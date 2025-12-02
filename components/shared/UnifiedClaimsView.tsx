@@ -30,6 +30,7 @@ import ClaimsRepairsTable, {
 } from "@/components/shared/ClaimsRepairsTable";
 import ViewClaimDetailView from "@/view/shared/ViewClaimDetailView";
 import { useClaimsApi } from "@/hooks/shared/useClaimsApi";
+import { getAllClaims } from "@/lib/api/claims";
 
 export interface UnifiedClaimsViewProps {
 	role: ClaimRepairRole;
@@ -195,6 +196,93 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 		limit: rowsPerPage,
 		onPaymentResults: handlePaymentResults,
 	});
+
+	// Fetch all data for export (respecting current filters but with high limit)
+	const fetchAllData = async (): Promise<ClaimRepairItem[]> => {
+		try {
+			// Build params matching current filters
+			// Use pagination total + 100 to ensure we get all records
+			const totalRecords = pagination?.total || 0;
+			const params: any = {
+				limit: totalRecords + 100,
+			};
+
+			// Add status filter
+			if (activeTab && activeTab !== "all") {
+				params.status = activeTab.toUpperCase();
+			}
+
+			// Add payment filter
+			if (paymentFilter && paymentFilter !== "all") {
+				params.payment_status = paymentFilter.toUpperCase();
+			}
+
+			// Add search params
+			if (imeiParam) {
+				params.imei = imeiParam;
+			} else if (claimNumberParam) {
+				params.claim_number = claimNumberParam;
+			}
+
+			// Add date range
+			if (startDate) {
+				params.start_date = startDate;
+			}
+			if (endDate) {
+				params.end_date = endDate;
+			}
+
+			const response = await getAllClaims(params);
+
+			// Map the response data to ClaimRepairItem format
+			// Use the same transformation as in useClaimsApi
+			return response.data.map((claim: any) => ({
+				id: claim.id,
+				claimId: claim.claim_number,
+				customerName: `${claim.customer_first_name} ${claim.customer_last_name}`,
+				imei: claim.imei?.imei || "",
+				deviceName: claim.product?.name || "",
+				brand: "Samsung",
+				model: claim.product?.name || "",
+				faultType: "Faulty/Broken Screen",
+				repairCost: Number(claim.repair_price) || 0,
+				status: claim.status,
+				repairStatus: "PENDING",
+				paymentStatus: claim.payment_status,
+				transactionRef: claim.transaction_id,
+				sessionId: claim.reference_id,
+				createdAt: claim.created_at,
+				serviceCenterName: claim.service_center?.name || "",
+				serviceCenterId: claim.service_center_id,
+				engineerName: claim.engineer?.user?.name || "",
+				completedAt: claim.completed_at,
+				completedById: claim.completed_by_id,
+				approvedAt: claim.approved_at,
+				approvedById: claim.approved_by_id,
+				rejectedAt: claim.rejected_at,
+				rejectedById: claim.rejected_by_id,
+				rejectionReason: claim.rejection_reason,
+				authorizedAt: claim.authorized_at,
+				authorizedById: claim.authorized_by_id,
+				paidAt: claim.paid_at,
+				paidById: claim.paid_by_id,
+				transactionId: claim.transaction_id,
+				referenceId: claim.reference_id,
+				service_center: claim.service_center
+					? {
+							id: claim.service_center.id,
+							name: claim.service_center.name,
+							account_name: claim.service_center.account_name,
+							account_number: claim.service_center.account_number,
+							bank_name: claim.service_center.bank_name,
+					  }
+					: undefined,
+			}));
+		} catch (error) {
+			console.error("Error fetching all data for export:", error);
+			return [];
+		}
+	};
 
 	// Handle view details
 	const handleViewDetails = (claim: ClaimRepairItem) => {
@@ -396,6 +484,7 @@ const UnifiedClaimsView: React.FC<UnifiedClaimsViewProps> = ({
 								onBulkAuthorizePayment={bulkAuthorizePaymentHandler}
 								onUpdateRepairStatus={updateRepairStatusHandler}
 								onViewDetails={handleViewDetails}
+								onFetchAllData={fetchAllData}
 								showPaymentColumns={
 									showPaymentTabs &&
 									(activeTab === "completed" || activeTab === "all") &&
