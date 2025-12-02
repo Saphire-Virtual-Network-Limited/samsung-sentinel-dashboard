@@ -449,7 +449,7 @@ export default function AdminRepairCentersView() {
 							{item.user?.phone || item.phone || "N/A"}
 						</p>
 						<p className="text-sm text-default-400">
-							{item.user?.email || item.email}
+							{item.email || item.user?.email}
 						</p>
 					</div>
 				);
