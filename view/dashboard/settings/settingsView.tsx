@@ -107,9 +107,10 @@ export default function SettingsView() {
 		try {
 			setIsUpdatingProfile(true);
 
-			// Transform the data to match UpdateUserDto interface (name, phone only)
+			// Transform the data to match UpdateUserDto interface (name, email, phone)
 			const updateData = {
 				name: profileForm.name || "",
+				email: profileForm.email || "",
 				phone: profileForm.phone || "",
 			};
 

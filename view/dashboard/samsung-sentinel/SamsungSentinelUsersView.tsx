@@ -116,6 +116,7 @@ export default function SamsungSentinelUsersView() {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [editFormData, setEditFormData] = useState({
 		name: "",
+		email: "",
 		phone: "",
 	});
 	const [createFormData, setCreateFormData] = useState({
@@ -267,6 +268,7 @@ export default function SamsungSentinelUsersView() {
 			case "edit":
 				setEditFormData({
 					name: user.name,
+					email: user.email,
 					phone: user.phone || "",
 				});
 				setIsEditModalOpen(true);
@@ -840,15 +842,19 @@ export default function SamsungSentinelUsersView() {
 							<div className="space-y-4">
 								<div>
 									<label className="text-sm text-gray-500 mb-1 block">
-										Email (Read-only)
+										Email <span className="text-red-500">*</span>
 									</label>
 									<Input
-										value={selectedUser.email}
-										isReadOnly
-										variant="flat"
-										classNames={{
-											input: "bg-gray-100",
-										}}
+										value={editFormData.email}
+										onChange={(e) =>
+											setEditFormData((prev) => ({
+												...prev,
+												email: e.target.value,
+											}))
+										}
+										placeholder="Enter email address"
+										type="email"
+										variant="bordered"
 									/>
 								</div>
 								<div>
@@ -913,7 +919,9 @@ export default function SamsungSentinelUsersView() {
 							color="primary"
 							onPress={handleSaveEdit}
 							isLoading={isSaving}
-							isDisabled={!editFormData.name.trim()}
+							isDisabled={
+								!editFormData.name.trim() || !editFormData.email.trim()
+							}
 						>
 							Save Changes
 						</Button>
