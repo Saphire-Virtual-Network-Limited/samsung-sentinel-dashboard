@@ -18,9 +18,9 @@ import {
 import GenericTable, {
 	ColumnDef,
 } from "@/components/reususables/custom-ui/tableUi";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import { StatCard } from "@/components/atoms/StatCard";
+import { getAllClaims } from "@/lib/api/claims";
+import { formatDateTimeForExport } from "@/lib";
 import {
 	Eye,
 	CheckCircle,
@@ -118,6 +118,96 @@ export default function RepairStoreClaimsView() {
 		page,
 		limit: rowsPerPage,
 	});
+
+	// Fetch all data for export (respecting current filters but with high limit)
+	const fetchAllData = async (): Promise<ClaimRepairItem[]> => {
+		try {
+			// Use pagination total + 100 to ensure we get all records
+			const totalRecords = pagination?.total || 0;
+			const params: any = {
+				limit: totalRecords + 100,
+			};
+
+			// Add status filter
+			if (statusFilter && statusFilter !== "all") {
+				params.status = statusFilter.toUpperCase();
+			}
+
+			// Add payment filter
+			if (paymentFilter && paymentFilter !== "all") {
+				params.payment_status = paymentFilter.toUpperCase();
+			}
+
+			// Add search params
+			if (filterValue) {
+				if (/^\d+/.test(filterValue)) {
+					params.imei = filterValue;
+				} else if (/^CLM-/i.test(filterValue)) {
+					params.claim_number = filterValue;
+				} else {
+					params.customer_name = filterValue;
+				}
+			}
+
+			// Add date range
+			if (startDate) {
+				params.start_date = startDate;
+			}
+			if (endDate) {
+				params.end_date = endDate;
+			}
+
+			const response = await getAllClaims(params);
+
+			// Map the response data to ClaimRepairItem format
+			// Use the same transformation as in useClaimsApi
+			return response.data.map((claim: any) => ({
+				id: claim.id,
+				claimId: claim.claim_number,
+				customerName: `${claim.customer_first_name} ${claim.customer_last_name}`,
+				imei: claim.imei?.imei || "",
+				deviceName: claim.product?.name || "",
+				brand: "Samsung",
+				model: claim.product?.name || "",
+				faultType: "Faulty/Broken Screen",
+				repairCost: Number(claim.repair_price) || 0,
+				status: claim.status,
+				repairStatus: "PENDING",
+				paymentStatus: claim.payment_status,
+				transactionRef: claim.transaction_id,
+				sessionId: claim.reference_id,
+				createdAt: claim.created_at,
+				serviceCenterName: claim.service_center?.name || "",
+				serviceCenterId: claim.service_center_id,
+				engineerName: claim.engineer?.user?.name || "",
+				completedAt: claim.completed_at,
+				completedById: claim.completed_by_id,
+				approvedAt: claim.approved_at,
+				approvedById: claim.approved_by_id,
+				rejectedAt: claim.rejected_at,
+				rejectedById: claim.rejected_by_id,
+				rejectionReason: claim.rejection_reason,
+				authorizedAt: claim.authorized_at,
+				authorizedById: claim.authorized_by_id,
+				paidAt: claim.paid_at,
+				paidById: claim.paid_by_id,
+				transactionId: claim.transaction_id,
+				referenceId: claim.reference_id,
+				service_center: claim.service_center
+					? {
+							id: claim.service_center.id,
+							name: claim.service_center.name,
+							account_name: claim.service_center.account_name,
+							account_number: claim.service_center.account_number,
+							bank_name: claim.service_center.bank_name,
+					  }
+					: undefined,
+			}));
+		} catch (error) {
+			console.error("Error fetching all data for export:", error);
+			return [];
+		}
+	};
 
 	// Use stats from dashboard API
 	const stats = useMemo(() => {
@@ -394,60 +484,139 @@ export default function RepairStoreClaimsView() {
 				pages={pagination?.totalPages || 1}
 				onPageChange={setPage}
 				exportFn={async (data) => {
-					const allClaims = data;
 					try {
-						if (pagination?.total) {
-							// If you have an API to fetch all, use it here. Example:
-							// const allClaimsResponse = await useClaimsApi({ ...filters, page: 1, limit: pagination.total + 20 });
-							// allClaims = allClaimsResponse?.data || data;
+						// Fetch all data if available
+						let dataToExport = data;
+						try {
+							showToast({
+								message: "Fetching all data for export...",
+								type: "info",
+							});
+							dataToExport = await fetchAllData();
+						} catch (error) {
+							console.error("Failed to fetch all data:", error);
+							showToast({
+								message:
+									"Failed to fetch all data, exporting visible data only",
+								type: "warning",
+							});
 						}
-					} catch (e) {
-						// fallback to data
-					}
-					const workbook = new ExcelJS.Workbook();
-					const worksheet = workbook.addWorksheet("Claims");
-					worksheet.columns = [
-						{ header: "Claim ID", key: "claimId", width: 20 },
-						{ header: "Customer", key: "customer", width: 20 },
-						{ header: "IMEI", key: "imei", width: 20 },
-						{ header: "Device", key: "device", width: 20 },
-						{ header: "Device Fault", key: "deviceFault", width: 20 },
-						{ header: "Service Center", key: "serviceCenter", width: 20 },
-						{ header: "Engineer", key: "engineer", width: 20 },
-						{ header: "Amount", key: "amount", width: 15 },
-						{ header: "Status", key: "status", width: 15 },
-						{ header: "Payment", key: "payment", width: 15 },
-						{ header: "Txn Ref ID", key: "transactionRef", width: 20 },
-						{ header: "Submitted", key: "submitted", width: 20 },
-						{ header: "Completed", key: "completed", width: 20 },
-					];
-					worksheet.getRow(1).font = { bold: true };
-					worksheet.getRow(1).alignment = {
-						vertical: "middle",
-						horizontal: "center",
-					};
-					allClaims.forEach((claim: any) => {
-						worksheet.addRow({
-							claimId: claim.claimId,
-							customer: claim.customer,
-							imei: claim.imei,
-							device: claim.device,
-							deviceFault: claim.deviceFault,
-							serviceCenter: claim.serviceCenter,
-							engineer: claim.engineer,
-							amount: claim.amount,
-							status: claim.status,
-							payment: claim.payment,
-							transactionRef: claim.transactionRef,
-							submitted: claim.submitted,
-							completed: claim.completed,
+
+						// CSV Headers with comprehensive audit columns
+						const exportHeaders = [
+							"Claim ID",
+							"Customer Name",
+							"Service Center",
+							"Engineer",
+							"IMEI",
+							"Device Name",
+							"Brand",
+							"Model",
+							"Fault Type",
+							"Repair Cost",
+							"Status",
+							"Payment Status",
+							"Created Date",
+							"Completed Date",
+							"Completed By",
+							"Payment Date",
+							"Paid By",
+							"Authorized Date",
+							"Authorized By",
+							"Approved Date",
+							"Approved By",
+							"Rejected Date",
+							"Rejected By",
+							"Rejection Reason",
+							"Transaction Reference",
+							"Transaction ID",
+						];
+
+						// Map data rows
+						const csvRows = dataToExport.map((item) => {
+							const row: any[] = [
+								item.claimId,
+								item.customerName,
+								item.serviceCenterName || "N/A",
+								item.engineerName || "N/A",
+								item.imei,
+								item.deviceName,
+								item.brand,
+								item.model,
+								item.faultType,
+								item.repairCost,
+								item.status,
+								item.paymentStatus || "N/A",
+								formatDateTimeForExport(item.createdAt),
+							];
+
+							// Add payment and audit data - split dates and user IDs
+							row.push(
+								item.completedAt
+									? formatDateTimeForExport(item.completedAt)
+									: "N/A",
+								item.completedById || "N/A",
+								item.paidAt ? formatDateTimeForExport(item.paidAt) : "N/A",
+								item.paidById || "N/A",
+								item.authorizedAt
+									? formatDateTimeForExport(item.authorizedAt)
+									: "N/A",
+								item.authorizedById || "N/A",
+								item.approvedAt
+									? formatDateTimeForExport(item.approvedAt)
+									: "N/A",
+								item.approvedById || "N/A",
+								item.rejectedAt
+									? formatDateTimeForExport(item.rejectedAt)
+									: "N/A",
+								item.rejectedById || "N/A",
+								item.rejectionReason || "N/A",
+								item.transactionRef || "N/A",
+								item.transactionId || "N/A"
+							);
+
+							return row;
 						});
-					});
-					const buffer = await workbook.xlsx.writeBuffer();
-					const blob = new Blob([buffer], {
-						type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-					});
-					saveAs(blob, `claims-${new Date().toISOString().split("T")[0]}.xlsx`);
+
+						// Create CSV content
+						const csvContent = [
+							exportHeaders.join(","),
+							...csvRows.map((row) =>
+								row
+									.map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+									.join(",")
+							),
+						].join("\n");
+
+						// Create and download file
+						const blob = new Blob([csvContent], {
+							type: "text/csv;charset=utf-8;",
+						});
+						const link = document.createElement("a");
+						const url = URL.createObjectURL(blob);
+						link.setAttribute("href", url);
+						link.setAttribute(
+							"download",
+							`repair-store-claims_${
+								new Date().toISOString().split("T")[0]
+							}.csv`
+						);
+						link.style.visibility = "hidden";
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+
+						showToast({
+							message: `Exported ${dataToExport.length} claims successfully`,
+							type: "success",
+						});
+					} catch (error) {
+						console.error("Export error:", error);
+						showToast({
+							message: "Failed to export data",
+							type: "error",
+						});
+					}
 				}}
 				renderCell={renderCell}
 				hasNoRecords={claims.length === 0}
