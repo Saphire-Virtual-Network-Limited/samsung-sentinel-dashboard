@@ -15,6 +15,7 @@ import InternetStatus from "./internetCheck";
 
 import {
 	formatDate,
+	formatDateTimeForExport,
 	sortData,
 	filterData,
 	statusColorMap,
@@ -23,6 +24,7 @@ import {
 
 export {
 	formatDate,
+	formatDateTimeForExport,
 	sortData,
 	filterData,
 	statusColorMap,
