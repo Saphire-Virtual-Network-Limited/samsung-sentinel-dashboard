@@ -478,11 +478,7 @@ const ClaimsRepairsTable: React.FC<ClaimsRepairsTableProps> = ({
 		}
 
 		// Samsung Partners: Authorize payment for approved claims
-		if (
-			role === "samsung-partners" &&
-			item.status === "COMPLETED" &&
-			item.paymentStatus === "UNPAID"
-		) {
+		if (role === "samsung-partners" && item.status === "COMPLETED") {
 			items.push(
 				<DropdownItem
 					key="authorize"
